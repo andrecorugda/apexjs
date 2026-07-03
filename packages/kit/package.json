@@ -1,6 +1,6 @@
 {
   "name": "@apex-stack/kit",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Apex JS core — .alpine SFC parser, SSR renderer, and client runtime",
   "type": "module",
   "license": "MIT",
@@ -9,6 +9,10 @@
     "type": "git",
     "url": "git+https://github.com/andrecorugda/apexjs.git",
     "directory": "packages/kit"
+  },
+  "homepage": "https://apexjs.site",
+  "bugs": {
+    "url": "https://github.com/andrecorugda/apexjs/issues"
   },
   "keywords": [
     "alpine",

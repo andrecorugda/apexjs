@@ -1,6 +1,6 @@
 {
   "name": "@apex-stack/core",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "The full-stack meta-framework for Alpine.js — CLI and runtime",
   "type": "module",
   "license": "MIT",
@@ -9,6 +9,10 @@
     "type": "git",
     "url": "git+https://github.com/andrecorugda/apexjs.git",
     "directory": "packages/apexjs"
+  },
+  "homepage": "https://apexjs.site",
+  "bugs": {
+    "url": "https://github.com/andrecorugda/apexjs/issues"
   },
   "keywords": [
     "alpine",
