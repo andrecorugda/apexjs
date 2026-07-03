@@ -1,5 +1,6 @@
 import { createServer as createHttpServer, type Server } from 'node:http'
 import { createRequire } from 'node:module'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { apex } from '@apex-stack/vite'
 import {
@@ -15,7 +16,8 @@ import { createApiHandler, loadApiRoutes } from '../api/routes.js'
 import { createMcpHandler } from '../mcp/server.js'
 import { loadComponents } from '../components/registry.js'
 import { renderIslandsPage } from '../islands/render.js'
-import { matchRoute, type RouteDef, scanPages } from '../routing/router.js'
+import { matchRoute, scanPages } from '../routing/router.js'
+import { renderErrorPage, renderNotFoundPage } from './errorPage.js'
 import { type PageModule, renderPage } from './renderPage.js'
 
 export interface DevServerOptions {
@@ -65,13 +67,25 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   const vite = await createViteServer({
     root: options.root,
     appType: 'custom',
-    server: { middlewareMode: true, fs: { strict: false } },
+    // Derive the HMR port from the dev port so multiple `apex dev` instances
+    // don't all fight over Vite's default 24678.
+    server: { middlewareMode: true, fs: { strict: false }, hmr: { port: port + 1 } },
     resolve: { alias },
     // User apps depend on `@apex-stack/core`, so the client module imports the runtime
     // from `@apex-stack/core/client` (a re-export) rather than the internal kit package.
     plugins: [apex({ clientRuntime: '@apex-stack/core/client' })],
     optimizeDeps: { include: ['alpinejs'] },
   })
+
+  // Vite's ssrLoadModule needs project files as absolute paths — a bare
+  // root-relative "/pages/x" is misread as drive-root ("C:\pages\x") on Windows,
+  // so it "doesn't exist". Normalize project ids (anything starting with "/" not
+  // already under root) to an absolute forward-slash path; identical on POSIX + Windows.
+  const ssrLoad = (id: string): Promise<Record<string, unknown>> => {
+    const resolved =
+      id[0] === '/' && !id.startsWith(options.root) ? join(options.root, id).replace(/\\/g, '/') : id
+    return vite.ssrLoadModule(resolved) as Promise<Record<string, unknown>>
+  }
 
   const app = createApp()
 
@@ -84,7 +98,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   // editing a route or resource takes effect without a restart — Vite invalidates the
   // module on change, so ssrLoadModule returns fresh code. A `/api` handler validates
   // and dispatches them; `/mcp` exposes every `mcp: true` entry as an AI-callable tool.
-  const loadEntries = () => loadApiRoutes(options.root, (id) => vite.ssrLoadModule(id) as never)
+  const loadEntries = () => loadApiRoutes(options.root, (id) => ssrLoad(id) as never)
   app.use('/api', defineEventHandler((event) => loadEntries().then((e) => createApiHandler(e)(event))))
   app.use('/mcp', defineEventHandler((event) => loadEntries().then((e) => createMcpHandler(e)(event))))
 
@@ -98,16 +112,16 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
         if (!matched) {
           setResponseStatus(event, 404)
           setResponseHeader(event, 'Content-Type', 'text/html')
-          return notFoundPage(url, routes)
+          return await vite.transformIndexHtml(url, renderNotFoundPage(url, routes))
         }
 
         const { registry, css: componentCss } = await loadComponents(
           options.root,
-          (id) => vite.ssrLoadModule(id) as never,
+          (id) => ssrLoad(id) as never,
         )
         const render = options.islands ? renderIslandsPage : renderPage
         const html = await render({
-          loadModule: (id) => vite.ssrLoadModule(id) as Promise<PageModule>,
+          loadModule: (id) => ssrLoad(id) as unknown as Promise<PageModule>,
           pageId: matched.pageId,
           params: matched.params,
           url,
@@ -122,7 +136,13 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
         vite.ssrFixStacktrace(error)
         setResponseStatus(event, 500)
         setResponseHeader(event, 'Content-Type', 'text/html')
-        return `<pre>${escapeHtml(error.stack ?? error.message)}</pre>`
+        const html = renderErrorPage(error, { url, root: options.root })
+        try {
+          // Inject Vite's HMR client so the page reloads once the error is fixed.
+          return await vite.transformIndexHtml(url, html)
+        } catch {
+          return html
+        }
       }
     }),
   )
@@ -141,18 +161,4 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
       )
     },
   }
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>]/g, (c) => (c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;'))
-}
-
-function notFoundPage(url: string, routes: RouteDef[]): string {
-  const list = routes.map((r) => `<li><code>${escapeHtml(r.pattern)}</code></li>`).join('')
-  return `<!DOCTYPE html><html><head><title>404 — Apex JS</title></head>
-<body style="font-family: system-ui, sans-serif; max-width: 40rem; margin: 3rem auto;">
-  <h1>404 — no route for <code>${escapeHtml(url)}</code></h1>
-  <p>Available routes:</p>
-  <ul>${list || '<li>(no pages found — add <code>pages/index.alpine</code>)</li>'}</ul>
-</body></html>`
 }
