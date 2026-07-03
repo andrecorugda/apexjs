@@ -39,9 +39,13 @@ zero JS until an island needs it.
   resolved x-data baked as a prop-free literal for hydration; works as component islands too.
 - `create-apexjs` scaffolder: `npm create apexjs@latest`.
 
-### ▢ Phase 2 — Data
-Drizzle integration + migrations + `apex make:model/route`, each with MCP hooks. SSG. Prod build
-via Nitro (deploy presets). Component `<script server>` loaders + slots.
+### ◑ Phase 2 — Data ([DATA.md](./DATA.md))
+- **Done:** `apexjs-data` — Drizzle + SQLite, `createDb`, SQL-file `applyMigrations`, and
+  `defineResource` (list/get/create) where one table → REST endpoints **and** MCP tools on one DB.
+  Proven: an MCP-tool write is visible via the REST list.
+- **Next:** `update`/`delete`, `apex make:model` + `drizzle-kit` migrations + `apex migrate` CLI,
+  per-route auth scoping, more Drizzle drivers. SSG + Nitro prod build. Component `<script server>`
+  loaders + slots.
 
 ### ▢ Phase 3 — Backend
 Jobs/queues, events/observers, auth — all MCP-aware.

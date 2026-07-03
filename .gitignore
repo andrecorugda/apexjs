@@ -6,3 +6,6 @@ coverage
 test-results
 playwright-report
 *.tsbuildinfo
+*.db
+*.db-shm
+*.db-wal

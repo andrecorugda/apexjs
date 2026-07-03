@@ -9,7 +9,7 @@ import {
   toNodeListener,
 } from 'h3'
 import { createServer as createViteServer, type ViteDevServer } from 'vite'
-import { loadApiRoutes, mountRestRoutes } from '../api/routes.js'
+import { createApiHandler, loadApiRoutes } from '../api/routes.js'
 import { createMcpHandler, hasMcpRoutes } from '../mcp/server.js'
 import { loadComponents } from '../components/registry.js'
 import { renderIslandsPage } from '../islands/render.js'
@@ -58,13 +58,14 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   // API / MCP / SSR handlers below.
   app.use(fromNodeMiddleware(vite.middlewares))
 
-  // Load server/api/*.ts routes and mount them as validated REST endpoints.
-  // Every `mcp: true` route is additionally exposed as an MCP tool at /mcp —
-  // one typed definition, both a REST API and an AI-callable tool.
-  const apiRoutes = await loadApiRoutes(options.root, (id) => vite.ssrLoadModule(id) as never)
-  mountRestRoutes(app, apiRoutes)
-  if (hasMcpRoutes(apiRoutes)) {
-    app.use('/mcp', createMcpHandler(apiRoutes))
+  // Load server/api/*.ts routes (single routes + resources) into one entry table.
+  // A single `/api` handler validates and dispatches them; every `mcp: true`
+  // entry is additionally exposed as an MCP tool at /mcp — one typed definition,
+  // both a REST API and an AI-callable tool.
+  const apiEntries = await loadApiRoutes(options.root, (id) => vite.ssrLoadModule(id) as never)
+  if (apiEntries.length) app.use('/api', createApiHandler(apiEntries))
+  if (hasMcpRoutes(apiEntries)) {
+    app.use('/mcp', createMcpHandler(apiEntries))
   }
 
   app.use(
