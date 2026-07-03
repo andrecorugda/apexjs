@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { resolve } from 'node:path'
 import { defineCommand, runMain } from 'citty'
 import { buildCommand } from './commands/build.js'

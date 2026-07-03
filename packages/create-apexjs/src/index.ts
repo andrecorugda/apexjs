@@ -82,10 +82,13 @@ const main = defineCommand({
     }
 
     // Install dependencies with the detected package manager.
+    // For npm, skip the audit + fund passes — the audit call is a common source
+    // of long "stuck" hangs after the packages are already on disk.
     let installed = false
     if (args.install) {
-      console.log(`\n  Installing dependencies with ${c.cyan(pm)}…\n`)
-      installed = run(pm, ['install'], target)
+      console.log(`\n  Installing dependencies with ${c.cyan(pm)}… ${c.dim('(first install can take a minute)')}\n`)
+      const installArgs = pm === 'npm' ? ['install', '--no-audit', '--no-fund'] : ['install']
+      installed = run(pm, installArgs, target)
       if (!installed) {
         console.log(`\n  ${c.yellow('⚠')}  Dependency install failed — run it yourself after cd'ing in.\n`)
       }
@@ -96,15 +99,16 @@ const main = defineCommand({
 
     const steps: string[] = [`cd ${args.dir}`]
     if (!installed) steps.push(pm === 'yarn' ? 'yarn' : `${pm} install`)
-    steps.push(`${runPrefix} dev          ${c.dim('# http://localhost:3000')}`)
-    steps.push(`${runPrefix} dev:islands  ${c.dim('# static-first islands mode')}`)
+    steps.push(`${runPrefix} dev          ${c.dim('# start the dev server → http://localhost:3000')}`)
 
     console.log(`
   ${installed ? c.green('Ready.') : 'Next steps:'}
 ${steps.map((s) => `    ${s}`).join('\n')}
 
-  ${gitOk ? c.dim('Git repository initialized.') : ''}
-  Your server/api/*.ts routes are also MCP tools at /mcp.
+  ${c.yellow('Note:')} ${c.cyan('apex')} is a project command, not a global one — run it as
+        ${c.cyan(runPrefix + ' dev')}  (or ${c.cyan('npx apex dev')}), never a bare "apex".
+  ${c.dim('Islands mode:')} ${runPrefix} dev:islands
+  ${gitOk ? c.dim('Git repository initialized. ') : ''}Your server/api/*.ts routes are also MCP tools at /mcp.
 `)
   },
 })
