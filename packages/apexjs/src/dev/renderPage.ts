@@ -1,6 +1,6 @@
-import { renderComponent, stateIsland } from '@apexjs/kit'
+import { renderComponent, stateIsland } from 'apexjs-kit'
 
-/** The shape a compiled `.alpine` SSR module exports (see @apexjs/vite). */
+/** The shape a compiled `.alpine` SSR module exports (see apexjs-vite). */
 export interface PageModule {
   loader: (ctx: { params: Record<string, string>; url: string }) => unknown | Promise<unknown>
   template: string

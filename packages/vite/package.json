@@ -1,5 +1,5 @@
 {
-  "name": "@apexjs/vite",
+  "name": "apexjs-vite",
   "version": "0.0.0",
   "description": "Vite plugin for Apex JS .alpine single-file components",
   "type": "module",
@@ -24,7 +24,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@apexjs/kit": "workspace:*"
+    "apexjs-kit": "workspace:*"
   },
   "peerDependencies": {
     "vite": "^5.0.0 || ^6.0.0"

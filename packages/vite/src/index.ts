@@ -1,4 +1,4 @@
-import { parseAlpineFile } from '@apexjs/kit'
+import { parseAlpineFile } from 'apexjs-kit'
 import { type Plugin, transformWithEsbuild } from 'vite'
 import { compileAlpine } from './compile.js'
 
@@ -6,7 +6,7 @@ import { compileAlpine } from './compile.js'
 export interface ApexPluginOptions {
   /**
    * The module specifier the generated client module imports the runtime from.
-   * Defaults to `@apexjs/kit/client`; the `apexjs` CLI overrides this to
+   * Defaults to `apexjs-kit/client`; the `apexjs` CLI overrides this to
    * `apexjs/client` so user apps only need `apexjs` installed.
    */
   clientRuntime?: string
@@ -22,7 +22,7 @@ export interface ApexPluginOptions {
  * milestone).
  */
 export function apex(options: ApexPluginOptions = {}): Plugin {
-  const clientRuntime = options.clientRuntime ?? '@apexjs/kit/client'
+  const clientRuntime = options.clientRuntime ?? 'apexjs-kit/client'
 
   return {
     name: 'apexjs',
@@ -48,6 +48,13 @@ export function apex(options: ApexPluginOptions = {}): Plugin {
     },
     handleHotUpdate(ctx) {
       if (!ctx.file.endsWith('.alpine')) return
+      // Invalidate the module (both client and SSR representations) so the next
+      // `ssrLoadModule` recompiles the changed file instead of returning the
+      // stale cached module — otherwise the full reload below re-renders old HTML.
+      const { moduleGraph } = ctx.server
+      for (const mod of moduleGraph.getModulesByFile(ctx.file) ?? []) {
+        moduleGraph.invalidateModule(mod)
+      }
       ctx.server.ws.send({ type: 'full-reload' })
       return []
     },

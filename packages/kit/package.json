@@ -1,5 +1,5 @@
 {
-  "name": "@apexjs/kit",
+  "name": "apexjs-kit",
   "version": "0.0.0",
   "description": "Apex JS core — .alpine SFC parser, SSR renderer, and client runtime",
   "type": "module",

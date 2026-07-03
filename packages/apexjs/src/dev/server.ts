@@ -1,5 +1,5 @@
 import { createServer as createHttpServer, type Server } from 'node:http'
-import { apex } from '@apexjs/vite'
+import { apex } from 'apexjs-vite'
 import {
   createApp,
   defineEventHandler,

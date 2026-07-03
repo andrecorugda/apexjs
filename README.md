@@ -25,8 +25,8 @@ Every major reactive library has a meta-framework — React has Next, Vue has Nu
 | --- | --- |
 | [`apexjs`](./packages/apexjs) | The CLI and runtime (`apex dev`, `apex build`) |
 | [`create-apexjs`](./packages/create-apexjs) | Project scaffolder |
-| [`@apexjs/kit`](./packages/kit) | SFC parser, SSR renderer, and client runtime |
-| [`@apexjs/vite`](./packages/vite) | Vite plugin for `.alpine` files |
+| [`apexjs-kit`](./packages/kit) | SFC parser, SSR renderer, and client runtime |
+| [`apexjs-vite`](./packages/vite) | Vite plugin for `.alpine` files |
 
 ## Status
 
