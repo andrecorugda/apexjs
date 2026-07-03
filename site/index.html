@@ -1,16 +1,31 @@
 <title>Apex JS — HTML-first apps, AI-native APIs</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The meta-framework for Alpine.js: file routing, SSR, islands, and every typed API route is also an MCP tool." />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJBcGV4Ij4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYXBleExpdCIgeDE9IjAiIHkxPSIxIiB4Mj0iMSIgeTI9IjAiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMyMmQzZWUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjNjM2NmYxIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8IS0tIEFwZXggbWFyazogYW4gIkEiIHRoYXQgaXMgYWxzbyBhIHN1bW1pdC4gTGVmdCBmYWNlIGxpdCwgcmlnaHQgZmFjZSBpbiBzaGFkb3cuIC0tPgogIDxwYXRoIGQ9Ik0zMiA3IEwzMiAzNSBMMjAgNTYgTDQgNTYgWiIgZmlsbD0idXJsKCNhcGV4TGl0KSIvPgogIDxwYXRoIGQ9Ik0zMiA3IEw2MCA1NiBMNDQgNTYgTDMyIDM1IFoiIGZpbGw9IiM2MzY2ZjEiLz4KPC9zdmc+Cg==" />
+<link rel="apple-touch-icon" href="https://apexjs.site/assets/apple-touch-icon.png" />
+<meta property="og:title" content="Apex JS — HTML-first apps, AI-native APIs" />
+<meta property="og:description" content="The meta-framework for Alpine.js: file routing, SSR, islands, and every typed API route is also an MCP tool." />
+<meta property="og:image" content="https://apexjs.site/assets/og-image.png" />
+<meta property="og:url" content="https://apexjs.site/" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
 <style>
   :root {
-    --ground: #0a0f1c;
-    --surface: #111a2e;
-    --surface-2: #16213a;
-    --text: #eaf1f9;
-    --muted: #93a6bd;
-    --faint: #566b85;
-    --line: rgba(120, 150, 190, 0.16);
-    --glacier: #56c1e8;
-    --glacier-deep: #2e8bc0;
-    --alpenglow: #f6976a;
+    /* dark is the default — synapse indigo/cyan palette */
+    --ground: #0a0e1a;
+    --ground-deep: #070b16;
+    --surface: #11172b;
+    --surface-2: #161e38;
+    --raised: #1e293b;
+    --raised-2: #243056;
+    --text: #f4f7ff;
+    --muted: #9aa6c4;
+    --faint: #5b6890;
+    --line: rgba(130, 140, 200, 0.16);
+    --glacier: #818cf8;
+    --glacier-deep: #6366f1;
+    --alpenglow: #22d3ee;
     --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --maxw: 1080px;
@@ -18,41 +33,50 @@
   }
   @media (prefers-color-scheme: light) {
     :root {
-      --ground: #f3f7fb;
+      --ground: #f4f7ff;
+      --ground-deep: #e6ecfa;
       --surface: #ffffff;
-      --surface-2: #eaf1f8;
-      --text: #0a0f1c;
-      --muted: #46596e;
-      --faint: #7d90a6;
-      --line: rgba(20, 55, 100, 0.12);
-      --glacier: #1c82c2;
-      --glacier-deep: #12628f;
-      --alpenglow: #d96a34;
+      --surface-2: #eef2fb;
+      --raised: #e4ebf9;
+      --raised-2: #d7e0f4;
+      --text: #0a0e1a;
+      --muted: #55617e;
+      --faint: #7d88a6;
+      --line: rgba(60, 70, 130, 0.14);
+      --glacier: #6366f1;
+      --glacier-deep: #4f46e5;
+      --alpenglow: #0891b2;
     }
   }
   :root[data-theme="light"] {
-    --ground: #f3f7fb;
+    --ground: #f4f7ff;
+    --ground-deep: #e6ecfa;
     --surface: #ffffff;
-    --surface-2: #eaf1f8;
-    --text: #0a0f1c;
-    --muted: #46596e;
-    --faint: #7d90a6;
-    --line: rgba(20, 55, 100, 0.12);
-    --glacier: #1c82c2;
-    --glacier-deep: #12628f;
-    --alpenglow: #d96a34;
+    --surface-2: #eef2fb;
+    --raised: #e4ebf9;
+    --raised-2: #d7e0f4;
+    --text: #0a0e1a;
+    --muted: #55617e;
+    --faint: #7d88a6;
+    --line: rgba(60, 70, 130, 0.14);
+    --glacier: #6366f1;
+    --glacier-deep: #4f46e5;
+    --alpenglow: #0891b2;
   }
   :root[data-theme="dark"] {
-    --ground: #0a0f1c;
-    --surface: #111a2e;
-    --surface-2: #16213a;
-    --text: #eaf1f9;
-    --muted: #93a6bd;
-    --faint: #566b85;
-    --line: rgba(120, 150, 190, 0.16);
-    --glacier: #56c1e8;
-    --glacier-deep: #2e8bc0;
-    --alpenglow: #f6976a;
+    --ground: #0a0e1a;
+    --ground-deep: #070b16;
+    --surface: #11172b;
+    --surface-2: #161e38;
+    --raised: #1e293b;
+    --raised-2: #243056;
+    --text: #f4f7ff;
+    --muted: #9aa6c4;
+    --faint: #5b6890;
+    --line: rgba(130, 140, 200, 0.16);
+    --glacier: #818cf8;
+    --glacier-deep: #6366f1;
+    --alpenglow: #22d3ee;
   }
 
   * { box-sizing: border-box; }
@@ -79,12 +103,32 @@
     font-size: 0.72rem;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: var(--glacier);
+    color: var(--alpenglow);
     margin: 0 0 1rem;
   }
 
   /* ---- Hero ---- */
-  .hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
+  .hero {
+    position: relative; overflow: hidden; border-bottom: 1px solid var(--line);
+    background:
+      radial-gradient(1100px 620px at 78% -8%, rgba(99, 102, 241, 0.20), transparent 60%),
+      radial-gradient(900px 560px at 8% 4%, rgba(34, 211, 238, 0.12), transparent 55%),
+      var(--ground);
+  }
+  :root[data-theme="light"] .hero {
+    background:
+      radial-gradient(1100px 620px at 78% -8%, rgba(99, 102, 241, 0.12), transparent 60%),
+      radial-gradient(900px 560px at 8% 4%, rgba(34, 211, 238, 0.10), transparent 55%),
+      var(--ground);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .hero {
+      background:
+        radial-gradient(1100px 620px at 78% -8%, rgba(99, 102, 241, 0.12), transparent 60%),
+        radial-gradient(900px 560px at 8% 4%, rgba(34, 211, 238, 0.10), transparent 55%),
+        var(--ground);
+    }
+  }
   #contours {
     position: absolute; inset: 0; width: 100%; height: 100%;
     z-index: 0; opacity: 0; transition: opacity 1.6s ease;
@@ -97,9 +141,7 @@
     font-family: var(--mono); font-weight: 600; letter-spacing: 0.02em;
     font-size: 0.95rem; margin-bottom: clamp(2.5rem, 8vh, 4.5rem);
   }
-  .peak { width: 20px; height: 20px; display: block; }
-  .peak path { fill: none; stroke: var(--glacier); stroke-width: 2; }
-  .peak .sun { fill: var(--alpenglow); stroke: none; }
+  .brand-mark { width: 22px; height: 22px; display: block; flex: none; }
 
   h1.thesis {
     font-size: clamp(2.6rem, 7vw, 5rem);
@@ -110,7 +152,7 @@
     text-wrap: balance;
     max-width: 16ch;
   }
-  h1.thesis .ai { color: var(--alpenglow); }
+  h1.thesis .ai { color: var(--glacier); }
   .lede {
     margin: 1.6rem 0 0;
     font-size: clamp(1.05rem, 2vw, 1.3rem);
@@ -210,6 +252,136 @@
     border-radius: 6px; padding: 0.4rem 0.7rem; cursor: pointer; text-transform: uppercase;
   }
   .theme-toggle:hover { color: var(--glacier); border-color: var(--glacier); }
+
+  /* ============================================================
+     Apex Studio — interactive IDE showcase (hero centerpiece)
+     ============================================================ */
+  .studio-section .section-head { max-width: 54ch; }
+  .studio {
+    border: 1px solid var(--line); border-radius: 14px; background: var(--surface); overflow: hidden;
+    box-shadow: 0 40px 90px -50px rgba(0, 0, 0, 0.65), 0 4px 14px -8px rgba(0, 0, 0, 0.4);
+  }
+  :root[data-theme="light"] .studio { box-shadow: 0 30px 70px -45px rgba(30, 40, 100, 0.28), 0 3px 10px -6px rgba(30, 40, 100, 0.16); }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .studio { box-shadow: 0 30px 70px -45px rgba(30, 40, 100, 0.28), 0 3px 10px -6px rgba(30, 40, 100, 0.16); } }
+  .studio.intro { animation: studioRise 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+  @keyframes studioRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  .studio-chrome { display: flex; align-items: center; gap: 0.85rem; padding: 0.6rem 0.95rem; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+  .studio-dots { display: inline-flex; gap: 0.45rem; flex: none; }
+  .studio-dots i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+  .studio-dots i:nth-child(1) { background: #ff5f57; }
+  .studio-dots i:nth-child(2) { background: #febc2e; }
+  .studio-dots i:nth-child(3) { background: #28c840; }
+  .studio-titlebar { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); letter-spacing: 0.01em; }
+  .studio-address { margin-left: auto; font-family: var(--mono); font-size: 0.74rem; color: var(--muted); background: var(--ground); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.75rem; display: inline-flex; align-items: center; gap: 0.4rem; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .studio-address .lock { color: var(--glacier); font-size: 0.9em; }
+
+  .studio-body { display: grid; grid-template-columns: 190px minmax(0, 1fr) minmax(0, 320px); height: 452px; }
+  @media (max-width: 960px) { .studio-body { grid-template-columns: 1fr; height: auto; } }
+
+  .studio-tree { border-right: 1px solid var(--line); background: color-mix(in srgb, var(--surface-2) 55%, var(--surface)); padding: 0.7rem 0.5rem; font-family: var(--mono); font-size: 0.8rem; overflow-y: auto; min-width: 0; }
+  .tree-root { margin: 0.1rem 0 0.5rem; padding: 0 0.4rem; color: var(--text); font-weight: 600; font-size: 0.78rem; }
+  .tree-group { display: flex; align-items: center; gap: 0.4rem; color: var(--muted); padding: 0.3rem 0.4rem; white-space: nowrap; }
+  .tree-group .ic-folder { width: 13px; height: 10px; flex: none; position: relative; border: 1.4px solid currentColor; border-radius: 2px; opacity: 0.7; }
+  .tree-group .ic-folder::before { content: ""; position: absolute; top: -3.4px; left: 1px; width: 5px; height: 3px; border: 1.4px solid currentColor; border-bottom: none; border-radius: 2px 2px 0 0; }
+  .tree-file { display: flex; align-items: center; width: 100%; text-align: left; background: none; border: 0; cursor: pointer; font: inherit; color: var(--muted); padding: 0.32rem 0.5rem; border-radius: 6px; border-left: 2px solid transparent; white-space: nowrap; transition: color 0.12s ease, background 0.12s ease; }
+  .tree-file:hover { color: var(--text); background: color-mix(in srgb, var(--glacier) 9%, transparent); }
+  .tree-file[aria-pressed="true"] { color: var(--text); background: color-mix(in srgb, var(--glacier) 12%, transparent); border-left-color: var(--glacier); }
+  .tree-file .ic-file { width: 7px; height: 7px; border-radius: 2px; background: var(--faint); margin-right: 0.55rem; flex: none; }
+  .tree-file.ext-alpine .ic-file { background: var(--glacier); }
+  .tree-file.ext-ts .ic-file { background: var(--alpenglow); }
+  .tree-file.lvl-1 { padding-left: 1.5rem; }
+  .tree-file.lvl-2 { padding-left: 2.4rem; }
+  @media (max-width: 960px) {
+    .studio-tree { display: flex; gap: 0.35rem; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid var(--line); padding: 0.5rem; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+    .studio-tree .tree-root, .studio-tree .tree-group { display: none; }
+    .tree-file { width: auto; flex: none; padding: 0.4rem 0.75rem; border-left: 0; border: 1px solid var(--line); border-radius: 999px; }
+    .tree-file.lvl-1, .tree-file.lvl-2 { padding-left: 0.75rem; }
+    .tree-file[aria-pressed="true"] { border-color: var(--glacier); }
+  }
+
+  .studio-editor { display: flex; flex-direction: column; min-width: 0; background: var(--surface); }
+  .editor-tabs { display: flex; border-bottom: 1px solid var(--line); background: var(--surface-2); padding: 0 0.5rem; flex: none; }
+  .editor-tab { display: inline-flex; align-items: center; gap: 0.5rem; max-width: 100%; font-family: var(--mono); font-size: 0.75rem; color: var(--text); padding: 0.5rem 0.8rem; border: 1px solid var(--line); border-bottom: none; border-radius: 8px 8px 0 0; background: var(--surface); margin-top: 0.4rem; position: relative; top: 1px; }
+  .editor-tab .ic-file { width: 7px; height: 7px; border-radius: 2px; background: var(--glacier); flex: none; }
+  .editor-tab .tab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .editor-tab .tab-x { color: var(--faint); margin-left: 0.1rem; }
+  .editor-scroll { overflow: auto; padding: 0.85rem 0 1.1rem; flex: 1; min-height: 0; }
+  .code { display: none; margin: 0; border: 0; border-radius: 0; background: none; padding: 0; overflow: visible; font-family: var(--mono); font-size: 0.8rem; line-height: 1.7; color: var(--text); }
+  .code.is-active { display: block; }
+  .code code { counter-reset: ln; display: block; background: none; border: 0; padding: 0; font: inherit; }
+  .line { counter-increment: ln; display: block; white-space: pre; position: relative; padding: 0 1rem 0 3.3rem; }
+  .line::before { content: counter(ln); position: absolute; left: 0; width: 2.3rem; text-align: right; color: var(--faint); opacity: 0.55; padding-right: 0.35rem; font-variant-numeric: tabular-nums; -webkit-user-select: none; user-select: none; }
+  .line:hover { background: color-mix(in srgb, var(--glacier) 6%, transparent); }
+
+  .studio .c { color: var(--faint); font-style: italic; }
+  .studio .s { color: #7fd4a6; }
+  .studio .k { color: #a5b4fc; }
+  .studio .f { color: #a5b4fc; }
+  .studio .t { color: #67e8f9; }
+  .studio .a { color: #67e8f9; opacity: 0.85; }
+  :root[data-theme="light"] .studio .s { color: #2f9e66; }
+  :root[data-theme="light"] .studio .k, :root[data-theme="light"] .studio .f { color: #4f46e5; }
+  :root[data-theme="light"] .studio .t, :root[data-theme="light"] .studio .a { color: #0e7490; }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .studio .s { color: #2f9e66; }
+    :root:not([data-theme="dark"]) .studio .k, :root:not([data-theme="dark"]) .studio .f { color: #4f46e5; }
+    :root:not([data-theme="dark"]) .studio .t, :root:not([data-theme="dark"]) .studio .a { color: #0e7490; }
+  }
+
+  .caret { display: inline-block; width: 0.5ch; height: 1.05em; margin-left: 1px; background: var(--glacier); vertical-align: -0.18em; border-radius: 1px; animation: studioBlink 1.1s steps(1) infinite; }
+  @keyframes studioBlink { 50% { opacity: 0; } }
+  .studio .code.sw, .studio .pv.sw { animation: studioSwap 0.26s ease; }
+  @keyframes studioSwap { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .studio-preview { border-left: 1px solid var(--line); background: var(--surface-2); padding: 1rem; overflow-y: auto; min-width: 0; }
+  @media (max-width: 960px) { .studio-preview { border-left: 0; border-top: 1px solid var(--line); } }
+  .preview-inner { display: flex; flex-direction: column; gap: 0.75rem; height: 100%; }
+  .pv { display: none; flex-direction: column; gap: 0.7rem; }
+  .pv.is-active { display: flex; }
+  .mini-browser { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--ground); box-shadow: 0 14px 34px -24px rgba(0, 0, 0, 0.55); }
+  .mb-bar { display: flex; align-items: center; gap: 0.55rem; padding: 0.45rem 0.6rem; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+  .mb-dots { display: inline-flex; gap: 0.28rem; flex: none; }
+  .mb-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); opacity: 0.55; display: block; }
+  .mb-url { font-family: var(--mono); font-size: 0.66rem; color: var(--muted); background: var(--ground); border: 1px solid var(--line); border-radius: 999px; padding: 0.12rem 0.55rem; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mb-view { padding: 1rem; }
+  .mb-view.mb-center { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 1.6rem 1rem; }
+  .mb-view h4 { margin: 0 0 0.65rem; font-size: 1.05rem; letter-spacing: -0.01em; font-weight: 700; }
+  .mb-filter { width: 100%; font: inherit; font-size: 0.8rem; padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--text); margin-bottom: 0.7rem; }
+  .mb-filter:focus-visible { outline: 2px solid var(--glacier); outline-offset: 1px; }
+  .mb-list { display: flex; flex-direction: column; gap: 0.3rem; }
+  .mb-list a { font-size: 0.85rem; color: var(--glacier); padding: 0.15rem 0; cursor: pointer; }
+  .mb-list a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .mb-body { margin: 0; color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+  .counter-demo { font-family: var(--mono); font-size: 0.9rem; font-weight: 600; cursor: pointer; padding: 0.6rem 1.1rem; border-radius: 0.6rem; background: var(--glacier); color: #04121f; border: 1px solid transparent; transition: transform 0.08s ease, background 0.12s ease; }
+  .counter-demo:hover { background: var(--glacier-deep); color: #fff; }
+  .counter-demo:active { transform: translateY(1px); }
+  .mb-hint { margin: 0; color: var(--faint); font-family: var(--mono); font-size: 0.72rem; }
+
+  .surfaces { display: flex; flex-direction: column; gap: 0.7rem; }
+  .surface { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 0.75rem 0.85rem; border-left: 3px solid var(--glacier); }
+  .surface.mcp { border-left-color: var(--alpenglow); background: color-mix(in srgb, var(--alpenglow) 8%, var(--surface)); }
+  .surface .s-h { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--glacier); display: block; margin-bottom: 0.45rem; }
+  .surface.mcp .s-h { color: var(--alpenglow); }
+  .surface > code { font-family: var(--mono); font-size: 0.78rem; color: var(--text); }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip { font-family: var(--mono); font-size: 0.71rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--alpenglow) 45%, var(--line)); color: var(--alpenglow); background: color-mix(in srgb, var(--alpenglow) 12%, transparent); }
+  .preview-caption { font-size: 0.76rem; color: var(--muted); font-family: var(--mono); text-align: center; margin: 0.1rem 0 0; }
+  .preview-caption.warm { color: var(--alpenglow); }
+  .schema-card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+  .schema-card .sc-h { font-family: var(--mono); font-size: 0.72rem; padding: 0.45rem 0.7rem; background: var(--surface-2); border-bottom: 1px solid var(--line); color: var(--muted); }
+  .schema-card .sc-h b { color: var(--glacier); font-weight: 600; }
+  .sc-row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.32rem 0.7rem; font-family: var(--mono); font-size: 0.74rem; border-bottom: 1px solid var(--line); }
+  .sc-row:last-child { border-bottom: 0; }
+  .sc-row .col { color: var(--text); }
+  .sc-row .typ { color: var(--muted); }
+  .schema-arrow { text-align: center; font-family: var(--mono); font-size: 0.72rem; color: var(--faint); margin: 0; }
+  .schema-arrow code { font-size: 0.9em; }
+  @media (prefers-reduced-motion: reduce) {
+    .studio.intro { animation: none; }
+    .studio .code.sw, .studio .pv.sw { animation: none; }
+    .caret { animation: none; }
+  }
 </style>
 
 <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">Theme</button>
@@ -218,9 +390,15 @@
   <canvas id="contours" aria-hidden="true"></canvas>
   <div class="wrap">
     <span class="brand">
-      <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
-        <circle class="sun" cx="18" cy="6" r="2.4" />
-        <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+      <svg class="brand-mark" viewBox="0 0 64 64" role="img" aria-label="Apex JS">
+        <defs>
+          <linearGradient id="apexLitSite" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stop-color="#22d3ee" />
+            <stop offset="1" stop-color="#6366f1" />
+          </linearGradient>
+        </defs>
+        <path d="M32 7 L32 35 L20 56 L4 56 Z" fill="url(#apexLitSite)" />
+        <path d="M32 7 L60 56 L44 56 L32 35 Z" fill="#6366f1" />
       </svg>
       Apex&nbsp;JS
     </span>
@@ -241,6 +419,146 @@
 </header>
 
 <main>
+  <section class="studio-section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Apex Studio</p>
+        <h2 style="font-size: clamp(1.7rem, 3.4vw, 2.4rem); letter-spacing: -0.02em; font-weight: 800; margin: 0; line-height: 1.1; text-wrap: balance;">A real project, in one window.</h2>
+        <p style="color: var(--muted); margin: 0.8rem 0 0; max-width: 52ch;">
+          Click through the files. Pages render on the server and hydrate as islands, and a single
+          resource definition becomes both a REST endpoint <em>and</em> MCP tools. This isn't a video —
+          it's the framework, live.
+        </p>
+      </div>
+
+      <div class="studio" id="apexStudio" style="margin-top: 2.4rem;">
+        <div class="studio-chrome">
+          <span class="studio-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="studio-titlebar">apex dev</span>
+          <span class="studio-address"><span class="lock" aria-hidden="true">&#9107;</span>localhost:3000</span>
+        </div>
+
+        <div class="studio-body">
+          <nav class="studio-tree" aria-label="Project files">
+            <p class="tree-root">my-app</p>
+            <div class="tree-group"><span class="ic-folder" aria-hidden="true"></span>pages</div>
+            <button type="button" class="tree-file ext-alpine lvl-1" data-file="index" aria-pressed="true"><span class="ic-file" aria-hidden="true"></span>index.alpine</button>
+            <div class="tree-group lvl-1"><span class="ic-folder" aria-hidden="true"></span>blog</div>
+            <button type="button" class="tree-file ext-alpine lvl-2" data-file="slug" aria-pressed="false"><span class="ic-file" aria-hidden="true"></span>[slug].alpine</button>
+            <div class="tree-group"><span class="ic-folder" aria-hidden="true"></span>components</div>
+            <button type="button" class="tree-file ext-alpine lvl-1" data-file="counter" aria-pressed="false"><span class="ic-file" aria-hidden="true"></span>Counter.alpine</button>
+            <div class="tree-group"><span class="ic-folder" aria-hidden="true"></span>server / api</div>
+            <button type="button" class="tree-file ext-ts lvl-1" data-file="posts" aria-pressed="false"><span class="ic-file" aria-hidden="true"></span>posts.ts</button>
+            <div class="tree-group"><span class="ic-folder" aria-hidden="true"></span>db</div>
+            <button type="button" class="tree-file ext-ts lvl-1" data-file="schema" aria-pressed="false"><span class="ic-file" aria-hidden="true"></span>schema.ts</button>
+          </nav>
+
+          <div class="studio-editor">
+            <div class="editor-tabs">
+              <span class="editor-tab"><span class="ic-file" aria-hidden="true"></span><span class="tab-name">pages/index.alpine</span><span class="tab-x" aria-hidden="true">&times;</span></span>
+            </div>
+            <div class="editor-scroll">
+<pre class="code is-active" data-code="index"><code><span class="line">&lt;<span class="t">script</span> <span class="a">server</span> <span class="a">lang</span>=<span class="s">"ts"</span>&gt;</span><span class="line">  <span class="k">import</span> { db, schema } <span class="k">from</span> <span class="s">'../db'</span></span><span class="line">  <span class="c">// Runs on the server — the page arrives as real HTML.</span></span><span class="line">  <span class="k">export async function</span> <span class="f">loader</span>() {</span><span class="line">    <span class="k">return</span> { posts: <span class="k">await</span> db.select().from(schema.posts) }</span><span class="line">  }</span><span class="line">&lt;/<span class="t">script</span>&gt;</span><span class="line"></span><span class="line">&lt;<span class="t">template</span> <span class="a">x-data</span>=<span class="s">"{ q: '' }"</span>&gt;</span><span class="line">  &lt;<span class="t">main</span>&gt;</span><span class="line">    &lt;<span class="t">h1</span>&gt;My blog&lt;/<span class="t">h1</span>&gt;</span><span class="line">    &lt;<span class="t">input</span> <span class="a">x-model</span>=<span class="s">"q"</span> <span class="a">placeholder</span>=<span class="s">"Filter…"</span> /&gt;</span><span class="line">    &lt;<span class="t">template</span> <span class="a">x-for</span>=<span class="s">"p in posts"</span> <span class="a">:key</span>=<span class="s">"p.id"</span>&gt;</span><span class="line">      &lt;<span class="t">a</span> <span class="a">:href</span>=<span class="s">"'/blog/' + p.slug"</span> <span class="a">x-show</span>=<span class="s">"p.title.includes(q)"</span> <span class="a">x-text</span>=<span class="s">"p.title"</span>&gt;&lt;/<span class="t">a</span>&gt;</span><span class="line">    &lt;/<span class="t">template</span>&gt;</span><span class="line">  &lt;/<span class="t">main</span>&gt;</span><span class="line">&lt;/<span class="t">template</span>&gt;</span><span class="line"></span><span class="line">&lt;<span class="t">style</span> <span class="a">scoped</span>&gt;</span><span class="line">  <span class="t">main</span> { max-width: 40rem; margin: 2rem auto; }</span><span class="line">&lt;/<span class="t">style</span>&gt;</span></code></pre>
+<pre class="code" data-code="slug"><code><span class="line">&lt;<span class="t">script</span> <span class="a">server</span> <span class="a">lang</span>=<span class="s">"ts"</span>&gt;</span><span class="line">  <span class="k">export function</span> <span class="f">loader</span>({ params }) {</span><span class="line">    <span class="k">return</span> { slug: params.slug }</span><span class="line">  }</span><span class="line">&lt;/<span class="t">script</span>&gt;</span><span class="line"></span><span class="line">&lt;<span class="t">template</span> <span class="a">x-data</span>&gt;</span><span class="line">  &lt;<span class="t">article</span>&gt;</span><span class="line">    &lt;<span class="t">h1</span> <span class="a">x-text</span>=<span class="s">"'Post: ' + slug"</span>&gt;&lt;/<span class="t">h1</span>&gt;</span><span class="line">  &lt;/<span class="t">article</span>&gt;</span><span class="line">&lt;/<span class="t">template</span>&gt;</span></code></pre>
+<pre class="code" data-code="counter"><code><span class="line">&lt;<span class="t">template</span> <span class="a">x-data</span>=<span class="s">"{ count: Number(start) }"</span>&gt;</span><span class="line">  &lt;<span class="t">button</span> <span class="a">@click</span>=<span class="s">"count++"</span> <span class="a">x-text</span>=<span class="s">"label + ': ' + count"</span>&gt;&lt;/<span class="t">button</span>&gt;</span><span class="line">&lt;/<span class="t">template</span>&gt;</span></code></pre>
+<pre class="code" data-code="posts"><code><span class="line"><span class="k">import</span> { defineResource } <span class="k">from</span> <span class="s">'@apex-stack/data'</span></span><span class="line"><span class="k">import</span> { z } <span class="k">from</span> <span class="s">'zod'</span></span><span class="line"><span class="k">import</span> { db, schema } <span class="k">from</span> <span class="s">'../../db'</span></span><span class="line"></span><span class="line"><span class="c">// One definition → REST endpoints AND MCP tools at /mcp.</span></span><span class="line"><span class="k">export default</span> <span class="f">defineResource</span>(<span class="s">'posts'</span>, {</span><span class="line">  db,</span><span class="line">  table: schema.posts,</span><span class="line">  insert: { title: <span class="f">z</span>.string(), slug: <span class="f">z</span>.string() },</span><span class="line">})</span></code></pre>
+<pre class="code" data-code="schema"><code><span class="line"><span class="k">import</span> { integer, sqliteTable, text } <span class="k">from</span> <span class="s">'drizzle-orm/sqlite-core'</span></span><span class="line"></span><span class="line"><span class="k">export const</span> posts = <span class="f">sqliteTable</span>(<span class="s">'posts'</span>, {</span><span class="line">  id: <span class="f">integer</span>(<span class="s">'id'</span>).primaryKey({ autoIncrement: <span class="k">true</span> }),</span><span class="line">  title: <span class="f">text</span>(<span class="s">'title'</span>).notNull(),</span><span class="line">  slug: <span class="f">text</span>(<span class="s">'slug'</span>).notNull(),</span><span class="line">})</span></code></pre>
+            </div>
+          </div>
+
+          <div class="studio-preview">
+            <div class="preview-inner">
+              <div class="pv is-active" data-pv="index">
+                <div class="mini-browser">
+                  <div class="mb-bar"><span class="mb-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="mb-url">localhost:3000/</span></div>
+                  <div class="mb-view">
+                    <h4>My blog</h4>
+                    <input class="mb-filter" type="text" placeholder="Filter…" aria-label="Filter posts (live demo)" />
+                    <div class="mb-list">
+                      <a>Hello, Apex</a>
+                      <a>Islands on demand</a>
+                      <a>REST + MCP, one file</a>
+                    </div>
+                  </div>
+                </div>
+                <p class="preview-caption">server-rendered, then hydrated</p>
+              </div>
+
+              <div class="pv" data-pv="slug">
+                <div class="mini-browser">
+                  <div class="mb-bar"><span class="mb-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="mb-url">localhost:3000/blog/hello-apex</span></div>
+                  <div class="mb-view">
+                    <h4>Post: hello-apex</h4>
+                    <p class="mb-body">Rendered on the server from the <code>[slug]</code> route param, then delivered as real HTML.</p>
+                  </div>
+                </div>
+                <p class="preview-caption">dynamic route, server-rendered</p>
+              </div>
+
+              <div class="pv" data-pv="counter">
+                <div class="mini-browser">
+                  <div class="mb-bar"><span class="mb-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="mb-url">localhost:3000/</span></div>
+                  <div class="mb-view mb-center">
+                    <button type="button" class="counter-demo"><span class="clabel">Likes</span>: <span class="cval">3</span></button>
+                    <p class="mb-hint">click it — hydrated island</p>
+                  </div>
+                </div>
+                <p class="preview-caption">reusable, with props</p>
+              </div>
+
+              <div class="pv" data-pv="posts">
+                <div class="surfaces">
+                  <div class="surface rest">
+                    <span class="s-h">REST endpoint</span>
+                    <code>GET /api/posts → [ … ]</code>
+                  </div>
+                  <div class="surface mcp">
+                    <span class="s-h">MCP tools · /mcp</span>
+                    <div class="chips">
+                      <span class="chip">posts_list</span>
+                      <span class="chip">posts_create</span>
+                      <span class="chip">posts_get</span>
+                      <span class="chip">posts_update</span>
+                      <span class="chip">posts_delete</span>
+                    </div>
+                  </div>
+                </div>
+                <p class="preview-caption warm">one definition — REST endpoint + MCP tool</p>
+              </div>
+
+              <div class="pv" data-pv="schema">
+                <div class="schema-card">
+                  <div class="sc-h">table <b>posts</b></div>
+                  <div class="sc-row"><span class="col">id</span><span class="typ">integer · pk</span></div>
+                  <div class="sc-row"><span class="col">title</span><span class="typ">text</span></div>
+                  <div class="sc-row"><span class="col">slug</span><span class="typ">text</span></div>
+                </div>
+                <p class="schema-arrow">↓ powers <code>defineResource('posts')</code> ↓</p>
+                <div class="surfaces">
+                  <div class="surface rest">
+                    <span class="s-h">REST endpoint</span>
+                    <code>GET /api/posts → [ … ]</code>
+                  </div>
+                  <div class="surface mcp">
+                    <span class="s-h">MCP tools · /mcp</span>
+                    <div class="chips">
+                      <span class="chip">posts_list</span>
+                      <span class="chip">posts_create</span>
+                      <span class="chip">posts_get</span>
+                      <span class="chip">posts_update</span>
+                      <span class="chip">posts_delete</span>
+                    </div>
+                  </div>
+                </div>
+                <p class="preview-caption warm">the schema powers both surfaces</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="pillars-section">
     <div class="wrap">
       <div class="section-head reveal">
@@ -434,5 +752,74 @@
       entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
     }, { threshold: 0.12 });
     document.querySelectorAll(".reveal").forEach(function (el) { io.observe(el); });
+  })();
+
+  // Apex Studio — interactive file switcher (self-contained, no deps)
+  (function () {
+    var studio = document.getElementById("apexStudio");
+    if (!studio) return;
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var paths = {
+      index: "pages/index.alpine",
+      slug: "pages/blog/[slug].alpine",
+      counter: "components/Counter.alpine",
+      posts: "server/api/posts.ts",
+      schema: "db/schema.ts"
+    };
+    var buttons = studio.querySelectorAll(".tree-file");
+    var codes = studio.querySelectorAll(".code");
+    var pvs = studio.querySelectorAll(".pv");
+    var tabName = studio.querySelector(".tab-name");
+    var tabIcon = studio.querySelector(".editor-tab .ic-file");
+    var caret = null;
+
+    function placeCaret(codeEl) {
+      if (reduce || !codeEl) return;
+      if (!caret) { caret = document.createElement("span"); caret.className = "caret"; }
+      var lines = codeEl.querySelectorAll(".line");
+      for (var i = lines.length - 1; i >= 0; i--) {
+        if (lines[i].textContent.trim() !== "") { lines[i].appendChild(caret); break; }
+      }
+    }
+
+    function swap(el) {
+      if (reduce || !el) return;
+      el.classList.remove("sw");
+      void el.offsetWidth;
+      el.classList.add("sw");
+    }
+
+    function select(file) {
+      buttons.forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.file === file ? "true" : "false"); });
+      var activeCode = null, activePv = null;
+      codes.forEach(function (c) { var on = c.dataset.code === file; c.classList.toggle("is-active", on); if (on) activeCode = c; });
+      pvs.forEach(function (p) { var on = p.dataset.pv === file; p.classList.toggle("is-active", on); if (on) activePv = p; });
+      if (tabName) tabName.textContent = paths[file];
+      if (tabIcon) tabIcon.style.background = (file === "posts" || file === "schema") ? "var(--alpenglow)" : "var(--glacier)";
+      placeCaret(activeCode);
+      swap(activeCode);
+      swap(activePv);
+    }
+
+    buttons.forEach(function (b) { b.addEventListener("click", function () { select(b.dataset.file); }); });
+
+    var filter = studio.querySelector(".mb-filter");
+    if (filter) {
+      filter.addEventListener("input", function () {
+        var q = this.value.toLowerCase();
+        studio.querySelectorAll('.pv[data-pv="index"] .mb-list a').forEach(function (a) {
+          a.style.display = a.textContent.toLowerCase().indexOf(q) > -1 ? "" : "none";
+        });
+      });
+    }
+
+    var counter = studio.querySelector(".counter-demo");
+    if (counter) {
+      var val = counter.querySelector(".cval");
+      counter.addEventListener("click", function () { val.textContent = String(Number(val.textContent) + 1); });
+    }
+
+    placeCaret(studio.querySelector(".code.is-active"));
+    if (!reduce) studio.classList.add("intro");
   })();
 </script>

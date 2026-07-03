@@ -2,6 +2,14 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="description" content="Apex JS is the full-stack meta-framework for Alpine.js: file routing, SSR, islands, and every typed API route is also an MCP tool your AI can call." />
+<link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+<link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+<meta property="og:title" content="Apex JS — HTML-first apps, AI-native APIs" />
+<meta property="og:description" content="The meta-framework for Alpine.js: file routing, SSR, islands, and every typed API route is also an MCP tool." />
+<meta property="og:image" content="https://apexjs.site/assets/og-image.png" />
+<meta property="og:url" content="https://apexjs.site/" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
 <link rel="stylesheet" href="./style.css" />
 
 <a class="skip-link" href="#main">Skip to content</a>
@@ -9,10 +17,7 @@
 <header class="site-header">
   <div class="bar">
     <a class="brand" href="./index.html">
-      <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
-        <circle class="sun" cx="18" cy="6" r="2.4" />
-        <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
-      </svg>
+      <img src="./assets/apex-mark.svg" alt="Apex JS" class="brand-mark" width="22" height="22" />
       Apex&nbsp;JS
     </a>
     <nav class="site-nav" aria-label="Documentation">
@@ -44,6 +49,146 @@
         <span class="terminal"><span class="prompt">$</span> npm create apexjs@latest</span>
         <a class="btn" href="./getting-started.html">Get started →</a>
         <a class="btn ghost" href="https://github.com/andrecorugda/apexjs">GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section studio-section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Apex Studio</p>
+        <h2>A real project, in one window.</h2>
+        <p>
+          Click through the files. Pages render on the server and hydrate as islands, and a single
+          resource definition becomes both a REST endpoint <em>and</em> MCP tools. This isn't a video —
+          it's the framework, live.
+        </p>
+      </div>
+
+      <div class="studio" id="apexStudio">
+        <div class="studio-chrome">
+          <span class="studio-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="studio-titlebar">apex dev</span>
+          <span class="studio-address"><span class="lock" aria-hidden="true">&#9107;</span>localhost:3000</span>
+        </div>
+
+        <div class="studio-body">
+          <nav class="studio-tree" aria-label="Project files">
+            <p class="tree-root">my-app</p>
+            <div class="tree-group"><span class="ic-folder" aria-hidden="true"></span>pages</div>
+            <button type="button" class="tree-file ext-alpine lvl-1" data-file="index" aria-pressed="true"><span class="ic-file" aria-hidden="true"></span>index.alpine</button>
+            <div class="tree-group lvl-1"><span class="ic-folder" aria-hidden="true"></span>blog</div>
+            <button type="button" class="tree-file ext-alpine lvl-2" data-file="slug" aria-pressed="false"><span class="ic-file" aria-hidden="true"></span>[slug].alpine</button>
+            <div class="tree-group"><span class="ic-folder" aria-hidden="true"></span>components</div>
+            <button type="button" class="tree-file ext-alpine lvl-1" data-file="counter" aria-pressed="false"><span class="ic-file" aria-hidden="true"></span>Counter.alpine</button>
+            <div class="tree-group"><span class="ic-folder" aria-hidden="true"></span>server / api</div>
+            <button type="button" class="tree-file ext-ts lvl-1" data-file="posts" aria-pressed="false"><span class="ic-file" aria-hidden="true"></span>posts.ts</button>
+            <div class="tree-group"><span class="ic-folder" aria-hidden="true"></span>db</div>
+            <button type="button" class="tree-file ext-ts lvl-1" data-file="schema" aria-pressed="false"><span class="ic-file" aria-hidden="true"></span>schema.ts</button>
+          </nav>
+
+          <div class="studio-editor">
+            <div class="editor-tabs">
+              <span class="editor-tab"><span class="ic-file" aria-hidden="true"></span><span class="tab-name">pages/index.alpine</span><span class="tab-x" aria-hidden="true">&times;</span></span>
+            </div>
+            <div class="editor-scroll">
+<pre class="code is-active" data-code="index"><code><span class="line">&lt;<span class="t">script</span> <span class="a">server</span> <span class="a">lang</span>=<span class="s">"ts"</span>&gt;</span><span class="line">  <span class="k">import</span> { db, schema } <span class="k">from</span> <span class="s">'../db'</span></span><span class="line">  <span class="c">// Runs on the server — the page arrives as real HTML.</span></span><span class="line">  <span class="k">export async function</span> <span class="f">loader</span>() {</span><span class="line">    <span class="k">return</span> { posts: <span class="k">await</span> db.select().from(schema.posts) }</span><span class="line">  }</span><span class="line">&lt;/<span class="t">script</span>&gt;</span><span class="line"></span><span class="line">&lt;<span class="t">template</span> <span class="a">x-data</span>=<span class="s">"{ q: '' }"</span>&gt;</span><span class="line">  &lt;<span class="t">main</span>&gt;</span><span class="line">    &lt;<span class="t">h1</span>&gt;My blog&lt;/<span class="t">h1</span>&gt;</span><span class="line">    &lt;<span class="t">input</span> <span class="a">x-model</span>=<span class="s">"q"</span> <span class="a">placeholder</span>=<span class="s">"Filter…"</span> /&gt;</span><span class="line">    &lt;<span class="t">template</span> <span class="a">x-for</span>=<span class="s">"p in posts"</span> <span class="a">:key</span>=<span class="s">"p.id"</span>&gt;</span><span class="line">      &lt;<span class="t">a</span> <span class="a">:href</span>=<span class="s">"'/blog/' + p.slug"</span> <span class="a">x-show</span>=<span class="s">"p.title.includes(q)"</span> <span class="a">x-text</span>=<span class="s">"p.title"</span>&gt;&lt;/<span class="t">a</span>&gt;</span><span class="line">    &lt;/<span class="t">template</span>&gt;</span><span class="line">  &lt;/<span class="t">main</span>&gt;</span><span class="line">&lt;/<span class="t">template</span>&gt;</span><span class="line"></span><span class="line">&lt;<span class="t">style</span> <span class="a">scoped</span>&gt;</span><span class="line">  <span class="t">main</span> { max-width: 40rem; margin: 2rem auto; }</span><span class="line">&lt;/<span class="t">style</span>&gt;</span></code></pre>
+<pre class="code" data-code="slug"><code><span class="line">&lt;<span class="t">script</span> <span class="a">server</span> <span class="a">lang</span>=<span class="s">"ts"</span>&gt;</span><span class="line">  <span class="k">export function</span> <span class="f">loader</span>({ params }) {</span><span class="line">    <span class="k">return</span> { slug: params.slug }</span><span class="line">  }</span><span class="line">&lt;/<span class="t">script</span>&gt;</span><span class="line"></span><span class="line">&lt;<span class="t">template</span> <span class="a">x-data</span>&gt;</span><span class="line">  &lt;<span class="t">article</span>&gt;</span><span class="line">    &lt;<span class="t">h1</span> <span class="a">x-text</span>=<span class="s">"'Post: ' + slug"</span>&gt;&lt;/<span class="t">h1</span>&gt;</span><span class="line">  &lt;/<span class="t">article</span>&gt;</span><span class="line">&lt;/<span class="t">template</span>&gt;</span></code></pre>
+<pre class="code" data-code="counter"><code><span class="line">&lt;<span class="t">template</span> <span class="a">x-data</span>=<span class="s">"{ count: Number(start) }"</span>&gt;</span><span class="line">  &lt;<span class="t">button</span> <span class="a">@click</span>=<span class="s">"count++"</span> <span class="a">x-text</span>=<span class="s">"label + ': ' + count"</span>&gt;&lt;/<span class="t">button</span>&gt;</span><span class="line">&lt;/<span class="t">template</span>&gt;</span></code></pre>
+<pre class="code" data-code="posts"><code><span class="line"><span class="k">import</span> { defineResource } <span class="k">from</span> <span class="s">'@apex-stack/data'</span></span><span class="line"><span class="k">import</span> { z } <span class="k">from</span> <span class="s">'zod'</span></span><span class="line"><span class="k">import</span> { db, schema } <span class="k">from</span> <span class="s">'../../db'</span></span><span class="line"></span><span class="line"><span class="c">// One definition → REST endpoints AND MCP tools at /mcp.</span></span><span class="line"><span class="k">export default</span> <span class="f">defineResource</span>(<span class="s">'posts'</span>, {</span><span class="line">  db,</span><span class="line">  table: schema.posts,</span><span class="line">  insert: { title: <span class="f">z</span>.string(), slug: <span class="f">z</span>.string() },</span><span class="line">})</span></code></pre>
+<pre class="code" data-code="schema"><code><span class="line"><span class="k">import</span> { integer, sqliteTable, text } <span class="k">from</span> <span class="s">'drizzle-orm/sqlite-core'</span></span><span class="line"></span><span class="line"><span class="k">export const</span> posts = <span class="f">sqliteTable</span>(<span class="s">'posts'</span>, {</span><span class="line">  id: <span class="f">integer</span>(<span class="s">'id'</span>).primaryKey({ autoIncrement: <span class="k">true</span> }),</span><span class="line">  title: <span class="f">text</span>(<span class="s">'title'</span>).notNull(),</span><span class="line">  slug: <span class="f">text</span>(<span class="s">'slug'</span>).notNull(),</span><span class="line">})</span></code></pre>
+            </div>
+          </div>
+
+          <div class="studio-preview">
+            <div class="preview-inner">
+              <div class="pv is-active" data-pv="index">
+                <div class="mini-browser">
+                  <div class="mb-bar"><span class="mb-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="mb-url">localhost:3000/</span></div>
+                  <div class="mb-view">
+                    <h4>My blog</h4>
+                    <input class="mb-filter" type="text" placeholder="Filter…" aria-label="Filter posts (live demo)" />
+                    <div class="mb-list">
+                      <a>Hello, Apex</a>
+                      <a>Islands on demand</a>
+                      <a>REST + MCP, one file</a>
+                    </div>
+                  </div>
+                </div>
+                <p class="preview-caption">server-rendered, then hydrated</p>
+              </div>
+
+              <div class="pv" data-pv="slug">
+                <div class="mini-browser">
+                  <div class="mb-bar"><span class="mb-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="mb-url">localhost:3000/blog/hello-apex</span></div>
+                  <div class="mb-view">
+                    <h4>Post: hello-apex</h4>
+                    <p class="mb-body">Rendered on the server from the <code>[slug]</code> route param, then delivered as real HTML.</p>
+                  </div>
+                </div>
+                <p class="preview-caption">dynamic route, server-rendered</p>
+              </div>
+
+              <div class="pv" data-pv="counter">
+                <div class="mini-browser">
+                  <div class="mb-bar"><span class="mb-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="mb-url">localhost:3000/</span></div>
+                  <div class="mb-view mb-center">
+                    <button type="button" class="counter-demo"><span class="clabel">Likes</span>: <span class="cval">3</span></button>
+                    <p class="mb-hint">click it — hydrated island</p>
+                  </div>
+                </div>
+                <p class="preview-caption">reusable, with props</p>
+              </div>
+
+              <div class="pv" data-pv="posts">
+                <div class="surfaces">
+                  <div class="surface rest">
+                    <span class="s-h">REST endpoint</span>
+                    <code>GET /api/posts → [ … ]</code>
+                  </div>
+                  <div class="surface mcp">
+                    <span class="s-h">MCP tools · /mcp</span>
+                    <div class="chips">
+                      <span class="chip">posts_list</span>
+                      <span class="chip">posts_create</span>
+                      <span class="chip">posts_get</span>
+                      <span class="chip">posts_update</span>
+                      <span class="chip">posts_delete</span>
+                    </div>
+                  </div>
+                </div>
+                <p class="preview-caption warm">one definition — REST endpoint + MCP tool</p>
+              </div>
+
+              <div class="pv" data-pv="schema">
+                <div class="schema-card">
+                  <div class="sc-h">table <b>posts</b></div>
+                  <div class="sc-row"><span class="col">id</span><span class="typ">integer · pk</span></div>
+                  <div class="sc-row"><span class="col">title</span><span class="typ">text</span></div>
+                  <div class="sc-row"><span class="col">slug</span><span class="typ">text</span></div>
+                </div>
+                <p class="schema-arrow">↓ powers <code>defineResource('posts')</code> ↓</p>
+                <div class="surfaces">
+                  <div class="surface rest">
+                    <span class="s-h">REST endpoint</span>
+                    <code>GET /api/posts → [ … ]</code>
+                  </div>
+                  <div class="surface mcp">
+                    <span class="s-h">MCP tools · /mcp</span>
+                    <div class="chips">
+                      <span class="chip">posts_list</span>
+                      <span class="chip">posts_create</span>
+                      <span class="chip">posts_get</span>
+                      <span class="chip">posts_update</span>
+                      <span class="chip">posts_delete</span>
+                    </div>
+                  </div>
+                </div>
+                <p class="preview-caption warm">the schema powers both surfaces</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -262,10 +407,7 @@ npm run dev:islands  <span class="c"># static-first islands mode</span></code></
     <div class="cols">
       <div class="brand-col">
         <a class="brand" href="./index.html">
-          <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
-            <circle class="sun" cx="18" cy="6" r="2.4" />
-            <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
-          </svg>
+          <img src="./assets/apex-mark.svg" alt="Apex JS" class="brand-mark" width="22" height="22" />
           Apex&nbsp;JS
         </a>
         <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
@@ -289,5 +431,76 @@ npm run dev:islands  <span class="c"># static-first islands mode</span></code></
       var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
       root.setAttribute("data-theme", dark ? "light" : "dark");
     });
+  })();
+
+  // Apex Studio — interactive file switcher (self-contained, no deps)
+  (function () {
+    var studio = document.getElementById("apexStudio");
+    if (!studio) return;
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var paths = {
+      index: "pages/index.alpine",
+      slug: "pages/blog/[slug].alpine",
+      counter: "components/Counter.alpine",
+      posts: "server/api/posts.ts",
+      schema: "db/schema.ts"
+    };
+    var buttons = studio.querySelectorAll(".tree-file");
+    var codes = studio.querySelectorAll(".code");
+    var pvs = studio.querySelectorAll(".pv");
+    var tabName = studio.querySelector(".tab-name");
+    var tabIcon = studio.querySelector(".editor-tab .ic-file");
+    var caret = null;
+
+    function placeCaret(codeEl) {
+      if (reduce || !codeEl) return;
+      if (!caret) { caret = document.createElement("span"); caret.className = "caret"; }
+      var lines = codeEl.querySelectorAll(".line");
+      for (var i = lines.length - 1; i >= 0; i--) {
+        if (lines[i].textContent.trim() !== "") { lines[i].appendChild(caret); break; }
+      }
+    }
+
+    function swap(el) {
+      if (reduce || !el) return;
+      el.classList.remove("sw");
+      void el.offsetWidth;
+      el.classList.add("sw");
+    }
+
+    function select(file) {
+      buttons.forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.file === file ? "true" : "false"); });
+      var activeCode = null, activePv = null;
+      codes.forEach(function (c) { var on = c.dataset.code === file; c.classList.toggle("is-active", on); if (on) activeCode = c; });
+      pvs.forEach(function (p) { var on = p.dataset.pv === file; p.classList.toggle("is-active", on); if (on) activePv = p; });
+      if (tabName) tabName.textContent = paths[file];
+      if (tabIcon) tabIcon.style.background = (file === "posts" || file === "schema") ? "var(--alpenglow)" : "var(--glacier)";
+      placeCaret(activeCode);
+      swap(activeCode);
+      swap(activePv);
+    }
+
+    buttons.forEach(function (b) { b.addEventListener("click", function () { select(b.dataset.file); }); });
+
+    // live filter — demonstrates client-side hydration on the index preview
+    var filter = studio.querySelector(".mb-filter");
+    if (filter) {
+      filter.addEventListener("input", function () {
+        var q = this.value.toLowerCase();
+        studio.querySelectorAll('.pv[data-pv="index"] .mb-list a').forEach(function (a) {
+          a.style.display = a.textContent.toLowerCase().indexOf(q) > -1 ? "" : "none";
+        });
+      });
+    }
+
+    // interactive counter island
+    var counter = studio.querySelector(".counter-demo");
+    if (counter) {
+      var val = counter.querySelector(".cval");
+      counter.addEventListener("click", function () { val.textContent = String(Number(val.textContent) + 1); });
+    }
+
+    placeCaret(studio.querySelector(".code.is-active"));
+    if (!reduce) studio.classList.add("intro");
   })();
 </script>
