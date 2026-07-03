@@ -1,2 +1,12 @@
-// @apexjs/kit — public API. Filled in by the parser/renderer tasks.
-export {} from './parse/parseAlpineFile.js'
+// @apexjs/kit — public API.
+export {
+  parseAlpineFile,
+  AlpineParseError,
+} from './parse/parseAlpineFile.js'
+export type {
+  AlpineDescriptor,
+  ScriptBlock,
+  TemplateBlock,
+  StyleBlock,
+  SourceLocation,
+} from './parse/parseAlpineFile.js'
