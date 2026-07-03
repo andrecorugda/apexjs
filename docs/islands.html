@@ -1,0 +1,186 @@
+<title>Islands — Apex JS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The four client:* island modes in Apex JS and the zero-JS-until-needed story." />
+<link rel="stylesheet" href="./style.css" />
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="./index.html">
+      <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+        <circle class="sun" cx="18" cy="6" r="2.4" />
+        <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+      </svg>
+      Apex&nbsp;JS
+    </a>
+    <nav class="site-nav" aria-label="Documentation">
+      <a href="./index.html">Home</a>
+      <a href="./getting-started.html">Start</a>
+      <a href="./components.html">Components</a>
+      <a href="./routing.html">Routing</a>
+      <a href="./islands.html" aria-current="page">Islands</a>
+      <a href="./data.html">Data</a>
+      <a href="./ai-native.html">AI-Native</a>
+      <a href="./cli.html">CLI</a>
+      <a href="./deploy.html">Deploy</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">Theme</button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">Islands</p>
+      <h1>Ship zero JavaScript until an island needs it.</h1>
+      <p class="lede">
+        A page is static HTML. Interactive regions — "islands" — hydrate individually, on a trigger,
+        loading Alpine only at that moment. A fully static page loads Alpine <strong>never</strong>.
+      </p>
+    </div>
+  </section>
+
+  <section class="doc">
+    <div class="wrap">
+
+      <nav class="onpage" aria-label="On this page">
+        <span class="k">On this page</span>
+        <ul>
+          <li><a href="#idea">The idea</a></li>
+          <li><a href="#modes">The four client:* modes</a></li>
+          <li><a href="#when">When to use each</a></li>
+          <li><a href="#example">A real example</a></li>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#run">Turning it on</a></li>
+        </ul>
+      </nav>
+
+      <h2 id="idea">The idea <a class="anchor" href="#idea">#</a></h2>
+      <p>
+        Alpine is islands-native by design — it only ever activates <code>x-data</code> roots. Apex
+        makes that explicit and lazy: mark an interactive region with a <code>client:*</code> directive
+        and it becomes an island that hydrates on its own trigger. Static content around it stays
+        pure HTML, 0&nbsp;KB of framework JS.
+      </p>
+
+      <h2 id="modes">The four <code>client:*</code> modes <a class="anchor" href="#modes">#</a></h2>
+      <pre><code>&lt;<span class="t">template</span>&gt;
+  &lt;<span class="t">h1</span> <span class="k">x-text</span>=<span class="s">"title"</span>&gt;&lt;/<span class="t">h1</span>&gt;                 <span class="c">&lt;!-- static, 0 KB JS --&gt;</span>
+
+  &lt;<span class="t">section</span> <span class="k">x-data</span>=<span class="s">"{ n: 0 }"</span> <span class="k">client:load</span>&gt;    <span class="c">&lt;!-- hydrate immediately --&gt;</span>
+    &lt;<span class="t">button</span> <span class="k">@click</span>=<span class="s">"n++"</span> <span class="k">x-text</span>=<span class="s">"n"</span>&gt;&lt;/<span class="t">button</span>&gt;
+  &lt;/<span class="t">section</span>&gt;
+
+  &lt;<span class="t">section</span> <span class="k">x-data</span>=<span class="s">"{ n: 0 }"</span> <span class="k">client:visible</span>&gt; <span class="c">&lt;!-- hydrate when scrolled into view --&gt;</span>
+    &lt;<span class="t">button</span> <span class="k">@click</span>=<span class="s">"n++"</span> <span class="k">x-text</span>=<span class="s">"n"</span>&gt;&lt;/<span class="t">button</span>&gt;
+  &lt;/<span class="t">section</span>&gt;
+
+  &lt;<span class="t">aside</span> <span class="k">x-data</span>=<span class="s">"{}"</span> <span class="k">client:idle</span>&gt; … &lt;/<span class="t">aside</span>&gt; <span class="c">&lt;!-- hydrate when the browser is idle --&gt;</span>
+  &lt;<span class="t">div</span> <span class="k">x-data</span>=<span class="s">"{}"</span> <span class="k">client:none</span>&gt; … &lt;/<span class="t">div</span>&gt;   <span class="c">&lt;!-- SSR only, never ships JS --&gt;</span>
+&lt;/<span class="t">template</span>&gt;</code></pre>
+
+      <h2 id="when">When to use each <a class="anchor" href="#when">#</a></h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Mode</th><th>Hydrates</th><th>Use it for</th></tr></thead>
+          <tbody>
+            <tr><td><code>client:load</code></td><td>immediately on page load</td><td>Above-the-fold interactivity a user hits right away (a primary form, nav toggle).</td></tr>
+            <tr><td><code>client:idle</code></td><td>when the browser goes idle</td><td>Non-urgent widgets that can wait for the main work to settle.</td></tr>
+            <tr><td><code>client:visible</code></td><td>when scrolled into view</td><td>Below-the-fold interactivity — pay for JS only if the user reaches it.</td></tr>
+            <tr><td><code>client:none</code></td><td>never — SSR only</td><td>Render server state as inert HTML; the markup is there but no JS ships or runs.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="example">A real example <a class="anchor" href="#example">#</a></h2>
+      <p>
+        <code>playground/islands</code> is a static header plus a <code>client:none</code> island and a
+        below-the-fold <code>client:visible</code> island:
+      </p>
+      <pre><code>&lt;<span class="t">template</span>&gt;
+  &lt;<span class="t">header</span>&gt;
+    &lt;<span class="t">h1</span> <span class="k">x-text</span>=<span class="s">"title"</span>&gt;&lt;/<span class="t">h1</span>&gt;
+    &lt;<span class="t">p</span>&gt;Server-rendered. No JavaScript hydrates this.&lt;/<span class="t">p</span>&gt;
+  &lt;/<span class="t">header</span>&gt;
+
+  &lt;<span class="c">&lt;!-- rendered on the server, never ships or runs JS --&gt;</span>
+  &lt;<span class="t">section</span> <span class="k">x-data</span>=<span class="s">"{ n: 0 }"</span> <span class="k">client:none</span>&gt;
+    &lt;<span class="t">button</span> <span class="k">@click</span>=<span class="s">"n++"</span> <span class="k">x-text</span>=<span class="s">"'count: ' + n"</span>&gt;&lt;/<span class="t">button</span>&gt;
+  &lt;/<span class="t">section</span>&gt;
+
+  &lt;<span class="c">&lt;!-- hydrates only when scrolled into view --&gt;</span>
+  &lt;<span class="t">section</span> <span class="k">x-data</span>=<span class="s">"{ n: 0 }"</span> <span class="k">client:visible</span>&gt;
+    &lt;<span class="t">button</span> <span class="k">@click</span>=<span class="s">"n++"</span> <span class="k">x-text</span>=<span class="s">"'count: ' + n"</span>&gt;&lt;/<span class="t">button</span>&gt;
+  &lt;/<span class="t">section</span>&gt;
+&lt;/<span class="t">template</span>&gt;</code></pre>
+      <figure>
+        <img src="./assets/islands.png" loading="lazy"
+             alt="The Apex islands demo page: a server-rendered header with client:none and client:visible island cards." />
+        <figcaption>The islands demo — the top island never hydrates; the lower one wakes on scroll.</figcaption>
+      </figure>
+
+      <h2 id="how">How it works <a class="anchor" href="#how">#</a></h2>
+      <ol>
+        <li><strong>SSR</strong> — the whole page renders on the server (static HTML <em>and</em> island subtrees, evaluated against loader data). Each <code>client:*</code> element is marked <code>data-apex-island</code> + <code>data-apex-client="&lt;mode&gt;"</code> and <code>x-ignore</code>d so global Alpine never auto-hydrates it.</li>
+        <li><strong>Lazy loader</strong> — a tiny inline script (shipped only if the page has hydrating islands) wires up each island's trigger. Alpine is <code>import()</code>ed lazily on the first island that actually needs it. A <code>client:none</code>-only or fully static page loads Alpine never.</li>
+        <li><strong>Per-island hydration</strong> — on trigger, Apex clears that island's <code>x-ignore</code> and calls <code>Alpine.initTree()</code> on just that element.</li>
+      </ol>
+      <p class="muted">
+        Verified end-to-end with Playwright: zero Alpine JS is requested on load; scrolling a
+        <code>client:visible</code> island into view loads Alpine and makes it interactive; a
+        <code>client:none</code> button stays inert.
+      </p>
+
+      <h2 id="run">Turning it on <a class="anchor" href="#run">#</a></h2>
+      <pre><code>apex dev --islands      <span class="c"># dev, static-first</span>
+apex build --islands    <span class="c"># zero-JS static site (SSG)</span></code></pre>
+      <div class="callout warm">
+        <span class="h">Known deferrals</span>
+        <p>
+          <code>x-for</code> / <code>x-if</code> inside an island, component-file islands
+          (<code>&lt;Counter client:visible /&gt;</code>), and islands-as-automatic-per-page (instead of a
+          dev flag) are on the roadmap.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand-col">
+        <a class="brand" href="./index.html">
+          <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="sun" cx="18" cy="6" r="2.4" />
+            <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+          </svg>
+          Apex&nbsp;JS
+        </a>
+        <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
+      </div>
+      <div class="links">
+        <a href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        <a href="./getting-started.html">Get started</a>
+        <a href="./ai-native.html">AI-native</a>
+        <a href="./cli.html">CLI</a>
+      </div>
+    </div>
+    <p class="foot-note">Apex&nbsp;JS · MIT · built by Andre Corugda · npm create apexjs@latest</p>
+  </div>
+</footer>
+
+<script>
+  document.documentElement.classList.add("js");
+  (function () {
+    var root = document.documentElement;
+    document.getElementById("themeToggle").addEventListener("click", function () {
+      var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
+      root.setAttribute("data-theme", dark ? "light" : "dark");
+    });
+  })();
+</script>

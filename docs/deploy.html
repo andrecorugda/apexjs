@@ -1,0 +1,185 @@
+<title>Build & deploy — Apex JS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The three apex build modes, apex start, databases in production, and hosting targets." />
+<link rel="stylesheet" href="./style.css" />
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="./index.html">
+      <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+        <circle class="sun" cx="18" cy="6" r="2.4" />
+        <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+      </svg>
+      Apex&nbsp;JS
+    </a>
+    <nav class="site-nav" aria-label="Documentation">
+      <a href="./index.html">Home</a>
+      <a href="./getting-started.html">Start</a>
+      <a href="./components.html">Components</a>
+      <a href="./routing.html">Routing</a>
+      <a href="./islands.html">Islands</a>
+      <a href="./data.html">Data</a>
+      <a href="./ai-native.html">AI-Native</a>
+      <a href="./cli.html">CLI</a>
+      <a href="./deploy.html" aria-current="page">Deploy</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">Theme</button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">Build &amp; deploy</p>
+      <h1>Three build modes, from fully static to full server.</h1>
+      <p class="lede">
+        <code>apex build</code> spans a spectrum — a zero-JS static site, a prerendered-and-hydrated
+        static bundle, or a deployable Node server for dynamic routes, API, MCP, and a database. Pick
+        the most static mode your app can use.
+      </p>
+    </div>
+  </section>
+
+  <section class="doc">
+    <div class="wrap">
+
+      <nav class="onpage" aria-label="On this page">
+        <span class="k">On this page</span>
+        <ul>
+          <li><a href="#choose">Choosing a mode</a></li>
+          <li><a href="#ssg">1 · Static site (SSG)</a></li>
+          <li><a href="#hydrated">2 · Prerendered + hydrated</a></li>
+          <li><a href="#server">3 · Server target</a></li>
+          <li><a href="#db">Databases in production</a></li>
+          <li><a href="#hosting">Hosting targets</a></li>
+        </ul>
+      </nav>
+
+      <h2 id="choose">Choosing a mode <a class="anchor" href="#choose">#</a></h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Mode</th><th>Command</th><th>Ships</th><th>Use when</th></tr></thead>
+          <tbody>
+            <tr><td>Static (SSG)</td><td><code>apex build --islands</code></td><td>HTML, zero framework JS (islands hydrate where present)</td><td>Content sites; static routes only.</td></tr>
+            <tr><td>Prerendered + hydrated</td><td><code>apex build</code></td><td>HTML + per-page client bundle</td><td>Interactive apps that can run from a static host.</td></tr>
+            <tr><td>Server target</td><td><code>apex build --server</code> + <code>apex start</code></td><td>Client bundles + SSR modules + a Node server</td><td>Dynamic routes, API/MCP, or a database in production.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="ssg">1 · Static site (SSG) — <code>apex build --islands</code> <a class="anchor" href="#ssg">#</a></h2>
+      <p>
+        Prerenders every static route to <code>dist/**/index.html</code> with <strong>zero framework
+        JS</strong> — islands hydrate lazily where present. Deploy <code>dist/</code> to any static host.
+      </p>
+      <pre><code>apex build --islands
+<span class="c"># → dist/index.html, dist/about/index.html, …  (static-first)</span></code></pre>
+
+      <h2 id="hydrated">2 · Prerendered + hydrated — <code>apex build</code> <a class="anchor" href="#hydrated">#</a></h2>
+      <p>
+        Prerenders each page to HTML <strong>and</strong> builds a per-page client bundle (hashed, with
+        a shared runtime chunk). Pages are server-rendered for first paint, then hydrate — fully
+        interactive from a <strong>static</strong> <code>dist/</code>.
+      </p>
+      <pre><code>apex build
+<span class="c"># → dist/  (prerendered HTML + hashed client bundles)</span></code></pre>
+      <div class="callout">
+        <span class="h">Dynamic routes need the server target</span>
+        <p>
+          <code>apex build</code> and <code>--islands</code> prerender only <em>static</em> routes and
+          report any dynamic <code>[param]</code> routes they skipped. To serve those in production,
+          use <code>--server</code> below.
+        </p>
+      </div>
+
+      <h2 id="server">3 · Server target — <code>apex build --server</code> + <code>apex start</code> <a class="anchor" href="#server">#</a></h2>
+      <p>
+        Builds client bundles <strong>and</strong> SSR modules plus a run manifest
+        (<code>apex-manifest.json</code>), producing a deployable Node server:
+      </p>
+      <pre><code>apex build --server     <span class="c"># → dist/ (client assets + dist/server/*.mjs + apex-manifest.json)</span>
+apex migrate            <span class="c"># apply DB migrations (deploy step)</span>
+apex start              <span class="c"># run the production server (no Vite)</span></code></pre>
+      <p>The production server (<code>apex start</code>, verified end-to-end) serves:</p>
+      <ul>
+        <li><strong>Dynamic routes</strong> — <code>pages/blog/[slug].alpine</code> rendered per request.</li>
+        <li><strong>API + MCP</strong> — <code>server/api/*</code> as REST endpoints and MCP tools at <code>/mcp</code>.</li>
+        <li><strong>Static assets</strong> — hashed client bundles with long-cache headers.</li>
+        <li><strong>Any database</strong> — SQLite/Turso/Supabase/Neon via <code>@apex-stack/data</code>.</li>
+      </ul>
+
+      <h2 id="db">Databases in production <a class="anchor" href="#db">#</a></h2>
+      <p>
+        Local SQLite is great for a Node host. For serverless/edge (e.g. Cloudflare Workers), pair with
+        a fetch-based driver — Turso (libSQL) or Supabase/Neon (Postgres) — since native SQLite can't
+        run on edge. Swap drivers in one line:
+      </p>
+      <pre><code><span class="k">await</span> createDb({ driver: <span class="s">'libsql'</span>, url: process.env.TURSO_URL })       <span class="c">// Turso</span>
+<span class="k">await</span> createDb({ driver: <span class="s">'postgres'</span>, url: process.env.DATABASE_URL })   <span class="c">// Supabase / Neon</span></code></pre>
+      <p class="muted">
+        Run <code>apex migrate</code> as a deploy step (with the matching <code>--driver</code>/<code>--url</code>).
+        See <a href="./data.html#drivers">Data → Drivers</a>.
+      </p>
+
+      <h2 id="hosting">Hosting targets <a class="anchor" href="#hosting">#</a></h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Host</th><th>Best mode</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Netlify / Cloudflare Pages / S3</td><td>SSG or prerendered</td><td>Serve <code>dist/</code> as static files.</td></tr>
+            <tr><td>GitHub Pages</td><td>SSG or prerendered</td><td>Static-only; keep asset paths relative (this docs site does).</td></tr>
+            <tr><td>Node host (Fly, Render, a VM)</td><td>Server target</td><td><code>apex build --server</code> + <code>apex start</code>; local SQLite works.</td></tr>
+            <tr><td>Serverless / edge</td><td>Server target</td><td>Pair with a fetch-based DB driver (Turso / Supabase / Neon).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warm">
+        <span class="h">On the roadmap</span>
+        <p>
+          Nitro deploy presets (Vercel/Netlify/Workers adapters) — today <code>apex start</code> targets
+          Node. Also planned: island-mode client bundling in the built output, and streaming SSR.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand-col">
+        <a class="brand" href="./index.html">
+          <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="sun" cx="18" cy="6" r="2.4" />
+            <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+          </svg>
+          Apex&nbsp;JS
+        </a>
+        <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
+      </div>
+      <div class="links">
+        <a href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        <a href="./getting-started.html">Get started</a>
+        <a href="./ai-native.html">AI-native</a>
+        <a href="./cli.html">CLI</a>
+      </div>
+    </div>
+    <p class="foot-note">Apex&nbsp;JS · MIT · built by Andre Corugda · npm create apexjs@latest</p>
+  </div>
+</footer>
+
+<script>
+  document.documentElement.classList.add("js");
+  (function () {
+    var root = document.documentElement;
+    document.getElementById("themeToggle").addEventListener("click", function () {
+      var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
+      root.setAttribute("data-theme", dark ? "light" : "dark");
+    });
+  })();
+</script>

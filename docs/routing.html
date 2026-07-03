@@ -1,0 +1,178 @@
+<title>Routing — Apex JS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="File-based routing in Apex JS: pages/**, index routes, dynamic [param] segments, and 404s." />
+<link rel="stylesheet" href="./style.css" />
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="./index.html">
+      <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+        <circle class="sun" cx="18" cy="6" r="2.4" />
+        <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+      </svg>
+      Apex&nbsp;JS
+    </a>
+    <nav class="site-nav" aria-label="Documentation">
+      <a href="./index.html">Home</a>
+      <a href="./getting-started.html">Start</a>
+      <a href="./components.html">Components</a>
+      <a href="./routing.html" aria-current="page">Routing</a>
+      <a href="./islands.html">Islands</a>
+      <a href="./data.html">Data</a>
+      <a href="./ai-native.html">AI-Native</a>
+      <a href="./cli.html">CLI</a>
+      <a href="./deploy.html">Deploy</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">Theme</button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">Routing</p>
+      <h1>The file system is the router.</h1>
+      <p class="lede">
+        Every <code>.alpine</code> file under <code>pages/</code> is a route. The path on disk becomes
+        the URL — with <code>index</code> collapsing to the parent and <code>[param]</code> segments
+        matching dynamically.
+      </p>
+    </div>
+  </section>
+
+  <section class="doc">
+    <div class="wrap">
+
+      <nav class="onpage" aria-label="On this page">
+        <span class="k">On this page</span>
+        <ul>
+          <li><a href="#map">The mapping</a></li>
+          <li><a href="#index">Index routes</a></li>
+          <li><a href="#dynamic">Dynamic [param] segments</a></li>
+          <li><a href="#precedence">Precedence</a></li>
+          <li><a href="#notfound">404s</a></li>
+        </ul>
+      </nav>
+
+      <h2 id="map">The mapping <a class="anchor" href="#map">#</a></h2>
+      <p>
+        <code>scanPages</code> walks <code>pages/**/*.alpine</code> and turns each file into a route.
+        A trailing <code>index</code> is dropped, and <code>[name]</code> becomes a
+        <code>:name</code> parameter:
+      </p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>File</th><th>URL</th><th>Kind</th></tr></thead>
+          <tbody>
+            <tr><td><code>pages/index.alpine</code></td><td><code>/</code></td><td>static</td></tr>
+            <tr><td><code>pages/about.alpine</code></td><td><code>/about</code></td><td>static</td></tr>
+            <tr><td><code>pages/blog/index.alpine</code></td><td><code>/blog</code></td><td>static</td></tr>
+            <tr><td><code>pages/blog/[slug].alpine</code></td><td><code>/blog/:slug</code></td><td>dynamic</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">
+        Nesting works to any depth — folders become path segments. Generate a page with
+        <a href="./cli.html#make"><code>apex make page blog/hello</code></a>.
+      </p>
+
+      <h2 id="index">Index routes <a class="anchor" href="#index">#</a></h2>
+      <p>
+        <code>index.alpine</code> represents the folder it sits in. <code>pages/index.alpine</code> is
+        the site root <code>/</code>; <code>pages/blog/index.alpine</code> is <code>/blog</code>.
+      </p>
+
+      <h2 id="dynamic">Dynamic <code>[param]</code> segments <a class="anchor" href="#dynamic">#</a></h2>
+      <p>
+        Wrap a segment in square brackets to capture it. The matched value is passed to the page's
+        <code>loader()</code> as <code>params</code>:
+      </p>
+      <p class="code-label">pages/blog/[slug].alpine</p>
+      <pre><code>&lt;<span class="t">script</span> <span class="k">server</span> <span class="k">lang</span>=<span class="s">"ts"</span>&gt;
+  <span class="k">export function</span> loader({ params }: { params: Record&lt;string, string&gt; }) {
+    <span class="k">return</span> { slug: params.slug }
+  }
+&lt;/<span class="t">script</span>&gt;
+
+&lt;<span class="t">template</span> <span class="k">x-data</span>&gt;
+  &lt;<span class="t">main</span>&gt;
+    &lt;<span class="t">h1</span> <span class="k">x-text</span>=<span class="s">"'Post: ' + slug"</span>&gt;&lt;/<span class="t">h1</span>&gt;
+    &lt;<span class="t">a</span> <span class="k">href</span>=<span class="s">"/"</span>&gt;← Home&lt;/<span class="t">a</span>&gt;
+  &lt;/<span class="t">main</span>&gt;
+&lt;/<span class="t">template</span>&gt;</code></pre>
+      <p>
+        Requesting <code>/blog/hello-world</code> calls the loader with
+        <code>params.slug === "hello-world"</code>. Segment values are URL-decoded for you.
+      </p>
+      <div class="callout">
+        <span class="h">Dynamic routes need a server at build time</span>
+        <p>
+          <code>apex dev</code> and <code>apex start</code> render dynamic routes per request. A plain
+          <code>apex build</code> / <code>apex build --islands</code> prerenders only <em>static</em>
+          routes and reports the dynamic ones it skipped — build with <code>--server</code> to serve
+          them in production. See <a href="./deploy.html">Build &amp; deploy</a>.
+        </p>
+      </div>
+
+      <h2 id="precedence">Precedence <a class="anchor" href="#precedence">#</a></h2>
+      <p>
+        Routes are matched by segment count and then literal-vs-param. <strong>Static routes take
+        precedence over dynamic ones</strong>, so <code>pages/blog/new.alpine</code>
+        (<code>/blog/new</code>) wins over <code>pages/blog/[slug].alpine</code> for the exact path
+        <code>/blog/new</code>.
+      </p>
+
+      <h2 id="notfound">404s <a class="anchor" href="#notfound">#</a></h2>
+      <p>
+        A request that matches no route returns a <strong>404</strong>. Keep URLs relative in your
+        own links (Apex is happy under a sub-path), and let unmatched paths fall through to the
+        framework's not-found response.
+      </p>
+
+      <div class="card-grid cols-2">
+        <a class="card" href="./components.html"><span class="k">Author</span><h3>Components</h3><p>What a page file looks like inside.</p></a>
+        <a class="card" href="./islands.html"><span class="k">Optimize</span><h3>Islands</h3><p>Ship zero JS on static routes.</p></a>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand-col">
+        <a class="brand" href="./index.html">
+          <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="sun" cx="18" cy="6" r="2.4" />
+            <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+          </svg>
+          Apex&nbsp;JS
+        </a>
+        <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
+      </div>
+      <div class="links">
+        <a href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        <a href="./getting-started.html">Get started</a>
+        <a href="./ai-native.html">AI-native</a>
+        <a href="./cli.html">CLI</a>
+      </div>
+    </div>
+    <p class="foot-note">Apex&nbsp;JS · MIT · built by Andre Corugda · npm create apexjs@latest</p>
+  </div>
+</footer>
+
+<script>
+  document.documentElement.classList.add("js");
+  (function () {
+    var root = document.documentElement;
+    document.getElementById("themeToggle").addEventListener("click", function () {
+      var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
+      root.setAttribute("data-theme", dark ? "light" : "dark");
+    });
+  })();
+</script>

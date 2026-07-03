@@ -1,0 +1,293 @@
+<title>Apex JS — HTML-first apps, AI-native APIs</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Apex JS is the full-stack meta-framework for Alpine.js: file routing, SSR, islands, and every typed API route is also an MCP tool your AI can call." />
+<link rel="stylesheet" href="./style.css" />
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="./index.html">
+      <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+        <circle class="sun" cx="18" cy="6" r="2.4" />
+        <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+      </svg>
+      Apex&nbsp;JS
+    </a>
+    <nav class="site-nav" aria-label="Documentation">
+      <a href="./index.html" aria-current="page">Home</a>
+      <a href="./getting-started.html">Start</a>
+      <a href="./components.html">Components</a>
+      <a href="./routing.html">Routing</a>
+      <a href="./islands.html">Islands</a>
+      <a href="./data.html">Data</a>
+      <a href="./ai-native.html">AI-Native</a>
+      <a href="./cli.html">CLI</a>
+      <a href="./deploy.html">Deploy</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">Theme</button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="home-hero">
+    <div class="wrap">
+      <p class="eyebrow">The meta-framework for Alpine.js</p>
+      <h1>HTML-first apps.<br /><span class="ai">AI-native</span> APIs.</h1>
+      <p class="lede">
+        Apex is to Alpine what Nuxt is to Vue — file routing, server rendering, and islands.
+        Then it does what <strong>no other framework does</strong>: every typed API route is
+        also an MCP tool your AI can call. No extra library.
+      </p>
+      <div class="cta-row">
+        <span class="terminal"><span class="prompt">$</span> npm create apexjs@latest</span>
+        <a class="btn" href="./getting-started.html">Get started →</a>
+        <a class="btn ghost" href="https://github.com/andrecorugda/apexjs">GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">See it run</p>
+        <h2>One app: server-rendered from the DB, interactive, and AI-native.</h2>
+        <p>
+          A single Apex app — a feature list rendered on the server from SQLite, filtered and added to
+          live in the browser, and an AI-native panel where clicking "Simulate an AI" hits the
+          <strong>same endpoint</strong> an assistant calls over MCP. Recorded from a running dev server.
+        </p>
+      </div>
+      <div class="video-frame">
+        <video controls muted loop playsinline preload="metadata" poster="./assets/showcase.png"
+               aria-label="Screen recording of one Apex app: a feature list server-rendered from a database, live filtering and adding, and an AI-native panel that calls the same create endpoint an assistant uses via MCP.">
+          <source src="./assets/demo.webm" type="video/webm" />
+          Your browser doesn't support embedded video.
+          <a href="./assets/demo.webm">Download the demo</a>.
+        </video>
+      </div>
+
+      <div class="card-grid cols-3" style="margin-top:1.6rem">
+        <div class="card" style="cursor:default">
+          <span class="k">Server-rendered</span>
+          <h3>From the database</h3>
+          <p>The <code>loader()</code> queries SQLite on the server; the list is real HTML on first paint.</p>
+        </div>
+        <div class="card" style="cursor:default">
+          <span class="k">Interactive</span>
+          <h3>Islands + hydration</h3>
+          <p>Alpine hydrates the panel — filter and add features live, no full-page reloads.</p>
+        </div>
+        <div class="card" style="cursor:default">
+          <span class="k">AI-native</span>
+          <h3>Same data, one definition</h3>
+          <p>The UI and an AI both call <code>features_create</code> — REST and MCP from one <code>defineResource</code>.</p>
+        </div>
+      </div>
+
+      <p class="code-label">server/api/features.ts — the whole backend of the demo</p>
+      <pre><code><span class="c">// One definition → REST endpoints AND MCP tools</span>
+<span class="c">// (features_list / get / create / update / delete). The UI</span>
+<span class="c">// below and an AI assistant call the SAME handlers.</span>
+<span class="k">export default</span> defineResource(<span class="s">'features'</span>, {
+  db,
+  table: schema.features,
+  insert: { name: z.string(), tag: z.string().optional() },
+})</code></pre>
+
+      <p class="code-label">pages/index.alpine — the list is rendered from the DB on the server</p>
+      <pre><code>&lt;<span class="t">script</span> <span class="k">server</span> <span class="k">lang</span>=<span class="s">"ts"</span>&gt;
+  <span class="k">import</span> { db, schema } <span class="k">from</span> <span class="s">'../db/index.js'</span>
+  <span class="k">export async function</span> loader() {
+    <span class="k">const</span> features = <span class="k">await</span> db.select().from(schema.features)
+    <span class="k">return</span> { features }   <span class="c">// → Alpine x-data, in the first HTML</span>
+  }
+&lt;/<span class="t">script</span>&gt;</code></pre>
+
+      <p class="muted">
+        The browser's "Add" and the "Simulate an AI" button both <code>POST /api/features</code> — the
+        exact endpoint exposed as the MCP tool <code>features_create</code>. One
+        <code>defineResource</code>, and the UI and an assistant operate on the same rows.
+        <a href="./data.html">See the Data guide →</a>
+      </p>
+
+      <figure>
+        <img src="./assets/showcase.png" loading="lazy"
+             alt="The Apex showcase app: a feature list with a filter and add form, and an AI-native panel listing the features_* MCP tools with a Simulate an AI button." />
+        <figcaption>One app, three capabilities at once — from <code>playground/showcase</code>.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Three pillars</p>
+        <h2>Light where it counts. Full-stack where you need it. AI-native by default.</h2>
+      </div>
+
+      <div class="pillars">
+        <article class="pillar">
+          <span class="tag">Light</span>
+          <h3>Ship almost no JavaScript</h3>
+          <p>Static-first pages. Islands hydrate only when they need to — many pages ship zero framework JS until you scroll.</p>
+          <pre><code><span class="c">&lt;!-- wakes on scroll, not on load --&gt;</span>
+&lt;<span class="t">section</span> <span class="k">x-data</span>=<span class="s">"{ n: 0 }"</span> <span class="k">client:visible</span>&gt;
+  &lt;<span class="t">button</span> <span class="k">@click</span>=<span class="s">"n++"</span> <span class="k">x-text</span>=<span class="s">"n"</span>&gt;&lt;/<span class="t">button</span>&gt;
+&lt;/<span class="t">section</span>&gt;</code></pre>
+        </article>
+
+        <article class="pillar">
+          <span class="tag">Full-stack</span>
+          <h3>Routing, SSR, typed routes</h3>
+          <p>File-based routing, server-side rendering, and a component you already know how to write. On Node — no PHP required.</p>
+          <pre><code><span class="c">// pages/blog/[slug].alpine</span>
+&lt;<span class="t">script</span> <span class="k">server</span>&gt;
+  <span class="k">export function</span> loader({ params }) {
+    <span class="k">return</span> { post: getPost(params.slug) }
+  }
+&lt;/<span class="t">script</span>&gt;</code></pre>
+        </article>
+
+        <article class="pillar ai">
+          <span class="tag">AI-native</span>
+          <h3>Your API is a tool</h3>
+          <p>Write a route once. It's a REST endpoint <em>and</em> an MCP tool. Point Claude at <code>/mcp</code> and it can call your app.</p>
+          <pre><code><span class="c">// server/api/add.ts</span>
+<span class="k">export default</span> defineApexRoute({
+  description: <span class="s">'Add two numbers'</span>,
+  input: { a: z.number(), b: z.number() },
+  <span class="k">mcp</span>: <span class="k">true</span>,
+  handler: ({ input }) =&gt; ({ sum: input.a + input.b }),
+})</code></pre>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow warm">The unfair advantage</p>
+        <h2>One definition. Two surfaces.</h2>
+        <p>
+          Because every route carries a strict, typed schema, exposing it to an AI is automatic.
+          The framework carries the MCP transport — you install nothing extra.
+        </p>
+      </div>
+      <div class="flow">
+        <div class="node">
+          <div class="h">defineApexRoute</div>
+          <code>server/api/add.ts</code>
+        </div>
+        <div class="arm">↓ generates ↓</div>
+        <div class="node rest">
+          <div class="h">REST endpoint</div>
+          <code>POST /api/add → { "sum": 5 }</code>
+        </div>
+        <div class="node mcp">
+          <div class="h">MCP tool</div>
+          <code>tools/call add → { "sum": 5 }</code>
+        </div>
+      </div>
+      <p><a href="./ai-native.html">Read the AI-native guide →</a></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Quickstart</p>
+        <h2>Scaffold and run in under a minute.</h2>
+      </div>
+      <pre><code><span class="c"># create a new app and start the dev server</span>
+npm create apexjs@latest my-app
+cd my-app
+npm install
+npm run dev          <span class="c"># http://localhost:3000</span>
+npm run dev:islands  <span class="c"># static-first islands mode</span></code></pre>
+      <p class="muted">
+        The scaffold ships a server-rendered page (<code>pages/index.alpine</code>) and an API
+        route that is also an MCP tool (<code>server/api/hello.ts</code>).
+      </p>
+
+      <div class="card-grid cols-3">
+        <a class="card" href="./getting-started.html">
+          <span class="k">Start here</span>
+          <h3>Getting started</h3>
+          <p>Install, project structure, and the dev → build → deploy lifecycle.</p>
+        </a>
+        <a class="card" href="./components.html">
+          <span class="k">Author</span>
+          <h3>Components</h3>
+          <p>The <code>.alpine</code> single-file format and component embedding with props.</p>
+        </a>
+        <a class="card" href="./ai-native.html">
+          <span class="k">Signature</span>
+          <h3>AI-native APIs</h3>
+          <p>REST + MCP from one <code>defineApexRoute</code>, and the <code>/mcp</code> endpoint.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Early, but real</p>
+        <h2>Not a manifesto — a working framework.</h2>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="n">3</div><div class="l">Pillars, all shipping</div></div>
+        <div class="stat"><div class="n">76</div><div class="l">Tests passing</div></div>
+        <div class="stat"><div class="n">~15KB</div><div class="l">Alpine — one runtime</div></div>
+        <div class="stat"><div class="n">MIT</div><div class="l">Built in the open</div></div>
+      </div>
+      <div class="callout warm">
+        <span class="h">Status · v0.1.4</span>
+        <p>
+          Apex JS is on npm under <code>@apex-stack/*</code>. SSR + hydration, islands, file routing,
+          components, AI-native APIs, a multi-database data layer, and a full production build (static
+          or Node server) are all proven and covered by tests. Jobs/queues and Nitro deploy presets
+          are next — see the <a href="https://github.com/andrecorugda/apexjs/blob/main/ROADMAP.md">roadmap</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand-col">
+        <a class="brand" href="./index.html">
+          <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="sun" cx="18" cy="6" r="2.4" />
+            <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+          </svg>
+          Apex&nbsp;JS
+        </a>
+        <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
+      </div>
+      <div class="links">
+        <a href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        <a href="./getting-started.html">Get started</a>
+        <a href="./ai-native.html">AI-native</a>
+        <a href="./cli.html">CLI</a>
+      </div>
+    </div>
+    <p class="foot-note">Apex&nbsp;JS · MIT · built by Andre Corugda · npm create apexjs@latest</p>
+  </div>
+</footer>
+
+<script>
+  document.documentElement.classList.add("js");
+  (function () {
+    var root = document.documentElement;
+    document.getElementById("themeToggle").addEventListener("click", function () {
+      var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
+      root.setAttribute("data-theme", dark ? "light" : "dark");
+    });
+  })();
+</script>

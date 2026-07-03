@@ -1,0 +1,234 @@
+<title>AI-native APIs — Apex JS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="defineApexRoute serves REST and an MCP tool from one definition. The /mcp endpoint, the apex mcp inspector, and pointing Claude at your API." />
+<link rel="stylesheet" href="./style.css" />
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="./index.html">
+      <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+        <circle class="sun" cx="18" cy="6" r="2.4" />
+        <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+      </svg>
+      Apex&nbsp;JS
+    </a>
+    <nav class="site-nav" aria-label="Documentation">
+      <a href="./index.html">Home</a>
+      <a href="./getting-started.html">Start</a>
+      <a href="./components.html">Components</a>
+      <a href="./routing.html">Routing</a>
+      <a href="./islands.html">Islands</a>
+      <a href="./data.html">Data</a>
+      <a href="./ai-native.html" aria-current="page">AI-Native</a>
+      <a href="./cli.html">CLI</a>
+      <a href="./deploy.html">Deploy</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">Theme</button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow warm">AI-native APIs · the signature feature</p>
+      <h1>Write a route once. Get REST <em>and</em> an MCP tool.</h1>
+      <p class="lede">
+        Because every Apex route carries a strict, typed schema, exposing it to an AI is automatic.
+        The framework carries the MCP transport — <strong>you install nothing extra</strong>. Next,
+        Nuxt, Rails, and Laravel don't do this. It's the reason Apex exists.
+      </p>
+    </div>
+  </section>
+
+  <section class="doc">
+    <div class="wrap">
+
+      <nav class="onpage" aria-label="On this page">
+        <span class="k">On this page</span>
+        <ul>
+          <li><a href="#one-def">One definition, two surfaces</a></li>
+          <li><a href="#config">defineApexRoute options</a></li>
+          <li><a href="#mcp-endpoint">The /mcp endpoint</a></li>
+          <li><a href="#inspector">The apex mcp inspector</a></li>
+          <li><a href="#claude">Point Claude at your API</a></li>
+          <li><a href="#resources">Resources are AI-native too</a></li>
+          <li><a href="#design">Design notes</a></li>
+        </ul>
+      </nav>
+
+      <h2 id="one-def">One definition, two surfaces <a class="anchor" href="#one-def">#</a></h2>
+      <p>
+        <code>defineApexRoute</code> takes a Zod input shape, a handler, and a description. That single
+        definition drives <strong>REST validation</strong> and the <strong>MCP tool's
+        <code>inputSchema</code></strong> — no duplication, no drift.
+      </p>
+      <p class="code-label">server/api/add.ts</p>
+      <pre><code><span class="k">import</span> { defineApexRoute } <span class="k">from</span> <span class="s">'@apex-stack/core'</span>
+<span class="k">import</span> { z } <span class="k">from</span> <span class="s">'zod'</span>
+
+<span class="k">export default</span> defineApexRoute({
+  method: <span class="s">'POST'</span>,
+  description: <span class="s">'Add two numbers and return their sum'</span>, <span class="c">// → MCP tool description</span>
+  input: { a: z.number(), b: z.number() },            <span class="c">// → REST validation + MCP inputSchema</span>
+  <span class="k">mcp</span>: <span class="k">true</span>,                                          <span class="c">// opt in to MCP exposure</span>
+  handler: ({ input }) =&gt; ({ sum: input.a + input.b }),
+})</code></pre>
+      <p>You now have both surfaces from that one file:</p>
+      <div class="flow">
+        <div class="node">
+          <div class="h">defineApexRoute</div>
+          <code>server/api/add.ts</code>
+        </div>
+        <div class="arm">↓ generates ↓</div>
+        <div class="node rest">
+          <div class="h">REST endpoint</div>
+          <code>POST /api/add {a,b} → { "sum": 5 }</code>
+        </div>
+        <div class="node mcp">
+          <div class="h">MCP tool</div>
+          <code>tools/call add {a,b} → { "sum": 5 }</code>
+        </div>
+      </div>
+      <p class="muted">
+        Invalid input returns <code>400</code> with the Zod issues. Only <code>mcp: true</code> routes are
+        exposed as tools — everything else stays REST-only.
+      </p>
+
+      <h2 id="config">defineApexRoute options <a class="anchor" href="#config">#</a></h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Option</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>method</code></td><td><code>'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'</code></td><td>HTTP method. Defaults to <code>GET</code>.</td></tr>
+            <tr><td><code>description</code></td><td><code>string</code></td><td>Human + AI-readable. Becomes the MCP tool description.</td></tr>
+            <tr><td><code>input</code></td><td>Zod raw shape</td><td>An object of Zod validators. Drives REST validation <em>and</em> the MCP <code>inputSchema</code>.</td></tr>
+            <tr><td><code>mcp</code></td><td><code>boolean</code></td><td>Opt in to MCP exposure. Defaults to <code>false</code>.</td></tr>
+            <tr><td><code>mcpName</code></td><td><code>string</code></td><td>Override the tool name (must match <code>^[a-zA-Z0-9_-]{1,64}$</code>). Defaults to a slug from the file path.</td></tr>
+            <tr><td><code>handler</code></td><td><code>(ctx) =&gt; Output</code></td><td>The implementation. <code>ctx.input</code> is validated; <code>ctx.url</code> is the raw request URL.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warm">
+        <span class="h">Keep handlers thin</span>
+        <p>
+          A handler is an adapter — business logic belongs in a service so it's reusable beyond the
+          route. The route's job is the schema-carrying contract that makes REST + MCP automatic.
+        </p>
+      </div>
+      <p>
+        For a <code>GET</code> route, input is read from the query string; for others, from the JSON
+        body. Use <code>z.coerce.*</code> when a query value should become a number/boolean:
+      </p>
+      <p class="code-label">server/api/greet.ts</p>
+      <pre><code><span class="k">export default</span> defineApexRoute({
+  method: <span class="s">'GET'</span>,
+  description: <span class="s">'Greet a person by name'</span>,
+  input: { name: z.string() },
+  <span class="k">mcp</span>: <span class="k">true</span>,
+  handler: ({ input }) =&gt; ({ message: <span class="s">`Hello, ${input.name}!`</span> }),
+})</code></pre>
+
+      <h2 id="mcp-endpoint">The <code>/mcp</code> endpoint <a class="anchor" href="#mcp-endpoint">#</a></h2>
+      <p>
+        Apex serves all <code>mcp: true</code> routes at a single <code>/mcp</code> endpoint using the
+        official <a href="https://modelcontextprotocol.io">MCP</a> SDK's Web-standard
+        <strong>Streamable HTTP</strong> transport, in stateless JSON mode — a fresh server per request,
+        no session bookkeeping. It's available in <code>apex dev</code> and, in production, from
+        <code>apex build --server</code> + <code>apex start</code>.
+      </p>
+      <ul>
+        <li><code>tools/list</code> returns every exposed route as a tool, with its description and <code>inputSchema</code>.</li>
+        <li><code>tools/call &lt;name&gt;</code> runs the same handler as the REST endpoint, over the same data.</li>
+      </ul>
+
+      <h2 id="inspector">The <code>apex mcp</code> inspector <a class="anchor" href="#inspector">#</a></h2>
+      <p>
+        A built-in inspector connects to a running dev server's <code>/mcp</code>, lists tools with their
+        signatures, and calls one — the local test loop for AI-callable routes, right in your terminal
+        (it reuses the bundled MCP SDK, so there's nothing to install).
+      </p>
+      <pre><code><span class="c"># list every tool and its input signature</span>
+apex mcp
+
+<span class="c"># call one with JSON arguments</span>
+apex mcp --call add --args '{"a":2,"b":3}'
+
+<span class="c"># point at a non-default endpoint</span>
+apex mcp --url http://localhost:4000/mcp</code></pre>
+      <p class="muted">
+        Full flags on the <a href="./cli.html#mcp">CLI reference</a>. Smoke-testing tools with the
+        inspector before shipping is the recommended rhythm.
+      </p>
+
+      <h2 id="claude">Point Claude at your API <a class="anchor" href="#claude">#</a></h2>
+      <p>
+        Because <code>/mcp</code> speaks standard MCP over Streamable HTTP, any MCP client — Claude
+        included — can connect to it and call your tools directly. Run your app, expose
+        <code>/mcp</code>, and an assistant can read and write through the very same handlers your UI
+        uses. No adapter, no second implementation, no drift between "the API" and "what the AI can do".
+      </p>
+
+      <h2 id="resources">Resources are AI-native too <a class="anchor" href="#resources">#</a></h2>
+      <p>
+        The same principle scales to data. <a href="./data.html"><code>defineResource</code></a> turns
+        one table into list/get/create/update/delete over REST <strong>and</strong> as MCP tools
+        (<code>&lt;name&gt;_list</code>, <code>&lt;name&gt;_create</code>, …) on one database — so an AI
+        creating a row and a browser listing rows see the same data.
+      </p>
+
+      <h2 id="design">Design notes <a class="anchor" href="#design">#</a></h2>
+      <ul>
+        <li><strong>The schema is the enabler.</strong> The Zod shape is used for REST validation and the MCP <code>inputSchema</code> — one source of truth.</li>
+        <li><strong>Opt-in &amp; safe.</strong> MCP exposure is per-route (<code>mcp: true</code>). Free-form handlers without a schema aren't auto-exposed, by design.</li>
+        <li><strong>Stateless.</strong> The <code>/mcp</code> transport runs in stateless JSON mode — a fresh server per request.</li>
+      </ul>
+      <div class="callout">
+        <span class="h">On the roadmap</span>
+        <p>
+          Route-level auth/permission scopes for tools, <code>outputSchema</code> → MCP structured
+          content, and extracting the MCP server into its own package to keep core lean.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand-col">
+        <a class="brand" href="./index.html">
+          <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="sun" cx="18" cy="6" r="2.4" />
+            <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+          </svg>
+          Apex&nbsp;JS
+        </a>
+        <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
+      </div>
+      <div class="links">
+        <a href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        <a href="./getting-started.html">Get started</a>
+        <a href="./ai-native.html">AI-native</a>
+        <a href="./cli.html">CLI</a>
+      </div>
+    </div>
+    <p class="foot-note">Apex&nbsp;JS · MIT · built by Andre Corugda · npm create apexjs@latest</p>
+  </div>
+</footer>
+
+<script>
+  document.documentElement.classList.add("js");
+  (function () {
+    var root = document.documentElement;
+    document.getElementById("themeToggle").addEventListener("click", function () {
+      var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
+      root.setAttribute("data-theme", dark ? "light" : "dark");
+    });
+  })();
+</script>

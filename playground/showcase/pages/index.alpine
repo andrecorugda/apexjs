@@ -1,0 +1,118 @@
+<script server lang="ts">
+  import { db, schema } from '../db/index.js'
+
+  // Runs on the server. The list below is rendered from the database on first paint.
+  export async function loader() {
+    const features = await db.select().from(schema.features)
+    return { features }
+  }
+</script>
+
+<template x-data="{
+  filter: '',
+  newName: '',
+  async add() {
+    if (!this.newName.trim()) return
+    const res = await fetch('/api/features', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: this.newName.trim(), tag: 'you' }),
+    })
+    this.features.push(await res.json())
+    this.newName = ''
+  },
+  async addByAi() {
+    // The exact same endpoint an AI assistant calls via the MCP tool `features_create`.
+    const res = await fetch('/api/features', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'Suggested by an AI ✨', tag: 'ai' }),
+    })
+    this.features.push(await res.json())
+  }
+}">
+  <main>
+    <header>
+      <p class="eyebrow">Apex JS — live showcase</p>
+      <h1>One app. Server-rendered, interactive, and <span class="ai">AI-native</span>.</h1>
+      <p class="lede">
+        This whole page is server-rendered from a SQLite database, hydrated by Alpine,
+        and every action here is <strong>also an MCP tool</strong> an assistant can call.
+      </p>
+    </header>
+
+    <section class="panel">
+      <div class="row">
+        <h2>Features <span class="count" x-text="features.filter(f => f.name.toLowerCase().includes(filter.toLowerCase())).length + ' / ' + features.length"></span></h2>
+        <input class="filter" x-model="filter" placeholder="Filter…" />
+      </div>
+
+      <ul class="list">
+        <template x-for="f in features" :key="f.id">
+          <li class="card" :class="'tag-' + f.tag" x-show="f.name.toLowerCase().includes(filter.toLowerCase())">
+            <span class="name" x-text="f.name"></span>
+            <span class="badge" x-text="f.tag"></span>
+          </li>
+        </template>
+      </ul>
+
+      <form class="add" @submit.prevent="add()">
+        <input x-model="newName" placeholder="Add a feature…" />
+        <button type="submit">Add</button>
+      </form>
+      <p class="hint">Rendered on the server; new rows persist to the database via <code>POST /api/features</code>.</p>
+    </section>
+
+    <section class="panel ai-panel">
+      <h2>🤖 This app is AI-native</h2>
+      <p>
+        The list above comes from one <code>defineResource('features', …)</code>. That single definition
+        exposes REST endpoints <em>and</em> MCP tools at <code>/mcp</code> — no extra library:
+      </p>
+      <ul class="tools">
+        <li><code>features_list</code></li>
+        <li><code>features_create</code></li>
+        <li><code>features_get</code></li>
+        <li><code>features_update</code></li>
+        <li><code>features_delete</code></li>
+      </ul>
+      <button class="ai-btn" @click="addByAi()">Simulate an AI calling <code>features_create</code></button>
+      <p class="hint">Point Claude at <code>/mcp</code> and it can read and write the same data you see.</p>
+    </section>
+  </main>
+</template>
+
+<style scoped>
+  :root { color-scheme: light dark; }
+  body { margin: 0; background: #0a0f1c; color: #eaf1f9; }
+  main {
+    max-width: 46rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  .eyebrow { font-family: ui-monospace, monospace; letter-spacing: .2em; text-transform: uppercase; font-size: .72rem; color: #56c1e8; margin: 0 0 .8rem; }
+  h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; letter-spacing: -.02em; margin: 0; }
+  h1 .ai { color: #f6976a; }
+  .lede { color: #93a6bd; max-width: 42ch; }
+  .lede strong { color: #eaf1f9; }
+  .panel { margin-top: 1.75rem; padding: 1.4rem 1.5rem; border: 1px solid rgba(120,150,190,.16); border-radius: 14px; background: #111a2e; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  h2 { font-size: 1.1rem; margin: 0 0 .2rem; display: flex; align-items: center; gap: .6rem; }
+  .count { font-family: ui-monospace, monospace; font-size: .75rem; color: #93a6bd; }
+  input { background: #0a0f1c; border: 1px solid rgba(120,150,190,.24); color: #eaf1f9; border-radius: 8px; padding: .5rem .75rem; font: inherit; }
+  .filter { width: 10rem; }
+  .list { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: .5rem; }
+  .card { display: flex; align-items: center; justify-content: space-between; padding: .7rem .9rem; border: 1px solid rgba(120,150,190,.16); border-radius: 10px; background: #0d1526; }
+  .card .name { font-weight: 500; }
+  .badge { font-family: ui-monospace, monospace; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; padding: .15rem .5rem; border-radius: 999px; background: rgba(86,193,232,.14); color: #56c1e8; }
+  .tag-ai .badge { background: rgba(246,151,106,.16); color: #f6976a; }
+  .tag-you .badge { background: rgba(148,163,184,.16); color: #cbd5e1; }
+  .add { display: flex; gap: .6rem; margin-top: 1rem; }
+  .add input { flex: 1; }
+  button { cursor: pointer; font: inherit; border-radius: 8px; padding: .5rem 1rem; border: 1px solid #2e8bc0; background: #56c1e8; color: #06121c; font-weight: 600; }
+  .hint { color: #6b7f97; font-size: .82rem; margin: .8rem 0 0; }
+  .ai-panel { border-color: rgba(246,151,106,.3); }
+  .tools { list-style: none; padding: 0; margin: .8rem 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+  .tools code { font-family: ui-monospace, monospace; font-size: .78rem; background: #0d1526; border: 1px solid rgba(120,150,190,.16); padding: .2rem .5rem; border-radius: 6px; color: #eaf1f9; }
+  .ai-btn { background: #f6976a; border-color: #d9713b; color: #2a1305; margin-top: .4rem; }
+  code { font-family: ui-monospace, monospace; }
+</style>

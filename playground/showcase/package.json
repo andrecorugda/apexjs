@@ -1,0 +1,14 @@
+{
+  "name": "showcase",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "apex dev" },
+  "dependencies": {
+    "alpinejs": "^3.14.8",
+    "@apex-stack/core": "workspace:*",
+    "@apex-stack/data": "workspace:*",
+    "drizzle-orm": "^0.38.0",
+    "zod": "^4.4.3"
+  }
+}

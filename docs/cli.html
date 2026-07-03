@@ -1,0 +1,238 @@
+<title>CLI reference — Apex JS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Complete reference for the apex CLI: dev, build, start, make, migrate, and mcp with every flag." />
+<link rel="stylesheet" href="./style.css" />
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="./index.html">
+      <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+        <circle class="sun" cx="18" cy="6" r="2.4" />
+        <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+      </svg>
+      Apex&nbsp;JS
+    </a>
+    <nav class="site-nav" aria-label="Documentation">
+      <a href="./index.html">Home</a>
+      <a href="./getting-started.html">Start</a>
+      <a href="./components.html">Components</a>
+      <a href="./routing.html">Routing</a>
+      <a href="./islands.html">Islands</a>
+      <a href="./data.html">Data</a>
+      <a href="./ai-native.html">AI-Native</a>
+      <a href="./cli.html" aria-current="page">CLI</a>
+      <a href="./deploy.html">Deploy</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">Theme</button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">CLI reference</p>
+      <h1>The <code>apex</code> command.</h1>
+      <p class="lede">
+        One CLI covers the whole lifecycle — develop, generate, migrate, build, serve, and inspect
+        your MCP tools. Every command and flag below is from the source.
+      </p>
+    </div>
+  </section>
+
+  <section class="doc">
+    <div class="wrap">
+
+      <nav class="onpage" aria-label="On this page">
+        <span class="k">On this page</span>
+        <ul>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#dev">apex dev</a></li>
+          <li><a href="#build">apex build</a></li>
+          <li><a href="#start">apex start</a></li>
+          <li><a href="#make">apex make</a></li>
+          <li><a href="#migrate">apex migrate</a></li>
+          <li><a href="#mcp">apex mcp</a></li>
+          <li><a href="#create">create-apexjs</a></li>
+        </ul>
+      </nav>
+
+      <h2 id="overview">Overview <a class="anchor" href="#overview">#</a></h2>
+      <p>
+        <code>apex</code> ships with <code>@apex-stack/core</code>. In a scaffolded project it's wired to
+        npm scripts (<code>npm run dev</code>); you can also run it directly.
+      </p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><a href="#dev"><code>apex dev</code></a></td><td>Start the development server (SSR + hydrate, API + MCP, hot reload).</td></tr>
+            <tr><td><a href="#build"><code>apex build</code></a></td><td>Prerender pages to deployable HTML + client bundles.</td></tr>
+            <tr><td><a href="#start"><code>apex start</code></a></td><td>Run a production build made with <code>apex build --server</code>.</td></tr>
+            <tr><td><a href="#make"><code>apex make</code></a></td><td>Generate a page, component, or API route.</td></tr>
+            <tr><td><a href="#migrate"><code>apex migrate</code></a></td><td>Apply pending SQL migrations.</td></tr>
+            <tr><td><a href="#mcp"><code>apex mcp</code></a></td><td>Inspect the local MCP server — list or call tools.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="dev">apex dev <a class="anchor" href="#dev">#</a></h2>
+      <p>Start the Apex JS development server.</p>
+      <pre><code>apex dev [root] [--port &lt;n&gt;] [--islands]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>root</code> (positional)</td><td><code>.</code></td><td>Project root.</td></tr>
+            <tr><td><code>--port</code></td><td><code>3000</code></td><td>Port to listen on.</td></tr>
+            <tr><td><code>--islands</code></td><td><code>false</code></td><td>Render in islands mode (static-first). See <a href="./islands.html">Islands</a>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>apex dev
+apex dev --port 4000
+apex dev --islands</code></pre>
+
+      <h2 id="build">apex build <a class="anchor" href="#build">#</a></h2>
+      <p>Prerender pages to deployable HTML plus per-page client bundles.</p>
+      <pre><code>apex build [root] [--outDir &lt;dir&gt;] [--islands] [--server]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>root</code> (positional)</td><td><code>.</code></td><td>Project root.</td></tr>
+            <tr><td><code>--outDir</code></td><td><code>dist</code></td><td>Output directory.</td></tr>
+            <tr><td><code>--islands</code></td><td><code>false</code></td><td>Static-first islands mode (zero-JS static site).</td></tr>
+            <tr><td><code>--server</code></td><td><code>false</code></td><td>Build a Node server (dynamic routes + API/MCP). Pair with <code>apex start</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>apex build            <span class="c"># prerender + hydrate → static dist/</span>
+apex build --islands  <span class="c"># zero-JS static site (SSG)</span>
+apex build --server   <span class="c"># deployable Node server target</span></code></pre>
+      <p class="muted">The three modes are explained in full on <a href="./deploy.html">Build &amp; deploy</a>.</p>
+
+      <h2 id="start">apex start <a class="anchor" href="#start">#</a></h2>
+      <p>Run a production build produced by <code>apex build --server</code> (no Vite).</p>
+      <pre><code>apex start [dir] [--port &lt;n&gt;]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>dir</code> (positional)</td><td><code>dist</code></td><td>Build directory (must contain <code>apex-manifest.json</code>).</td></tr>
+            <tr><td><code>--port</code></td><td><code>3000</code></td><td>Port to listen on.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>apex build --server &amp;&amp; apex start</code></pre>
+
+      <h2 id="make">apex make <a class="anchor" href="#make">#</a></h2>
+      <p>Generate a page, component, or API route from a template.</p>
+      <pre><code>apex make &lt;kind&gt; &lt;name&gt; [--root &lt;dir&gt;]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>kind</code> (positional)</td><td>—</td><td><code>page</code> | <code>component</code> | <code>api</code> (required).</td></tr>
+            <tr><td><code>name</code> (positional)</td><td>—</td><td>Name, e.g. <code>about</code>, <code>Counter</code>, <code>todos</code> (required).</td></tr>
+            <tr><td><code>--root</code></td><td><code>.</code></td><td>Project root.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Kind</th><th>Creates</th></tr></thead>
+          <tbody>
+            <tr><td><code>page</code></td><td><code>pages/&lt;name&gt;.alpine</code> — a loader + <code>x-data</code> template + scoped style.</td></tr>
+            <tr><td><code>component</code></td><td><code>components/&lt;name&gt;.alpine</code> — a small interactive component.</td></tr>
+            <tr><td><code>api</code></td><td><code>server/api/&lt;name&gt;.ts</code> — a <code>defineApexRoute</code> that's REST + MCP.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>apex make page about
+apex make component Counter
+apex make api todos</code></pre>
+      <p class="muted">Fails if the target file already exists (it won't overwrite your work).</p>
+
+      <h2 id="migrate">apex migrate <a class="anchor" href="#migrate">#</a></h2>
+      <p>Apply pending SQL migrations from <code>db/migrations/*.sql</code> (idempotent). Resolves <code>@apex-stack/data</code> from your app.</p>
+      <pre><code>apex migrate [--db &lt;file&gt;] [--driver &lt;d&gt;] [--url &lt;url&gt;] [--dir &lt;dir&gt;] [--root &lt;dir&gt;]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Flag</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>--db</code></td><td><code>data.db</code></td><td>SQLite file path (libSQL).</td></tr>
+            <tr><td><code>--driver</code></td><td><code>sqlite</code></td><td><code>sqlite</code> | <code>postgres</code> | <code>pglite</code>.</td></tr>
+            <tr><td><code>--url</code></td><td>—</td><td>Connection URL (Postgres) — overrides <code>--db</code>.</td></tr>
+            <tr><td><code>--dir</code></td><td><code>db/migrations</code></td><td>Migrations directory.</td></tr>
+            <tr><td><code>--root</code></td><td><code>.</code></td><td>Project root.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>apex migrate
+apex migrate --driver postgres --url $DATABASE_URL</code></pre>
+      <p class="muted">See <a href="./data.html#migrations">Data → Migrations</a>.</p>
+
+      <h2 id="mcp">apex mcp <a class="anchor" href="#mcp">#</a></h2>
+      <p>Inspect the local MCP server — list its tools or call one. Reuses the bundled MCP SDK (nothing to install).</p>
+      <pre><code>apex mcp [--url &lt;url&gt;] [--call &lt;name&gt;] [--args &lt;json&gt;]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Flag</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>--url</code></td><td><code>http://localhost:3000/mcp</code></td><td>MCP endpoint URL.</td></tr>
+            <tr><td><code>--call</code></td><td>—</td><td>Name of a tool to call. Omit to list all tools.</td></tr>
+            <tr><td><code>--args</code></td><td><code>{}</code></td><td>JSON arguments for <code>--call</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>apex mcp                                  <span class="c"># list tools + signatures</span>
+apex mcp --call add --args '{"a":2,"b":3}'</code></pre>
+      <p class="muted">Requires a running dev server. More on <a href="./ai-native.html#inspector">AI-native → inspector</a>.</p>
+
+      <h2 id="create">create-apexjs <a class="anchor" href="#create">#</a></h2>
+      <p>The scaffolder (a separate, unscoped package) — the entry point for a new project.</p>
+      <pre><code>npm create apexjs@latest [dir]   <span class="c"># dir defaults to "apex-app"</span></code></pre>
+      <p>It copies the default template, renames <code>_gitignore</code> → <code>.gitignore</code>, substitutes the project name, and prints next steps. See <a href="./getting-started.html">Getting started</a>.</p>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand-col">
+        <a class="brand" href="./index.html">
+          <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="sun" cx="18" cy="6" r="2.4" />
+            <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+          </svg>
+          Apex&nbsp;JS
+        </a>
+        <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
+      </div>
+      <div class="links">
+        <a href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        <a href="./getting-started.html">Get started</a>
+        <a href="./ai-native.html">AI-native</a>
+        <a href="./cli.html">CLI</a>
+      </div>
+    </div>
+    <p class="foot-note">Apex&nbsp;JS · MIT · built by Andre Corugda · npm create apexjs@latest</p>
+  </div>
+</footer>
+
+<script>
+  document.documentElement.classList.add("js");
+  (function () {
+    var root = document.documentElement;
+    document.getElementById("themeToggle").addEventListener("click", function () {
+      var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
+      root.setAttribute("data-theme", dark ? "light" : "dark");
+    });
+  })();
+</script>

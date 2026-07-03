@@ -1,0 +1,217 @@
+<title>Data — Apex JS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="defineResource turns one table into REST + MCP CRUD. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations." />
+<link rel="stylesheet" href="./style.css" />
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="./index.html">
+      <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+        <circle class="sun" cx="18" cy="6" r="2.4" />
+        <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+      </svg>
+      Apex&nbsp;JS
+    </a>
+    <nav class="site-nav" aria-label="Documentation">
+      <a href="./index.html">Home</a>
+      <a href="./getting-started.html">Start</a>
+      <a href="./components.html">Components</a>
+      <a href="./routing.html">Routing</a>
+      <a href="./islands.html">Islands</a>
+      <a href="./data.html" aria-current="page">Data</a>
+      <a href="./ai-native.html">AI-Native</a>
+      <a href="./cli.html">CLI</a>
+      <a href="./deploy.html">Deploy</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">Theme</button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">Data</p>
+      <h1>One table → REST <em>and</em> MCP CRUD.</h1>
+      <p class="lede">
+        <code>@apex-stack/data</code> wraps Drizzle and turns a table into a full resource: list, get,
+        create, update, delete — over REST <strong>and</strong> as MCP tools, on the same database.
+        Your data is AI-callable by construction.
+      </p>
+    </div>
+  </section>
+
+  <section class="doc">
+    <div class="wrap">
+
+      <nav class="onpage" aria-label="On this page">
+        <span class="k">On this page</span>
+        <ul>
+          <li><a href="#install">Install</a></li>
+          <li><a href="#define">Define once</a></li>
+          <li><a href="#surfaces">The surfaces you get</a></li>
+          <li><a href="#drivers">Databases &amp; drivers</a></li>
+          <li><a href="#migrations">Migrations</a></li>
+          <li><a href="#custom">Beyond CRUD</a></li>
+        </ul>
+      </nav>
+
+      <h2 id="install">Install <a class="anchor" href="#install">#</a></h2>
+      <p>Add the data package (and Drizzle) alongside core:</p>
+      <pre><code>npm i @apex-stack/data drizzle-orm</code></pre>
+      <p class="muted">Postgres/PGlite drivers load on demand — install only the one you use (below).</p>
+
+      <h2 id="define">Define once <a class="anchor" href="#define">#</a></h2>
+      <p>A schema, a database handle, and a resource — three small files:</p>
+      <p class="code-label">db/schema.ts</p>
+      <pre><code><span class="k">import</span> { integer, sqliteTable, text } <span class="k">from</span> <span class="s">'drizzle-orm/sqlite-core'</span>
+
+<span class="k">export const</span> todos = sqliteTable(<span class="s">'todos'</span>, {
+  id: integer(<span class="s">'id'</span>).primaryKey({ autoIncrement: <span class="k">true</span> }),
+  text: text(<span class="s">'text'</span>).notNull(),
+  done: integer(<span class="s">'done'</span>, { mode: <span class="s">'boolean'</span> }).notNull().default(<span class="k">false</span>),
+})</code></pre>
+      <p class="code-label">db/index.ts — pick your database in one line</p>
+      <pre><code><span class="k">import</span> { fileURLToPath } <span class="k">from</span> <span class="s">'node:url'</span>
+<span class="k">import</span> { applyMigrations, createDb } <span class="k">from</span> <span class="s">'@apex-stack/data'</span>
+<span class="k">import</span> * <span class="k">as</span> schema <span class="k">from</span> <span class="s">'./schema.js'</span>
+
+<span class="k">const</span> handle = <span class="k">await</span> createDb(<span class="s">'data.db'</span>)   <span class="c">// local SQLite (libSQL)</span>
+<span class="k">await</span> applyMigrations(handle, fileURLToPath(<span class="k">new</span> URL(<span class="s">'./migrations'</span>, <span class="k">import</span>.meta.url)))
+
+<span class="k">export const</span> db = handle.db
+<span class="k">export</span> { schema }</code></pre>
+      <p class="code-label">server/api/todos.ts</p>
+      <pre><code><span class="k">import</span> { defineResource } <span class="k">from</span> <span class="s">'@apex-stack/data'</span>
+<span class="k">import</span> { z } <span class="k">from</span> <span class="s">'zod'</span>
+<span class="k">import</span> { db, schema } <span class="k">from</span> <span class="s">'../../db/index.js'</span>
+
+<span class="k">export default</span> defineResource(<span class="s">'todos'</span>, {
+  db,
+  table: schema.todos,
+  insert: { text: z.string(), done: z.boolean().optional() },
+})</code></pre>
+
+      <h2 id="surfaces">The surfaces you get <a class="anchor" href="#surfaces">#</a></h2>
+      <p>From that single <code>defineResource</code> call:</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Action</th><th>REST</th><th>MCP tool</th></tr></thead>
+          <tbody>
+            <tr><td>List</td><td><code>GET /api/todos</code></td><td><code>todos_list</code></td></tr>
+            <tr><td>Get</td><td><code>GET /api/todos/:id</code></td><td><code>todos_get</code></td></tr>
+            <tr><td>Create</td><td><code>POST /api/todos</code></td><td><code>todos_create</code></td></tr>
+            <tr><td>Update</td><td><code>PATCH /api/todos/:id</code></td><td><code>todos_update</code></td></tr>
+            <tr><td>Delete</td><td><code>DELETE /api/todos/:id</code></td><td><code>todos_delete</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        REST and MCP run the <strong>same handlers over the same database</strong>. An AI that creates a
+        todo via <code>todos_create</code> and a browser that lists via <code>GET /api/todos</code> see
+        the same rows. The <code>insert</code> shape validates creates; updates accept the same fields,
+        all optional, keyed by <code>id</code>.
+      </p>
+      <div class="callout warm">
+        <span class="h">Why this matters</span>
+        <p>
+          No other full-stack framework gives you REST + a live MCP CRUD surface from one table
+          definition, on one database, by default. See <a href="./ai-native.html">AI-native APIs</a>
+          for how the MCP transport is carried for you.
+        </p>
+      </div>
+
+      <h2 id="drivers">Databases &amp; drivers <a class="anchor" href="#drivers">#</a></h2>
+      <p>
+        <code>createDb</code> is driver-agnostic — every driver uses Drizzle's async API, so a
+        <code>defineResource</code> written once runs unchanged across all of them:
+      </p>
+      <pre><code><span class="k">await</span> createDb(<span class="s">'data.db'</span>)                                       <span class="c">// local SQLite (libSQL)</span>
+<span class="k">await</span> createDb({ driver: <span class="s">'libsql'</span>, url: process.env.TURSO_URL })  <span class="c">// Turso (edge)</span>
+<span class="k">await</span> createDb({ driver: <span class="s">'postgres'</span>, url: process.env.DATABASE_URL }) <span class="c">// Supabase / Neon</span>
+<span class="k">await</span> createDb({ driver: <span class="s">'pglite'</span> })                             <span class="c">// embedded Postgres (tests)</span></code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Driver</th><th>Dialect</th><th>Good for</th><th>Install</th></tr></thead>
+          <tbody>
+            <tr><td><code>sqlite</code> / <code>libsql</code></td><td>SQLite</td><td>Local dev, single Node host</td><td><code>@libsql/client</code></td></tr>
+            <tr><td><code>libsql</code> (Turso)</td><td>SQLite</td><td>Edge — fetch-based, works on Workers</td><td><code>@libsql/client</code></td></tr>
+            <tr><td><code>postgres</code></td><td>Postgres</td><td>Supabase / Neon / any Postgres</td><td><code>postgres</code></td></tr>
+            <tr><td><code>pglite</code></td><td>Postgres</td><td>Embedded Postgres for tests (in-memory)</td><td><code>@electric-sql/pglite</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">
+        SQLite and Turso share a dialect; Supabase, Neon, and PGlite are all Postgres. Edge targets
+        can't run native SQLite — pair them with Turso or Supabase/Neon, whose drivers are fetch-based.
+      </p>
+
+      <h2 id="migrations">Migrations <a class="anchor" href="#migrations">#</a></h2>
+      <p>
+        Write plain SQL files in <code>db/migrations/</code>. <code>applyMigrations</code> runs each
+        file once in filename order, tracked in an <code>_apex_migrations</code> table — applied on
+        boot in dev, or explicitly as a deploy step with
+        <a href="./cli.html#migrate"><code>apex migrate</code></a> (idempotent).
+      </p>
+      <p class="code-label">db/migrations/0001_init.sql</p>
+      <pre><code><span class="k">CREATE TABLE IF NOT EXISTS</span> todos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  text TEXT NOT NULL,
+  done INTEGER NOT NULL DEFAULT 0
+);</code></pre>
+      <pre><code>apex migrate                                   <span class="c"># default: data.db (sqlite)</span>
+apex migrate --driver postgres --url $DATABASE_URL</code></pre>
+
+      <h2 id="custom">Beyond CRUD <a class="anchor" href="#custom">#</a></h2>
+      <p>
+        Need something a table can't express — a search, an aggregate, a domain action? Write a plain
+        typed route with <a href="./ai-native.html"><code>defineApexRoute</code></a> right next to your
+        resources. It's REST + MCP too, so your custom endpoints join the same AI-callable surface.
+      </p>
+
+      <div class="card-grid cols-2">
+        <a class="card" href="./ai-native.html"><span class="k">Signature</span><h3>AI-native APIs</h3><p>How REST + MCP is generated, and the <code>/mcp</code> endpoint.</p></a>
+        <a class="card" href="./deploy.html"><span class="k">Ship</span><h3>Build &amp; deploy</h3><p>Databases in production and the server target.</p></a>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand-col">
+        <a class="brand" href="./index.html">
+          <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="sun" cx="18" cy="6" r="2.4" />
+            <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+          </svg>
+          Apex&nbsp;JS
+        </a>
+        <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
+      </div>
+      <div class="links">
+        <a href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        <a href="./getting-started.html">Get started</a>
+        <a href="./ai-native.html">AI-native</a>
+        <a href="./cli.html">CLI</a>
+      </div>
+    </div>
+    <p class="foot-note">Apex&nbsp;JS · MIT · built by Andre Corugda · npm create apexjs@latest</p>
+  </div>
+</footer>
+
+<script>
+  document.documentElement.classList.add("js");
+  (function () {
+    var root = document.documentElement;
+    document.getElementById("themeToggle").addEventListener("click", function () {
+      var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
+      root.setAttribute("data-theme", dark ? "light" : "dark");
+    });
+  })();
+</script>

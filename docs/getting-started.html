@@ -1,0 +1,230 @@
+<title>Getting started — Apex JS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Install Apex JS, understand the project structure, run the dev server, and follow the dev → build → deploy lifecycle." />
+<link rel="stylesheet" href="./style.css" />
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="./index.html">
+      <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+        <circle class="sun" cx="18" cy="6" r="2.4" />
+        <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+      </svg>
+      Apex&nbsp;JS
+    </a>
+    <nav class="site-nav" aria-label="Documentation">
+      <a href="./index.html">Home</a>
+      <a href="./getting-started.html" aria-current="page">Start</a>
+      <a href="./components.html">Components</a>
+      <a href="./routing.html">Routing</a>
+      <a href="./islands.html">Islands</a>
+      <a href="./data.html">Data</a>
+      <a href="./ai-native.html">AI-Native</a>
+      <a href="./cli.html">CLI</a>
+      <a href="./deploy.html">Deploy</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">Theme</button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">Getting started</p>
+      <h1>From zero to a running app.</h1>
+      <p class="lede">
+        If you can write <code>x-data</code>, you can build a full-stack, server-rendered app.
+        Scaffold a project, run the dev server, then follow the <strong>dev → build → deploy</strong>
+        lifecycle.
+      </p>
+    </div>
+  </section>
+
+  <section class="doc">
+    <div class="wrap">
+
+      <nav class="onpage" aria-label="On this page">
+        <span class="k">On this page</span>
+        <ul>
+          <li><a href="#requirements">Requirements</a></li>
+          <li><a href="#scaffold">Scaffold a project</a></li>
+          <li><a href="#structure">Project structure</a></li>
+          <li><a href="#dev">Run the dev server</a></li>
+          <li><a href="#first-edit">Your first edit</a></li>
+          <li><a href="#hot-reload">Hot reload</a></li>
+          <li><a href="#lifecycle">The dev → build → deploy lifecycle</a></li>
+          <li><a href="#next">Next steps</a></li>
+        </ul>
+      </nav>
+
+      <h2 id="requirements">Requirements <a class="anchor" href="#requirements">#</a></h2>
+      <p>
+        Apex runs on <strong>Node.js</strong> (18+ recommended) with any package manager
+        (<code>npm</code>, <code>pnpm</code>, <code>yarn</code>). It is Node-native — no PHP,
+        no other runtime. TypeScript is set up for you.
+      </p>
+
+      <h2 id="scaffold">Scaffold a project <a class="anchor" href="#scaffold">#</a></h2>
+      <p>The scaffolder is the entry point. It creates a ready-to-run app in a new directory:</p>
+      <pre><code>npm create apexjs@latest my-app
+cd my-app
+npm install</code></pre>
+      <p class="muted">
+        <code>create-apexjs</code> is the unscoped package behind <code>npm create apexjs</code>;
+        the libraries it depends on live under the <code>@apex-stack/*</code> scope
+        (<code>@apex-stack/core</code> is the CLI + runtime).
+      </p>
+      <figure>
+        <img src="./assets/app-hello.png" loading="lazy"
+             alt="The Apex JS starter page running in a browser, showing the welcome heading and a Show me how button." />
+        <figcaption>The starter you get out of the box — server-rendered, then hydrated.</figcaption>
+      </figure>
+
+      <h2 id="structure">Project structure <a class="anchor" href="#structure">#</a></h2>
+      <p>A fresh app is intentionally small. Everything is a file in a known place:</p>
+      <pre><code>my-app/
+├─ pages/
+│  └─ index.alpine        <span class="c"># a route → "/"  (SSR + hydrate)</span>
+├─ server/
+│  └─ api/
+│     └─ hello.ts         <span class="c"># REST endpoint AND MCP tool</span>
+├─ package.json
+└─ .gitignore</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Location</th><th>What it holds</th></tr></thead>
+          <tbody>
+            <tr><td><code>pages/**/*.alpine</code></td><td>Routes. File path → URL. <code>[param]</code> segments are dynamic. See <a href="./routing.html">Routing</a>.</td></tr>
+            <tr><td><code>components/*.alpine</code></td><td>Reusable <code>.alpine</code> components embedded as <code>&lt;PascalCase /&gt;</code>. See <a href="./components.html">Components</a>.</td></tr>
+            <tr><td><code>server/api/*.ts</code></td><td>Typed API routes (<code>defineApexRoute</code>) and data resources (<code>defineResource</code>). REST + MCP. See <a href="./ai-native.html">AI-native</a>.</td></tr>
+            <tr><td><code>db/</code></td><td>Schema, <code>createDb</code>, and <code>db/migrations/*.sql</code>. See <a href="./data.html">Data</a>.</td></tr>
+            <tr><td><code>public/</code></td><td>Static assets copied verbatim into the build output.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">
+        <code>components/</code>, <code>db/</code>, and <code>public/</code> are optional — add them
+        when you need them (or generate files with <a href="./cli.html#make"><code>apex make</code></a>).
+      </p>
+
+      <h2 id="dev">Run the dev server <a class="anchor" href="#dev">#</a></h2>
+      <p>The scaffold wires two scripts. Start the standard dev server:</p>
+      <pre><code>npm run dev          <span class="c"># apex dev  → http://localhost:3000</span>
+npm run dev:islands  <span class="c"># apex dev --islands (static-first)</span></code></pre>
+      <p>
+        The dev server is Vite in middleware mode fronted by an <a href="https://github.com/unjs/h3">h3</a>
+        app. It server-renders every <code>.alpine</code> page, serves your <code>server/api/*</code>
+        routes at <code>/api/*</code>, and exposes their MCP tools at <code>/mcp</code>. Pass
+        <code>--port</code> to change the port.
+      </p>
+      <div class="callout">
+        <span class="h">Islands mode</span>
+        <p>
+          <code>apex dev --islands</code> renders pages static-first and hydrates interactive regions
+          individually, on a trigger — a page with no islands ships <em>zero</em> framework JS. See
+          <a href="./islands.html">Islands</a>.
+        </p>
+      </div>
+
+      <h2 id="first-edit">Your first edit <a class="anchor" href="#first-edit">#</a></h2>
+      <p>
+        Open <code>pages/index.alpine</code>. A page is one file: a server <code>loader()</code>,
+        an Alpine <code>&lt;template&gt;</code>, and scoped CSS. The <code>loader()</code> runs on
+        the server and its return value becomes the Alpine <code>x-data</code> scope — no fetch,
+        no boilerplate.
+      </p>
+      <p class="code-label">pages/index.alpine</p>
+      <pre><code>&lt;<span class="t">script</span> <span class="k">server</span> <span class="k">lang</span>=<span class="s">"ts"</span>&gt;
+  <span class="k">export function</span> loader() {
+    <span class="k">return</span> { title: <span class="s">'Welcome to Apex JS'</span> }
+  }
+&lt;/<span class="t">script</span>&gt;
+
+&lt;<span class="t">template</span> <span class="k">x-data</span>=<span class="s">"{ open: false }"</span>&gt;
+  &lt;<span class="t">main</span>&gt;
+    &lt;<span class="t">h1</span> <span class="k">x-text</span>=<span class="s">"title"</span>&gt;&lt;/<span class="t">h1</span>&gt;
+    &lt;<span class="t">button</span> <span class="k">@click</span>=<span class="s">"open = !open"</span>&gt;Toggle&lt;/<span class="t">button</span>&gt;
+    &lt;<span class="t">p</span> <span class="k">x-show</span>=<span class="s">"open"</span>&gt;Hydrated in the browser.&lt;/<span class="t">p</span>&gt;
+  &lt;/<span class="t">main</span>&gt;
+&lt;/<span class="t">template</span>&gt;
+
+&lt;<span class="t">style</span> <span class="k">scoped</span>&gt;
+  main { max-width: 40rem; margin: 4rem auto; }
+&lt;/<span class="t">style</span>&gt;</code></pre>
+      <p>
+        Change the <code>title</code> string and save — the browser updates on its own. The full
+        <code>.alpine</code> format (loader, template, scoped style, embedding) is covered in
+        <a href="./components.html">Components</a>.
+      </p>
+
+      <h2 id="hot-reload">Hot reload <a class="anchor" href="#hot-reload">#</a></h2>
+      <p>Dev reloads are automatic and scoped to what you changed:</p>
+      <ul>
+        <li><strong><code>.alpine</code> pages, components, and styles</strong> — a full page reload on save, so SSR output and hydration always match.</li>
+        <li><strong><code>server/api/*.ts</code> routes and resources</strong> — reloaded <em>per request</em>. Editing a handler, a Zod schema, or a resource takes effect on the next request, no dev-server restart <span class="pill">v0.1.4</span>.</li>
+      </ul>
+
+      <h2 id="lifecycle">The dev → build → deploy lifecycle <a class="anchor" href="#lifecycle">#</a></h2>
+      <p>One project, three commands, from local iteration to production:</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Stage</th><th>Command</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>Develop</td><td><code>apex dev</code></td><td>SSR + hydrate with hot reload; API + MCP live at <code>/api</code> and <code>/mcp</code>.</td></tr>
+            <tr><td>Build</td><td><code>apex build</code></td><td>Prerender pages + per-page client bundle → static <code>dist/</code>. <code>--islands</code> for zero-JS SSG; <code>--server</code> for a Node server.</td></tr>
+            <tr><td>Migrate</td><td><code>apex migrate</code></td><td>Apply <code>db/migrations/*.sql</code> (a deploy step for apps with a database).</td></tr>
+            <tr><td>Serve</td><td><code>apex start</code></td><td>Run the production Node server built by <code>apex build --server</code> (dynamic routes + API/MCP + DB).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The three build modes and hosting targets are covered in full on <a href="./deploy.html">Build &amp; deploy</a>.</p>
+
+      <h2 id="next">Next steps <a class="anchor" href="#next">#</a></h2>
+      <div class="card-grid cols-3">
+        <a class="card" href="./components.html"><span class="k">Author</span><h3>Components</h3><p>The <code>.alpine</code> format and embedding with props.</p></a>
+        <a class="card" href="./ai-native.html"><span class="k">Signature</span><h3>AI-native APIs</h3><p>REST + MCP from one route definition.</p></a>
+        <a class="card" href="./cli.html"><span class="k">Reference</span><h3>CLI</h3><p>Every command and flag.</p></a>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand-col">
+        <a class="brand" href="./index.html">
+          <svg class="peak" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="sun" cx="18" cy="6" r="2.4" />
+            <path d="M2 21 L9 8 L13 15 L16 10 L22 21 Z" />
+          </svg>
+          Apex&nbsp;JS
+        </a>
+        <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
+      </div>
+      <div class="links">
+        <a href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        <a href="./getting-started.html">Get started</a>
+        <a href="./ai-native.html">AI-native</a>
+        <a href="./cli.html">CLI</a>
+      </div>
+    </div>
+    <p class="foot-note">Apex&nbsp;JS · MIT · built by Andre Corugda · npm create apexjs@latest</p>
+  </div>
+</footer>
+
+<script>
+  document.documentElement.classList.add("js");
+  (function () {
+    var root = document.documentElement;
+    document.getElementById("themeToggle").addEventListener("click", function () {
+      var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
+      root.setAttribute("data-theme", dark ? "light" : "dark");
+    });
+  })();
+</script>
