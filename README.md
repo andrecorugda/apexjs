@@ -2,6 +2,8 @@
 
 > The full-stack meta-framework for Alpine.js. File-based routing, server-side rendering, API routes, and one CLI — powered by Vite and Node.
 
+**📖 Docs & demo: [andrecorugda.github.io/apexjs](https://andrecorugda.github.io/apexjs/)**
+
 **Apex is to Alpine what Nuxt is to Vue.** You already know the syntax: if you can write `x-data`, you can build a full-stack, server-rendered app — shipping a fraction of the JavaScript of a React framework.
 
 ```bash
