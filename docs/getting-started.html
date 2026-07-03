@@ -73,24 +73,25 @@
       </p>
 
       <h2 id="scaffold">Scaffold a project <a class="anchor" href="#scaffold">#</a></h2>
-      <p>The scaffolder is the entry point. It creates a ready-to-run app, installs dependencies, and inits git — all in one step:</p>
-      <pre><code>npm create apexjs@latest my-app
+      <p>Install the CLI once, then the whole lifecycle is <code>apex …</code>:</p>
+      <pre><code>npm i -g @apex-stack/core   <span class="c"># install the Apex CLI</span>
+apex new my-app             <span class="c"># scaffold, install deps, init git</span>
 cd my-app
-npm run dev</code></pre>
+apex dev</code></pre>
       <p class="muted">
-        Dependencies install automatically with your package manager (npm/pnpm/yarn/bun) and a git repo is
-        initialized — pass <code>--no-install</code> or <code>--no-git</code> to skip. <code>create-apexjs</code>
-        is the unscoped package behind <code>npm create apexjs</code>; the libraries it pulls in live under the
-        <code>@apex-stack/*</code> scope (<code>@apex-stack/core</code> is the CLI + runtime).
+        <code>apex new</code> installs dependencies with your package manager (npm/pnpm/yarn/bun) and initializes
+        git — pass <code>--no-install</code> or <code>--no-git</code> to skip. Rather not install globally? Use
+        <code>npm create apexjs@latest my-app</code> and run the CLI locally with <code>npm run dev</code> (or
+        <code>npx apex dev</code>). The libraries live under the <code>@apex-stack/*</code> scope
+        (<code>@apex-stack/core</code> is the CLI + runtime).
       </p>
       <div class="callout">
-        <span class="h">Running the apex CLI</span>
+        <span class="h">Global vs. local</span>
         <p>
-          By default <code>apex</code> is a <em>project</em> command (like <code>next</code> or <code>vite</code>),
-          so run it through your package manager — <code>npm run dev</code>, or <code>npx apex dev</code>. A bare
-          <code>apex</code> in your shell won't resolve unless you also install it globally:
+          With the global install, <code>apex</code> works in any project. Without it, <code>apex</code> is a
+          project-local binary (like <code>next</code> or <code>vite</code>) — run it via <code>npm run dev</code>
+          or <code>npx apex dev</code>. A bare <code>apex</code> only resolves once it's installed globally.
         </p>
-        <pre><code>npm i -g @apex-stack/core   <span class="c"># then `apex dev` works in any project</span></code></pre>
       </div>
       <figure>
         <img src="./assets/app-hello.png" loading="lazy"

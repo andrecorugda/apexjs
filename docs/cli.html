@@ -54,6 +54,7 @@
         <span class="k">On this page</span>
         <ul>
           <li><a href="#overview">Overview</a></li>
+          <li><a href="#new">apex new</a></li>
           <li><a href="#dev">apex dev</a></li>
           <li><a href="#build">apex build</a></li>
           <li><a href="#start">apex start</a></li>
@@ -66,13 +67,15 @@
 
       <h2 id="overview">Overview <a class="anchor" href="#overview">#</a></h2>
       <p>
-        <code>apex</code> ships with <code>@apex-stack/core</code>. In a scaffolded project it's wired to
-        npm scripts (<code>npm run dev</code>); you can also run it directly.
+        <code>apex</code> ships with <code>@apex-stack/core</code>. Install it globally
+        (<code>npm i -g @apex-stack/core</code>) and <code>apex</code> works in any project; otherwise it's a
+        project-local binary wired to npm scripts (<code>npm run dev</code>) or run via <code>npx apex</code>.
       </p>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Command</th><th>What it does</th></tr></thead>
           <tbody>
+            <tr><td><a href="#new"><code>apex new</code></a></td><td>Scaffold a new app, install dependencies, and init git.</td></tr>
             <tr><td><a href="#dev"><code>apex dev</code></a></td><td>Start the development server (SSR + hydrate, API + MCP, hot reload).</td></tr>
             <tr><td><a href="#build"><code>apex build</code></a></td><td>Prerender pages to deployable HTML + client bundles.</td></tr>
             <tr><td><a href="#start"><code>apex start</code></a></td><td>Run a production build made with <code>apex build --server</code>.</td></tr>
@@ -82,6 +85,24 @@
           </tbody>
         </table>
       </div>
+
+      <h2 id="new">apex new <a class="anchor" href="#new">#</a></h2>
+      <p>Scaffold a new Apex JS app in a new directory — then install dependencies and initialize a git repo.</p>
+      <pre><code>apex new [dir] [--no-install] [--no-git]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>dir</code> (positional)</td><td><code>apex-app</code></td><td>Target directory for the new app.</td></tr>
+            <tr><td><code>--no-install</code></td><td>installs</td><td>Skip installing dependencies.</td></tr>
+            <tr><td><code>--no-git</code></td><td>inits git</td><td>Skip initializing a git repository.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">
+        No global install? <code>npm create apexjs@latest my-app</code> runs the same scaffolder via
+        <code>npx</code>, then use <code>npm run dev</code>.
+      </p>
 
       <h2 id="dev">apex dev <a class="anchor" href="#dev">#</a></h2>
       <p>Start the Apex JS development server.</p>

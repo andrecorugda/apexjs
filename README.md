@@ -7,13 +7,14 @@
 **Apex is to Alpine what Next.js is to React.** You already know the syntax: if you can write `x-data`, you can build a full-stack, server-rendered app — shipping a fraction of the JavaScript of a React framework.
 
 ```bash
-npm create apexjs@latest my-app   # scaffolds, installs deps, inits git
+npm i -g @apex-stack/core   # install the Apex CLI (once)
+apex new my-app             # scaffold, install deps, init git
 cd my-app
-npm run dev                        # → http://localhost:3000
+apex dev                    # → http://localhost:3000
 ```
 
-> `apex` is a project command (like `next` or `vite`) — run it via `npm run dev` or `npx apex`. Prefer a
-> global command? `npm i -g @apex-stack/core`, then `apex dev` works in any project.
+> No global install? `npm create apexjs@latest my-app`, then `npm run dev` — same result using the
+> project-local CLI (`apex` then runs via `npm run dev` / `npx apex`, like `next` or `vite`).
 
 ## Why Apex
 

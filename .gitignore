@@ -9,3 +9,4 @@ playwright-report
 *.db
 *.db-shm
 *.db-wal
+packages/apexjs/templates/

@@ -47,7 +47,7 @@
           an MCP tool your AI can call. No extra library.
         </p>
         <div class="cta-row">
-          <span class="terminal"><span class="prompt">$</span> npm create apexjs@latest</span>
+          <span class="terminal"><span class="prompt">$</span> npm i -g @apex-stack/core</span>
           <a class="btn" href="./getting-started.html">Get started →</a>
           <a class="btn ghost" href="https://github.com/andrecorugda/apexjs">GitHub</a>
         </div>
@@ -366,16 +366,17 @@ pages/blog/[slug].alpine  → <span class="s">/blog/:slug</span></code></pre>
         <p class="eyebrow">Quickstart</p>
         <h2>Scaffold and run in under a minute.</h2>
       </div>
-      <pre><code><span class="c"># scaffold — dependencies install and git inits automatically</span>
-npm create apexjs@latest my-app
+      <pre><code><span class="c"># install the CLI once, then use `apex` everywhere</span>
+npm i -g @apex-stack/core
+apex new my-app        <span class="c"># scaffold + install deps + git init</span>
 cd my-app
-npm run dev          <span class="c"># http://localhost:3000</span>
-npm run dev:islands  <span class="c"># static-first islands mode</span></code></pre>
+apex dev               <span class="c"># http://localhost:3000</span>
+apex dev --islands     <span class="c"># static-first islands mode</span></code></pre>
       <p class="muted">
-        The scaffolder installs everything and sets up git for you, then <code>npm run dev</code> starts the
-        server. It ships a server-rendered page (<code>pages/index.alpine</code>) and an API route that is
-        also an MCP tool (<code>server/api/hello.ts</code>). <code>apex</code> is a project command — run it via
-        <code>npm run dev</code> or <code>npx apex</code>, not a bare <code>apex</code>.
+        <code>apex new</code> installs everything and sets up git for you; the app ships a server-rendered
+        page (<code>pages/index.alpine</code>) and an API route that is also an MCP tool
+        (<code>server/api/hello.ts</code>). Don't want a global install? Run
+        <code>npm create apexjs@latest my-app</code> and use <code>npm run dev</code> — same result, local CLI.
       </p>
 
       <div class="card-grid cols-3">

@@ -1,7 +1,7 @@
 {
   "name": "@apex-stack/core",
-  "version": "0.1.8",
-  "description": "The full-stack meta-framework for Alpine.js — CLI and runtime",
+  "version": "0.1.10",
+  "description": "The full-stack meta-framework for Alpine.js \u2014 CLI and runtime",
   "type": "module",
   "license": "MIT",
   "author": "Andre Corugda",
@@ -36,10 +36,11 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "templates"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "node scripts/copy-templates.mjs && tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit"
   },
