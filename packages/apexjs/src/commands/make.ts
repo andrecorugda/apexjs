@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { defineCommand } from 'citty'
 
-type Kind = 'page' | 'component' | 'api' | 'store'
+type Kind = 'page' | 'component' | 'api' | 'store' | 'layout'
 
 /** Components are referenced as `<PascalCase/>`, so their file must be PascalCase. */
 function pascalCase(s: string): string {
@@ -37,6 +37,27 @@ function componentTemplate(): string {
 
 <style scoped>
   button { cursor: pointer; }
+</style>
+`
+}
+
+function layoutTemplate(): string {
+  return `<template>
+  <header class="site-header">
+    <nav><a href="/">Home</a></nav>
+  </header>
+  <main>
+    <slot></slot>
+  </main>
+  <footer class="site-footer">
+    <p>Built with Apex JS</p>
+  </footer>
+</template>
+
+<style scoped>
+  .site-header { padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
+  main { max-width: 60rem; margin: 0 auto; padding: 2rem 1.5rem; }
+  .site-footer { padding: 1.5rem; border-top: 1px solid #e5e7eb; color: #6b7280; }
 </style>
 `
 }
@@ -80,20 +101,22 @@ function plan(kind: Kind, name: string, root: string): { path: string; contents:
       return { path: join(root, 'server', 'api', `${name}.ts`), contents: apiTemplate(name) }
     case 'store':
       return { path: join(root, 'stores', `${name}.ts`), contents: storeTemplate(name) }
+    case 'layout':
+      return { path: join(root, 'layouts', `${name}.alpine`), contents: layoutTemplate() }
   }
 }
 
 export const makeCommand = defineCommand({
-  meta: { name: 'make', description: 'Generate a page, component, API route, or store' },
+  meta: { name: 'make', description: 'Generate a page, component, API route, store, or layout' },
   args: {
-    kind: { type: 'positional', required: true, description: 'page | component | api | store' },
+    kind: { type: 'positional', required: true, description: 'page | component | api | store | layout' },
     name: { type: 'positional', required: true, description: 'Name (about, Counter, todos, …)' },
     root: { type: 'string', description: 'Project root', default: '.' },
   },
   run({ args }) {
     const kind = args.kind as Kind
-    if (kind !== 'page' && kind !== 'component' && kind !== 'api' && kind !== 'store') {
-      console.error(`\n  Unknown type "${args.kind}". Use: page | component | api | store\n`)
+    if (kind !== 'page' && kind !== 'component' && kind !== 'api' && kind !== 'store' && kind !== 'layout') {
+      console.error(`\n  Unknown type "${args.kind}". Use: page | component | api | store | layout\n`)
       process.exit(1)
     }
 

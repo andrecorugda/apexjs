@@ -1,4 +1,4 @@
-import { type ComponentRegistry, renderComponent, stateIsland } from '@apex-stack/kit'
+import { type ComponentRegistry, renderComponent, renderFragment, stateIsland } from '@apex-stack/kit'
 import { type LoadedStore, storesInitialState } from '../stores/loader.js'
 
 /** The shape a compiled `.alpine` SSR module exports (see @apex-stack/vite). */
@@ -23,6 +23,8 @@ export interface PageModule {
   rootXData: string | null
   /** Compiled x-data factory (present when the page has a `<script client>`) — resolves imports at SSR. */
   rootData?: () => Record<string, unknown>
+  /** Layout name to wrap this page in; `false` opts out. Defaults to `default` if it exists. */
+  layout?: string | false
   componentId: string
   scopeId: string
   css: string
@@ -68,6 +70,8 @@ export interface RenderPageOptions {
   stores?: LoadedStore[]
   /** A global stylesheet module id (e.g. `/app.css`) to import — carries Tailwind + shared styles. */
   appCss?: string
+  /** Available layout names (from `layouts/*.alpine`) — enables page-wrapping layouts. */
+  layouts?: string[]
 }
 
 /**
@@ -99,10 +103,35 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     authoredDefaults: mod.rootData ? mod.rootData() : undefined,
   })
 
+  // Wrap the page in a layout (layouts/<name>.alpine) — its `<slot></slot>` is
+  // replaced by the rendered page. `export const layout` on the page overrides;
+  // `false` opts out; otherwise `default` is used when it exists.
+  const available = opts.layouts ?? []
+  const layoutName =
+    mod.layout === false
+      ? null
+      : typeof mod.layout === 'string'
+        ? mod.layout
+        : available.includes('default')
+          ? 'default'
+          : null
+
+  let body = html
+  let layoutCss = ''
+  if (layoutName && available.includes(layoutName)) {
+    const layoutMod = await opts.loadModule(`/layouts/${layoutName}.alpine`)
+    const chrome = renderFragment(layoutMod.template, {}, layoutMod.scopeId, opts.registry)
+    // Function replacement so `$` in the page HTML isn't treated as a special token.
+    body = /<slot\b[^>]*>[\s\S]*?<\/slot>/.test(chrome)
+      ? chrome.replace(/<slot\b[^>]*>[\s\S]*?<\/slot>/, () => html)
+      : chrome + html
+    layoutCss = layoutMod.css
+  }
+
   const doc = shell({
-    body: html,
+    body,
     island: stateIsland(mod.componentId, loaderData),
-    css: mod.css + (opts.componentCss ?? ''),
+    css: mod.css + layoutCss + (opts.componentCss ?? ''),
     pageId: opts.pageId,
     clientHref: opts.clientHref,
     storeIds: stores.map((s) => s.id),

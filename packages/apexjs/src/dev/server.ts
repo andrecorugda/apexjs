@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { createServer as createHttpServer, type Server } from 'node:http'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
@@ -142,6 +142,12 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           (id) => ssrLoad(id) as never,
         )
         const stores = await loadStores(options.root, (id) => ssrLoad(id) as never)
+        const layoutsDir = join(options.root, 'layouts')
+        const layouts = existsSync(layoutsDir)
+          ? readdirSync(layoutsDir)
+              .filter((f) => f.endsWith('.alpine'))
+              .map((f) => f.replace(/\.alpine$/, ''))
+          : []
         const render = options.islands ? renderIslandsPage : renderPage
         const html = await render({
           loadModule: (id) => ssrLoad(id) as unknown as Promise<PageModule>,
@@ -152,6 +158,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           componentCss,
           stores,
           appCss,
+          layouts,
           transformHtml: (u, doc) => vite.transformIndexHtml(u, doc),
         })
         setResponseHeader(event, 'Content-Type', 'text/html')
