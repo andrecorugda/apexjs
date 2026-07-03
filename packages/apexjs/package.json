@@ -1,0 +1,42 @@
+{
+  "name": "apexjs",
+  "version": "0.0.0",
+  "description": "The full-stack meta-framework for Alpine.js — CLI and runtime",
+  "type": "module",
+  "license": "MIT",
+  "author": "Andre Corugda",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrecorugda/apexjs.git",
+    "directory": "packages/apexjs"
+  },
+  "keywords": ["alpine", "alpinejs", "framework", "ssr", "apex", "apexjs"],
+  "bin": {
+    "apex": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@apexjs/kit": "workspace:*",
+    "@apexjs/vite": "workspace:*",
+    "citty": "^0.1.6",
+    "h3": "^1.13.0",
+    "vite": "^6.0.7"
+  },
+  "peerDependencies": {
+    "alpinejs": "^3.14.0"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

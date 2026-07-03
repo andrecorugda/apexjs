@@ -1,0 +1,37 @@
+# Apex JS
+
+> The full-stack meta-framework for Alpine.js. File-based routing, server-side rendering, API routes, and one CLI — powered by Vite and Node.
+
+**Apex is to Alpine what Nuxt is to Vue.** You already know the syntax: if you can write `x-data`, you can build a full-stack, server-rendered app — shipping a fraction of the JavaScript of a React framework.
+
+```bash
+npx create-apexjs@latest my-app
+cd my-app
+apex dev
+```
+
+## Why Apex
+
+Every major reactive library has a meta-framework — React has Next, Vue has Nuxt, Svelte has SvelteKit. Alpine.js, despite its huge mindshare, has none. Apex fills that gap:
+
+- **HTML-first, JS-light.** Server-render your pages to real HTML; Alpine hydrates only what needs interactivity.
+- **Zero new component model.** An `.alpine` single-file component is just HTML, a server `loader()`, and scoped CSS.
+- **Node-native.** No PHP required — bring Alpine's DX to the entire JavaScript ecosystem.
+- **TypeScript by default.** Strict types end to end.
+
+## Packages
+
+| Package | Description |
+| --- | --- |
+| [`apexjs`](./packages/apexjs) | The CLI and runtime (`apex dev`, `apex build`) |
+| [`create-apexjs`](./packages/create-apexjs) | Project scaffolder |
+| [`@apexjs/kit`](./packages/kit) | SFC parser, SSR renderer, and client runtime |
+| [`@apexjs/vite`](./packages/vite) | Vite plugin for `.alpine` files |
+
+## Status
+
+Early development — Phase 0 (SSR + HMR spike). Not yet production-ready.
+
+## License
+
+MIT © Andre Corugda

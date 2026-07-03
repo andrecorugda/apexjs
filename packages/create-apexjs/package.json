@@ -1,0 +1,29 @@
+{
+  "name": "create-apexjs",
+  "version": "0.0.0",
+  "description": "Scaffold a new Apex JS app",
+  "type": "module",
+  "license": "MIT",
+  "author": "Andre Corugda",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrecorugda/apexjs.git",
+    "directory": "packages/create-apexjs"
+  },
+  "keywords": ["alpine", "alpinejs", "apex", "apexjs", "create"],
+  "bin": {
+    "create-apexjs": "./dist/index.js"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "citty": "^0.1.6"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

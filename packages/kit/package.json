@@ -1,0 +1,40 @@
+{
+  "name": "@apexjs/kit",
+  "version": "0.0.0",
+  "description": "Apex JS core — .alpine SFC parser, SSR renderer, and client runtime",
+  "type": "module",
+  "license": "MIT",
+  "author": "Andre Corugda",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrecorugda/apexjs.git",
+    "directory": "packages/kit"
+  },
+  "keywords": ["alpine", "alpinejs", "ssr", "apex", "apexjs"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client/runtime.d.ts",
+      "import": "./dist/client/runtime.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "devalue": "^5.1.1",
+    "htmlparser2": "^10.0.0",
+    "linkedom": "^0.18.6",
+    "postcss": "^8.4.49",
+    "postcss-selector-parser": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

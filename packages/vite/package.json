@@ -1,0 +1,35 @@
+{
+  "name": "@apexjs/vite",
+  "version": "0.0.0",
+  "description": "Vite plugin for Apex JS .alpine single-file components",
+  "type": "module",
+  "license": "MIT",
+  "author": "Andre Corugda",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrecorugda/apexjs.git",
+    "directory": "packages/vite"
+  },
+  "keywords": ["alpine", "alpinejs", "vite", "vite-plugin", "apex", "apexjs"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@apexjs/kit": "workspace:*"
+  },
+  "peerDependencies": {
+    "vite": "^5.0.0 || ^6.0.0"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}
