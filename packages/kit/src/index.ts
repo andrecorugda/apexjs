@@ -15,3 +15,4 @@ export type {
   RenderComponentResult,
 } from './render/renderComponent.js'
 export { serializeState, stateIsland } from './render/island.js'
+export { scopeCss } from './style/scopedCss.js'
