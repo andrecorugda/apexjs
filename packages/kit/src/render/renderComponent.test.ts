@@ -5,7 +5,8 @@ import { renderComponent } from './renderComponent.js'
 function render(src: string, loaderData: Record<string, unknown> = {}) {
   const descriptor = parseAlpineFile(src, 'test.alpine')
   return renderComponent({
-    descriptor,
+    template: descriptor.template?.content ?? '',
+    rootXData: descriptor.template?.attrs['x-data'],
     componentId: 'c0',
     scopeId: 'data-apex-test',
     loaderData,

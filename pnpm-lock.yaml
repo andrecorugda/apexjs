@@ -13,7 +13,10 @@ importers:
         version: 1.9.4
       '@changesets/cli':
         specifier: ^2.27.11
-        version: 2.31.0
+        version: 2.31.0(@types/node@22.20.0)
+      '@types/node':
+        specifier: ^22
+        version: 22.20.0
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(postcss@8.5.16)(typescript@5.9.3)
@@ -22,7 +25,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^2.1.8
-        version: 2.1.9
+        version: 2.1.9(@types/node@22.20.0)
 
   packages/apexjs:
     dependencies:
@@ -43,7 +46,7 @@ importers:
         version: 1.15.11
       vite:
         specifier: ^6.0.7
-        version: 6.4.3
+        version: 6.4.3(@types/node@22.20.0)
 
   packages/create-apexjs:
     dependencies:
@@ -76,7 +79,7 @@ importers:
         version: link:../kit
       vite:
         specifier: ^5.0.0 || ^6.0.0
-        version: 6.4.3
+        version: 6.4.3(@types/node@22.20.0)
 
   playground/spike:
     dependencies:
@@ -837,6 +840,9 @@ packages:
   '@types/node@12.20.55':
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
 
+  '@types/node@22.20.0':
+    resolution: {integrity: sha512-QWlFW2wf3nTjC13/DqRnBpR4ZO36VJH/JVBkA/vcnmbTBNQIlnObqyqZE1tUR7+Ni23Lda8R1BxMfbXRpCUx5g==}
+
   '@vitest/expect@2.1.9':
     resolution: {integrity: sha512-UJCIkTBenHeKT1TTlKMJWy1laZewsRIzYighyYiJKZreqtdxSos/S1t+ktRMQWu2CKqaarrkeszJx1cgC5tGZw==}
 
@@ -1536,6 +1542,9 @@ packages:
   uncrypto@0.1.3:
     resolution: {integrity: sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q==}
 
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
   universalify@0.1.2:
     resolution: {integrity: sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==}
     engines: {node: '>= 4.0.0'}
@@ -1722,7 +1731,7 @@ snapshots:
     dependencies:
       '@changesets/types': 6.1.0
 
-  '@changesets/cli@2.31.0':
+  '@changesets/cli@2.31.0(@types/node@22.20.0)':
     dependencies:
       '@changesets/apply-release-plan': 7.1.1
       '@changesets/assemble-release-plan': 6.0.10
@@ -1738,7 +1747,7 @@ snapshots:
       '@changesets/should-skip-package': 0.1.2
       '@changesets/types': 6.1.0
       '@changesets/write': 0.4.0
-      '@inquirer/external-editor': 1.0.3
+      '@inquirer/external-editor': 1.0.3(@types/node@22.20.0)
       '@manypkg/get-packages': 1.1.3
       ansi-colors: 4.1.3
       enquirer: 2.4.1
@@ -2061,10 +2070,12 @@ snapshots:
   '@esbuild/win32-x64@0.27.7':
     optional: true
 
-  '@inquirer/external-editor@1.0.3':
+  '@inquirer/external-editor@1.0.3(@types/node@22.20.0)':
     dependencies:
       chardet: 2.2.0
       iconv-lite: 0.7.2
+    optionalDependencies:
+      '@types/node': 22.20.0
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -2193,6 +2204,10 @@ snapshots:
 
   '@types/node@12.20.55': {}
 
+  '@types/node@22.20.0':
+    dependencies:
+      undici-types: 6.21.0
+
   '@vitest/expect@2.1.9':
     dependencies:
       '@vitest/spy': 2.1.9
@@ -2200,13 +2215,13 @@ snapshots:
       chai: 5.3.3
       tinyrainbow: 1.2.0
 
-  '@vitest/mocker@2.1.9(vite@5.4.21)':
+  '@vitest/mocker@2.1.9(vite@5.4.21(@types/node@22.20.0))':
     dependencies:
       '@vitest/spy': 2.1.9
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 5.4.21
+      vite: 5.4.21(@types/node@22.20.0)
 
   '@vitest/pretty-format@2.1.9':
     dependencies:
@@ -2904,17 +2919,19 @@ snapshots:
 
   uncrypto@0.1.3: {}
 
+  undici-types@6.21.0: {}
+
   universalify@0.1.2: {}
 
   util-deprecate@1.0.2: {}
 
-  vite-node@2.1.9:
+  vite-node@2.1.9(@types/node@22.20.0):
     dependencies:
       cac: 6.7.14
       debug: 4.4.3
       es-module-lexer: 1.7.0
       pathe: 1.1.2
-      vite: 5.4.21
+      vite: 5.4.21(@types/node@22.20.0)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -2926,15 +2943,16 @@ snapshots:
       - supports-color
       - terser
 
-  vite@5.4.21:
+  vite@5.4.21(@types/node@22.20.0):
     dependencies:
       esbuild: 0.21.5
       postcss: 8.5.16
       rollup: 4.62.2
     optionalDependencies:
+      '@types/node': 22.20.0
       fsevents: 2.3.3
 
-  vite@6.4.3:
+  vite@6.4.3(@types/node@22.20.0):
     dependencies:
       esbuild: 0.25.12
       fdir: 6.5.0(picomatch@4.0.5)
@@ -2943,12 +2961,13 @@ snapshots:
       rollup: 4.62.2
       tinyglobby: 0.2.17
     optionalDependencies:
+      '@types/node': 22.20.0
       fsevents: 2.3.3
 
-  vitest@2.1.9:
+  vitest@2.1.9(@types/node@22.20.0):
     dependencies:
       '@vitest/expect': 2.1.9
-      '@vitest/mocker': 2.1.9(vite@5.4.21)
+      '@vitest/mocker': 2.1.9(vite@5.4.21(@types/node@22.20.0))
       '@vitest/pretty-format': 2.1.9
       '@vitest/runner': 2.1.9
       '@vitest/snapshot': 2.1.9
@@ -2964,9 +2983,11 @@ snapshots:
       tinyexec: 0.3.2
       tinypool: 1.1.1
       tinyrainbow: 1.2.0
-      vite: 5.4.21
-      vite-node: 2.1.9
+      vite: 5.4.21(@types/node@22.20.0)
+      vite-node: 2.1.9(@types/node@22.20.0)
       why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@types/node': 22.20.0
     transitivePeerDependencies:
       - less
       - lightningcss

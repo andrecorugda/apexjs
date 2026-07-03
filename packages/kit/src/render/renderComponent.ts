@@ -1,5 +1,4 @@
 import { parseHTML } from 'linkedom'
-import type { AlpineDescriptor } from '../parse/parseAlpineFile.js'
 import { applyBinding, resolveBindTarget } from './bindings.js'
 import { evaluate } from './evaluator.js'
 import { parseForExpression, toIterablePairs } from './forExpression.js'
@@ -7,7 +6,10 @@ import { createMagics } from './magics.js'
 import type { ScopeLayer } from './scope.js'
 
 export interface RenderComponentInput {
-  descriptor: AlpineDescriptor
+  /** The SFC template's inner HTML (the content of the top-level <template>). */
+  template: string
+  /** The authored root `x-data` expression, if any (from `<template x-data="...">`). */
+  rootXData?: string | null
   /** Stable component id, e.g. `c0`. Used for Alpine.data name + state island. */
   componentId: string
   /** Scoped-CSS attribute name, e.g. `data-apex-a1b2c3`. */
@@ -39,12 +41,11 @@ const SSR_IGNORED_PREFIXES = ['@', 'x-on:']
  * directive attribute in place for Alpine to pick up on boot.
  */
 export function renderComponent(input: RenderComponentInput): RenderComponentResult {
-  const { descriptor, componentId, scopeId, loaderData } = input
-  const templateSrc = descriptor.template?.content ?? ''
+  const { template, rootXData, componentId, scopeId, loaderData } = input
 
   // linkedom parses literally (no HTML5 tree construction), so `document.body`
   // is only populated when given a full <html><body> wrapper.
-  const { document } = parseHTML(`<!DOCTYPE html><html><body>${templateSrc}</body></html>`)
+  const { document } = parseHTML(`<!DOCTYPE html><html><body>${template}</body></html>`)
   const body = document.body
 
   // Root wrapper hosting the component's x-data reference.
@@ -54,7 +55,7 @@ export function renderComponent(input: RenderComponentInput): RenderComponentRes
   while (body.firstChild) root.appendChild(body.firstChild)
 
   // Merge authored x-data defaults (evaluated) under the loader data.
-  const authoredExpr = descriptor.template?.attrs['x-data']
+  const authoredExpr = rootXData ?? undefined
   const authoredDefaults =
     authoredExpr && authoredExpr.trim()
       ? ((evaluate(authoredExpr, [{}]) as Record<string, unknown>) ?? {})

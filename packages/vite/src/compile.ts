@@ -22,7 +22,7 @@ export interface CompileResult {
 export function compileAlpine(
   descriptor: AlpineDescriptor,
   filePath: string,
-  opts: { ssr: boolean },
+  opts: { ssr: boolean; clientRuntime?: string },
 ): CompileResult {
   const { componentId, scopeId } = computeIds(filePath)
 
@@ -36,9 +36,11 @@ export function compileAlpine(
       ? loaderCode
       : 'export const loader = () => ({})'
 
+    const rootXData = descriptor.template?.attrs['x-data'] ?? null
     const code = [
       loaderExport,
       `export const template = ${JSON.stringify(descriptor.template?.content ?? '')}`,
+      `export const rootXData = ${JSON.stringify(rootXData)}`,
       `export const componentId = ${JSON.stringify(componentId)}`,
       `export const scopeId = ${JSON.stringify(scopeId)}`,
       `export const css = ${JSON.stringify(scopedCssBlocks)}`,
@@ -49,8 +51,9 @@ export function compileAlpine(
 
   // Client module: never includes <script server> code.
   const authoredExpr = descriptor.template?.attrs['x-data']?.trim() || '{}'
+  const runtime = opts.clientRuntime ?? '@apexjs/kit/client'
   const code = [
-    `import { registerApexComponent } from '@apexjs/kit/client'`,
+    `import { registerApexComponent } from ${JSON.stringify(runtime)}`,
     `registerApexComponent(${JSON.stringify(componentId)}, () => (${authoredExpr}))`,
     `if (import.meta.hot) import.meta.hot.accept()`,
   ].join('\n')

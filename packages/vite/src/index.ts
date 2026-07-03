@@ -2,11 +2,14 @@ import { parseAlpineFile } from '@apexjs/kit'
 import { type Plugin, transformWithEsbuild } from 'vite'
 import { compileAlpine } from './compile.js'
 
-const ALPINE_RE = /\.alpine$/
-
+// Match `.alpine`, tolerating Vite's query suffixes (?import, ?v=, ?t=, …).
 export interface ApexPluginOptions {
-  /** File extension handled by the plugin. Defaults to `.alpine`. */
-  include?: RegExp
+  /**
+   * The module specifier the generated client module imports the runtime from.
+   * Defaults to `@apexjs/kit/client`; the `apexjs` CLI overrides this to
+   * `apexjs/client` so user apps only need `apexjs` installed.
+   */
+  clientRuntime?: string
 }
 
 /**
@@ -19,25 +22,32 @@ export interface ApexPluginOptions {
  * milestone).
  */
 export function apex(options: ApexPluginOptions = {}): Plugin {
-  const include = options.include ?? ALPINE_RE
+  const clientRuntime = options.clientRuntime ?? '@apexjs/kit/client'
 
   return {
     name: 'apexjs',
     async transform(code, id, transformOptions) {
-      if (!include.test(id)) return
-      const descriptor = parseAlpineFile(code, id)
-      const { code: generated } = compileAlpine(descriptor, id, {
+      // Skip Vite virtual modules (\0-prefixed, e.g. html-proxy blocks).
+      if (id.includes('\0')) return
+      // Match the real file, ignoring any query suffix (?import, ?v=, …).
+      const filePath = id.split('?', 1)[0] as string
+      if (!filePath.endsWith('.alpine')) return
+
+      const descriptor = parseAlpineFile(code, filePath)
+      const { code: generated } = compileAlpine(descriptor, filePath, {
         ssr: transformOptions?.ssr === true,
+        clientRuntime,
       })
-      // Transpile any TS (loader body / authored x-data) to JS.
-      const result = await transformWithEsbuild(generated, id, {
+      // Transpile any TS (loader body / authored x-data) to JS. Use the clean
+      // file path as the esbuild filename — a queried id can carry null bytes.
+      const result = await transformWithEsbuild(generated, filePath, {
         loader: 'ts',
         sourcemap: true,
       })
       return { code: result.code, map: result.map }
     },
     handleHotUpdate(ctx) {
-      if (!include.test(ctx.file)) return
+      if (!ctx.file.endsWith('.alpine')) return
       ctx.server.ws.send({ type: 'full-reload' })
       return []
     },
