@@ -1,7 +1,7 @@
 <script server lang="ts">
   import { db, schema } from '../db/index.js'
 
-  // Runs on the server. The list below is rendered from the database on first paint.
+  // The AI-native card's list is rendered on the server from SQLite.
   export async function loader() {
     const features = await db.select().from(schema.features)
     return { features }
@@ -9,20 +9,8 @@
 </script>
 
 <template x-data="{
-  filter: '',
   newName: '',
-  async add() {
-    if (!this.newName.trim()) return
-    const res = await fetch('/api/features', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name: this.newName.trim(), tag: 'you' }),
-    })
-    this.features.push(await res.json())
-    this.newName = ''
-  },
   async addByAi() {
-    // The exact same endpoint an AI assistant calls via the MCP tool `features_create`.
     const res = await fetch('/api/features', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -32,87 +20,176 @@
   }
 }">
   <main>
-    <header>
-      <p class="eyebrow">Apex JS — live showcase</p>
-      <h1>One app. Server-rendered, interactive, and <span class="ai">AI-native</span>.</h1>
-      <p class="lede">
-        This whole page is server-rendered from a SQLite database, hydrated by Alpine,
-        and every action here is <strong>also an MCP tool</strong> an assistant can call.
-      </p>
+    <header class="hero">
+      <p class="eyebrow">Apex JS · what it can do</p>
+      <h1>Scroll through the framework.</h1>
+      <p class="lede">Six capabilities, one Alpine app. Each is real — server-rendered, then hydrated.</p>
+      <p class="scroll-cue">↓ scroll</p>
     </header>
 
-    <section class="panel">
-      <div class="row">
-        <h2>Features <span class="count" x-text="features.filter(f => f.name.toLowerCase().includes(filter.toLowerCase())).length + ' / ' + features.length"></span></h2>
-        <input class="filter" x-model="filter" placeholder="Filter…" />
+    <section class="card">
+      <span class="num">01</span>
+      <div class="card-body">
+        <p class="kicker">Server-side rendering</p>
+        <h2>Real HTML on first paint.</h2>
+        <p>A <code>loader()</code> runs on the server; the page arrives fully rendered — fast and SEO-ready, no blank screen.</p>
       </div>
-
-      <ul class="list">
-        <template x-for="f in features" :key="f.id">
-          <li class="card" :class="'tag-' + f.tag" x-show="f.name.toLowerCase().includes(filter.toLowerCase())">
-            <span class="name" x-text="f.name"></span>
-            <span class="badge" x-text="f.tag"></span>
-          </li>
-        </template>
-      </ul>
-
-      <form class="add" @submit.prevent="add()">
-        <input x-model="newName" placeholder="Add a feature…" />
-        <button type="submit">Add</button>
-      </form>
-      <p class="hint">Rendered on the server; new rows persist to the database via <code>POST /api/features</code>.</p>
+      <pre class="snippet"><span class="c">&lt;script server&gt;</span>
+  export function <span class="fn">loader</span>() {
+    return { posts: <span class="fn">db</span>.select().from(posts) }
+  }
+<span class="c">&lt;/script&gt;</span></pre>
     </section>
 
-    <section class="panel ai-panel">
-      <h2>🤖 This app is AI-native</h2>
-      <p>
-        The list above comes from one <code>defineResource('features', …)</code>. That single definition
-        exposes REST endpoints <em>and</em> MCP tools at <code>/mcp</code> — no extra library:
-      </p>
-      <ul class="tools">
-        <li><code>features_list</code></li>
-        <li><code>features_create</code></li>
-        <li><code>features_get</code></li>
-        <li><code>features_update</code></li>
-        <li><code>features_delete</code></li>
-      </ul>
-      <button class="ai-btn" @click="addByAi()">Simulate an AI calling <code>features_create</code></button>
-      <p class="hint">Point Claude at <code>/mcp</code> and it can read and write the same data you see.</p>
+    <section class="card">
+      <span class="num">02</span>
+      <div class="card-body">
+        <p class="kicker light">Islands</p>
+        <h2>Zero JavaScript by default.</h2>
+        <p>Static-first pages. Interactive regions hydrate only when needed — some pages ship no framework JS until you scroll.</p>
+      </div>
+      <pre class="snippet"><span class="c">&lt;!-- wakes on scroll --&gt;</span>
+&lt;section <span class="at">x-data</span>=<span class="s">"{ n: 0 }"</span> <span class="at">client:visible</span>&gt;
+  &lt;button <span class="at">@click</span>=<span class="s">"n++"</span> <span class="at">x-text</span>=<span class="s">"n"</span>&gt;&lt;/button&gt;
+&lt;/section&gt;</pre>
     </section>
+
+    <section class="card">
+      <span class="num">03</span>
+      <div class="card-body">
+        <p class="kicker">Components</p>
+        <h2>Reusable pieces, with props.</h2>
+        <p>Write a component once, drop it in anywhere. Props pass straight through — statically or bound.</p>
+      </div>
+      <pre class="snippet">&lt;<span class="cm">Counter</span> <span class="at">start</span>=<span class="s">"5"</span> <span class="at">label</span>=<span class="s">"Hits"</span> /&gt;
+&lt;<span class="cm">Counter</span> <span class="at">:start</span>=<span class="s">"user.score"</span> /&gt;</pre>
+    </section>
+
+    <section class="card">
+      <span class="num">04</span>
+      <div class="card-body">
+        <p class="kicker">File-based routing</p>
+        <h2>Your files are your routes.</h2>
+        <p>Drop a file in <code>pages/</code>. Dynamic segments, index routes, and 404s — all from the folder structure.</p>
+      </div>
+      <pre class="snippet">pages/index.alpine        <span class="c">→  /</span>
+pages/about.alpine        <span class="c">→  /about</span>
+pages/blog/[slug].alpine  <span class="c">→  /blog/:slug</span></pre>
+    </section>
+
+    <section class="card">
+      <span class="num">05</span>
+      <div class="card-body">
+        <p class="kicker">Data · any database</p>
+        <h2>One table → full CRUD.</h2>
+        <p>One definition gives you list / get / create / update / delete — over SQLite, Turso, Supabase, Neon, or embedded Postgres.</p>
+      </div>
+      <pre class="snippet">export default <span class="fn">defineResource</span>(<span class="s">'features'</span>, {
+  db, table: features,
+  insert: { name: <span class="fn">z</span>.string() },
+})</pre>
+    </section>
+
+    <section class="card live">
+      <span class="num alpen">06</span>
+      <div class="card-body">
+        <p class="kicker ai">AI-native</p>
+        <h2>Your API is an MCP&nbsp;tool.</h2>
+        <p>That same <code>defineResource</code> is also live at <code>/mcp</code>. The list below is server-rendered; the button calls the exact endpoint an assistant would.</p>
+
+        <ul class="chips">
+          <template x-for="f in features" :key="f.id">
+            <li class="chip" :class="'tag-' + f.tag"><span x-text="f.name"></span></li>
+          </template>
+        </ul>
+
+        <button class="ai-btn" @click="addByAi()">🤖 Simulate an AI calling <code>features_create</code></button>
+        <p class="tools">features_list · features_create · features_get · features_update · features_delete</p>
+      </div>
+    </section>
+
+    <footer class="end">
+      <p>Server-rendered. Interactive. AI-native.</p>
+      <code>npm create apexjs@latest</code>
+    </footer>
   </main>
 </template>
 
 <style scoped>
-  :root { color-scheme: light dark; }
-  body { margin: 0; background: #0a0f1c; color: #eaf1f9; }
-  main {
-    max-width: 46rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem;
-    font-family: ui-sans-serif, system-ui, sans-serif;
+  html { background: #0b1120; }
+  body {
+    margin: 0;
+    color: #eef3fb;
+    background:
+      radial-gradient(1200px 700px at 70% -5%, #17233f 0%, transparent 55%),
+      #0b1120;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
   }
-  .eyebrow { font-family: ui-monospace, monospace; letter-spacing: .2em; text-transform: uppercase; font-size: .72rem; color: #56c1e8; margin: 0 0 .8rem; }
-  h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; letter-spacing: -.02em; margin: 0; }
-  h1 .ai { color: #f6976a; }
-  .lede { color: #93a6bd; max-width: 42ch; }
-  .lede strong { color: #eaf1f9; }
-  .panel { margin-top: 1.75rem; padding: 1.4rem 1.5rem; border: 1px solid rgba(120,150,190,.16); border-radius: 14px; background: #111a2e; }
-  .row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-  h2 { font-size: 1.1rem; margin: 0 0 .2rem; display: flex; align-items: center; gap: .6rem; }
-  .count { font-family: ui-monospace, monospace; font-size: .75rem; color: #93a6bd; }
-  input { background: #0a0f1c; border: 1px solid rgba(120,150,190,.24); color: #eaf1f9; border-radius: 8px; padding: .5rem .75rem; font: inherit; }
-  .filter { width: 10rem; }
-  .list { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: .5rem; }
-  .card { display: flex; align-items: center; justify-content: space-between; padding: .7rem .9rem; border: 1px solid rgba(120,150,190,.16); border-radius: 10px; background: #0d1526; }
-  .card .name { font-weight: 500; }
-  .badge { font-family: ui-monospace, monospace; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; padding: .15rem .5rem; border-radius: 999px; background: rgba(86,193,232,.14); color: #56c1e8; }
-  .tag-ai .badge { background: rgba(246,151,106,.16); color: #f6976a; }
-  .tag-you .badge { background: rgba(148,163,184,.16); color: #cbd5e1; }
-  .add { display: flex; gap: .6rem; margin-top: 1rem; }
-  .add input { flex: 1; }
-  button { cursor: pointer; font: inherit; border-radius: 8px; padding: .5rem 1rem; border: 1px solid #2e8bc0; background: #56c1e8; color: #06121c; font-weight: 600; }
-  .hint { color: #6b7f97; font-size: .82rem; margin: .8rem 0 0; }
-  .ai-panel { border-color: rgba(246,151,106,.3); }
-  .tools { list-style: none; padding: 0; margin: .8rem 0; display: flex; flex-wrap: wrap; gap: .5rem; }
-  .tools code { font-family: ui-monospace, monospace; font-size: .78rem; background: #0d1526; border: 1px solid rgba(120,150,190,.16); padding: .2rem .5rem; border-radius: 6px; color: #eaf1f9; }
-  .ai-btn { background: #f6976a; border-color: #d9713b; color: #2a1305; margin-top: .4rem; }
-  code { font-family: ui-monospace, monospace; }
+  main { max-width: 46rem; margin: 0 auto; padding: 0 1.5rem 6rem; }
+
+  .hero { min-height: 88vh; display: flex; flex-direction: column; justify-content: center; }
+  .eyebrow { font-family: ui-monospace, monospace; letter-spacing: .24em; text-transform: uppercase; font-size: .72rem; color: #6fcbec; margin: 0 0 1.1rem; }
+  h1 { font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.03; letter-spacing: -.03em; font-weight: 800; margin: 0; }
+  .lede { font-size: 1.15rem; color: #a9b8ca; max-width: 34ch; margin: 1.2rem 0 0; }
+  .scroll-cue { font-family: ui-monospace, monospace; color: #61748c; margin-top: 2.5rem; font-size: .8rem; letter-spacing: .1em; }
+
+  .card {
+    display: grid; gap: 1.4rem; align-items: start;
+    padding: 2.2rem clamp(1.2rem, 3vw, 2.2rem);
+    margin: 2.2rem 0;
+    border: 1px solid rgba(130,160,200,.16);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(24,34,58,.72), rgba(16,24,44,.72));
+    box-shadow: 0 20px 60px -30px rgba(0,0,0,.6);
+  }
+  .num { font-family: ui-monospace, monospace; font-size: .85rem; color: #56c1e8; letter-spacing: .1em; }
+  .num.alpen { color: #f6976a; }
+  .card-body h2 { font-size: clamp(1.5rem, 3.2vw, 2.1rem); letter-spacing: -.02em; line-height: 1.1; margin: .35rem 0 .6rem; font-weight: 750; }
+  .card-body p { color: #b7c4d6; margin: 0; max-width: 46ch; }
+  .kicker { font-family: ui-monospace, monospace; font-size: .72rem; text-transform: uppercase; letter-spacing: .16em; color: #6fcbec; margin: 0; }
+  .kicker.light { color: #7fd4a6; }
+  .kicker.ai { color: #f6976a; }
+  code { font-family: ui-monospace, monospace; color: #dbe6f3; background: rgba(130,160,200,.12); padding: .08em .35em; border-radius: 5px; font-size: .92em; }
+
+  .snippet {
+    margin: 0; overflow-x: auto;
+    background: rgba(6,12,22,.66);
+    border: 1px solid rgba(130,160,200,.14);
+    border-radius: 12px; padding: 1rem 1.1rem;
+    font-family: ui-monospace, monospace; font-size: .82rem; line-height: 1.7; color: #d5e2f1;
+  }
+  .snippet .c { color: #6b7f97; }
+  .snippet .s { color: #7fd4a6; }
+  .snippet .fn { color: #6fcbec; }
+  .snippet .at { color: #f6976a; }
+  .snippet .cm { color: #f6b98a; }
+
+  .live { border-color: rgba(246,151,106,.34); background: linear-gradient(180deg, rgba(40,28,22,.5), rgba(16,24,44,.72)); }
+  .chips { list-style: none; padding: 0; margin: 1rem 0 1.2rem; display: flex; flex-wrap: wrap; gap: .5rem; }
+  .chip { font-size: .85rem; padding: .35rem .7rem; border-radius: 999px; background: rgba(86,193,232,.14); color: #bfe6f6; border: 1px solid rgba(86,193,232,.2); }
+  .chip.tag-ai { background: rgba(246,151,106,.16); color: #f8c3a4; border-color: rgba(246,151,106,.3); }
+  .chip.tag-you { background: rgba(160,175,195,.14); color: #cfdae7; }
+  .ai-btn { cursor: pointer; font: inherit; font-weight: 600; border: none; border-radius: 10px; padding: .7rem 1.1rem; background: #f6976a; color: #2a1305; }
+  .ai-btn code { background: rgba(0,0,0,.14); color: #2a1305; }
+  .tools { font-family: ui-monospace, monospace; font-size: .72rem; color: #8895a8; margin: .9rem 0 0; }
+
+  .end { text-align: center; margin-top: 4rem; color: #a9b8ca; }
+  .end p { font-size: 1.15rem; }
+  .end code { font-size: 1rem; background: rgba(86,193,232,.12); color: #bfe6f6; padding: .5rem .9rem; border-radius: 8px; display: inline-block; margin-top: .5rem; }
+
+  /* Scroll-driven reveal — only where supported, so content is never hidden otherwise. */
+  @supports (animation-timeline: view()) {
+    .card {
+      opacity: 0; transform: translateY(34px) scale(.99);
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 2% cover 26%;
+    }
+    @keyframes reveal { to { opacity: 1; transform: none; } }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card { opacity: 1; transform: none; animation: none; }
+  }
 </style>

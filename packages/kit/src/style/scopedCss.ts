@@ -11,7 +11,14 @@ import selectorParser from 'postcss-selector-parser'
  * `scopeAttr` is the bare attribute name (no brackets), e.g. `data-apex-abc123`.
  * A real selector parser is used rather than regex because pseudo-classes,
  * combinators and attribute selectors break naive string manipulation.
+ *
+ * Global targets — `html`, `body`, `:root` — are left UNSCOPED: they live outside
+ * the component and can't carry the scope attribute, so scoping them would silently
+ * drop the rule (a page-level background/color would never apply).
  */
+const GLOBAL_TAGS = new Set(['html', 'body'])
+const GLOBAL_PSEUDOS = new Set([':root', ':host'])
+
 export function scopeCss(css: string, scopeAttr: string): string {
   const rewriter = selectorParser((selectors) => {
     selectors.each((selector) => {
@@ -22,7 +29,12 @@ export function scopeCss(css: string, scopeAttr: string): string {
       selector.each((node) => {
         if (node.type !== 'combinator' && node.type !== 'comment') last = node
       })
-      if (last) {
+      if (!last) return
+      // Don't scope a bare global target (its last compound is html/body/:root).
+      const isGlobal =
+        (last.type === 'tag' && GLOBAL_TAGS.has(String(last.value).toLowerCase())) ||
+        (last.type === 'pseudo' && GLOBAL_PSEUDOS.has(String(last.value).toLowerCase()))
+      if (!isGlobal) {
         selector.insertAfter(last, selectorParser.attribute({ attribute: scopeAttr } as any))
       }
     })

@@ -23,6 +23,15 @@ describe('scopeCss', () => {
     expect(out).toContain('h2[data-apex-x]')
   })
 
+  it('leaves global targets (body/html/:root) unscoped', () => {
+    expect(scopeCss('body { margin: 0 }', 'data-apex-x')).toContain('body {')
+    expect(scopeCss('body { margin: 0 }', 'data-apex-x')).not.toContain('body[data-apex-x]')
+    expect(scopeCss('html { height: 100% }', 'data-apex-x')).toContain('html {')
+    expect(scopeCss(':root { --x: 1 }', 'data-apex-x')).toContain(':root {')
+    // but a descendant of body is still scoped
+    expect(scopeCss('body .card { color: red }', 'data-apex-x')).toContain('.card[data-apex-x]')
+  })
+
   it('does not scope @keyframes stops', () => {
     const out = scopeCss('@keyframes spin { from { opacity: 0 } to { opacity: 1 } }', 'data-apex-x')
     expect(out).not.toContain('from[data-apex-x]')
