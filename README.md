@@ -25,17 +25,20 @@ Every major reactive library has a meta-framework — React has Next, Vue has Nu
 
 | Package | Description |
 | --- | --- |
-| [`@apex-stack/core`](./packages/apexjs) | The CLI and runtime (`apex dev`, `apex build`) |
-| [`create-apexjs`](./packages/create-apexjs) | Project scaffolder |
+| [`@apex-stack/core`](./packages/apexjs) | The CLI and runtime (`apex dev`, `apex build`, `apex start`, `apex mcp`) |
+| [`create-apexjs`](./packages/create-apexjs) | Project scaffolder (`npm create apexjs@latest`) |
 | [`@apex-stack/kit`](./packages/kit) | SFC parser, SSR renderer, and client runtime |
 | [`@apex-stack/vite`](./packages/vite) | Vite plugin for `.alpine` files |
+| [`@apex-stack/data`](./packages/data) | Drizzle-backed data layer — `defineResource` (REST + MCP) |
 
 ## Status
 
-**v0.1.3 on npm.** SSR + hydration, islands, file routing, components, AI-native APIs (REST + MCP),
-a multi-database data layer (SQLite/Turso/Supabase/Neon), and a full production build — static
-(`apex build`) or a Node server (`apex build --server` + `apex start`) for dynamic routes + API/MCP.
-All covered by tests. Jobs/queues and Nitro deploy presets are next. See [ROADMAP.md](./ROADMAP.md).
+**v0.1.5 on npm.** SSR + hydration, islands (`client:load|idle|visible|none`), file routing,
+components, AI-native APIs (REST + MCP from one typed route), a multi-database data layer
+(SQLite/Turso/Supabase/Neon), and a full production build — static (`apex build`), zero-JS
+(`apex build --islands`), or a Node server (`apex build --server` + `apex start`) for dynamic
+routes + API/MCP. All covered by tests. Jobs/queues and Nitro deploy presets are next.
+See [ROADMAP.md](./ROADMAP.md).
 
 ## License
 
