@@ -43,9 +43,9 @@ zero JS until an island needs it.
 - **Done:** `apexjs-data` — Drizzle + SQLite, `createDb`, SQL-file `applyMigrations`, and
   `defineResource` (list/get/create) where one table → REST endpoints **and** MCP tools on one DB.
   Proven: an MCP-tool write is visible via the REST list.
-- **Next:** `update`/`delete`, `apex make:model` + `drizzle-kit` migrations + `apex migrate` CLI,
-  per-route auth scoping, more Drizzle drivers. SSG + Nitro prod build. Component `<script server>`
-  loaders + slots.
+  Full CRUD (list/get/create/update/delete). `apex migrate` CLI + `apex make page/component/api`.
+- **Next:** `apex make:model` + `drizzle-kit`-generated migrations, per-route auth scoping, more
+  Drizzle drivers. SSG + Nitro prod build. Component `<script server>` loaders + slots.
 
 ### ▢ Phase 3 — Backend
 Jobs/queues, events/observers, auth — all MCP-aware.

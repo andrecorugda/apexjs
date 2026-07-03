@@ -2,6 +2,7 @@ import { resolve } from 'node:path'
 import { defineCommand, runMain } from 'citty'
 import { makeCommand } from './commands/make.js'
 import { mcpCommand } from './commands/mcp.js'
+import { migrateCommand } from './commands/migrate.js'
 import { startDevServer } from './dev/server.js'
 
 const dev = defineCommand({
@@ -25,7 +26,7 @@ const main = defineCommand({
     name: 'apex',
     description: 'The full-stack meta-framework for Alpine.js',
   },
-  subCommands: { dev, make: makeCommand, mcp: mcpCommand },
+  subCommands: { dev, make: makeCommand, migrate: migrateCommand, mcp: mcpCommand },
 })
 
 runMain(main)

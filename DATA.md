@@ -43,8 +43,9 @@ see the same data. No other full-stack framework does this by default.
 ## Migrations
 
 `applyMigrations(sqlite, dir)` runs `db/migrations/*.sql` in order, once each, tracked in an
-`_apex_migrations` table — applied on boot in dev. (`drizzle-kit`-generated migrations and an
-`apex migrate` command are the next step.)
+`_apex_migrations` table — applied on boot in dev, or explicitly with **`apex migrate`**
+(idempotent; resolves `apexjs-data` from the app). `drizzle-kit`-generated migrations are the
+next step.
 
 ## Proven end-to-end
 
