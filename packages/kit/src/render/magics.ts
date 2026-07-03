@@ -7,7 +7,11 @@ import type { ScopeLayer } from './scope.js'
  * inert stubs so an expression referencing them doesn't crash the render. Their
  * live behavior is restored by real Alpine in the browser.
  */
-export function createMagics(el: unknown, idCounter: { n: number }): ScopeLayer {
+export function createMagics(
+  el: unknown,
+  idCounter: { n: number },
+  stores: Record<string, unknown> = {},
+): ScopeLayer {
   return {
     // `$el` is the element currently being rendered — works naturally.
     $el: el,
@@ -20,9 +24,8 @@ export function createMagics(el: unknown, idCounter: { n: number }): ScopeLayer 
       if (typeof cb === 'function') cb()
     },
     $watch: () => {},
-    // Not supported in Phase 0 — surfaces a clear error rather than undefined.
-    get $store(): never {
-      throw new Error('$store is not supported during SSR in Apex JS Phase 0')
-    },
+    // Global stores are available during SSR (initial state) so `$store.x.y`
+    // renders server-side; real Alpine reactivity takes over after hydration.
+    $store: stores,
   }
 }

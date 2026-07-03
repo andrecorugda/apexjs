@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { defineCommand } from 'citty'
 
-type Kind = 'page' | 'component' | 'api'
+type Kind = 'page' | 'component' | 'api' | 'store'
 
 /** Components are referenced as `<PascalCase/>`, so their file must be PascalCase. */
 function pascalCase(s: string): string {
@@ -41,6 +41,19 @@ function componentTemplate(): string {
 `
 }
 
+function storeTemplate(name: string): string {
+  return `import { defineStore } from '@apex-stack/core'
+
+// Access anywhere as $store.${name} — SSR-rendered and reactive after hydration.
+export default defineStore('${name}', () => ({
+  count: 0,
+  increment() {
+    this.count++
+  },
+}))
+`
+}
+
 function apiTemplate(name: string): string {
   return `import { defineApexRoute } from '@apex-stack/core'
 import { z } from 'zod'
@@ -65,20 +78,22 @@ function plan(kind: Kind, name: string, root: string): { path: string; contents:
       return { path: join(root, 'components', `${pascalCase(name)}.alpine`), contents: componentTemplate() }
     case 'api':
       return { path: join(root, 'server', 'api', `${name}.ts`), contents: apiTemplate(name) }
+    case 'store':
+      return { path: join(root, 'stores', `${name}.ts`), contents: storeTemplate(name) }
   }
 }
 
 export const makeCommand = defineCommand({
-  meta: { name: 'make', description: 'Generate a page, component, or API route' },
+  meta: { name: 'make', description: 'Generate a page, component, API route, or store' },
   args: {
-    kind: { type: 'positional', required: true, description: 'page | component | api' },
+    kind: { type: 'positional', required: true, description: 'page | component | api | store' },
     name: { type: 'positional', required: true, description: 'Name (about, Counter, todos, …)' },
     root: { type: 'string', description: 'Project root', default: '.' },
   },
   run({ args }) {
     const kind = args.kind as Kind
-    if (kind !== 'page' && kind !== 'component' && kind !== 'api') {
-      console.error(`\n  Unknown type "${args.kind}". Use: page | component | api\n`)
+    if (kind !== 'page' && kind !== 'component' && kind !== 'api' && kind !== 'store') {
+      console.error(`\n  Unknown type "${args.kind}". Use: page | component | api | store\n`)
       process.exit(1)
     }
 

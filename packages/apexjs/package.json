@@ -1,6 +1,6 @@
 {
   "name": "@apex-stack/core",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "The full-stack meta-framework for Alpine.js \u2014 CLI and runtime",
   "type": "module",
   "license": "MIT",
@@ -58,5 +58,6 @@
   },
   "engines": {
     "node": ">=20.19"
-  }
+  },
+  "sideEffects": false
 }

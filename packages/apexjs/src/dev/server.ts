@@ -17,6 +17,7 @@ import { createMcpHandler } from '../mcp/server.js'
 import { loadComponents } from '../components/registry.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { matchRoute, scanPages } from '../routing/router.js'
+import { loadStores } from '../stores/loader.js'
 import { renderErrorPage, renderNotFoundPage } from './errorPage.js'
 import { type PageModule, renderPage } from './renderPage.js'
 
@@ -60,7 +61,12 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   const alpine = tryResolve('alpinejs')
   const kit = tryResolve('@apex-stack/kit')
   const coreClient = fileURLToPath(new URL('./client.js', import.meta.url))
-  const alias: Record<string, string> = { '@apex-stack/core/client': coreClient }
+  const coreSelf = fileURLToPath(new URL('./index.js', import.meta.url))
+  // Order matters: the subpath alias must precede the bare package alias.
+  const alias: Record<string, string> = {
+    '@apex-stack/core/client': coreClient,
+    '@apex-stack/core': coreSelf,
+  }
   if (alpine) alias.alpinejs = alpine
   if (kit) alias['@apex-stack/kit'] = kit
 
@@ -119,6 +125,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           options.root,
           (id) => ssrLoad(id) as never,
         )
+        const stores = await loadStores(options.root, (id) => ssrLoad(id) as never)
         const render = options.islands ? renderIslandsPage : renderPage
         const html = await render({
           loadModule: (id) => ssrLoad(id) as unknown as Promise<PageModule>,
@@ -127,6 +134,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           url,
           registry,
           componentCss,
+          stores,
           transformHtml: (u, doc) => vite.transformIndexHtml(u, doc),
         })
         setResponseHeader(event, 'Content-Type', 'text/html')

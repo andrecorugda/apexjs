@@ -42,12 +42,12 @@ const LOGO = [
   '██║  ██║██║     ███████╗██╔╝ ██╗',
   '╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝',
 ]
-const FROM = [99, 102, 241] // indigo
-const TO = [34, 211, 238] // cyan
+const FROM: [number, number, number] = [99, 102, 241] // indigo
+const TO: [number, number, number] = [34, 211, 238] // cyan
 
 /** The Apex brand banner: the APEX wordmark with a left→right indigo→cyan gradient. */
 export function banner(subtitle = 'The full-stack, AI-native meta-framework for Alpine.js'): string {
-  const width = LOGO[0].length
+  const width = LOGO[0]?.length ?? 0
   const rows = LOGO.map((line) => {
     if (!TTY) return `  ${line}`
     let out = '  '
@@ -56,7 +56,7 @@ export function banner(subtitle = 'The full-stack, AI-native meta-framework for 
       const r = Math.round(FROM[0] + (TO[0] - FROM[0]) * t)
       const g = Math.round(FROM[1] + (TO[1] - FROM[1]) * t)
       const b = Math.round(FROM[2] + (TO[2] - FROM[2]) * t)
-      out += `\x1b[38;2;${r};${g};${b}m${line[i]}`
+      out += `\x1b[38;2;${r};${g};${b}m${line[i] ?? ''}`
     }
     return out + RESET
   })
@@ -85,7 +85,7 @@ export function spinner(text: string): Spinner {
   let i = 0
   process.stdout.write('\x1b[?25l') // hide cursor
   const id = setInterval(() => {
-    process.stdout.write(`\r\x1b[2K  ${color.cyan(FRAMES[i++ % FRAMES.length])} ${text}`)
+    process.stdout.write(`\r\x1b[2K  ${color.cyan(FRAMES[i++ % FRAMES.length] ?? '')} ${text}`)
   }, 80)
   const end = (symbol: string, t?: string) => {
     clearInterval(id)

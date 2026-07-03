@@ -20,11 +20,12 @@ function firstFileFrame(stack: string, root: string): Frame | undefined {
   let m: RegExpExecArray | null
   const frames: Frame[] = []
   while ((m = re.exec(stack))) {
-    let file = m[1]
-    if (/^[A-Za-z]:[\\/]/.test(file) === false && !file.startsWith('/')) continue
-    file = file.replace(/\//g, process.platform === 'win32' ? '\\' : '/')
+    const raw = m[1]
+    if (!raw) continue
+    if (/^[A-Za-z]:[\\/]/.test(raw) === false && !raw.startsWith('/')) continue
+    const file = raw.replace(/\//g, process.platform === 'win32' ? '\\' : '/')
     if (existsSync(file) && !file.includes('node_modules')) {
-      frames.push({ file, line: Number(m[2]), col: Number(m[3]) })
+      frames.push({ file, line: Number(m[2] ?? 0), col: Number(m[3] ?? 0) })
     }
   }
   // Prefer a frame inside the project root, else the first real file.

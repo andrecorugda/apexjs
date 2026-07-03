@@ -19,6 +19,8 @@ export interface RenderComponentInput {
   loaderData: Record<string, unknown>
   /** Registry of embeddable components (`<Counter/>` → components/Counter.alpine). */
   registry?: ComponentRegistry
+  /** Global store initial state keyed by name, exposed as `$store` during SSR. */
+  stores?: Record<string, unknown>
 }
 
 export interface RenderComponentResult {
@@ -69,7 +71,7 @@ export function renderComponent(input: RenderComponentInput): RenderComponentRes
   const rootData: Record<string, unknown> = { ...authoredDefaults, ...loaderData }
 
   const idCounter = { n: 0 }
-  const magics = createMagics(root, idCounter)
+  const magics = createMagics(root, idCounter, input.stores)
   const layers: ScopeLayer[] = [magics, rootData]
 
   stampScope(root, scopeId)
