@@ -1,0 +1,15 @@
+<template x-data="{ count: Number(start) }">
+  <button class="counter" @click="count++" x-text="label + ': ' + count"></button>
+</template>
+
+<style scoped>
+  .counter {
+    padding: 0.4rem 0.9rem;
+    border: 1px solid #2563eb;
+    border-radius: 0.5rem;
+    background: #eff6ff;
+    color: #1e3a8a;
+    cursor: pointer;
+    font: inherit;
+  }
+</style>

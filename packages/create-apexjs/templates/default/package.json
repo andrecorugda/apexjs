@@ -1,0 +1,14 @@
+{
+  "name": "{{name}}",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "apex dev",
+    "dev:islands": "apex dev --islands"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.8",
+    "apexjs-core": "latest",
+    "zod": "^4.0.0"
+  }
+}

@@ -1,5 +1,6 @@
 import { parseHTML } from 'linkedom'
 import { applyBinding, resolveBindTarget } from './bindings.js'
+import { type ComponentRegistry, rewriteComponentTags } from './components.js'
 import { evaluate } from './evaluator.js'
 import { parseForExpression, toIterablePairs } from './forExpression.js'
 import { createMagics } from './magics.js'
@@ -16,6 +17,8 @@ export interface RenderComponentInput {
   scopeId: string
   /** Loader result — seeds the root scope and is serialized to the state island. */
   loaderData: Record<string, unknown>
+  /** Registry of embeddable components (`<Counter/>` → components/Counter.alpine). */
+  registry?: ComponentRegistry
 }
 
 export interface RenderComponentResult {
@@ -42,10 +45,13 @@ const SSR_IGNORED_PREFIXES = ['@', 'x-on:']
  */
 export function renderComponent(input: RenderComponentInput): RenderComponentResult {
   const { template, rootXData, componentId, scopeId, loaderData } = input
+  const registry = input.registry ?? {}
 
+  // Rewrite <PascalCase/> component tags before parsing (the DOM lowercases tags).
+  const prepared = rewriteComponentTags(template, Object.keys(registry))
   // linkedom parses literally (no HTML5 tree construction), so `document.body`
   // is only populated when given a full <html><body> wrapper.
-  const { document } = parseHTML(`<!DOCTYPE html><html><body>${template}</body></html>`)
+  const { document } = parseHTML(`<!DOCTYPE html><html><body>${prepared}</body></html>`)
   const body = document.body
 
   // Root wrapper hosting the component's x-data reference.
@@ -67,7 +73,7 @@ export function renderComponent(input: RenderComponentInput): RenderComponentRes
   const layers: ScopeLayer[] = [magics, rootData]
 
   stampScope(root, scopeId)
-  walkChildren(root, layers, scopeId, document)
+  walkChildren(root, layers, scopeId, document, registry)
 
   return { html: root.outerHTML, rootData }
 }
@@ -82,13 +88,15 @@ export function renderFragment(
   templateHtml: string,
   data: Record<string, unknown>,
   scopeId: string,
+  registry: ComponentRegistry = {},
 ): string {
-  const { document } = parseHTML(`<!DOCTYPE html><html><body>${templateHtml}</body></html>`)
-  const body = document.body
   const idCounter = { n: 0 }
-  const layers: ScopeLayer[] = [createMagics(body, idCounter), data]
-  walkChildren(body, layers, scopeId, document)
-  return body.innerHTML
+  return renderFragmentInternal(
+    templateHtml,
+    [createMagicsFor(idCounter), data],
+    scopeId,
+    registry,
+  )
 }
 
 export type ClientDirective = 'load' | 'idle' | 'visible' | 'none'
@@ -116,12 +124,14 @@ export function renderIslands(
   templateHtml: string,
   data: Record<string, unknown>,
   scopeId: string,
+  registry: ComponentRegistry = {},
 ): RenderIslandsResult {
-  const { document } = parseHTML(`<!DOCTYPE html><html><body>${templateHtml}</body></html>`)
+  const prepared = rewriteComponentTags(templateHtml, Object.keys(registry))
+  const { document } = parseHTML(`<!DOCTYPE html><html><body>${prepared}</body></html>`)
   const body = document.body
   const idCounter = { n: 0 }
   const layers: ScopeLayer[] = [createMagics(body, idCounter), data]
-  walkChildren(body, layers, scopeId, document)
+  walkChildren(body, layers, scopeId, document, registry)
 
   let hydratingCount = 0
   let nextId = 0
@@ -143,17 +153,37 @@ export function renderIslands(
 
 type AnyEl = any
 
+/** Parse + walk a template fragment with the given scope, returning its innerHTML. */
+function renderFragmentInternal(
+  templateHtml: string,
+  layers: ScopeLayer[],
+  scopeId: string,
+  registry: ComponentRegistry,
+): string {
+  const prepared = rewriteComponentTags(templateHtml, Object.keys(registry))
+  const { document } = parseHTML(`<!DOCTYPE html><html><body>${prepared}</body></html>`)
+  const body = document.body
+  walkChildren(body, layers, scopeId, document, registry)
+  return body.innerHTML
+}
+
+function createMagicsFor(idCounter: { n: number }): ScopeLayer {
+  return createMagics(null, idCounter)
+}
+
 function walkChildren(
   parent: AnyEl,
   layers: ScopeLayer[],
   scopeId: string,
   document: AnyEl,
+  registry: ComponentRegistry,
 ): void {
-  // Snapshot children first — the walk mutates the tree (x-for/x-if insert clones).
+  // Snapshot children first — the walk mutates the tree (x-for/x-if insert clones,
+  // components get replaced by their rendered output).
   const children = Array.from(parent.childNodes) as AnyEl[]
   for (const node of children) {
     if (node.nodeType !== ELEMENT_NODE) continue
-    walkElement(node, layers, scopeId, document)
+    walkElement(node, layers, scopeId, document, registry)
   }
 }
 
@@ -162,15 +192,22 @@ function walkElement(
   layers: ScopeLayer[],
   scopeId: string,
   document: AnyEl,
+  registry: ComponentRegistry,
 ): void {
   const tag = String(el.tagName).toLowerCase()
+
+  // Component usage (`<Counter/>` was rewritten to <apex-component data-apex-name>).
+  if (tag === 'apex-component') {
+    renderComponentInstance(el, layers, document, registry)
+    return
+  }
 
   // Structural directives live on <template> elements.
   if (tag === 'template') {
     const xFor = el.getAttribute('x-for')
-    if (xFor != null) return renderFor(el, xFor, layers, scopeId, document)
+    if (xFor != null) return renderFor(el, xFor, layers, scopeId, document, registry)
     const xIf = el.getAttribute('x-if')
-    if (xIf != null) return renderIf(el, xIf, layers, scopeId, document)
+    if (xIf != null) return renderIf(el, xIf, layers, scopeId, document, registry)
     // A plain <template> (no structural directive) is left untouched.
     return
   }
@@ -212,8 +249,64 @@ function walkElement(
   } else if (xText != null) {
     el.textContent = String(evaluate(xText, scoped) ?? '')
   } else {
-    walkChildren(el, scoped, scopeId, document)
+    walkChildren(el, scoped, scopeId, document, registry)
   }
+}
+
+/**
+ * Render an embedded component instance. Props come from the usage attributes
+ * (`prop="x"` static, `:prop="expr"` evaluated). The component's authored x-data
+ * is evaluated with the props in scope to get the resolved initial data, which is
+ * baked onto the wrapper as a JSON literal — so client hydration needs no access
+ * to the parent scope or props. A `client:*` directive is forwarded to the wrapper
+ * so islands mode can hydrate the component lazily.
+ */
+function renderComponentInstance(
+  el: AnyEl,
+  layers: ScopeLayer[],
+  document: AnyEl,
+  registry: ComponentRegistry,
+): void {
+  const name = el.getAttribute('data-apex-name') as string
+  const entry = registry[name]
+  if (!entry) {
+    el.replaceWith(document.createComment(` apex: unknown component "${name}" `))
+    return
+  }
+
+  const props: Record<string, unknown> = {}
+  let clientDirective: string | null = null
+  for (const attr of Array.from(el.attributes) as AnyEl[]) {
+    const n = attr.name as string
+    if (n === 'data-apex-name') continue
+    if (n.startsWith('client:')) {
+      clientDirective = n
+      continue
+    }
+    if (n.startsWith(':')) props[n.slice(1)] = evaluate(attr.value, layers)
+    else if (n.startsWith('x-bind:')) props[n.slice('x-bind:'.length)] = evaluate(attr.value, layers)
+    else props[n] = attr.value
+  }
+
+  const dataObj =
+    entry.rootXData && entry.rootXData.trim()
+      ? ((evaluate(entry.rootXData, [props]) as Record<string, unknown>) ?? {})
+      : {}
+  // Props first so component x-data can override; both are available in the
+  // component's scope and baked into the hydration literal.
+  const merged = { ...props, ...dataObj }
+
+  const idCounter = { n: 0 }
+  const innerLayers: ScopeLayer[] = [createMagics(el, idCounter), merged]
+  const innerHtml = renderFragmentInternal(entry.template, innerLayers, entry.scopeId, registry)
+
+  const root = document.createElement('div')
+  root.setAttribute('x-data', JSON.stringify(merged))
+  root.setAttribute('data-apex-component', name)
+  root.setAttribute(entry.scopeId, '')
+  if (clientDirective) root.setAttribute(clientDirective, '')
+  root.innerHTML = innerHtml
+  el.replaceWith(root)
 }
 
 function renderFor(
@@ -222,6 +315,7 @@ function renderFor(
   layers: ScopeLayer[],
   scopeId: string,
   document: AnyEl,
+  registry: ComponentRegistry,
 ): void {
   const parsed = parseForExpression(expr)
   if (!parsed) return
@@ -240,7 +334,7 @@ function renderFor(
     for (const clone of clones) {
       if (clone.nodeType !== ELEMENT_NODE) continue
       clone.setAttribute('data-apex-ssr', '')
-      walkElement(clone, scoped, scopeId, document)
+      walkElement(clone, scoped, scopeId, document, registry)
       anchor = clone
     }
   }
@@ -252,6 +346,7 @@ function renderIf(
   layers: ScopeLayer[],
   scopeId: string,
   document: AnyEl,
+  registry: ComponentRegistry,
 ): void {
   if (!evaluate(expr, layers)) return
   const frag = template.content.cloneNode(true)
@@ -260,7 +355,7 @@ function renderIf(
   for (const clone of clones) {
     if (clone.nodeType !== ELEMENT_NODE) continue
     clone.setAttribute('data-apex-ssr', '')
-    walkElement(clone, layers, scopeId, document)
+    walkElement(clone, layers, scopeId, document, registry)
   }
 }
 

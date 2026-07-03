@@ -1,0 +1,17 @@
+<script server lang="ts">
+  export function loader() {
+    return { heading: 'About Apex' }
+  }
+</script>
+
+<template x-data>
+  <main>
+    <h1 x-text="heading"></h1>
+    <p>A static route at <code>pages/about.alpine</code>.</p>
+    <a href="/">← Home</a>
+  </main>
+</template>
+
+<style scoped>
+  main { max-width: 40rem; margin: 3rem auto; font-family: system-ui, sans-serif; }
+</style>

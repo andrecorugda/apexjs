@@ -1,4 +1,4 @@
-import { renderComponent, stateIsland } from 'apexjs-kit'
+import { type ComponentRegistry, renderComponent, stateIsland } from 'apexjs-kit'
 
 /** The shape a compiled `.alpine` SSR module exports (see apexjs-vite). */
 export interface PageModule {
@@ -17,6 +17,12 @@ export interface RenderPageOptions {
   pageId: string
   /** The incoming request path. */
   url: string
+  /** Route params captured from a dynamic segment (e.g. { slug: '...' }). */
+  params?: Record<string, string>
+  /** Registry of embeddable components. */
+  registry?: ComponentRegistry
+  /** Aggregated component CSS to include in the shell. */
+  componentCss?: string
   /** Post-process the shell HTML (dev: vite.transformIndexHtml). */
   transformHtml?: (url: string, html: string) => string | Promise<string>
 }
@@ -29,7 +35,7 @@ export interface RenderPageOptions {
  */
 export async function renderPage(opts: RenderPageOptions): Promise<string> {
   const mod = await opts.loadModule(opts.pageId)
-  const loaderData = ((await mod.loader({ params: {}, url: opts.url })) ?? {}) as Record<
+  const loaderData = ((await mod.loader({ params: opts.params ?? {}, url: opts.url })) ?? {}) as Record<
     string,
     unknown
   >
@@ -40,12 +46,13 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     componentId: mod.componentId,
     scopeId: mod.scopeId,
     loaderData,
+    registry: opts.registry,
   })
 
   const doc = shell({
     body: html,
     island: stateIsland(mod.componentId, loaderData),
-    css: mod.css,
+    css: mod.css + (opts.componentCss ?? ''),
     pageId: opts.pageId,
   })
 

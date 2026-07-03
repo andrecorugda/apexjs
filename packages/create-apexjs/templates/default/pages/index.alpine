@@ -1,0 +1,107 @@
+<script server lang="ts">
+  export function loader() {
+    return {
+      title: 'Welcome to Apex JS',
+      tagline: 'The meta-framework for Alpine.js — server-rendered, then hydrated.',
+    }
+  }
+</script>
+
+<template x-data="{ open: false }">
+  <main>
+    <h1 x-text="title"></h1>
+    <p class="tagline" x-text="tagline"></p>
+
+    <section class="card">
+      <p>
+        This page was rendered on the server from
+        <code>pages/index.alpine</code>, then hydrated by Alpine in the browser.
+        Edit it and save to see your changes live.
+      </p>
+
+      <button type="button" @click="open = !open" x-text="open ? 'Hide the details' : 'Show me how'"></button>
+
+      <div x-show="open" x-transition class="details">
+        <p>
+          The <code>loader()</code> in the server block runs on the server and
+          hands its data straight to Alpine's <code>x-data</code> scope — no
+          fetch, no boilerplate.
+        </p>
+        <p>
+          Next, open <code>server/api/hello.ts</code>: it's a REST endpoint
+          <em>and</em> an MCP tool at <code>/mcp</code> at the same time.
+        </p>
+      </div>
+    </section>
+
+    <p class="hint">
+      Run <code>apex dev --islands</code> to ship interactive islands only where
+      you need them.
+    </p>
+  </main>
+</template>
+
+<style scoped>
+  main {
+    max-width: 40rem;
+    margin: 4rem auto;
+    padding: 0 1.5rem;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    color: #1e293b;
+  }
+
+  h1 {
+    color: #2563eb;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .tagline {
+    font-size: 1.15rem;
+    color: #475569;
+    margin-top: 0;
+  }
+
+  .card {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    background: #f8fafc;
+  }
+
+  button {
+    margin-top: 0.5rem;
+    padding: 0.6rem 1.1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    background: #2563eb;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  button:hover {
+    background: #1d4ed8;
+  }
+
+  .details {
+    margin-top: 1rem;
+  }
+
+  code {
+    padding: 0.1rem 0.35rem;
+    font-size: 0.9em;
+    background: #e2e8f0;
+    border-radius: 0.35rem;
+  }
+
+  .hint {
+    margin-top: 2rem;
+    font-size: 0.95rem;
+    color: #64748b;
+  }
+</style>

@@ -11,7 +11,9 @@ import {
 import { createServer as createViteServer, type ViteDevServer } from 'vite'
 import { loadApiRoutes, mountRestRoutes } from '../api/routes.js'
 import { createMcpHandler, hasMcpRoutes } from '../mcp/server.js'
+import { loadComponents } from '../components/registry.js'
 import { renderIslandsPage } from '../islands/render.js'
+import { matchRoute, type RouteDef, scanPages } from '../routing/router.js'
 import { type PageModule, renderPage } from './renderPage.js'
 
 export interface DevServerOptions {
@@ -69,11 +71,27 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
     defineEventHandler(async (event) => {
       const url = event.path || '/'
       try {
+        // Re-scan per request so newly added pages are picked up without a restart.
+        const routes = scanPages(options.root)
+        const matched = routes.length ? matchRoute(routes, url) : { pageId, params: {} }
+        if (!matched) {
+          setResponseStatus(event, 404)
+          setResponseHeader(event, 'Content-Type', 'text/html')
+          return notFoundPage(url, routes)
+        }
+
+        const { registry, css: componentCss } = await loadComponents(
+          options.root,
+          (id) => vite.ssrLoadModule(id) as never,
+        )
         const render = options.islands ? renderIslandsPage : renderPage
         const html = await render({
           loadModule: (id) => vite.ssrLoadModule(id) as Promise<PageModule>,
-          pageId,
+          pageId: matched.pageId,
+          params: matched.params,
           url,
+          registry,
+          componentCss,
           transformHtml: (u, doc) => vite.transformIndexHtml(u, doc),
         })
         setResponseHeader(event, 'Content-Type', 'text/html')
@@ -106,4 +124,14 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
 
 function escapeHtml(s: string): string {
   return s.replace(/[&<>]/g, (c) => (c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;'))
+}
+
+function notFoundPage(url: string, routes: RouteDef[]): string {
+  const list = routes.map((r) => `<li><code>${escapeHtml(r.pattern)}</code></li>`).join('')
+  return `<!DOCTYPE html><html><head><title>404 — Apex JS</title></head>
+<body style="font-family: system-ui, sans-serif; max-width: 40rem; margin: 3rem auto;">
+  <h1>404 — no route for <code>${escapeHtml(url)}</code></h1>
+  <p>Available routes:</p>
+  <ul>${list || '<li>(no pages found — add <code>pages/index.alpine</code>)</li>'}</ul>
+</body></html>`
 }

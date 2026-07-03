@@ -1,4 +1,4 @@
-import { renderIslands } from 'apexjs-kit'
+import { type ComponentRegistry, renderIslands } from 'apexjs-kit'
 import type { PageModule } from '../dev/renderPage.js'
 
 /**
@@ -51,6 +51,9 @@ export interface RenderIslandsPageOptions {
   loadModule: (id: string) => Promise<PageModule>
   pageId: string
   url: string
+  params?: Record<string, string>
+  registry?: ComponentRegistry
+  componentCss?: string
   transformHtml?: (url: string, html: string) => string | Promise<string>
 }
 
@@ -60,12 +63,17 @@ export interface RenderIslandsPageOptions {
  */
 export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise<string> {
   const mod = await opts.loadModule(opts.pageId)
-  const loaderData = ((await mod.loader({ params: {}, url: opts.url })) ?? {}) as Record<
+  const loaderData = ((await mod.loader({ params: opts.params ?? {}, url: opts.url })) ?? {}) as Record<
     string,
     unknown
   >
 
-  const { html, hydratingCount } = renderIslands(mod.template, loaderData, mod.scopeId)
+  const { html, hydratingCount } = renderIslands(
+    mod.template,
+    loaderData,
+    mod.scopeId,
+    opts.registry,
+  )
 
   const loaderScript =
     hydratingCount > 0 ? `\n<script type="module">${ISLAND_LOADER}</script>` : ''
@@ -76,7 +84,7 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Apex JS — Islands</title>
-  <style>${mod.css}</style>
+  <style>${mod.css}${opts.componentCss ?? ''}</style>
 </head>
 <body>
 ${html}${loaderScript}

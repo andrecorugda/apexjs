@@ -1,0 +1,25 @@
+<script server lang="ts">
+  export function loader() {
+    return { title: 'Apex Base Camp' }
+  }
+</script>
+
+<template x-data>
+  <main>
+    <h1 x-text="title"></h1>
+    <nav>
+      <a href="/about">About</a> ·
+      <a href="/blog/hello-world">A blog post</a>
+    </nav>
+
+    <p>Two embedded components, each with props, rendered on the server and hydrated:</p>
+    <Counter start="3" label="Clicks" />
+    <Counter start="10" label="Score" />
+  </main>
+</template>
+
+<style scoped>
+  main { max-width: 40rem; margin: 3rem auto; font-family: system-ui, sans-serif; }
+  h1 { color: #2563eb; }
+  nav { margin: 1rem 0; }
+</style>
