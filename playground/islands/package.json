@@ -1,0 +1,17 @@
+{
+  "name": "islands-spike",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "apex dev --islands",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.8",
+    "apexjs-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
+  }
+}

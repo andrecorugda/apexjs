@@ -72,6 +72,75 @@ export function renderComponent(input: RenderComponentInput): RenderComponentRes
   return { html: root.outerHTML, rootData }
 }
 
+/**
+ * SSR-render a template fragment against `data`, without adding a component root
+ * wrapper. Nested inline `x-data` islands are evaluated as their own scope layers
+ * (so `x-text` etc. inside them resolve). Used by the islands renderer, where the
+ * page has many independent interactive regions rather than one component root.
+ */
+export function renderFragment(
+  templateHtml: string,
+  data: Record<string, unknown>,
+  scopeId: string,
+): string {
+  const { document } = parseHTML(`<!DOCTYPE html><html><body>${templateHtml}</body></html>`)
+  const body = document.body
+  const idCounter = { n: 0 }
+  const layers: ScopeLayer[] = [createMagics(body, idCounter), data]
+  walkChildren(body, layers, scopeId, document)
+  return body.innerHTML
+}
+
+export type ClientDirective = 'load' | 'idle' | 'visible' | 'none'
+const CLIENT_ATTRS: Array<`client:${ClientDirective}`> = [
+  'client:load',
+  'client:idle',
+  'client:visible',
+  'client:none',
+]
+
+export interface RenderIslandsResult {
+  html: string
+  /** Number of islands that will hydrate on the client (mode !== 'none'). */
+  hydratingCount: number
+}
+
+/**
+ * Render an islands page: the whole template is SSR'd (static HTML + islands),
+ * then every element carrying a `client:*` directive is marked as an island —
+ * `x-ignore`d so global Alpine never auto-hydrates it, and tagged with the
+ * hydration mode for the lazy client loader to act on. Static content ships no
+ * JS; islands hydrate individually on their trigger.
+ */
+export function renderIslands(
+  templateHtml: string,
+  data: Record<string, unknown>,
+  scopeId: string,
+): RenderIslandsResult {
+  const { document } = parseHTML(`<!DOCTYPE html><html><body>${templateHtml}</body></html>`)
+  const body = document.body
+  const idCounter = { n: 0 }
+  const layers: ScopeLayer[] = [createMagics(body, idCounter), data]
+  walkChildren(body, layers, scopeId, document)
+
+  let hydratingCount = 0
+  let nextId = 0
+  for (const el of Array.from(body.querySelectorAll('*')) as AnyEl[]) {
+    const attr = CLIENT_ATTRS.find((a) => el.hasAttribute(a))
+    if (!attr) continue
+    const mode = attr.slice('client:'.length) as ClientDirective
+    el.removeAttribute(attr)
+    el.setAttribute('data-apex-island', String(nextId++))
+    el.setAttribute('data-apex-client', mode)
+    // Every island is ignored by global Alpine; the loader removes x-ignore on
+    // the specific island it hydrates. `none` islands stay ignored forever.
+    el.setAttribute('x-ignore', '')
+    if (mode !== 'none') hydratingCount++
+  }
+
+  return { html: body.innerHTML, hydratingCount }
+}
+
 type AnyEl = any
 
 function walkChildren(

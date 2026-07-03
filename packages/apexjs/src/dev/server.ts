@@ -11,6 +11,7 @@ import {
 import { createServer as createViteServer, type ViteDevServer } from 'vite'
 import { loadApiRoutes, mountRestRoutes } from '../api/routes.js'
 import { createMcpHandler, hasMcpRoutes } from '../mcp/server.js'
+import { renderIslandsPage } from '../islands/render.js'
 import { type PageModule, renderPage } from './renderPage.js'
 
 export interface DevServerOptions {
@@ -18,6 +19,8 @@ export interface DevServerOptions {
   port?: number
   /** Page module rendered for every route in the spike (single-route). */
   pageId?: string
+  /** Render in islands mode (static-first, per-island hydration) instead of one page component. */
+  islands?: boolean
 }
 
 export interface DevServer {
@@ -66,7 +69,8 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
     defineEventHandler(async (event) => {
       const url = event.path || '/'
       try {
-        const html = await renderPage({
+        const render = options.islands ? renderIslandsPage : renderPage
+        const html = await render({
           loadModule: (id) => vite.ssrLoadModule(id) as Promise<PageModule>,
           pageId,
           url,
