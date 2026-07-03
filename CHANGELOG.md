@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.2 — 2026-07-03
+
+- **`apex build`** — production build: prerenders pages to HTML **and** builds a per-page client
+  bundle (Vite + manifest) so interactive pages hydrate from a static `dist/`. `apex build --islands`
+  for zero-JS static-first output. (Dynamic routes + API/MCP in prod need a server target — next.)
+- **`apex make page|component|api`** — artisan-style generators.
+- **`apex migrate`** — apply `db/migrations/*.sql` (idempotent).
+- **`apex mcp`** — built-in MCP inspector (list/call tools).
+- Data resources gained full CRUD (`update`/`delete`).
+
+(Only `@apex-stack/core` changed since 0.1.1.)
+
 ## 0.1.1 — 2026-07-03
 
 Moved the libraries under the **`@apex-stack`** npm scope for a protected namespace.

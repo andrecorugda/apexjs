@@ -48,10 +48,12 @@ zero JS until an island needs it.
   Drizzle drivers. Component `<script server>` loaders + slots.
 
 ### ◑ Production build
-- **Done:** `apex build` — SSG prerender of static routes to `dist/**/index.html` (zero-JS output
-  for static pages; deployable to any static host).
-- **Next:** client-bundle pipeline (Vite build + manifest) so interactive/island pages hydrate in
-  the built output; a Node/Nitro server target for dynamic routes + API/MCP in production.
+- **Done:** `apex build` — prerenders each page to HTML **and** builds a per-page client bundle
+  (Vite + manifest, shared runtime chunk) so interactive pages **hydrate from static `dist/`**
+  (verified: components work when served as plain files). `apex build --islands` for zero-JS
+  static-first output.
+- **Next:** a Node/Nitro server target for dynamic routes (`[slug]`) + the API/MCP endpoints in
+  production; island-mode client bundling in the built output.
 
 ### ▢ Phase 3 — Backend
 Jobs/queues, events/observers, auth — all MCP-aware.

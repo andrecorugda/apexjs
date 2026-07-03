@@ -25,6 +25,9 @@ export interface RenderPageOptions {
   componentCss?: string
   /** Post-process the shell HTML (dev: vite.transformIndexHtml). */
   transformHtml?: (url: string, html: string) => string | Promise<string>
+  /** In a production build, the href of the built client bundle for this page.
+   * When set, the shell references it instead of the inline dev module. */
+  clientHref?: string
 }
 
 /**
@@ -54,6 +57,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     island: stateIsland(mod.componentId, loaderData),
     css: mod.css + (opts.componentCss ?? ''),
     pageId: opts.pageId,
+    clientHref: opts.clientHref,
   })
 
   return opts.transformHtml ? opts.transformHtml(opts.url, doc) : doc
@@ -64,9 +68,21 @@ interface ShellParts {
   island: string
   css: string
   pageId: string
+  clientHref?: string
 }
 
-function shell({ body, island, css, pageId }: ShellParts): string {
+function shell({ body, island, css, pageId, clientHref }: ShellParts): string {
+  // Production build → reference the built, hashed client bundle. Dev → inline
+  // the module so Vite serves + HMRs it.
+  const clientScript = clientHref
+    ? `<script type="module" src="${clientHref}"></script>`
+    : `<script type="module">
+  import Alpine from 'alpinejs'
+  import ${JSON.stringify(pageId)}
+  window.Alpine = Alpine
+  Alpine.start()
+</script>`
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -78,12 +94,7 @@ function shell({ body, island, css, pageId }: ShellParts): string {
 <body>
 ${body}
 ${island}
-<script type="module">
-  import Alpine from 'alpinejs'
-  import ${JSON.stringify(pageId)}
-  window.Alpine = Alpine
-  Alpine.start()
-</script>
+${clientScript}
 </body>
 </html>`
 }
