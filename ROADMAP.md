@@ -45,7 +45,13 @@ zero JS until an island needs it.
   Proven: an MCP-tool write is visible via the REST list.
   Full CRUD (list/get/create/update/delete). `apex migrate` CLI + `apex make page/component/api`.
 - **Next:** `apex make:model` + `drizzle-kit`-generated migrations, per-route auth scoping, more
-  Drizzle drivers. SSG + Nitro prod build. Component `<script server>` loaders + slots.
+  Drizzle drivers. Component `<script server>` loaders + slots.
+
+### ◑ Production build
+- **Done:** `apex build` — SSG prerender of static routes to `dist/**/index.html` (zero-JS output
+  for static pages; deployable to any static host).
+- **Next:** client-bundle pipeline (Vite build + manifest) so interactive/island pages hydrate in
+  the built output; a Node/Nitro server target for dynamic routes + API/MCP in production.
 
 ### ▢ Phase 3 — Backend
 Jobs/queues, events/observers, auth — all MCP-aware.

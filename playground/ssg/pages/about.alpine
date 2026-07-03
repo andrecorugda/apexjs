@@ -1,0 +1,13 @@
+<script server lang="ts">
+  export function loader() { return { heading: 'About' } }
+</script>
+<template>
+  <main>
+    <h1 x-text="heading"></h1>
+    <p>A statically generated content page — <code>pages/about.alpine</code>.</p>
+    <p><a href="/">← Home</a></p>
+  </main>
+</template>
+<style scoped>
+  main { max-width: 40rem; margin: 3rem auto; font-family: system-ui, sans-serif; }
+</style>
