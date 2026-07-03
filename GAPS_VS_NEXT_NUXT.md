@@ -1,5 +1,62 @@
 # Apex JS — Gap Analysis vs Next.js & Nuxt (and the plan to close them)
 
+## ✅ Shipped overnight (2026-07-04) — `@apex-stack/core@0.1.16`
+
+Four Wave-A features landed, each verified. Update with `npm i -g @apex-stack/core@latest`.
+
+**1. Global store — `defineStore`** (shared, SSR-safe, reactive)
+```ts
+// stores/counter.ts   ·   apex make store counter
+import { defineStore } from '@apex-stack/core'
+export default defineStore('counter', () => ({ n: 0, inc(){ this.n++ } }))
+```
+```html
+<button @click="$store.counter.inc()" x-text="$store.counter.n"></button>
+```
+Verified: `$store` renders on the server AND stays reactive + shared across components/islands after hydration.
+
+**2. Composables / reusable logic — `<script client>`**
+```ts
+// composables/useCounter.ts
+export function useCounter(start = 0) {
+  return { count: start, inc(){ this.count++ }, get double(){ return this.count * 2 } }
+}
+```
+```html
+<script client lang="ts">
+  import { useCounter } from '../composables/useCounter'
+</script>
+<template x-data="useCounter(5)">
+  <button @click="inc()" x-text="count"></button>
+  <span x-text="double"></span>
+</template>
+```
+Imports in `<script client>` are available to `x-data` on **both** server and client. Compose by spread:
+`x-data="{ ...useCounter(), ...useTimer() }"`. (Getters like `double` stay reactive.)
+
+**3. Tailwind + shared styles**
+```bash
+npm i tailwindcss @tailwindcss/vite
+echo '@import "tailwindcss";' > app.css      # app.css also = your shared/global styles
+```
+Apex auto-loads `@tailwindcss/vite` when installed and Vite-processes `app.css` (root / `styles/` / `src/`).
+
+**4. `.alpine` VSCode extension** — `editors/vscode-apex/apex-alpine-0.1.0.vsix`
+```bash
+code --install-extension editors/vscode-apex/apex-alpine-0.1.0.vsix
+```
+Highlights TS (`<script server|client>`), CSS (`<style>`), HTML, and Alpine directives.
+
+**Shared FE/BE types (works today):** put interfaces in `shared/*.ts` and import them in both
+`server/api/*.ts` and `.alpine` `<script>` blocks — one TS project, no duplication. (Typed
+`InferInput/Output` from route contracts is the next step — see roadmap.)
+
+Still open from Wave A: **layouts** and **head/SEO (`useHead`)** — next up.
+
+---
+
+
+
 > Written 2026-07-04. The goal isn't to clone Next/Nuxt — it's to give Alpine developers
 > everything a modern meta-framework offers, delivered the **Apex way**: HTML-first, ~zero-JS
 > by default, AI-native by construction. Where we can be more original than "port the feature",
