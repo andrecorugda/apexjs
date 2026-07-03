@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.5 — 2026-07-03
+
+- **fix(scoped CSS):** `<style scoped>` no longer scopes global selectors (`body`, `html`, `:root`) —
+  they can't carry the scope attribute, so page-level background/color rules were being silently
+  dropped. They're now left global. (`@apex-stack/kit` 0.1.2, `@apex-stack/vite` 0.1.2, core 0.1.5.)
+
 ## 0.1.4 — 2026-07-03
 
 - **Dev hot-reload for API routes** — `server/api/*.ts` routes and resources are re-loaded per
