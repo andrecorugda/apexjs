@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { defineCommand, runMain } from 'citty'
 import { newCommand } from './commands/new.js'
-import { banner, color } from './ui.js'
+import { banner, color, VERSION } from './ui.js'
 
 // Heavy commands (dev/build/start/make/migrate/mcp) are imported lazily so that
 // `apex new`, the banner, and `--help` never pull in Vite + rollup — which can
@@ -20,6 +20,7 @@ const COMMANDS: Array<[string, string]> = [
 const main = defineCommand({
   meta: {
     name: 'apex',
+    version: VERSION,
     description: 'The full-stack meta-framework for Alpine.js',
   },
   subCommands: {

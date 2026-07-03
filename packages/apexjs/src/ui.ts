@@ -1,9 +1,20 @@
 // Terminal UI kit for the Apex CLI — brand banner, spinner, and status output.
 // Truecolor when the terminal supports it; degrades cleanly to plain text in
 // non-TTY / NO_COLOR / dumb-terminal environments (CI, piped output).
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 
 const TTY = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR && process.env.TERM !== 'dumb'
 const RESET = '\x1b[0m'
+
+/** This package's version, read from its own package.json (for the banner + `apex --version`). */
+export const VERSION: string = (() => {
+  try {
+    return JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')).version || ''
+  } catch {
+    return ''
+  }
+})()
 
 function truecolor(r: number, g: number, b: number, s: string): string {
   return TTY ? `\x1b[38;2;${r};${g};${b}m${s}${RESET}` : s
@@ -49,7 +60,8 @@ export function banner(subtitle = 'The full-stack, AI-native meta-framework for 
     }
     return out + RESET
   })
-  return `\n${rows.join('\n')}\n  ${color.gray(subtitle)}\n`
+  const ver = VERSION ? `${color.cyan(`v${VERSION}`)}  ${color.gray('·')}  ` : ''
+  return `\n${rows.join('\n')}\n  ${ver}${color.gray(subtitle)}\n`
 }
 
 export interface Spinner {
