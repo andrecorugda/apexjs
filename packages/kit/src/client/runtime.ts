@@ -54,7 +54,14 @@ function onAlpineInit(): void {
   const Alpine = window.Alpine
   if (Alpine) {
     for (const [id, factory] of registry) {
-      Alpine.data(`apex_${id}`, () => ({ ...factory(), ...readState(id) }))
+      Alpine.data(`apex_${id}`, () => {
+        // Object.assign (not spread) so getters/methods from the factory —
+        // e.g. a composable's `get double()` — survive; loader state overlays
+        // plain data values on top (loader wins), same order the server used.
+        const base = factory()
+        const state = readState(id)
+        return Object.keys(state).length ? Object.assign(base, state) : base
+      })
     }
   }
   removeSsrClones()

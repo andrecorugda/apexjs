@@ -30,7 +30,10 @@ export interface StyleBlock {
 
 export interface AlpineDescriptor {
   filename: string
+  /** The `<script server>` block (loader; server-only, excluded from the client bundle). */
   script?: ScriptBlock
+  /** The `<script client>` block (imports + logic available to the template/x-data). */
+  clientScript?: ScriptBlock
   template?: TemplateBlock
   styles: StyleBlock[]
 }
@@ -134,12 +137,19 @@ function commitBlock(
 ): void {
   switch (block.tag) {
     case 'script': {
-      if (!('server' in block.attrs)) {
-        fail('<script> blocks must be marked `server` in Phase 0 (e.g. <script server>)', loc.start)
+      const isClient = 'client' in block.attrs
+      const isServer = 'server' in block.attrs
+      if (!isClient && !isServer) {
+        fail('<script> must be marked `server` or `client` (e.g. <script server> or <script client>)', loc.start)
       }
-      if (descriptor.script) fail('duplicate <script server> block', loc.start)
       const lang = block.attrs.lang === 'ts' || block.attrs.lang === 'js' ? block.attrs.lang : 'ts'
-      descriptor.script = { content, lang, attrs: block.attrs, loc }
+      if (isClient) {
+        if (descriptor.clientScript) fail('duplicate <script client> block', loc.start)
+        descriptor.clientScript = { content, lang, attrs: block.attrs, loc }
+      } else {
+        if (descriptor.script) fail('duplicate <script server> block', loc.start)
+        descriptor.script = { content, lang, attrs: block.attrs, loc }
+      }
       return
     }
     case 'template': {

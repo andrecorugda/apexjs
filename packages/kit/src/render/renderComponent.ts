@@ -21,6 +21,10 @@ export interface RenderComponentInput {
   registry?: ComponentRegistry
   /** Global store initial state keyed by name, exposed as `$store` during SSR. */
   stores?: Record<string, unknown>
+  /** Pre-evaluated root x-data defaults (from a compiled `rootData()` factory).
+   * When provided, used instead of sandbox-evaluating the `rootXData` string —
+   * this is how composables/imports in x-data resolve during SSR. */
+  authoredDefaults?: Record<string, unknown>
 }
 
 export interface RenderComponentResult {
@@ -62,12 +66,15 @@ export function renderComponent(input: RenderComponentInput): RenderComponentRes
   root.setAttribute('data-apex-root', componentId)
   while (body.firstChild) root.appendChild(body.firstChild)
 
-  // Merge authored x-data defaults (evaluated) under the loader data.
+  // Merge authored x-data defaults under the loader data. Prefer defaults from a
+  // compiled `rootData()` factory (real JS — resolves composable imports); else
+  // fall back to sandbox-evaluating the authored x-data string.
   const authoredExpr = rootXData ?? undefined
   const authoredDefaults =
-    authoredExpr && authoredExpr.trim()
+    input.authoredDefaults ??
+    (authoredExpr && authoredExpr.trim()
       ? ((evaluate(authoredExpr, [{}]) as Record<string, unknown>) ?? {})
-      : {}
+      : {})
   const rootData: Record<string, unknown> = { ...authoredDefaults, ...loaderData }
 
   const idCounter = { n: 0 }

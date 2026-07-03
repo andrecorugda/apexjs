@@ -1,7 +1,8 @@
+import { existsSync } from 'node:fs'
 import { createServer as createHttpServer, type Server } from 'node:http'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { apex } from '@apex-stack/vite'
 import {
   createApp,
@@ -11,7 +12,7 @@ import {
   setResponseStatus,
   toNodeListener,
 } from 'h3'
-import { createServer as createViteServer, type ViteDevServer } from 'vite'
+import { createServer as createViteServer, type PluginOption, type ViteDevServer } from 'vite'
 import { createApiHandler, loadApiRoutes } from '../api/routes.js'
 import { createMcpHandler } from '../mcp/server.js'
 import { loadComponents } from '../components/registry.js'
@@ -70,6 +71,21 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   if (alpine) alias.alpinejs = alpine
   if (kit) alias['@apex-stack/kit'] = kit
 
+  // Optional Tailwind — auto-load @tailwindcss/vite if the project installed it.
+  const plugins: PluginOption[] = [apex({ clientRuntime: '@apex-stack/core/client' })]
+  try {
+    const reqProj = createRequire(join(options.root, 'package.json'))
+    const twMod = await import(pathToFileURL(reqProj.resolve('@tailwindcss/vite')).href)
+    const tw = (twMod.default ?? twMod) as () => PluginOption
+    plugins.unshift(tw())
+  } catch {
+    // Tailwind not installed — fine, it's opt-in.
+  }
+
+  // A project global stylesheet (Tailwind entry + shared styles), Vite-processed.
+  const appCssRel = ['app.css', 'styles/app.css', 'src/app.css'].find((p) => existsSync(join(options.root, p)))
+  const appCss = appCssRel ? `/${appCssRel}` : undefined
+
   const vite = await createViteServer({
     root: options.root,
     appType: 'custom',
@@ -79,7 +95,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
     resolve: { alias },
     // User apps depend on `@apex-stack/core`, so the client module imports the runtime
     // from `@apex-stack/core/client` (a re-export) rather than the internal kit package.
-    plugins: [apex({ clientRuntime: '@apex-stack/core/client' })],
+    plugins,
     optimizeDeps: { include: ['alpinejs'] },
   })
 
@@ -135,6 +151,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           registry,
           componentCss,
           stores,
+          appCss,
           transformHtml: (u, doc) => vite.transformIndexHtml(u, doc),
         })
         setResponseHeader(event, 'Content-Type', 'text/html')

@@ -6,6 +6,8 @@ export interface PageModule {
   loader: (ctx: { params: Record<string, string>; url: string }) => unknown | Promise<unknown>
   template: string
   rootXData: string | null
+  /** Compiled x-data factory (present when the page has a `<script client>`) — resolves imports at SSR. */
+  rootData?: () => Record<string, unknown>
   componentId: string
   scopeId: string
   css: string
@@ -31,6 +33,8 @@ export interface RenderPageOptions {
   clientHref?: string
   /** Global stores discovered from `stores/*` — SSR initial state + client registration. */
   stores?: LoadedStore[]
+  /** A global stylesheet module id (e.g. `/app.css`) to import — carries Tailwind + shared styles. */
+  appCss?: string
 }
 
 /**
@@ -55,6 +59,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     loaderData,
     registry: opts.registry,
     stores: storesInitialState(stores),
+    authoredDefaults: mod.rootData ? mod.rootData() : undefined,
   })
 
   const doc = shell({
@@ -64,6 +69,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     pageId: opts.pageId,
     clientHref: opts.clientHref,
     storeIds: stores.map((s) => s.id),
+    appCss: opts.appCss,
   })
 
   return opts.transformHtml ? opts.transformHtml(opts.url, doc) : doc
@@ -76,9 +82,10 @@ interface ShellParts {
   pageId: string
   clientHref?: string
   storeIds?: string[]
+  appCss?: string
 }
 
-function shell({ body, island, css, pageId, clientHref, storeIds = [] }: ShellParts): string {
+function shell({ body, island, css, pageId, clientHref, storeIds = [], appCss }: ShellParts): string {
   // Register global stores on the client before Alpine.start(): import each store
   // module and call Alpine.store(name, factory()) — same factory the server used,
   // so hydration is value-identical.
@@ -90,7 +97,7 @@ function shell({ body, island, css, pageId, clientHref, storeIds = [] }: ShellPa
   const clientScript = clientHref
     ? `<script type="module" src="${clientHref}"></script>`
     : `<script type="module">
-  import Alpine from 'alpinejs'
+${appCss ? `  import ${JSON.stringify(appCss)}\n` : ''}  import Alpine from 'alpinejs'
 ${storeImports ? `${storeImports}\n` : ''}  import ${JSON.stringify(pageId)}
   window.Alpine = Alpine
 ${storeRegs ? `${storeRegs}\n` : ''}  Alpine.start()
