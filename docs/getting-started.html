@@ -67,21 +67,30 @@
 
       <h2 id="requirements">Requirements <a class="anchor" href="#requirements">#</a></h2>
       <p>
-        Apex runs on <strong>Node.js</strong> (18+ recommended) with any package manager
+        Apex runs on <strong>Node.js</strong> (20.19+) with any package manager
         (<code>npm</code>, <code>pnpm</code>, <code>yarn</code>). It is Node-native — no PHP,
         no other runtime. TypeScript is set up for you.
       </p>
 
       <h2 id="scaffold">Scaffold a project <a class="anchor" href="#scaffold">#</a></h2>
-      <p>The scaffolder is the entry point. It creates a ready-to-run app in a new directory:</p>
+      <p>The scaffolder is the entry point. It creates a ready-to-run app, installs dependencies, and inits git — all in one step:</p>
       <pre><code>npm create apexjs@latest my-app
 cd my-app
-npm install</code></pre>
+npm run dev</code></pre>
       <p class="muted">
-        <code>create-apexjs</code> is the unscoped package behind <code>npm create apexjs</code>;
-        the libraries it depends on live under the <code>@apex-stack/*</code> scope
-        (<code>@apex-stack/core</code> is the CLI + runtime).
+        Dependencies install automatically with your package manager (npm/pnpm/yarn/bun) and a git repo is
+        initialized — pass <code>--no-install</code> or <code>--no-git</code> to skip. <code>create-apexjs</code>
+        is the unscoped package behind <code>npm create apexjs</code>; the libraries it pulls in live under the
+        <code>@apex-stack/*</code> scope (<code>@apex-stack/core</code> is the CLI + runtime).
       </p>
+      <div class="callout">
+        <span class="h">apex is a project command</span>
+        <p>
+          Run it through your package manager — <code>npm run dev</code> (or <code>npx apex dev</code>). A bare
+          <code>apex</code> in your shell won't resolve: the CLI is a local dependency, exactly like
+          <code>next</code> or <code>vite</code>.
+        </p>
+      </div>
       <figure>
         <img src="./assets/app-hello.png" loading="lazy"
              alt="The Apex JS starter page running in a browser, showing the welcome heading and a Show me how button." />

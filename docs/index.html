@@ -39,31 +39,18 @@
   <section class="home-hero">
     <canvas id="hero-net" aria-hidden="true"></canvas>
     <div class="wrap">
-      <p class="eyebrow">The meta-framework for Alpine.js</p>
-      <h1>HTML-first apps.<br /><span class="ai">AI-native</span> APIs.</h1>
-      <p class="lede">
-        Apex is to Alpine what Next.js is to React (and Nuxt to Vue) — file routing, server rendering, and islands.
-        Then it does what <strong>no other framework does</strong>: every typed API route is
-        also an MCP tool your AI can call. No extra library.
-      </p>
-      <div class="cta-row">
-        <span class="terminal"><span class="prompt">$</span> npm create apexjs@latest</span>
-        <a class="btn" href="./getting-started.html">Get started →</a>
-        <a class="btn ghost" href="https://github.com/andrecorugda/apexjs">GitHub</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="section studio-section">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">Apex Studio</p>
-        <h2>A real project, in one window.</h2>
-        <p>
-          Click through the files. Pages render on the server and hydrate as islands, and a single
-          resource definition becomes both a REST endpoint <em>and</em> MCP tools. This isn't a video —
-          it's the framework, live.
+      <div class="hero-copy">
+        <h1>HTML-first apps.<br /><span class="ai">AI-native</span> APIs.</h1>
+        <p class="lede">
+          Apex is to Alpine what Next.js is to React — file routing, server rendering, and islands.
+          Then it does what <strong>no other framework does</strong>: every typed API route is also
+          an MCP tool your AI can call. No extra library.
         </p>
+        <div class="cta-row">
+          <span class="terminal"><span class="prompt">$</span> npm create apexjs@latest</span>
+          <a class="btn" href="./getting-started.html">Get started →</a>
+          <a class="btn ghost" href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        </div>
       </div>
 
       <div class="studio" id="apexStudio">
@@ -191,46 +178,78 @@
           </div>
         </div>
       </div>
+      <p class="studio-note">Click any file — this is the framework running, not a recording.</p>
     </div>
   </section>
 
-  <section class="section">
+  <section class="section" aria-label="Features">
     <div class="wrap">
       <div class="section-head">
-        <p class="eyebrow">See it run</p>
-        <h2>One app: server-rendered from the DB, interactive, and AI-native.</h2>
-        <p>
-          A single Apex app — a feature list rendered on the server from SQLite, filtered and added to
-          live in the browser, and an AI-native panel where clicking "Simulate an AI" hits the
-          <strong>same endpoint</strong> an assistant calls over MCP. Recorded from a running dev server.
-        </p>
-      </div>
-      <div class="video-frame">
-        <video controls muted loop playsinline preload="metadata" poster="./assets/showcase.png"
-               aria-label="Screen recording of one Apex app: a feature list server-rendered from a database, live filtering and adding, and an AI-native panel that calls the same create endpoint an assistant uses via MCP.">
-          <source src="./assets/demo.webm" type="video/webm" />
-          Your browser doesn't support embedded video.
-          <a href="./assets/demo.webm">Download the demo</a>.
-        </video>
+        <h2>Everything you need, in one framework.</h2>
+        <p>File routing, server rendering, islands, components, a typed data layer, and AI-native APIs — the essentials, out of the box.</p>
       </div>
 
-      <div class="card-grid cols-3" style="margin-top:1.6rem">
-        <div class="card" style="cursor:default">
-          <span class="k">Server-rendered</span>
-          <h3>From the database</h3>
-          <p>The <code>loader()</code> queries SQLite on the server; the list is real HTML on first paint.</p>
+      <div class="carousel" data-carousel>
+        <button type="button" class="carousel-nav prev" data-carousel-prev aria-label="Previous feature">&#8249;</button>
+        <div class="carousel-track" data-carousel-track tabindex="0" aria-label="Feature slides, scrollable">
+
+          <article class="feature-slide">
+            <span class="fs-num">01</span>
+            <h3>Server rendering</h3>
+            <p>Every page renders to real HTML on the server through a typed <code>loader()</code> — fast first paint, real SEO, no client round-trip.</p>
+            <pre><code><span class="k">export async function</span> <span class="f">loader</span>() {
+  <span class="k">return</span> { posts: <span class="k">await</span> db.select().from(schema.posts) }
+}</code></pre>
+          </article>
+
+          <article class="feature-slide">
+            <span class="fs-num">02</span>
+            <h3>Islands, on demand</h3>
+            <p>Ship almost no JavaScript. Hydrate only what's interactive, exactly when you choose.</p>
+            <pre><code>&lt;<span class="t">div</span> <span class="a">x-data</span>=<span class="s">"counter()"</span> <span class="a">client:visible</span>&gt;…&lt;/<span class="t">div</span>&gt;
+<span class="c">// client:load | idle | visible | none</span></code></pre>
+          </article>
+
+          <article class="feature-slide">
+            <span class="fs-num">03</span>
+            <h3>Components</h3>
+            <p>Single-file <code>.alpine</code> components with props and scoped styles — reused across pages.</p>
+            <pre><code>&lt;<span class="t">Counter</span> <span class="a">start</span>=<span class="s">"5"</span> <span class="a">:label</span>=<span class="s">"'Likes'"</span> /&gt;</code></pre>
+          </article>
+
+          <article class="feature-slide">
+            <span class="fs-num">04</span>
+            <h3>File-based routing</h3>
+            <p>Your <code>pages/</code> folder is your route map — nested folders and dynamic segments included.</p>
+            <pre><code>pages/index.alpine        → <span class="s">/</span>
+pages/blog/[slug].alpine  → <span class="s">/blog/:slug</span></code></pre>
+          </article>
+
+          <article class="feature-slide">
+            <span class="fs-num">05</span>
+            <h3>Typed data layer</h3>
+            <p>One <code>defineResource</code> gives you CRUD over Drizzle — SQLite, Postgres, Turso or Neon.</p>
+            <pre><code><span class="k">export default</span> <span class="f">defineResource</span>(<span class="s">'posts'</span>, {
+  db, table: schema.posts,
+  insert: { title: <span class="f">z</span>.string() },
+})</code></pre>
+          </article>
+
+          <article class="feature-slide accent">
+            <span class="fs-num">06</span>
+            <h3>AI-native APIs</h3>
+            <p>The part no one else has: every typed route is <em>also</em> a live MCP tool your AI can call — no extra library.</p>
+            <pre><code><span class="k">export default</span> <span class="f">defineApexRoute</span>({
+  input: { a: <span class="f">z</span>.number(), b: <span class="f">z</span>.number() },
+  <span class="a">mcp</span>: <span class="k">true</span>,   <span class="c">// → REST endpoint + MCP tool</span>
+  handler: ({ input }) =&gt; ({ sum: input.a + input.b }),
+})</code></pre>
+          </article>
+
         </div>
-        <div class="card" style="cursor:default">
-          <span class="k">Interactive</span>
-          <h3>Islands + hydration</h3>
-          <p>Alpine hydrates the panel — filter and add features live, no full-page reloads.</p>
-        </div>
-        <div class="card" style="cursor:default">
-          <span class="k">AI-native</span>
-          <h3>Same data, one definition</h3>
-          <p>The UI and an AI both call <code>features_create</code> — REST and MCP from one <code>defineResource</code>.</p>
-        </div>
+        <button type="button" class="carousel-nav next" data-carousel-next aria-label="Next feature">&#8250;</button>
       </div>
+      <div class="carousel-dots" data-carousel-dots></div>
 
       <p class="code-label">server/api/features.ts — the whole backend of the demo</p>
       <pre><code><span class="c">// One definition → REST endpoints AND MCP tools</span>
@@ -347,15 +366,16 @@
         <p class="eyebrow">Quickstart</p>
         <h2>Scaffold and run in under a minute.</h2>
       </div>
-      <pre><code><span class="c"># create a new app and start the dev server</span>
+      <pre><code><span class="c"># scaffold — dependencies install and git inits automatically</span>
 npm create apexjs@latest my-app
 cd my-app
-npm install
 npm run dev          <span class="c"># http://localhost:3000</span>
 npm run dev:islands  <span class="c"># static-first islands mode</span></code></pre>
       <p class="muted">
-        The scaffold ships a server-rendered page (<code>pages/index.alpine</code>) and an API
-        route that is also an MCP tool (<code>server/api/hello.ts</code>).
+        The scaffolder installs everything and sets up git for you, then <code>npm run dev</code> starts the
+        server. It ships a server-rendered page (<code>pages/index.alpine</code>) and an API route that is
+        also an MCP tool (<code>server/api/hello.ts</code>). <code>apex</code> is a project command — run it via
+        <code>npm run dev</code> or <code>npx apex</code>, not a bare <code>apex</code>.
       </p>
 
       <div class="card-grid cols-3">
@@ -542,14 +562,35 @@ npm run dev:islands  <span class="c"># static-first islands mode</span></code></
 
     function frame(move) {
       ctx.clearRect(0, 0, W, H);
-      var maxD = 150;
-      for (var i = 0; i < nodes.length; i++) {
-        var n = nodes[i];
-        if (move) {
+      var maxD = 150, facetLim = (maxD * 1.15) * (maxD * 1.15);
+      if (move) {
+        for (var i = 0; i < nodes.length; i++) {
+          var n = nodes[i];
           n.x += n.vx; n.y += n.vy; n.ph += 0.018;
           if (n.x < 0 || n.x > W) n.vx *= -1;
           if (n.y < 0 || n.y > H) n.vy *= -1;
         }
+      }
+      // Faceted fills — each node to its two nearest neighbours, echoing the
+      // faceted "A" logo (lit + shadow triangular faces).
+      for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i], a1 = null, a2 = null, d1 = 1e12, d2 = 1e12;
+        for (var j = 0; j < nodes.length; j++) {
+          if (j === i) continue;
+          var m = nodes[j], dx = n.x - m.x, dy = n.y - m.y, d = dx * dx + dy * dy;
+          if (d < d1) { d2 = d1; a2 = a1; d1 = d; a1 = m; }
+          else if (d < d2) { d2 = d; a2 = m; }
+        }
+        if (a1 && a2 && d2 < facetLim) {
+          var frgb = n.accent ? accC : lineC;
+          ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(a1.x, a1.y); ctx.lineTo(a2.x, a2.y); ctx.closePath();
+          ctx.fillStyle = "rgba(" + frgb[0] + "," + frgb[1] + "," + frgb[2] + ",0.035)";
+          ctx.fill();
+        }
+      }
+      // Connection lines.
+      for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i];
         for (var j = i + 1; j < nodes.length; j++) {
           var m = nodes[j], dx = n.x - m.x, dy = n.y - m.y, d = Math.sqrt(dx * dx + dy * dy);
           if (d < maxD) {
@@ -560,6 +601,7 @@ npm run dev:islands  <span class="c"># static-first islands mode</span></code></
           }
         }
       }
+      // Vertices.
       for (var k = 0; k < nodes.length; k++) {
         var p = nodes[k], rgb = p.accent ? accC : lineC;
         var rad = p.accent ? 1.7 + Math.sin(p.ph) * 0.8 : 1.4;
@@ -582,5 +624,52 @@ npm run dev:islands  <span class="c"># static-first islands mode</span></code></
     new MutationObserver(function () { palette(); if (reduce) frame(false); })
       .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     start();
+  })();
+
+  // Feature carousel — scroll-snap track with prev/next + dot indicators.
+  (function () {
+    var root = document.querySelector("[data-carousel]");
+    if (!root) return;
+    var track = root.querySelector("[data-carousel-track]");
+    var slides = Array.prototype.slice.call(track.children);
+    var dotsWrap = document.querySelector("[data-carousel-dots]");
+    var prev = root.querySelector("[data-carousel-prev]");
+    var next = root.querySelector("[data-carousel-next]");
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    var dots = slides.map(function (_, i) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("aria-label", "Go to feature " + (i + 1));
+      b.addEventListener("click", function () { scrollToIndex(i); });
+      dotsWrap.appendChild(b);
+      return b;
+    });
+
+    function current() {
+      var c = track.scrollLeft + track.clientWidth / 2, best = 0, bd = 1e12;
+      slides.forEach(function (s, i) {
+        var d = Math.abs(s.offsetLeft + s.offsetWidth / 2 - c);
+        if (d < bd) { bd = d; best = i; }
+      });
+      return best;
+    }
+    function scrollToIndex(i) {
+      i = Math.max(0, Math.min(slides.length - 1, i));
+      var s = slides[i];
+      track.scrollTo({ left: s.offsetLeft - (track.clientWidth - s.offsetWidth) / 2, behavior: reduce ? "auto" : "smooth" });
+    }
+    function sync() {
+      var i = current();
+      dots.forEach(function (d, di) { d.setAttribute("aria-current", di === i ? "true" : "false"); });
+      if (prev) prev.disabled = i === 0;
+      if (next) next.disabled = i === slides.length - 1;
+    }
+    if (prev) prev.addEventListener("click", function () { scrollToIndex(current() - 1); });
+    if (next) next.addEventListener("click", function () { scrollToIndex(current() + 1); });
+    var st;
+    track.addEventListener("scroll", function () { clearTimeout(st); st = setTimeout(sync, 80); });
+    window.addEventListener("resize", sync);
+    sync();
   })();
 </script>
