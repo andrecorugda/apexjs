@@ -12,7 +12,8 @@ cd my-app
 npm run dev                        # → http://localhost:3000
 ```
 
-> `apex` is a project command (like `next` or `vite`) — run it via `npm run dev` or `npx apex`, not a bare `apex`.
+> `apex` is a project command (like `next` or `vite`) — run it via `npm run dev` or `npx apex`. Prefer a
+> global command? `npm i -g @apex-stack/core`, then `apex dev` works in any project.
 
 ## Why Apex
 

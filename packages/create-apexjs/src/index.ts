@@ -105,8 +105,9 @@ const main = defineCommand({
   ${installed ? c.green('Ready.') : 'Next steps:'}
 ${steps.map((s) => `    ${s}`).join('\n')}
 
-  ${c.yellow('Note:')} ${c.cyan('apex')} is a project command, not a global one — run it as
-        ${c.cyan(runPrefix + ' dev')}  (or ${c.cyan('npx apex dev')}), never a bare "apex".
+  ${c.yellow('Run the CLI with:')} ${c.cyan(runPrefix + ' dev')}   ${c.dim('(or ' + 'npx apex dev' + ')')}
+        A bare ${c.cyan('apex')} won't resolve — it's a local dependency, like ${c.cyan('next')} or ${c.cyan('vite')}.
+        ${c.dim('Prefer a global command? ')}${c.cyan('npm i -g @apex-stack/core')}${c.dim(' → then `apex dev` works anywhere.')}
   ${c.dim('Islands mode:')} ${runPrefix} dev:islands
   ${gitOk ? c.dim('Git repository initialized. ') : ''}Your server/api/*.ts routes are also MCP tools at /mcp.
 `)

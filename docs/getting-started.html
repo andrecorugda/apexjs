@@ -84,12 +84,13 @@ npm run dev</code></pre>
         <code>@apex-stack/*</code> scope (<code>@apex-stack/core</code> is the CLI + runtime).
       </p>
       <div class="callout">
-        <span class="h">apex is a project command</span>
+        <span class="h">Running the apex CLI</span>
         <p>
-          Run it through your package manager — <code>npm run dev</code> (or <code>npx apex dev</code>). A bare
-          <code>apex</code> in your shell won't resolve: the CLI is a local dependency, exactly like
-          <code>next</code> or <code>vite</code>.
+          By default <code>apex</code> is a <em>project</em> command (like <code>next</code> or <code>vite</code>),
+          so run it through your package manager — <code>npm run dev</code>, or <code>npx apex dev</code>. A bare
+          <code>apex</code> in your shell won't resolve unless you also install it globally:
         </p>
+        <pre><code>npm i -g @apex-stack/core   <span class="c"># then `apex dev` works in any project</span></code></pre>
       </div>
       <figure>
         <img src="./assets/app-hello.png" loading="lazy"
