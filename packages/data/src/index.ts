@@ -1,49 +1,120 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { type ApexResource, defineApexRoute } from '@apex-stack/core'
-import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { eq } from 'drizzle-orm'
 import { z, type ZodRawShape } from 'zod'
 
-export type ApexDb = ReturnType<typeof drizzle>
+export type Dialect = 'sqlite' | 'postgres'
 
-/** Open a SQLite database and wrap it with Drizzle. */
-export function createDb(path: string): { db: ApexDb; sqlite: Database.Database } {
-  const sqlite = new Database(path)
-  sqlite.pragma('journal_mode = WAL')
-  return { db: drizzle(sqlite), sqlite }
+/** A driver-agnostic database handle. `db` is a Drizzle instance (async API). */
+export interface ApexDbHandle {
+  db: any
+  dialect: Dialect
+  /** Run raw SQL (one or more statements). */
+  exec(sql: string): Promise<void>
+  /** Run a query and return rows. */
+  query(sql: string): Promise<Array<Record<string, unknown>>>
+  close(): Promise<void>
+}
+
+export type CreateDbConfig =
+  | string // shorthand: a SQLite file path (libSQL), e.g. "data.db"
+  | { driver: 'sqlite' | 'libsql'; url: string } // local file (file:…) or Turso (libsql://…)
+  | { driver: 'postgres'; url: string } // Supabase / Neon / any Postgres
+  | { driver: 'pglite'; dir?: string } // embedded Postgres (in-memory if no dir)
+
+function libsqlUrl(pathOrUrl: string): string {
+  return /^(file:|libsql:|https?:|:memory:)/.test(pathOrUrl) ? pathOrUrl : `file:${pathOrUrl}`
+}
+
+/**
+ * Open a database and wrap it with Drizzle behind a driver-agnostic handle.
+ * All drivers use Drizzle's async query API, so `defineResource` works unchanged
+ * across SQLite (libSQL/Turso), Postgres (Supabase/Neon) and embedded PGlite.
+ * Postgres/PGlite drivers are loaded on demand — install only what you use.
+ */
+export async function createDb(config: CreateDbConfig): Promise<ApexDbHandle> {
+  const cfg = typeof config === 'string' ? ({ driver: 'libsql', url: config } as const) : config
+
+  if (cfg.driver === 'sqlite' || cfg.driver === 'libsql') {
+    const { createClient } = await import('@libsql/client')
+    const { drizzle } = await import('drizzle-orm/libsql')
+    const client = createClient({ url: libsqlUrl(cfg.url) })
+    return {
+      db: drizzle(client),
+      dialect: 'sqlite',
+      exec: async (sql) => {
+        await client.executeMultiple(sql)
+      },
+      query: async (sql) => (await client.execute(sql)).rows as Array<Record<string, unknown>>,
+      close: async () => {
+        client.close()
+      },
+    }
+  }
+
+  if (cfg.driver === 'postgres') {
+    const postgres = (await import('postgres')).default
+    const { drizzle } = await import('drizzle-orm/postgres-js')
+    const client = postgres(cfg.url)
+    return {
+      db: drizzle(client),
+      dialect: 'postgres',
+      exec: async (sql) => {
+        await client.unsafe(sql)
+      },
+      query: async (sql) => (await client.unsafe(sql)) as unknown as Array<Record<string, unknown>>,
+      close: async () => {
+        await client.end()
+      },
+    }
+  }
+
+  // pglite — embedded Postgres (great for local dev and tests).
+  const { PGlite } = await import('@electric-sql/pglite')
+  const { drizzle } = await import('drizzle-orm/pglite')
+  // No dir → in-memory (memory://); a dir persists to disk.
+  const client = new PGlite((cfg as { dir?: string }).dir ?? 'memory://')
+  return {
+    db: drizzle(client),
+    dialect: 'postgres',
+    exec: async (sql) => {
+      await client.exec(sql)
+    },
+    query: async (sql) => (await client.query(sql)).rows as Array<Record<string, unknown>>,
+    close: async () => {
+      await client.close()
+    },
+  }
 }
 
 /**
  * Apply pending `*.sql` migrations from `dir`, tracked in `_apex_migrations`.
- * Idempotent: each file runs once, in filename order, inside a transaction.
- * Returns the names of migrations applied this run.
+ * Idempotent; runs each file once in filename order. Works on any dialect.
  */
-export function applyMigrations(sqlite: Database.Database, dir: string): string[] {
-  sqlite.exec(
+export async function applyMigrations(handle: ApexDbHandle, dir: string): Promise<string[]> {
+  await handle.exec(
     'CREATE TABLE IF NOT EXISTS _apex_migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL)',
   )
   const applied = new Set(
-    sqlite.prepare('SELECT name FROM _apex_migrations').all().map((r) => (r as { name: string }).name),
+    (await handle.query('SELECT name FROM _apex_migrations')).map((r) => r.name as string),
   )
   const done: string[] = []
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
     if (applied.has(file)) continue
-    const sql = readFileSync(join(dir, file), 'utf8')
+    await handle.exec(readFileSync(join(dir, file), 'utf8'))
     const at = new Date().toISOString()
-    sqlite.transaction(() => {
-      sqlite.exec(sql)
-      sqlite.prepare('INSERT INTO _apex_migrations (name, applied_at) VALUES (?, ?)').run(file, at)
-    })()
+    await handle.exec(
+      `INSERT INTO _apex_migrations (name, applied_at) VALUES ('${file.replace(/'/g, "''")}', '${at}')`,
+    )
     done.push(file)
   }
   return done
 }
 
 export interface DefineResourceOptions {
-  db: ApexDb
-  /** A Drizzle table. */
+  db: any
+  /** A Drizzle table (from `drizzle-orm/sqlite-core` or `…/pg-core`). */
   table: any
   /** Zod raw shape validating the create payload. */
   insert: ZodRawShape
@@ -52,17 +123,14 @@ export interface DefineResourceOptions {
 }
 
 /**
- * Turn one table into a REST + MCP resource: `list`, `get`, and `create` routes,
- * each also an MCP tool. This is the moat — your data is AI-callable by construction.
- *   GET  /api/<name>        → list
- *   GET  /api/<name>/:id    → get
- *   POST /api/<name>        → create
+ * Turn one table into a REST + MCP resource (list/get/create/update/delete),
+ * each also an MCP tool. Dialect-agnostic — the same definition works whether
+ * `db` is backed by SQLite, Turso, Supabase, Neon, or embedded PGlite.
  */
 export function defineResource(name: string, opts: DefineResourceOptions): ApexResource {
   const { db, table, insert, pk = 'id' } = opts
   const pkCol = table[pk]
 
-  // Update accepts the id plus any subset of the create fields.
   const updateShape: Record<string, unknown> = { id: z.coerce.number() }
   for (const [key, schema] of Object.entries(
     insert as unknown as Record<string, { optional(): unknown }>,
@@ -81,7 +149,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           method: 'GET',
           description: `List all ${name}`,
           mcp: true,
-          handler: () => db.select().from(table).all(),
+          handler: async () => await db.select().from(table),
         }),
       },
       {
@@ -92,8 +160,8 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           description: `Get a single ${name} by id`,
           input: { id: z.coerce.number() },
           mcp: true,
-          handler: ({ input }) =>
-            db.select().from(table).where(eq(pkCol, (input as { id: number }).id)).get() ?? null,
+          handler: async ({ input }) =>
+            (await db.select().from(table).where(eq(pkCol, (input as { id: number }).id)))[0] ?? null,
         }),
       },
       {
@@ -104,7 +172,8 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           description: `Create a ${name}`,
           input: insert,
           mcp: true,
-          handler: ({ input }) => db.insert(table).values(input as never).returning().get(),
+          handler: async ({ input }) =>
+            (await db.insert(table).values(input as never).returning())[0],
         }),
       },
       {
@@ -115,9 +184,9 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           description: `Update a ${name} by id (partial)`,
           input: updateShape as ZodRawShape,
           mcp: true,
-          handler: ({ input }) => {
+          handler: async ({ input }) => {
             const { id, ...fields } = input as { id: number } & Record<string, unknown>
-            return db.update(table).set(fields).where(eq(pkCol, id)).returning().get() ?? null
+            return (await db.update(table).set(fields).where(eq(pkCol, id)).returning())[0] ?? null
           },
         }),
       },
@@ -129,8 +198,9 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           description: `Delete a ${name} by id`,
           input: { id: z.coerce.number() },
           mcp: true,
-          handler: ({ input }) =>
-            db.delete(table).where(eq(pkCol, (input as { id: number }).id)).returning().get() ?? null,
+          handler: async ({ input }) =>
+            (await db.delete(table).where(eq(pkCol, (input as { id: number }).id)).returning())[0] ??
+            null,
         }),
       },
     ],

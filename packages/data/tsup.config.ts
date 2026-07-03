@@ -6,5 +6,12 @@ export default defineConfig({
   dts: true,
   clean: true,
   target: 'node20',
-  external: ['better-sqlite3', 'drizzle-orm', '@apex-stack/core', 'zod'],
+  external: [
+    /^drizzle-orm/,
+    '@apex-stack/core',
+    'zod',
+    '@libsql/client',
+    'postgres',
+    /^@electric-sql\/pglite/,
+  ],
 })

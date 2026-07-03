@@ -19,15 +19,18 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@apex-stack/core": "workspace:*",
+    "@libsql/client": "^0.17.4",
     "better-sqlite3": "^11.0.0",
     "drizzle-orm": "^0.38.0",
-    "zod": "^4.4.3",
-    "@apex-stack/core": "workspace:*"
+    "zod": "^4.4.3"
   },
   "engines": {
     "node": ">=20.19"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13"
+    "@electric-sql/pglite": "^0.5.4",
+    "@types/better-sqlite3": "^7.6.13",
+    "postgres": "^3.4.9"
   }
 }

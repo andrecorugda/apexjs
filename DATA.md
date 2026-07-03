@@ -40,6 +40,23 @@ The REST endpoints and the MCP tools run the **same handlers over the same datab
 An AI that creates a todo via `todos_create` and a browser that lists via `GET /api/todos`
 see the same data. No other full-stack framework does this by default.
 
+## Databases / drivers
+
+`createDb` is driver-agnostic (all drivers use Drizzle's async API, so `defineResource` works
+unchanged across them). Postgres/PGlite drivers load on demand — install only what you use.
+
+```ts
+// db/index.ts — pick your database in one line:
+await createDb('data.db')                                    // local SQLite (libSQL)
+await createDb({ driver: 'libsql', url: process.env.TURSO_URL })     // Turso (edge)
+await createDb({ driver: 'postgres', url: process.env.DATABASE_URL }) // Supabase / Neon
+await createDb({ driver: 'pglite' })                                  // embedded Postgres (tests)
+```
+
+Because SQLite/Turso are the same dialect and Supabase/Neon/PGlite are all Postgres, a `defineResource`
+written once runs on any of them. Edge targets (Cloudflare Workers) can't run native SQLite — pair
+them with Turso or Supabase, whose drivers are fetch-based.
+
 ## Migrations
 
 `applyMigrations(sqlite, dir)` runs `db/migrations/*.sql` in order, once each, tracked in an

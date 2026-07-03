@@ -3,15 +3,20 @@ import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { defineCommand } from 'citty'
 
+interface DbHandle {
+  close(): Promise<void>
+}
 interface DataModule {
-  createDb: (path: string) => { sqlite: unknown }
-  applyMigrations: (sqlite: unknown, dir: string) => string[]
+  createDb: (config: unknown) => Promise<DbHandle>
+  applyMigrations: (handle: DbHandle, dir: string) => Promise<string[]>
 }
 
 export const migrateCommand = defineCommand({
   meta: { name: 'migrate', description: 'Apply pending SQL migrations (db/migrations/*.sql)' },
   args: {
-    db: { type: 'string', description: 'SQLite file path', default: 'data.db' },
+    db: { type: 'string', description: 'SQLite file path (libSQL)', default: 'data.db' },
+    driver: { type: 'string', description: 'sqlite | postgres | pglite', default: 'sqlite' },
+    url: { type: 'string', description: 'Connection URL (postgres) — overrides --db' },
     dir: { type: 'string', description: 'Migrations directory', default: 'db/migrations' },
     root: { type: 'string', description: 'Project root', default: '.' },
   },
@@ -29,8 +34,15 @@ export const migrateCommand = defineCommand({
       process.exit(1)
     }
 
-    const { sqlite } = data.createDb(resolve(root, args.db))
-    const applied = data.applyMigrations(sqlite, resolve(root, args.dir))
+    const config =
+      args.driver === 'postgres'
+        ? { driver: 'postgres', url: args.url }
+        : args.driver === 'pglite'
+          ? { driver: 'pglite', dir: args.url }
+          : resolve(root, args.db)
+    const handle = await data.createDb(config)
+    const applied = await data.applyMigrations(handle, resolve(root, args.dir))
+    await handle.close()
     // biome-ignore lint/suspicious/noConsole: CLI output
     console.log(
       applied.length
