@@ -40,7 +40,7 @@ zero JS until an island needs it.
 - `create-apexjs` scaffolder: `npm create apexjs@latest`.
 
 ### ◑ Phase 2 — Data ([DATA.md](./DATA.md))
-- **Done:** `apexjs-data` — Drizzle + SQLite, `createDb`, SQL-file `applyMigrations`, and
+- **Done:** `@apex-stack/data` — Drizzle + SQLite, `createDb`, SQL-file `applyMigrations`, and
   `defineResource` (list/get/create) where one table → REST endpoints **and** MCP tools on one DB.
   Proven: an MCP-tool write is visible via the REST list.
   Full CRUD (list/get/create/update/delete). `apex migrate` CLI + `apex make page/component/api`.

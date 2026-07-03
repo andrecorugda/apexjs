@@ -6,5 +6,5 @@ export default defineConfig({
   dts: true,
   clean: true,
   target: 'node20',
-  external: ['better-sqlite3', 'drizzle-orm', 'apexjs-core', 'zod'],
+  external: ['better-sqlite3', 'drizzle-orm', '@apex-stack/core', 'zod'],
 })

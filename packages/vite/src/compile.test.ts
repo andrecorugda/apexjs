@@ -1,4 +1,4 @@
-import { parseAlpineFile } from 'apexjs-kit'
+import { parseAlpineFile } from '@apex-stack/kit'
 import { describe, expect, it } from 'vitest'
 import { compileAlpine } from './compile.js'
 

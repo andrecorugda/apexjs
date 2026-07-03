@@ -1,14 +1,24 @@
 # Changelog
 
+## 0.1.1 — 2026-07-03
+
+Moved the libraries under the **`@apex-stack`** npm scope for a protected namespace.
+
+- `apexjs-core → @apex-stack/core`, `apexjs-kit → @apex-stack/kit`,
+  `apexjs-vite → @apex-stack/vite`, `apexjs-data → @apex-stack/data`.
+- `create-apexjs` stays unscoped so `npm create apexjs@latest` remains the entry point.
+- The unscoped `0.1.0` packages are deprecated with a pointer to the scoped names.
+
 ## 0.1.0 — 2026-07-03
 
-First public release. All packages published to npm.
+First public release (published unscoped as `apexjs-core` / `apexjs-kit` / `apexjs-vite` /
+`apexjs-data` / `create-apexjs`; the libraries were rescoped to `@apex-stack/*` in 0.1.1).
 
 ### Packages
-- **apexjs-core** — the `apex` CLI (`dev`, `make`, `migrate`, `mcp`) + runtime (dev server, SSR, routing, islands, API/MCP).
-- **apexjs-kit** — `.alpine` SFC parser, SSR renderer, client runtime.
-- **apexjs-vite** — Vite plugin for `.alpine` components.
-- **apexjs-data** — Drizzle-backed resources that are REST + MCP by default.
+- **@apex-stack/core** — the `apex` CLI (`dev`, `make`, `migrate`, `mcp`) + runtime (dev server, SSR, routing, islands, API/MCP).
+- **@apex-stack/kit** — `.alpine` SFC parser, SSR renderer, client runtime.
+- **@apex-stack/vite** — Vite plugin for `.alpine` components.
+- **@apex-stack/data** — Drizzle-backed resources that are REST + MCP by default.
 - **create-apexjs** — project scaffolder (`npm create apexjs@latest`).
 
 ### Features

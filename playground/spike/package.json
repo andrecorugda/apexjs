@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "alpinejs": "^3.14.8",
-    "apexjs-core": "workspace:*"
+    "@apex-stack/core": "workspace:*"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

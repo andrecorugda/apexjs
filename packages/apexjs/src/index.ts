@@ -1,4 +1,4 @@
-// apexjs-core — programmatic API.
+// @apex-stack/core — programmatic API.
 export { defineApexRoute } from './api/defineRoute.js'
 export type {
   ApexRoute,

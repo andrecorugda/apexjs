@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { applyMigrations, createDb } from 'apexjs-data'
+import { applyMigrations, createDb } from '@apex-stack/data'
 import * as schema from './schema.js'
 
 // Open the app database and apply any pending SQL migrations on boot.

@@ -1,6 +1,6 @@
 {
-  "name": "apexjs-data",
-  "version": "0.1.0",
+  "name": "@apex-stack/data",
+  "version": "0.1.1",
   "description": "Data layer for Apex JS — Drizzle-backed resources that are REST + MCP by default",
   "type": "module",
   "license": "MIT",
@@ -19,10 +19,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "apexjs-core": "workspace:*",
     "better-sqlite3": "^11.0.0",
     "drizzle-orm": "^0.38.0",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@apex-stack/core": "workspace:*"
   },
   "engines": {
     "node": ">=20.19"

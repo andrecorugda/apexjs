@@ -1,4 +1,4 @@
-import { defineApexRoute } from 'apexjs-core'
+import { defineApexRoute } from '@apex-stack/core'
 import { z } from 'zod'
 
 // POST /api/add  AND  MCP tool "add" — from a single definition.

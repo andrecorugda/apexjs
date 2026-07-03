@@ -1,4 +1,4 @@
-import { type ComponentRegistry, renderIslands } from 'apexjs-kit'
+import { type ComponentRegistry, renderIslands } from '@apex-stack/kit'
 import type { PageModule } from '../dev/renderPage.js'
 
 /**

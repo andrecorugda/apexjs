@@ -2,7 +2,7 @@
 
 > One table definition → REST endpoints **and** MCP tools. Your data is AI-callable by construction.
 
-This is where the "Laravel + AI-native" thesis becomes concrete. `apexjs-data` wraps
+This is where the "Laravel + AI-native" thesis becomes concrete. `@apex-stack/data` wraps
 [Drizzle](https://orm.drizzle.team) + SQLite and turns a table into a full resource.
 
 ## Define once
@@ -16,7 +16,7 @@ export const todos = sqliteTable('todos', {
 })
 
 // server/api/todos.ts
-import { defineResource } from 'apexjs-data'
+import { defineResource } from '@apex-stack/data'
 import { db, schema } from '../../db/index.js'
 
 export default defineResource('todos', {
@@ -44,7 +44,7 @@ see the same data. No other full-stack framework does this by default.
 
 `applyMigrations(sqlite, dir)` runs `db/migrations/*.sql` in order, once each, tracked in an
 `_apex_migrations` table — applied on boot in dev, or explicitly with **`apex migrate`**
-(idempotent; resolves `apexjs-data` from the app). `drizzle-kit`-generated migrations are the
+(idempotent; resolves `@apex-stack/data` from the app). `drizzle-kit`-generated migrations are the
 next step.
 
 ## Proven end-to-end

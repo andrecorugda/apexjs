@@ -18,14 +18,14 @@ export const migrateCommand = defineCommand({
   async run({ args }) {
     const root = resolve(process.cwd(), args.root)
 
-    // Resolve apexjs-data from the app (not the CLI's own location) so it works
+    // Resolve @apex-stack/data from the app (not the CLI's own location) so it works
     // under pnpm's strict node_modules layout.
     let data: DataModule
     try {
       const require = createRequire(join(root, 'package.json'))
-      data = (await import(pathToFileURL(require.resolve('apexjs-data')).href)) as DataModule
+      data = (await import(pathToFileURL(require.resolve('@apex-stack/data')).href)) as DataModule
     } catch {
-      console.error('\n  apexjs-data is not installed in this project. Run: npm i apexjs-data\n')
+      console.error('\n  @apex-stack/data is not installed in this project. Run: npm i @apex-stack/data\n')
       process.exit(1)
     }
 

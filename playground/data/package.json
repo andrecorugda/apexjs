@@ -9,8 +9,8 @@
   },
   "dependencies": {
     "alpinejs": "^3.14.8",
-    "apexjs-core": "workspace:*",
-    "apexjs-data": "workspace:*",
+    "@apex-stack/core": "workspace:*",
+    "@apex-stack/data": "workspace:*",
     "drizzle-orm": "^0.38.0",
     "zod": "^4.4.3"
   },

@@ -1,6 +1,6 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import type { ComponentRegistry } from 'apexjs-kit'
+import type { ComponentRegistry } from '@apex-stack/kit'
 
 interface ComponentModule {
   template: string

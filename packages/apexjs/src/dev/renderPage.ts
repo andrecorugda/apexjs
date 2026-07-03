@@ -1,6 +1,6 @@
-import { type ComponentRegistry, renderComponent, stateIsland } from 'apexjs-kit'
+import { type ComponentRegistry, renderComponent, stateIsland } from '@apex-stack/kit'
 
-/** The shape a compiled `.alpine` SSR module exports (see apexjs-vite). */
+/** The shape a compiled `.alpine` SSR module exports (see @apex-stack/vite). */
 export interface PageModule {
   loader: (ctx: { params: Record<string, string>; url: string }) => unknown | Promise<unknown>
   template: string

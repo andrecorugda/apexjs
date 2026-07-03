@@ -1,4 +1,4 @@
-import { parseAlpineFile } from 'apexjs-kit'
+import { parseAlpineFile } from '@apex-stack/kit'
 import { type Plugin, transformWithEsbuild } from 'vite'
 import { compileAlpine } from './compile.js'
 
@@ -6,8 +6,8 @@ import { compileAlpine } from './compile.js'
 export interface ApexPluginOptions {
   /**
    * The module specifier the generated client module imports the runtime from.
-   * Defaults to `apexjs-kit/client`; the `apexjs` CLI overrides this to
-   * `apexjs-core/client` so user apps only need `apexjs-core` installed.
+   * Defaults to `@apex-stack/kit/client`; the `apexjs` CLI overrides this to
+   * `@apex-stack/core/client` so user apps only need `@apex-stack/core` installed.
    */
   clientRuntime?: string
 }
@@ -22,7 +22,7 @@ export interface ApexPluginOptions {
  * milestone).
  */
 export function apex(options: ApexPluginOptions = {}): Plugin {
-  const clientRuntime = options.clientRuntime ?? 'apexjs-kit/client'
+  const clientRuntime = options.clientRuntime ?? '@apex-stack/kit/client'
 
   return {
     name: 'apexjs',

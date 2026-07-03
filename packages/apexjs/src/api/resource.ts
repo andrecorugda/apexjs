@@ -11,7 +11,7 @@ export interface ResourceRoute {
 
 /**
  * A resource expands to several routes (list/get/create/…) from one definition.
- * Built by `defineResource` in `apexjs-data`; recognized by the core API loader.
+ * Built by `defineResource` in `@apex-stack/data`; recognized by the core API loader.
  */
 export interface ApexResource {
   __apexResource: true

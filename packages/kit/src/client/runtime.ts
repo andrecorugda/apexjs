@@ -1,5 +1,5 @@
 /**
- * apexjs-kit/client — the tiny browser runtime.
+ * @apex-stack/kit/client — the tiny browser runtime.
  *
  * Two jobs, both performed synchronously inside the `alpine:init` event (which
  * fires during Alpine.start(), before Alpine walks the DOM):

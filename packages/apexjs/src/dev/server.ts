@@ -1,5 +1,5 @@
 import { createServer as createHttpServer, type Server } from 'node:http'
-import { apex } from 'apexjs-vite'
+import { apex } from '@apex-stack/vite'
 import {
   createApp,
   defineEventHandler,
@@ -45,9 +45,9 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
     root: options.root,
     appType: 'custom',
     server: { middlewareMode: true },
-    // User apps depend on `apexjs-core`, so the client module imports the runtime
-    // from `apexjs-core/client` (a re-export) rather than the internal kit package.
-    plugins: [apex({ clientRuntime: 'apexjs-core/client' })],
+    // User apps depend on `@apex-stack/core`, so the client module imports the runtime
+    // from `@apex-stack/core/client` (a re-export) rather than the internal kit package.
+    plugins: [apex({ clientRuntime: '@apex-stack/core/client' })],
     optimizeDeps: { include: ['alpinejs'] },
   })
 

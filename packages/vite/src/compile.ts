@@ -1,4 +1,4 @@
-import { type AlpineDescriptor, scopeCss } from 'apexjs-kit'
+import { type AlpineDescriptor, scopeCss } from '@apex-stack/kit'
 import { computeIds } from './ids.js'
 
 export interface CompileResult {
@@ -51,7 +51,7 @@ export function compileAlpine(
 
   // Client module: never includes <script server> code.
   const authoredExpr = descriptor.template?.attrs['x-data']?.trim() || '{}'
-  const runtime = opts.clientRuntime ?? 'apexjs-kit/client'
+  const runtime = opts.clientRuntime ?? '@apex-stack/kit/client'
   const code = [
     `import { registerApexComponent } from ${JSON.stringify(runtime)}`,
     `registerApexComponent(${JSON.stringify(componentId)}, () => (${authoredExpr}))`,

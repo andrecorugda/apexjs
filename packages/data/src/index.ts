@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { type ApexResource, defineApexRoute } from 'apexjs-core'
+import { type ApexResource, defineApexRoute } from '@apex-stack/core'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { eq } from 'drizzle-orm'

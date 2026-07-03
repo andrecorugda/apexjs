@@ -10,7 +10,7 @@ tool is automatic.
 
 ```ts
 // server/api/add.ts
-import { defineApexRoute } from 'apexjs-core'
+import { defineApexRoute } from '@apex-stack/core'
 import { z } from 'zod'
 
 export default defineApexRoute({

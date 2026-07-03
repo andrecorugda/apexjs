@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "alpinejs": "^3.14.8",
-    "apexjs-core": "latest",
+    "@apex-stack/core": "latest",
     "zod": "^4.0.0"
   }
 }

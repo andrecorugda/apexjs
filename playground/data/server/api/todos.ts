@@ -1,4 +1,4 @@
-import { defineResource } from 'apexjs-data'
+import { defineResource } from '@apex-stack/data'
 import { z } from 'zod'
 import { db, schema } from '../../db/index.js'
 

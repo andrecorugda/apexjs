@@ -1,4 +1,4 @@
-// apexjs-kit — public API.
+// @apex-stack/kit — public API.
 export { parseAlpineFile, AlpineParseError } from './parse/parseAlpineFile.js'
 export type {
   AlpineDescriptor,

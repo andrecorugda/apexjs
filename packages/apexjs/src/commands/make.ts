@@ -35,7 +35,7 @@ function componentTemplate(): string {
 }
 
 function apiTemplate(name: string): string {
-  return `import { defineApexRoute } from 'apexjs-core'
+  return `import { defineApexRoute } from '@apex-stack/core'
 import { z } from 'zod'
 
 // GET /api/${name}  ·  MCP tool "${name}"

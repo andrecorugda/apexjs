@@ -1,4 +1,4 @@
-import { defineApexRoute } from 'apexjs-core'
+import { defineApexRoute } from '@apex-stack/core'
 import { z } from 'zod'
 
 // GET /api/greet?name=...  AND  MCP tool "greet".

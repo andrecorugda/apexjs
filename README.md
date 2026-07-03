@@ -23,14 +23,16 @@ Every major reactive library has a meta-framework — React has Next, Vue has Nu
 
 | Package | Description |
 | --- | --- |
-| [`apexjs-core`](./packages/apexjs) | The CLI and runtime (`apex dev`, `apex build`) |
+| [`@apex-stack/core`](./packages/apexjs) | The CLI and runtime (`apex dev`, `apex build`) |
 | [`create-apexjs`](./packages/create-apexjs) | Project scaffolder |
-| [`apexjs-kit`](./packages/kit) | SFC parser, SSR renderer, and client runtime |
-| [`apexjs-vite`](./packages/vite) | Vite plugin for `.alpine` files |
+| [`@apex-stack/kit`](./packages/kit) | SFC parser, SSR renderer, and client runtime |
+| [`@apex-stack/vite`](./packages/vite) | Vite plugin for `.alpine` files |
 
 ## Status
 
-Early development — Phase 0 (SSR + HMR spike). Not yet production-ready.
+**v0.1.1 on npm.** SSR + hydration, islands, file routing, components, AI-native APIs (REST + MCP),
+and a full-CRUD data layer all ship and are covered by tests. Production build and jobs are next.
+See [ROADMAP.md](./ROADMAP.md).
 
 ## License
 
