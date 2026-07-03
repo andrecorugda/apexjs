@@ -37,6 +37,7 @@
 
 <main id="main">
   <section class="home-hero">
+    <canvas id="hero-net" aria-hidden="true"></canvas>
     <div class="wrap">
       <p class="eyebrow">The meta-framework for Alpine.js</p>
       <h1>HTML-first apps.<br /><span class="ai">AI-native</span> APIs.</h1>
@@ -502,5 +503,84 @@ npm run dev:islands  <span class="c"># static-first islands mode</span></code></
 
     placeCaret(studio.querySelector(".code.is-active"));
     if (!reduce) studio.classList.add("intro");
+  })();
+
+  // Apex summit network — a live triangulated mesh drifting beneath the hero.
+  (function () {
+    var canvas = document.getElementById("hero-net");
+    if (!canvas) return;
+    var ctx = canvas.getContext("2d");
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var W = 0, H = 0, DPR = 1, nodes = [], raf = null;
+
+    function css(v, fb) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim() || fb; }
+    function toRgb(h) {
+      h = h.replace("#", "");
+      if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+      var n = parseInt(h, 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+    var lineC, accC;
+    function palette() { lineC = toRgb(css("--glacier", "#818cf8")); accC = toRgb(css("--alpenglow", "#22d3ee")); }
+    palette();
+
+    function size() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = canvas.clientWidth; H = canvas.clientHeight;
+      canvas.width = W * DPR; canvas.height = H * DPR;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      var count = Math.max(24, Math.min(70, Math.floor(W / 22)));
+      nodes = [];
+      for (var i = 0; i < count; i++) {
+        nodes.push({
+          x: Math.random() * W, y: Math.random() * H,
+          vx: (Math.random() - 0.5) * 0.16, vy: (Math.random() - 0.5) * 0.16,
+          ph: Math.random() * Math.PI * 2, accent: Math.random() < 0.22,
+        });
+      }
+    }
+
+    function frame(move) {
+      ctx.clearRect(0, 0, W, H);
+      var maxD = 150;
+      for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i];
+        if (move) {
+          n.x += n.vx; n.y += n.vy; n.ph += 0.018;
+          if (n.x < 0 || n.x > W) n.vx *= -1;
+          if (n.y < 0 || n.y > H) n.vy *= -1;
+        }
+        for (var j = i + 1; j < nodes.length; j++) {
+          var m = nodes[j], dx = n.x - m.x, dy = n.y - m.y, d = Math.sqrt(dx * dx + dy * dy);
+          if (d < maxD) {
+            var a = (1 - d / maxD) * 0.30;
+            ctx.strokeStyle = "rgba(" + lineC[0] + "," + lineC[1] + "," + lineC[2] + "," + a.toFixed(3) + ")";
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(m.x, m.y); ctx.stroke();
+          }
+        }
+      }
+      for (var k = 0; k < nodes.length; k++) {
+        var p = nodes[k], rgb = p.accent ? accC : lineC;
+        var rad = p.accent ? 1.7 + Math.sin(p.ph) * 0.8 : 1.4;
+        ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0.5, rad), 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + "," + (p.accent ? 0.9 : 0.5) + ")";
+        ctx.fill();
+      }
+    }
+
+    function loop() { frame(true); raf = requestAnimationFrame(loop); }
+    function start() {
+      size();
+      if (raf) cancelAnimationFrame(raf);
+      if (reduce) frame(false); else loop();
+      requestAnimationFrame(function () { canvas.classList.add("drawn"); });
+    }
+
+    var rt;
+    window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 160); });
+    new MutationObserver(function () { palette(); if (reduce) frame(false); })
+      .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    start();
   })();
 </script>

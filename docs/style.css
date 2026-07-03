@@ -295,7 +295,14 @@ figcaption { color: var(--muted); font-size: 0.85rem; margin-top: 0.55rem; text-
       var(--ground);
   }
 }
-.home-hero .wrap { padding-block: clamp(3rem, 9vh, 6rem) clamp(2.5rem, 6vh, 4rem); }
+#hero-net {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  z-index: 0; opacity: 0; transition: opacity 1.4s ease;
+  -webkit-mask-image: radial-gradient(130% 100% at 74% 16%, #000 42%, transparent 100%);
+          mask-image: radial-gradient(130% 100% at 74% 16%, #000 42%, transparent 100%);
+}
+#hero-net.drawn { opacity: 1; }
+.home-hero .wrap { position: relative; z-index: 1; padding-block: clamp(3rem, 9vh, 6rem) clamp(2.5rem, 6vh, 4rem); }
 .home-hero h1 {
   font-size: clamp(2.6rem, 7vw, 5rem); line-height: 1.02; letter-spacing: -0.03em;
   font-weight: 800; margin: 0; text-wrap: balance; max-width: 15ch;
