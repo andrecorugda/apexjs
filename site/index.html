@@ -99,12 +99,10 @@
   :focus-visible { outline: 2px solid var(--glacier); outline-offset: 3px; border-radius: 3px; }
 
   .eyebrow {
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
+    font-size: 0.9rem;
+    font-weight: 500;
     color: var(--alpenglow);
-    margin: 0 0 1rem;
+    margin: 0 0 0.9rem;
   }
 
   /* ---- Hero ---- */
@@ -193,7 +191,7 @@
   .pillars { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
   @media (min-width: 860px) { .pillars { grid-template-columns: repeat(3, 1fr); } }
   .pillar { background: var(--ground); padding: 1.8rem 1.6rem; display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
-  .pillar .tag { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+  .pillar .tag { font-size: 0.85rem; font-weight: 500; color: var(--muted); }
   .pillar.ai .tag { color: var(--alpenglow); }
   .pillar h3 { margin: 0; font-size: 1.25rem; letter-spacing: -0.01em; }
   .pillar p { margin: 0; color: var(--muted); font-size: 0.95rem; }
@@ -217,7 +215,7 @@
     border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
     padding: 1rem 1.2rem;
   }
-  .flow .node .h { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+  .flow .node .h { font-size: 0.85rem; font-weight: 600; color: var(--muted); margin-bottom: 0.35rem; }
   .flow .node.rest { border-left: 3px solid var(--glacier); }
   .flow .node.mcp { border-left: 3px solid var(--alpenglow); }
   .flow .node.mcp .h { color: var(--alpenglow); }
@@ -237,7 +235,7 @@
 
   .stats { display: flex; flex-wrap: wrap; gap: 2.4rem; margin-top: 2.4rem; }
   .stat .n { font-family: var(--mono); font-size: 1.9rem; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-  .stat .l { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--mono); }
+  .stat .l { font-size: 0.85rem; color: var(--muted); }
 
   footer { padding-block: 3rem; }
   .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; align-items: center; color: var(--muted); font-size: 0.88rem; font-family: var(--mono); }
@@ -249,9 +247,9 @@
 
   .theme-toggle {
     position: fixed; top: 1rem; right: 1rem; z-index: 5;
-    font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.1em;
+    font-size: 0.85rem;
     background: var(--surface); color: var(--muted); border: 1px solid var(--line);
-    border-radius: 6px; padding: 0.4rem 0.7rem; cursor: pointer; text-transform: uppercase;
+    border-radius: 6px; padding: 0.4rem 0.7rem; cursor: pointer;
   }
   .theme-toggle:hover { color: var(--glacier); border-color: var(--glacier); }
 
@@ -363,12 +361,12 @@
   .surfaces { display: flex; flex-direction: column; gap: 0.7rem; }
   .surface { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 0.75rem 0.85rem; border-left: 3px solid var(--glacier); }
   .surface.mcp { border-left-color: var(--alpenglow); background: color-mix(in srgb, var(--alpenglow) 8%, var(--surface)); }
-  .surface .s-h { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--glacier); display: block; margin-bottom: 0.45rem; }
+  .surface .s-h { font-size: 0.82rem; font-weight: 600; color: var(--glacier); display: block; margin-bottom: 0.45rem; }
   .surface.mcp .s-h { color: var(--alpenglow); }
   .surface > code { font-family: var(--mono); font-size: 0.78rem; color: var(--text); }
   .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .chip { font-family: var(--mono); font-size: 0.71rem; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--alpenglow) 45%, var(--line)); color: var(--alpenglow); background: color-mix(in srgb, var(--alpenglow) 12%, transparent); }
-  .preview-caption { font-size: 0.76rem; color: var(--muted); font-family: var(--mono); text-align: center; margin: 0.1rem 0 0; }
+  .preview-caption { font-size: 0.82rem; color: var(--muted); text-align: center; margin: 0.1rem 0 0; }
   .preview-caption.warm { color: var(--alpenglow); }
   .schema-card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
   .schema-card .sc-h { font-family: var(--mono); font-size: 0.72rem; padding: 0.45rem 0.7rem; background: var(--surface-2); border-bottom: 1px solid var(--line); color: var(--muted); }
@@ -730,14 +728,34 @@
 
     function frame(move) {
       ctx.clearRect(0, 0, W, H);
-      var maxD = 150;
-      for (var i = 0; i < nodes.length; i++) {
-        var n = nodes[i];
-        if (move) {
+      var maxD = 150, facetLim = (maxD * 1.15) * (maxD * 1.15);
+      if (move) {
+        for (var i = 0; i < nodes.length; i++) {
+          var n = nodes[i];
           n.x += n.vx; n.y += n.vy; n.ph += 0.018;
           if (n.x < 0 || n.x > W) n.vx *= -1;
           if (n.y < 0 || n.y > H) n.vy *= -1;
         }
+      }
+      // Faceted fills — each node to its two nearest neighbours, echoing the faceted "A" logo.
+      for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i], a1 = null, a2 = null, d1 = 1e12, d2 = 1e12;
+        for (var j = 0; j < nodes.length; j++) {
+          if (j === i) continue;
+          var m = nodes[j], dx = n.x - m.x, dy = n.y - m.y, d = dx * dx + dy * dy;
+          if (d < d1) { d2 = d1; a2 = a1; d1 = d; a1 = m; }
+          else if (d < d2) { d2 = d; a2 = m; }
+        }
+        if (a1 && a2 && d2 < facetLim) {
+          var frgb = n.accent ? accC : lineC;
+          ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(a1.x, a1.y); ctx.lineTo(a2.x, a2.y); ctx.closePath();
+          ctx.fillStyle = "rgba(" + frgb[0] + "," + frgb[1] + "," + frgb[2] + ",0.035)";
+          ctx.fill();
+        }
+      }
+      // Connection lines.
+      for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i];
         for (var j = i + 1; j < nodes.length; j++) {
           var m = nodes[j], dx = n.x - m.x, dy = n.y - m.y, d = Math.sqrt(dx * dx + dy * dy);
           if (d < maxD) {
@@ -748,6 +766,7 @@
           }
         }
       }
+      // Vertices.
       for (var k = 0; k < nodes.length; k++) {
         var p = nodes[k], rgb = p.accent ? accC : lineC;
         var rad = p.accent ? 1.7 + Math.sin(p.ph) * 0.8 : 1.4;
