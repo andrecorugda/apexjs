@@ -4,7 +4,7 @@
 
 **📖 Docs & demo: [apexjs.site](https://apexjs.site)**
 
-**Apex is to Alpine what Nuxt is to Vue.** You already know the syntax: if you can write `x-data`, you can build a full-stack, server-rendered app — shipping a fraction of the JavaScript of a React framework.
+**Apex is to Alpine what Next.js is to React.** You already know the syntax: if you can write `x-data`, you can build a full-stack, server-rendered app — shipping a fraction of the JavaScript of a React framework.
 
 ```bash
 npx create-apexjs@latest my-app
