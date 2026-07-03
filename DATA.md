@@ -33,6 +33,8 @@ You now have — from that single definition:
 | List | `GET /api/todos` | `todos_list` |
 | Get | `GET /api/todos/:id` | `todos_get` |
 | Create | `POST /api/todos` | `todos_create` |
+| Update | `PATCH /api/todos/:id` | `todos_update` |
+| Delete | `DELETE /api/todos/:id` | `todos_delete` |
 
 The REST endpoints and the MCP tools run the **same handlers over the same database**.
 An AI that creates a todo via `todos_create` and a browser that lists via `GET /api/todos`
@@ -58,6 +60,7 @@ see the same data. No other full-stack framework does this by default.
 
 ## Scope & deferrals
 
-- Built: `createDb`, `applyMigrations`, `defineResource` (list/get/create), Drizzle+SQLite.
-- Next: `update`/`delete`, `apex make:model` + `drizzle-kit` migrations + `apex migrate` CLI,
-  per-route auth scoping, other Drizzle drivers (Postgres/libSQL), then jobs/queues (Phase 3).
+- Built: `createDb`, `applyMigrations`, `defineResource` (full CRUD: list/get/create/update/delete),
+  Drizzle + SQLite.
+- Next: `apex make:model` + `drizzle-kit` migrations + `apex migrate` CLI, per-route auth scoping,
+  other Drizzle drivers (Postgres/libSQL), then jobs/queues (Phase 3).

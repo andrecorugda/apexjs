@@ -62,6 +62,14 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
   const { db, table, insert, pk = 'id' } = opts
   const pkCol = table[pk]
 
+  // Update accepts the id plus any subset of the create fields.
+  const updateShape: Record<string, unknown> = { id: z.coerce.number() }
+  for (const [key, schema] of Object.entries(
+    insert as unknown as Record<string, { optional(): unknown }>,
+  )) {
+    updateShape[key] = schema.optional()
+  }
+
   return {
     __apexResource: true,
     name,
@@ -97,6 +105,32 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           input: insert,
           mcp: true,
           handler: ({ input }) => db.insert(table).values(input as never).returning().get(),
+        }),
+      },
+      {
+        pathSuffix: '/:id',
+        mcpName: `${name}_update`,
+        route: defineApexRoute({
+          method: 'PATCH',
+          description: `Update a ${name} by id (partial)`,
+          input: updateShape as ZodRawShape,
+          mcp: true,
+          handler: ({ input }) => {
+            const { id, ...fields } = input as { id: number } & Record<string, unknown>
+            return db.update(table).set(fields).where(eq(pkCol, id)).returning().get() ?? null
+          },
+        }),
+      },
+      {
+        pathSuffix: '/:id',
+        mcpName: `${name}_delete`,
+        route: defineApexRoute({
+          method: 'DELETE',
+          description: `Delete a ${name} by id`,
+          input: { id: z.coerce.number() },
+          mcp: true,
+          handler: ({ input }) =>
+            db.delete(table).where(eq(pkCol, (input as { id: number }).id)).returning().get() ?? null,
         }),
       },
     ],
