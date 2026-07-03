@@ -10,7 +10,7 @@ import {
 } from 'h3'
 import { createServer as createViteServer, type ViteDevServer } from 'vite'
 import { createApiHandler, loadApiRoutes } from '../api/routes.js'
-import { createMcpHandler, hasMcpRoutes } from '../mcp/server.js'
+import { createMcpHandler } from '../mcp/server.js'
 import { loadComponents } from '../components/registry.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { matchRoute, type RouteDef, scanPages } from '../routing/router.js'
@@ -58,15 +58,13 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   // API / MCP / SSR handlers below.
   app.use(fromNodeMiddleware(vite.middlewares))
 
-  // Load server/api/*.ts routes (single routes + resources) into one entry table.
-  // A single `/api` handler validates and dispatches them; every `mcp: true`
-  // entry is additionally exposed as an MCP tool at /mcp — one typed definition,
-  // both a REST API and an AI-callable tool.
-  const apiEntries = await loadApiRoutes(options.root, (id) => vite.ssrLoadModule(id) as never)
-  if (apiEntries.length) app.use('/api', createApiHandler(apiEntries))
-  if (hasMcpRoutes(apiEntries)) {
-    app.use('/mcp', createMcpHandler(apiEntries))
-  }
+  // Load server/api/*.ts routes (single routes + resources) per request in dev, so
+  // editing a route or resource takes effect without a restart — Vite invalidates the
+  // module on change, so ssrLoadModule returns fresh code. A `/api` handler validates
+  // and dispatches them; `/mcp` exposes every `mcp: true` entry as an AI-callable tool.
+  const loadEntries = () => loadApiRoutes(options.root, (id) => vite.ssrLoadModule(id) as never)
+  app.use('/api', defineEventHandler((event) => loadEntries().then((e) => createApiHandler(e)(event))))
+  app.use('/mcp', defineEventHandler((event) => loadEntries().then((e) => createMcpHandler(e)(event))))
 
   app.use(
     defineEventHandler(async (event) => {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4 — 2026-07-03
+
+- **Dev hot-reload for API routes** — `server/api/*.ts` routes and resources are re-loaded per
+  request in dev, so editing a handler, schema, or resource takes effect without restarting the
+  dev server (`.alpine` pages/components/styles already full-reloaded on save).
+
 ## 0.1.3 — 2026-07-03
 
 - **Server target** — `apex build --server` + `apex start`: a production Node server (no Vite)
