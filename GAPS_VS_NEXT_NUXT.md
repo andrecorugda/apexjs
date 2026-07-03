@@ -47,11 +47,35 @@ code --install-extension editors/vscode-apex/apex-alpine-0.1.0.vsix
 ```
 Highlights TS (`<script server|client>`), CSS (`<style>`), HTML, and Alpine directives.
 
+**5. Head / SEO — `head()` export** (in `@apex-stack/core@0.1.17`)
+```ts
+// in <script server>
+export function loader({ params }) { return { post: getPost(params.slug) } }
+export function head({ data }) {
+  return { title: `${data.post.title} — Blog`,
+    meta: [{ name: 'description', content: data.post.excerpt }, { property: 'og:title', content: data.post.title }],
+    link: [{ rel: 'canonical', href: '…' }] }
+}
+```
+SSR-injects `<title>/<meta>/<link>` from loader data; values escaped. (3 unit tests incl. XSS.)
+
+**6. Layouts — `layouts/*.alpine`** (in `@apex-stack/core@0.1.18`)
+```html
+<!-- layouts/default.alpine   ·   apex make layout default -->
+<template>
+  <header>…nav…</header>
+  <main><slot></slot></main>   <!-- the page renders here -->
+  <footer>…</footer>
+</template>
+```
+Pages auto-use `default`; override with `export const layout = 'blog'`; opt out with `export const layout = false`.
+
 **Shared FE/BE types (works today):** put interfaces in `shared/*.ts` and import them in both
 `server/api/*.ts` and `.alpine` `<script>` blocks — one TS project, no duplication. (Typed
 `InferInput/Output` from route contracts is the next step — see roadmap.)
 
-Still open from Wave A: **layouts** and **head/SEO (`useHead`)** — next up.
+**✅ Wave A is complete.** Next: Wave B — client-side navigation, catch-all routes, per-route
+error/loading boundaries, server-action sugar, component slots, middleware/runtime-config, fine-grained HMR.
 
 ---
 
@@ -83,7 +107,7 @@ Legend: ✅ have · 🟡 partial · ❌ gap
 |---|---|---|---|---|
 | File-based routing | ✅ app/pages | ✅ pages | ✅ `pages/**` + `[param]` | — |
 | Dynamic/catch-all routes | ✅ `[...slug]` | ✅ | 🟡 `[param]` only (no catch-all) | P2 |
-| **Layouts / nested layouts** | ✅ | ✅ `layouts/` | ❌ | **P1** |
+| **Layouts** | ✅ | ✅ `layouts/` | ✅ `layouts/*.alpine` + `<slot>` (nested: P2) | ✅ done |
 | Client-side navigation (SPA nav) | ✅ `<Link>` | ✅ `<NuxtLink>` | ❌ full page loads | P2 |
 | Loading / error boundaries | ✅ | ✅ | 🟡 dev error page ✅, no per-route boundary | P2 |
 | Server data loading | ✅ RSC/`getServerSideProps` | ✅ `useAsyncData` | ✅ `loader()` | — |
@@ -93,7 +117,7 @@ Legend: ✅ have · 🟡 partial · ❌ gap
 | Typed API routes | ✅ route handlers | ✅ server routes | ✅ `defineApexRoute` (+ MCP!) | — |
 | Data/ORM layer | 🟡 (bring your own) | 🟡 (Nitro + bring your own) | ✅ `defineResource` (REST+MCP) | — |
 | **Shared FE/BE types** | ✅ (same TS project) | ✅ | 🟡 possible, undocumented | **P1** |
-| **Head / SEO / meta** | ✅ Metadata API | ✅ `useHead`/`useSeoMeta` | ❌ | **P1** |
+| **Head / SEO / meta** | ✅ Metadata API | ✅ `useHead`/`useSeoMeta` | ✅ `head()` export (title/meta/link) | ✅ done |
 | **Tailwind** | ✅ first-class | ✅ module | ❌ not wired | **P1** |
 | Scoped styles | 🟡 CSS Modules | ✅ `<style scoped>` | ✅ `<style scoped>` | — |
 | Global/shared styles | ✅ | ✅ | 🟡 works (import css) undocumented | P2 |
