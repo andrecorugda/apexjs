@@ -1,5 +1,5 @@
 {
-  "name": "apexjs",
+  "name": "apexjs-core",
   "version": "0.0.0",
   "description": "The full-stack meta-framework for Alpine.js — CLI and runtime",
   "type": "module",

@@ -38,9 +38,9 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
     root: options.root,
     appType: 'custom',
     server: { middlewareMode: true },
-    // User apps depend on `apexjs`, so the client module imports the runtime
-    // from `apexjs/client` (a re-export) rather than the internal kit package.
-    plugins: [apex({ clientRuntime: 'apexjs/client' })],
+    // User apps depend on `apexjs-core`, so the client module imports the runtime
+    // from `apexjs-core/client` (a re-export) rather than the internal kit package.
+    plugins: [apex({ clientRuntime: 'apexjs-core/client' })],
     optimizeDeps: { include: ['alpinejs'] },
   })
 

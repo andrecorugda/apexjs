@@ -7,7 +7,7 @@ export interface ApexPluginOptions {
   /**
    * The module specifier the generated client module imports the runtime from.
    * Defaults to `apexjs-kit/client`; the `apexjs` CLI overrides this to
-   * `apexjs/client` so user apps only need `apexjs` installed.
+   * `apexjs-core/client` so user apps only need `apexjs-core` installed.
    */
   clientRuntime?: string
 }
