@@ -1,4 +1,6 @@
 import { createServer as createHttpServer, type Server } from 'node:http'
+import { createRequire } from 'node:module'
+import { fileURLToPath } from 'node:url'
 import { apex } from '@apex-stack/vite'
 import {
   createApp,
@@ -41,10 +43,30 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   const port = options.port ?? 3000
   const pageId = options.pageId ?? '/pages/index.alpine'
 
+  // Resolve the runtime deps from THIS package (core), so a globally-installed
+  // `apex` works even when the project's node_modules is missing alpinejs /
+  // @apex-stack/*. Aliases point Vite at core's own copies; fs.allow is relaxed
+  // so those out-of-root files can be served in dev.
+  const req = createRequire(import.meta.url)
+  const tryResolve = (spec: string): string | undefined => {
+    try {
+      return req.resolve(spec)
+    } catch {
+      return undefined
+    }
+  }
+  const alpine = tryResolve('alpinejs')
+  const kit = tryResolve('@apex-stack/kit')
+  const coreClient = fileURLToPath(new URL('./client.js', import.meta.url))
+  const alias: Record<string, string> = { '@apex-stack/core/client': coreClient }
+  if (alpine) alias.alpinejs = alpine
+  if (kit) alias['@apex-stack/kit'] = kit
+
   const vite = await createViteServer({
     root: options.root,
     appType: 'custom',
-    server: { middlewareMode: true },
+    server: { middlewareMode: true, fs: { strict: false } },
+    resolve: { alias },
     // User apps depend on `@apex-stack/core`, so the client module imports the runtime
     // from `@apex-stack/core/client` (a re-export) rather than the internal kit package.
     plugins: [apex({ clientRuntime: '@apex-stack/core/client' })],

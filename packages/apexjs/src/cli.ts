@@ -1,40 +1,11 @@
 #!/usr/bin/env node
-import { resolve } from 'node:path'
 import { defineCommand, runMain } from 'citty'
-import { buildCommand } from './commands/build.js'
-import { makeCommand } from './commands/make.js'
-import { mcpCommand } from './commands/mcp.js'
-import { migrateCommand } from './commands/migrate.js'
 import { newCommand } from './commands/new.js'
-import { startCommand } from './commands/start.js'
-import { startDevServer } from './dev/server.js'
-import { banner, color, ready, spinner } from './ui.js'
+import { banner, color } from './ui.js'
 
-const dev = defineCommand({
-  meta: { name: 'dev', description: 'Start the Apex JS development server' },
-  args: {
-    root: { type: 'positional', required: false, description: 'Project root', default: '.' },
-    port: { type: 'string', description: 'Port to listen on', default: '3000' },
-    islands: { type: 'boolean', description: 'Render in islands mode (static-first)', default: false },
-  },
-  async run({ args }) {
-    const root = resolve(process.cwd(), args.root)
-    const port = Number(args.port)
-    process.stdout.write(banner())
-    const sp = spinner(`Starting dev server${args.islands ? ' (islands mode)' : ''}…`)
-    try {
-      const { port: actual } = await startDevServer({ root, port, islands: args.islands })
-      sp.succeed('Dev server ready')
-      ready([
-        ['Local', `http://localhost:${actual}/`],
-        ['MCP', `http://localhost:${actual}/mcp`],
-      ])
-    } catch (err) {
-      sp.fail('Failed to start the dev server')
-      throw err
-    }
-  },
-})
+// Heavy commands (dev/build/start/make/migrate/mcp) are imported lazily so that
+// `apex new`, the banner, and `--help` never pull in Vite + rollup — which can
+// crash on a broken/mismatched native rollup binary (npm optional-deps bug).
 
 const COMMANDS: Array<[string, string]> = [
   ['new', 'Scaffold a new app'],
@@ -53,12 +24,12 @@ const main = defineCommand({
   },
   subCommands: {
     new: newCommand,
-    dev,
-    build: buildCommand,
-    start: startCommand,
-    make: makeCommand,
-    migrate: migrateCommand,
-    mcp: mcpCommand,
+    dev: () => import('./commands/dev.js').then((m) => m.devCommand),
+    build: () => import('./commands/build.js').then((m) => m.buildCommand),
+    start: () => import('./commands/start.js').then((m) => m.startCommand),
+    make: () => import('./commands/make.js').then((m) => m.makeCommand),
+    migrate: () => import('./commands/migrate.js').then((m) => m.migrateCommand),
+    mcp: () => import('./commands/mcp.js').then((m) => m.mcpCommand),
   },
   // Shown for a bare `apex` (no subcommand): the brand banner + a command menu.
   run({ rawArgs }) {
