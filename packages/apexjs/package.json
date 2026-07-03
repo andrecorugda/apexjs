@@ -1,6 +1,6 @@
 {
   "name": "apexjs-core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "The full-stack meta-framework for Alpine.js — CLI and runtime",
   "type": "module",
   "license": "MIT",

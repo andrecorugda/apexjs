@@ -1,6 +1,6 @@
 {
   "name": "create-apexjs",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Scaffold a new Apex JS app",
   "type": "module",
   "license": "MIT",
@@ -10,11 +10,20 @@
     "url": "git+https://github.com/andrecorugda/apexjs.git",
     "directory": "packages/create-apexjs"
   },
-  "keywords": ["alpine", "alpinejs", "apex", "apexjs", "create"],
+  "keywords": [
+    "alpine",
+    "alpinejs",
+    "apex",
+    "apexjs",
+    "create"
+  ],
   "bin": {
     "create-apexjs": "./dist/index.js"
   },
-  "files": ["dist", "templates"],
+  "files": [
+    "dist",
+    "templates"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
