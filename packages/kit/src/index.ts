@@ -14,3 +14,4 @@ export type {
   RenderComponentInput,
   RenderComponentResult,
 } from './render/renderComponent.js'
+export { serializeState, stateIsland } from './render/island.js'

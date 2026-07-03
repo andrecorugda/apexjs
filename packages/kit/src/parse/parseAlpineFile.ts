@@ -70,10 +70,10 @@ interface OpenBlock {
 export function parseAlpineFile(source: string, filename = 'anonymous.alpine'): AlpineDescriptor {
   const descriptor: AlpineDescriptor = { filename, styles: [] }
 
-  // Depth of the currently-open top-level block. 0 means we're at the document
-  // root and the next open tag is a candidate block delimiter.
-  let depth = 0
-  let open: OpenBlock | null = null
+  // Held in an object so TypeScript keeps the full `OpenBlock | null` type when
+  // read after the parser callbacks (a closure-mutated `let` would narrow back
+  // to its `null` initializer). `depth` tracks nesting of the open block.
+  const state: { open: OpenBlock | null; depth: number } = { open: null, depth: 0 }
 
   const fail = (message: string, offset: number): never => {
     throw new AlpineParseError(message, filename, offset)
@@ -83,17 +83,17 @@ export function parseAlpineFile(source: string, filename = 'anonymous.alpine'): 
     {
       onopentag(name, attribs) {
         const tag = name.toLowerCase()
-        if (open) {
+        if (state.open) {
           // Inside a block already — just track nesting depth so a nested
           // <template> doesn't prematurely close the outer one.
-          if (tag === open.tag) depth++
+          if (tag === state.open.tag) state.depth++
           return
         }
         if (!TOP_LEVEL_BLOCKS.has(tag)) {
           fail(`unexpected top-level <${tag}>; only <script>, <template> and <style> are allowed`, parser.startIndex)
         }
-        depth = 1
-        open = {
+        state.depth = 1
+        state.open = {
           tag,
           attrs: attribs,
           tagStart: parser.startIndex,
@@ -102,16 +102,16 @@ export function parseAlpineFile(source: string, filename = 'anonymous.alpine'): 
       },
       onclosetag(name) {
         const tag = name.toLowerCase()
-        if (!open || tag !== open.tag) return
-        depth--
-        if (depth > 0) return
+        if (!state.open || tag !== state.open.tag) return
+        state.depth--
+        if (state.depth > 0) return
 
         // Closing the top-level block. Inner content is [contentStart, closeStart).
         const closeStart = parser.startIndex
-        const content = source.slice(open.contentStart, closeStart)
-        const loc: SourceLocation = { start: open.tagStart, end: parser.endIndex + 1 }
-        commitBlock(descriptor, open, content, loc, fail)
-        open = null
+        const content = source.slice(state.open.contentStart, closeStart)
+        const loc: SourceLocation = { start: state.open.tagStart, end: parser.endIndex + 1 }
+        commitBlock(descriptor, state.open, content, loc, fail)
+        state.open = null
       },
     },
     { recognizeSelfClosing: true, lowerCaseTags: true },
@@ -120,7 +120,7 @@ export function parseAlpineFile(source: string, filename = 'anonymous.alpine'): 
   parser.write(source)
   parser.end()
 
-  if (open) fail(`unclosed <${open.tag}> block`, open.tagStart)
+  if (state.open) fail(`unclosed <${state.open.tag}> block`, state.open.tagStart)
 
   return descriptor
 }

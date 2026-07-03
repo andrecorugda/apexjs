@@ -16,7 +16,7 @@ const cache = new Map<string, CompiledExpr>()
 export class AlpineEvalError extends Error {
   constructor(
     readonly expression: string,
-    readonly cause: unknown,
+    override readonly cause: unknown,
   ) {
     const reason = cause instanceof Error ? cause.message : String(cause)
     super(`Failed to evaluate Alpine expression \`${expression}\`: ${reason}`)
