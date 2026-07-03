@@ -36,10 +36,12 @@ export function compileAlpine(
   const clientCode = descriptor.clientScript?.content?.trim() ?? ''
 
   if (opts.ssr) {
-    const loaderCode = descriptor.script?.content?.trim()
-    const loaderExport = loaderCode?.includes('loader')
-      ? loaderCode
-      : 'export const loader = () => ({})'
+    // Include the whole <script server> body (so `head`, helpers, etc. survive)
+    // and guarantee a `loader` export exists.
+    const scriptContent = descriptor.script?.content?.trim() ?? ''
+    const hasLoader =
+      /export\s+(async\s+)?function\s+loader\b|export\s+(const|let|var)\s+loader\b/.test(scriptContent)
+    const loaderExport = hasLoader ? scriptContent : `${scriptContent}\nexport const loader = () => ({})`
 
     const rootXData = descriptor.template?.attrs['x-data'] ?? null
     // When a client script exists, compile x-data into a real factory so its

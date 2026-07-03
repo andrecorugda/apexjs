@@ -2,8 +2,23 @@ import { type ComponentRegistry, renderComponent, stateIsland } from '@apex-stac
 import { type LoadedStore, storesInitialState } from '../stores/loader.js'
 
 /** The shape a compiled `.alpine` SSR module exports (see @apex-stack/vite). */
+/** Head/SEO data a page's `head()` may return. */
+export interface HeadInput {
+  title?: string
+  /** `<meta>` tags — each object's keys become attributes, e.g. { name: 'description', content: '…' }. */
+  meta?: Array<Record<string, string>>
+  /** `<link>` tags — e.g. { rel: 'canonical', href: '…' }. */
+  link?: Array<Record<string, string>>
+}
+
 export interface PageModule {
   loader: (ctx: { params: Record<string, string>; url: string }) => unknown | Promise<unknown>
+  /** Optional per-page head/SEO — receives the loader's data, returns title/meta/link. */
+  head?: (ctx: {
+    data: Record<string, unknown>
+    params: Record<string, string>
+    url: string
+  }) => HeadInput | Promise<HeadInput>
   template: string
   rootXData: string | null
   /** Compiled x-data factory (present when the page has a `<script client>`) — resolves imports at SSR. */
@@ -11,6 +26,24 @@ export interface PageModule {
   componentId: string
   scopeId: string
   css: string
+}
+
+function escAttr(s: unknown): string {
+  return String(s).replace(/[&<>"]/g, (c) =>
+    c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&quot;',
+  )
+}
+
+/** Build `<head>` inner tags from a page's head data. Always emits a <title>. */
+function renderHead(head: HeadInput | undefined): string {
+  const parts = [`<title>${head?.title ? escAttr(head.title) : 'Apex JS'}</title>`]
+  for (const m of head?.meta ?? []) {
+    parts.push(`<meta ${Object.entries(m).map(([k, v]) => `${k}="${escAttr(v)}"`).join(' ')} />`)
+  }
+  for (const l of head?.link ?? []) {
+    parts.push(`<link ${Object.entries(l).map(([k, v]) => `${k}="${escAttr(v)}"`).join(' ')} />`)
+  }
+  return parts.join('\n  ')
 }
 
 export interface RenderPageOptions {
@@ -50,6 +83,10 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     unknown
   >
 
+  const head = mod.head
+    ? await mod.head({ data: loaderData, params: opts.params ?? {}, url: opts.url })
+    : undefined
+
   const stores = opts.stores ?? []
   const { html } = renderComponent({
     template: mod.template,
@@ -70,6 +107,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     clientHref: opts.clientHref,
     storeIds: stores.map((s) => s.id),
     appCss: opts.appCss,
+    headTags: renderHead(head),
   })
 
   return opts.transformHtml ? opts.transformHtml(opts.url, doc) : doc
@@ -83,9 +121,19 @@ interface ShellParts {
   clientHref?: string
   storeIds?: string[]
   appCss?: string
+  headTags?: string
 }
 
-function shell({ body, island, css, pageId, clientHref, storeIds = [], appCss }: ShellParts): string {
+function shell({
+  body,
+  island,
+  css,
+  pageId,
+  clientHref,
+  storeIds = [],
+  appCss,
+  headTags = '<title>Apex JS</title>',
+}: ShellParts): string {
   // Register global stores on the client before Alpine.start(): import each store
   // module and call Alpine.store(name, factory()) — same factory the server used,
   // so hydration is value-identical.
@@ -108,7 +156,7 @@ ${storeRegs ? `${storeRegs}\n` : ''}  Alpine.start()
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Apex JS</title>
+  ${headTags}
   <style>${css}</style>
 </head>
 <body>
