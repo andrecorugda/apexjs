@@ -4,6 +4,13 @@ import { defineCommand } from 'citty'
 
 type Kind = 'page' | 'component' | 'api'
 
+/** Components are referenced as `<PascalCase/>`, so their file must be PascalCase. */
+function pascalCase(s: string): string {
+  return s
+    .replace(/[-_\s]+(.)?/g, (_, c: string | undefined) => (c ? c.toUpperCase() : ''))
+    .replace(/^(.)/, (c) => c.toUpperCase())
+}
+
 function pageTemplate(name: string): string {
   return `<script server lang="ts">
   export function loader() {
@@ -55,7 +62,7 @@ function plan(kind: Kind, name: string, root: string): { path: string; contents:
     case 'page':
       return { path: join(root, 'pages', `${name}.alpine`), contents: pageTemplate(name) }
     case 'component':
-      return { path: join(root, 'components', `${name}.alpine`), contents: componentTemplate() }
+      return { path: join(root, 'components', `${pascalCase(name)}.alpine`), contents: componentTemplate() }
     case 'api':
       return { path: join(root, 'server', 'api', `${name}.ts`), contents: apiTemplate(name) }
   }
