@@ -1,9 +1,10 @@
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { apex } from '@apex-stack/vite'
 import { defineCommand } from 'citty'
 import { createServer as createViteServer } from 'vite'
 import { buildClient } from '../build/buildClient.js'
+import { buildServer } from '../build/buildServer.js'
 import { loadComponents } from '../components/registry.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
 import { renderIslandsPage } from '../islands/render.js'
@@ -21,6 +22,7 @@ export const buildCommand = defineCommand({
     root: { type: 'positional', required: false, description: 'Project root', default: '.' },
     outDir: { type: 'string', description: 'Output directory', default: 'dist' },
     islands: { type: 'boolean', description: 'Static-first islands mode (zero-JS static)', default: false },
+    server: { type: 'boolean', description: 'Build a Node server (dynamic routes + API/MCP)', default: false },
   },
   async run({ args }) {
     const root = resolve(process.cwd(), args.root)
@@ -30,6 +32,10 @@ export const buildCommand = defineCommand({
     const routes = scanPages(root)
     const staticRoutes = routes.filter((r: RouteDef) => !r.isDynamic)
     const dynamic = routes.filter((r: RouteDef) => r.isDynamic)
+
+    if (args.server) {
+      return buildServerTarget(root, outDir, args.outDir, routes)
+    }
 
     // Component mode: build a client bundle per page so the prerendered HTML hydrates.
     const hrefs = args.islands ? new Map<string, string>() : await buildClient(root, staticRoutes, outDir)
@@ -85,3 +91,47 @@ export const buildCommand = defineCommand({
     }
   },
 })
+
+/** Build a deployable Node server: client bundles + SSR modules + a run manifest. */
+async function buildServerTarget(root: string, outDir: string, outLabel: string, routes: RouteDef[]) {
+  const clientHrefs = await buildClient(root, routes, outDir)
+  const server = await buildServer(root, routes, outDir)
+
+  const components: Record<string, string> = {}
+  const compDir = join(root, 'components')
+  if (existsSync(compDir)) {
+    for (const f of readdirSync(compDir).filter((f) => f.endsWith('.alpine'))) {
+      const sf = server.modules[`/components/${f}`]
+      if (sf) components[f.replace(/\.alpine$/, '')] = sf
+    }
+  }
+
+  const api: Array<{ name: string; serverFile: string }> = []
+  const apiDir = join(root, 'server', 'api')
+  if (existsSync(apiDir)) {
+    for (const f of readdirSync(apiDir).filter((f) => /\.(ts|js|mjs)$/.test(f))) {
+      const sf = server.modules[`/server/api/${f}`]
+      if (sf) api.push({ name: f.replace(/\.(ts|js|mjs)$/, ''), serverFile: sf })
+    }
+  }
+
+  const manifest = {
+    islands: false,
+    routes: routes.map((r) => ({
+      ...r,
+      serverFile: server.modules[r.pageId],
+      clientHref: clientHrefs.get(r.pageId),
+    })),
+    components,
+    api,
+  }
+  writeFileSync(join(outDir, 'apex-manifest.json'), JSON.stringify(manifest, null, 2))
+
+  const pub = join(root, 'public')
+  if (existsSync(pub)) cpSync(pub, outDir, { recursive: true })
+
+  // biome-ignore lint/suspicious/noConsole: CLI output
+  console.log(
+    `\n  Built server target → ${outLabel}/  (${routes.length} route(s), ${api.length} API module(s))\n  Run it:  apex start\n`,
+  )
+}

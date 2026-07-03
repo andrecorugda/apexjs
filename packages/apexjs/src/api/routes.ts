@@ -43,6 +43,20 @@ function entryFor(pattern: string, method: HttpMethod, mcpName: string, route: A
   return { pattern, segments: toSegments(pattern), method, mcpName, route }
 }
 
+/** Expand one API module's default export (single route or resource) into entries. */
+export function expandApiModule(name: string, def: ApexRoute | ApexResource | undefined): ApiEntry[] {
+  if (!def) return []
+  if (isApexResource(def)) {
+    return def.routes.map((r) =>
+      entryFor(`/api/${def.name}${r.pathSuffix}`, r.route.method, r.mcpName, r.route),
+    )
+  }
+  if (typeof def.handler === 'function') {
+    return [entryFor(`/api/${name}`, def.method, sanitizeName(name), def)]
+  }
+  return []
+}
+
 /**
  * Discover `server/api/*.ts` modules and expand them into a flat entry table.
  * A default export is either a single `ApexRoute` (from `defineApexRoute`) or an
@@ -59,15 +73,7 @@ export async function loadApiRoutes(
   for (const file of readdirSync(dir).filter((f) => /\.(ts|js|mjs)$/.test(f))) {
     const name = file.replace(/\.(ts|js|mjs)$/, '')
     const def = (await loadModule(`/server/api/${file}`)).default
-    if (!def) continue
-
-    if (isApexResource(def)) {
-      for (const r of def.routes) {
-        entries.push(entryFor(`/api/${def.name}${r.pathSuffix}`, r.route.method, r.mcpName, r.route))
-      }
-    } else if (typeof def.handler === 'function') {
-      entries.push(entryFor(`/api/${name}`, def.method, sanitizeName(name), def))
-    }
+    entries.push(...expandApiModule(name, def))
   }
   return entries
 }

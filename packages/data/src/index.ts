@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { type ApexResource, defineApexRoute } from '@apex-stack/core'
 import { eq } from 'drizzle-orm'
@@ -93,6 +93,9 @@ export async function createDb(config: CreateDbConfig): Promise<ApexDbHandle> {
  * Idempotent; runs each file once in filename order. Works on any dialect.
  */
 export async function applyMigrations(handle: ApexDbHandle, dir: string): Promise<string[]> {
+  // No migrations dir (e.g. a bundled server where migrations run via `apex migrate`
+  // as a deploy step) → nothing to do, don't crash on boot.
+  if (!existsSync(dir)) return []
   await handle.exec(
     'CREATE TABLE IF NOT EXISTS _apex_migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL)',
   )

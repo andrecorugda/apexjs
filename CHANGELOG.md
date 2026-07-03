@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.3 — 2026-07-03
+
+- **Server target** — `apex build --server` + `apex start`: a production Node server (no Vite)
+  serving dynamic routes (`[slug]`), REST + MCP endpoints, static client bundles, and any database.
+  Verified end-to-end (`@apex-stack/core` 0.1.3).
+- **`@apex-stack/data` 0.1.2** — driver abstraction: `createDb({ driver, url })` for
+  **libSQL/Turso**, **Postgres (Supabase/Neon)**, and embedded **PGlite**, all via Drizzle's async
+  API, so `defineResource` runs on any of them. `apex migrate` gained `--driver`/`--url`.
+- Deploy guide: [BUILD.md](./BUILD.md).
+
 ## 0.1.2 — 2026-07-03
 
 - **`apex build`** — production build: prerenders pages to HTML **and** builds a per-page client

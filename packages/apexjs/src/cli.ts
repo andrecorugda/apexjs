@@ -4,6 +4,7 @@ import { buildCommand } from './commands/build.js'
 import { makeCommand } from './commands/make.js'
 import { mcpCommand } from './commands/mcp.js'
 import { migrateCommand } from './commands/migrate.js'
+import { startCommand } from './commands/start.js'
 import { startDevServer } from './dev/server.js'
 
 const dev = defineCommand({
@@ -30,6 +31,7 @@ const main = defineCommand({
   subCommands: {
     dev,
     build: buildCommand,
+    start: startCommand,
     make: makeCommand,
     migrate: migrateCommand,
     mcp: mcpCommand,

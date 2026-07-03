@@ -30,9 +30,10 @@ Every major reactive library has a meta-framework — React has Next, Vue has Nu
 
 ## Status
 
-**v0.1.1 on npm.** SSR + hydration, islands, file routing, components, AI-native APIs (REST + MCP),
-and a full-CRUD data layer all ship and are covered by tests. Production build and jobs are next.
-See [ROADMAP.md](./ROADMAP.md).
+**v0.1.3 on npm.** SSR + hydration, islands, file routing, components, AI-native APIs (REST + MCP),
+a multi-database data layer (SQLite/Turso/Supabase/Neon), and a full production build — static
+(`apex build`) or a Node server (`apex build --server` + `apex start`) for dynamic routes + API/MCP.
+All covered by tests. Jobs/queues and Nitro deploy presets are next. See [ROADMAP.md](./ROADMAP.md).
 
 ## License
 
