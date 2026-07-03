@@ -1,0 +1,64 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Apex",
+  "scopeName": "source.alpine",
+  "patterns": [
+    { "include": "#script" },
+    { "include": "#style" },
+    { "include": "text.html.basic" }
+  ],
+  "injections": {
+    "L:text.html.basic -comment -string.quoted": {
+      "patterns": [
+        {
+          "match": "(?<=[\\s\"'])(x-[a-zA-Z][\\w:.-]*)",
+          "name": "keyword.control.directive.alpine"
+        },
+        {
+          "match": "(?<=[\\s\"'])(@[a-zA-Z][\\w:.-]*)",
+          "name": "keyword.control.event.alpine"
+        },
+        {
+          "match": "(?<=[\\s\"'])(:[a-zA-Z][\\w:.-]*)(?==)",
+          "name": "keyword.control.bind.alpine"
+        }
+      ]
+    }
+  },
+  "repository": {
+    "script": {
+      "begin": "(<)(script)\\b([^>]*)(>)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.script.html" },
+        "3": { "name": "meta.tag.attributes.alpine" },
+        "4": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "end": "(</)(script)\\s*(>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.script.html" },
+        "3": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "contentName": "source.ts",
+      "patterns": [{ "include": "source.ts" }]
+    },
+    "style": {
+      "begin": "(<)(style)\\b([^>]*)(>)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.style.html" },
+        "3": { "name": "meta.tag.attributes.alpine" },
+        "4": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "end": "(</)(style)\\s*(>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.style.html" },
+        "3": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "contentName": "source.css",
+      "patterns": [{ "include": "source.css" }]
+    }
+  }
+}

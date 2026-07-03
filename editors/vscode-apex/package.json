@@ -1,0 +1,38 @@
+{
+  "name": "apex-alpine",
+  "displayName": "Apex JS — .alpine",
+  "description": "Language support for Apex JS .alpine single-file components: HTML, TypeScript (<script server|client>), scoped CSS, and Alpine directive highlighting.",
+  "version": "0.1.0",
+  "publisher": "apex-stack",
+  "license": "MIT",
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Programming Languages"],
+  "keywords": ["alpine", "alpinejs", "apex", "apexjs", "sfc"],
+  "icon": "icon.png",
+  "repository": { "type": "git", "url": "https://github.com/andrecorugda/apexjs", "directory": "editors/vscode-apex" },
+  "homepage": "https://apexjs.site",
+  "bugs": { "url": "https://github.com/andrecorugda/apexjs/issues" },
+  "contributes": {
+    "languages": [
+      {
+        "id": "alpine",
+        "aliases": ["Apex", "alpine"],
+        "extensions": [".alpine"],
+        "configuration": "./language-configuration.json",
+        "icon": { "light": "./icon.png", "dark": "./icon.png" }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "alpine",
+        "scopeName": "source.alpine",
+        "path": "./syntaxes/alpine.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.ts": "typescript",
+          "source.css": "css",
+          "text.html.basic": "html"
+        }
+      }
+    ]
+  }
+}
