@@ -9,7 +9,11 @@
     "file": "Card.alpine",
     "description": "A surface container that inherits the theme."
   },
-  "badge": { "name": "Badge", "file": "Badge.alpine", "description": "A small status/label pill." },
+  "badge": {
+    "name": "Badge",
+    "file": "Badge.alpine",
+    "description": "A small status/label pill."
+  },
   "alert": {
     "name": "Alert",
     "file": "Alert.alpine",
@@ -109,5 +113,70 @@
     "name": "Dropdown",
     "file": "Dropdown.alpine",
     "description": "Menu with keyboard nav + click-outside close."
+  },
+  "carousel": {
+    "name": "Carousel",
+    "file": "Carousel.alpine",
+    "description": "Slide carousel with prev/next + dot indicators."
+  },
+  "chat-bubble": {
+    "name": "ChatBubble",
+    "file": "ChatBubble.alpine",
+    "description": "Received/sent chat message bubbles; text via slot."
+  },
+  "counter": {
+    "name": "Counter",
+    "file": "Counter.alpine",
+    "description": "Numeric stepper with min/max clamping."
+  },
+  "range": {
+    "name": "Range",
+    "file": "Range.alpine",
+    "description": "Styled range slider with themed thumb."
+  },
+  "file-input": {
+    "name": "FileInput",
+    "file": "FileInput.alpine",
+    "description": "Native file upload with styled button + label."
+  },
+  "rating": {
+    "name": "Rating",
+    "file": "Rating.alpine",
+    "description": "Interactive 5-star radio rating."
+  },
+  "pagination": {
+    "name": "Pagination",
+    "file": "Pagination.alpine",
+    "description": "Numbered pagination with prev/next."
+  },
+  "steps": {
+    "name": "Steps",
+    "file": "Steps.alpine",
+    "description": "Horizontal step progress indicator."
+  },
+  "navbar": {
+    "name": "Navbar",
+    "file": "Navbar.alpine",
+    "description": "Responsive top nav with mobile hamburger menu."
+  },
+  "sidebar": {
+    "name": "Sidebar",
+    "file": "Sidebar.alpine",
+    "description": "Responsive off-canvas sidebar with nav links."
+  },
+  "table": {
+    "name": "Table",
+    "file": "Table.alpine",
+    "description": "Bordered data table with header + rows."
+  },
+  "combobox": {
+    "name": "Combobox",
+    "file": "Combobox.alpine",
+    "description": "Searchable single-select with keyboard nav."
+  },
+  "toast": {
+    "name": "Toast",
+    "file": "Toast.alpine",
+    "description": "Stacking toast notifications with auto-dismiss."
   }
 }
