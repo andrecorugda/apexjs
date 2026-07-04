@@ -21,9 +21,9 @@ describe('component registry', () => {
     for (const entry of Object.values(registry)) {
       const file = join(REG, entry.file)
       expect(existsSync(file), `${entry.file} exists`).toBe(true)
-      // Themeable: styled via the theme's token utilities (bg-primary, surface, rounded-radius…).
+      // Themeable: styled via the theme's token utilities (primary/surface/outline/on-*/radius…).
       expect(readFileSync(file, 'utf8')).toMatch(
-        /\b(bg-primary|surface|rounded-radius|on-surface)\b/,
+        /(primary|secondary|surface|outline|on-surface|on-primary)|rounded-radius/,
       )
     }
   })

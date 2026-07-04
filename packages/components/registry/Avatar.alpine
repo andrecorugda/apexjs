@@ -1,0 +1,4 @@
+<!-- Apex component adapted from Penguin UI (MIT). -->
+<template>
+    <span class="flex size-14 items-center justify-center overflow-hidden rounded-full border border-outline bg-surface-alt text-2xl font-bold tracking-wider text-on-surface/80 dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark/80"><slot>JS</slot></span>
+</template>

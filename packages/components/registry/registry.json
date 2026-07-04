@@ -9,5 +9,105 @@
     "file": "Card.alpine",
     "description": "A surface container that inherits the theme."
   },
-  "badge": { "name": "Badge", "file": "Badge.alpine", "description": "A small status/label pill." }
+  "badge": { "name": "Badge", "file": "Badge.alpine", "description": "A small status/label pill." },
+  "alert": {
+    "name": "Alert",
+    "file": "Alert.alpine",
+    "description": "Dismissible info alert with icon, message slot, and close button."
+  },
+  "avatar": {
+    "name": "Avatar",
+    "file": "Avatar.alpine",
+    "description": "Circular initials avatar; content via slot."
+  },
+  "banner": {
+    "name": "Banner",
+    "file": "Banner.alpine",
+    "description": "Full-width dismissible top banner with a text slot."
+  },
+  "breadcrumbs": {
+    "name": "Breadcrumbs",
+    "file": "Breadcrumbs.alpine",
+    "description": "Chevron-separated breadcrumb navigation."
+  },
+  "kbd": {
+    "name": "Kbd",
+    "file": "Kbd.alpine",
+    "description": "Keyboard key indicator; key label via slot."
+  },
+  "checkbox": {
+    "name": "Checkbox",
+    "file": "Checkbox.alpine",
+    "description": "Checkbox with label and animated check."
+  },
+  "radio": {
+    "name": "Radio",
+    "file": "Radio.alpine",
+    "description": "Radio button with slotted label."
+  },
+  "select": {
+    "name": "Select",
+    "file": "Select.alpine",
+    "description": "Native select with floating label + chevron."
+  },
+  "text-input": {
+    "name": "TextInput",
+    "file": "TextInput.alpine",
+    "description": "Labeled text input with focus/disabled states."
+  },
+  "textarea": {
+    "name": "Textarea",
+    "file": "Textarea.alpine",
+    "description": "Labeled textarea with focus/disabled states."
+  },
+  "toggle": {
+    "name": "Toggle",
+    "file": "Toggle.alpine",
+    "description": "Accessible on/off switch with animated knob."
+  },
+  "spinner": {
+    "name": "Spinner",
+    "file": "Spinner.alpine",
+    "description": "SVG loading spinner (motion-safe)."
+  },
+  "progress": {
+    "name": "Progress",
+    "file": "Progress.alpine",
+    "description": "Progress bar with ARIA value bindings."
+  },
+  "skeleton": {
+    "name": "Skeleton",
+    "file": "Skeleton.alpine",
+    "description": "Pulsing placeholder skeleton loader."
+  },
+  "link": {
+    "name": "Link",
+    "file": "Link.alpine",
+    "description": "Styled inline anchor with slotted label."
+  },
+  "tooltip": {
+    "name": "Tooltip",
+    "file": "Tooltip.alpine",
+    "description": "Hover/focus tooltip; content via slot."
+  },
+  "tabs": {
+    "name": "Tabs",
+    "file": "Tabs.alpine",
+    "description": "Tablist with arrow-key focus + panel slots."
+  },
+  "accordion": {
+    "name": "Accordion",
+    "file": "Accordion.alpine",
+    "description": "Collapsible item with title + body slots."
+  },
+  "modal": {
+    "name": "Modal",
+    "file": "Modal.alpine",
+    "description": "Dialog with focus-trap, esc/click-outside close."
+  },
+  "dropdown": {
+    "name": "Dropdown",
+    "file": "Dropdown.alpine",
+    "description": "Menu with keyboard nav + click-outside close."
+  }
 }
