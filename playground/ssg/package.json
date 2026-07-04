@@ -1,8 +1,13 @@
 {
   "name": "ssg-spike",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
-  "scripts": { "build": "apex build" },
-  "dependencies": { "alpinejs": "^3.14.8", "@apex-stack/core": "workspace:*" }
+  "scripts": {
+    "build": "apex build"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.8",
+    "@apex-stack/core": "workspace:*"
+  }
 }

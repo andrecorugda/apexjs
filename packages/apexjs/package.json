@@ -1,6 +1,6 @@
 {
   "name": "@apex-stack/core",
-  "version": "0.1.20",
+  "version": "0.2.0",
   "description": "The full-stack meta-framework for Alpine.js — CLI and runtime",
   "type": "module",
   "license": "MIT",
@@ -14,7 +14,14 @@
   "bugs": {
     "url": "https://github.com/andrecorugda/apexjs/issues"
   },
-  "keywords": ["alpine", "alpinejs", "framework", "ssr", "apex", "apexjs"],
+  "keywords": [
+    "alpine",
+    "alpinejs",
+    "framework",
+    "ssr",
+    "apex",
+    "apexjs"
+  ],
   "bin": {
     "apex": "./dist/cli.js"
   },
@@ -28,7 +35,11 @@
       "import": "./dist/client.js"
     }
   },
-  "files": ["dist", "templates", "vscode"],
+  "files": [
+    "dist",
+    "templates",
+    "vscode"
+  ],
   "scripts": {
     "build": "node scripts/copy-templates.mjs && tsup",
     "dev": "tsup --watch",
