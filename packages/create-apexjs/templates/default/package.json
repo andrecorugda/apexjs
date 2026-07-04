@@ -4,11 +4,20 @@
   "type": "module",
   "scripts": {
     "dev": "apex dev",
-    "dev:islands": "apex dev --islands"
+    "dev:islands": "apex dev --islands",
+    "build": "apex build",
+    "start": "apex start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "alpinejs": "^3.14.8",
     "@apex-stack/core": "latest",
+    "alpinejs": "^3.14.8",
     "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
   }
 }

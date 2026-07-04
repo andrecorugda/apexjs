@@ -1,7 +1,7 @@
 {
   "name": "@apex-stack/core",
-  "version": "0.1.19",
-  "description": "The full-stack meta-framework for Alpine.js \u2014 CLI and runtime",
+  "version": "0.2.1",
+  "description": "The full-stack meta-framework for Alpine.js — CLI and runtime",
   "type": "module",
   "license": "MIT",
   "author": "Andre Corugda",
@@ -14,7 +14,14 @@
   "bugs": {
     "url": "https://github.com/andrecorugda/apexjs/issues"
   },
-  "keywords": ["alpine", "alpinejs", "framework", "ssr", "apex", "apexjs"],
+  "keywords": [
+    "alpine",
+    "alpinejs",
+    "framework",
+    "ssr",
+    "apex",
+    "apexjs"
+  ],
   "bin": {
     "apex": "./dist/cli.js"
   },
@@ -28,7 +35,11 @@
       "import": "./dist/client.js"
     }
   },
-  "files": ["dist", "templates"],
+  "files": [
+    "dist",
+    "templates",
+    "vscode"
+  ],
   "scripts": {
     "build": "node scripts/copy-templates.mjs && tsup",
     "dev": "tsup --watch",

@@ -10,4 +10,5 @@ playwright-report
 *.db-shm
 *.db-wal
 packages/apexjs/templates/
+packages/apexjs/vscode/
 editors/vscode-apex/node_modules/

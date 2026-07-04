@@ -6,15 +6,20 @@ import type { ComponentRegistry } from '@apex-stack/kit'
 import {
   createApp,
   defineEventHandler,
+  getRequestHeaders,
   getRequestURL,
   setResponseHeader,
   setResponseStatus,
   toNodeListener,
 } from 'h3'
 import { createApiHandler, expandApiModule } from '../api/routes.js'
+import { applyEnvToRuntimeConfig } from '../config/resolve.js'
+import type { RuntimeConfig } from '../config/runtime.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { createMcpHandler, hasMcpRoutes } from '../mcp/server.js'
+import type { Middleware } from '../middleware/define.js'
+import { runMiddleware } from '../middleware/run.js'
 import { type RouteDef, matchRoute } from '../routing/router.js'
 
 /** The build manifest written by `apex build --server` to `<dist>/apex-manifest.json`. */
@@ -23,6 +28,10 @@ export interface ProdManifest {
   routes: Array<RouteDef & { serverFile: string; clientHref?: string }>
   components: Record<string, string>
   api: Array<{ name: string; serverFile: string }>
+  /** Middleware modules in run order. */
+  middleware?: Array<{ serverFile: string }>
+  /** runtimeConfig defaults baked at build; env is applied at server start. */
+  runtimeConfig?: RuntimeConfig
 }
 
 const MIME: Record<string, string> = {
@@ -51,6 +60,15 @@ export async function startProdServer(
   const port = options.port ?? 3000
   const manifest = JSON.parse(readFileSync(join(dir, 'apex-manifest.json'), 'utf8')) as ProdManifest
 
+  // Apply deploy-time .env / process.env over the baked runtimeConfig defaults.
+  // Load .env from the working directory (where the operator runs `apex start`,
+  // i.e. the deploy root) — not from the build dir — matching where users keep it.
+  const runtimeConfig = applyEnvToRuntimeConfig(
+    manifest.runtimeConfig ?? { public: {} },
+    process.cwd(),
+  )
+  const publicConfig = (runtimeConfig.public ?? {}) as Record<string, unknown>
+
   const importServer = (relFile: string) => import(pathToFileURL(join(dir, 'server', relFile)).href)
 
   // Build the component registry from the built component modules.
@@ -69,7 +87,15 @@ export async function startProdServer(
     apiEntries.push(...expandApiModule(name, mod.default))
   }
 
+  // Load middleware modules (in manifest order).
+  const middleware: Middleware[] = []
+  for (const { serverFile } of manifest.middleware ?? []) {
+    const mod = await importServer(serverFile)
+    if (typeof mod.default === 'function') middleware.push(mod.default)
+  }
+
   const serverFileFor = new Map(manifest.routes.map((r) => [r.pageId, r.serverFile]))
+  const errorPageId = serverFileFor.has('/pages/error.alpine') ? '/pages/error.alpine' : undefined
   const loadModule = (id: string) =>
     importServer(serverFileFor.get(id) as string) as Promise<PageModule>
 
@@ -91,8 +117,29 @@ export async function startProdServer(
     }),
   )
 
-  if (apiEntries.length) app.use('/api', createApiHandler(apiEntries))
-  if (hasMcpRoutes(apiEntries)) app.use('/mcp', createMcpHandler(apiEntries))
+  // Run middleware before API + page handlers (after static assets, which the
+  // handler above already served). Sets locals; a redirect short-circuits.
+  if (middleware.length) {
+    app.use(
+      defineEventHandler(async (event) => {
+        const { redirect, locals } = await runMiddleware(middleware, {
+          url: getRequestURL(event).pathname,
+          method: event.method,
+          config: runtimeConfig,
+          headers: getRequestHeaders(event) as Record<string, string>,
+        })
+        event.context.apexLocals = locals
+        if (redirect) {
+          setResponseStatus(event, redirect.status)
+          setResponseHeader(event, 'Location', redirect.to)
+          return ''
+        }
+      }),
+    )
+  }
+
+  if (apiEntries.length) app.use('/api', createApiHandler(apiEntries, runtimeConfig))
+  if (hasMcpRoutes(apiEntries)) app.use('/mcp', createMcpHandler(apiEntries, runtimeConfig))
 
   app.use(
     defineEventHandler(async (event) => {
@@ -113,6 +160,10 @@ export async function startProdServer(
         registry,
         componentCss,
         clientHref: route?.clientHref,
+        runtimeConfig,
+        publicConfig,
+        locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
+        errorPageId,
       })
       setResponseHeader(event, 'Content-Type', 'text/html')
       return html

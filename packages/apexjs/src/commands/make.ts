@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { defineCommand } from 'citty'
 
-type Kind = 'page' | 'component' | 'api' | 'store' | 'layout'
+type Kind = 'page' | 'component' | 'api' | 'store' | 'layout' | 'service' | 'test' | 'middleware'
 
 /** Components are referenced as `<PascalCase/>`, so their file must be PascalCase. */
 function pascalCase(s: string): string {
@@ -90,6 +90,46 @@ export default defineApexRoute({
 `
 }
 
+function serviceTemplate(name: string): string {
+  const cls = `${pascalCase(name)}Service`
+  return `/**
+ * ${cls} — business logic as a plain, testable class. Keep routes and loaders
+ * thin and delegate to services like this one (the clean-code backbone).
+ */
+export class ${cls} {
+  // Replace with your methods.
+  run(input: string): string {
+    return input
+  }
+}
+`
+}
+
+function middlewareTemplate(): string {
+  return `import { defineMiddleware } from '@apex-stack/core'
+
+// Runs on every request before the page/API handler. Attach request-scoped
+// state to ctx.locals (read in a page loader via \`loader({ locals })\` and in
+// route handlers via \`{ locals }\`), or return ctx.redirect('/path') to
+// short-circuit. Files run in filename order — prefix with 01. / 02. to order.
+export default defineMiddleware((ctx) => {
+  // ctx.locals.user = await getUser(ctx.headers)
+  // if (ctx.url.startsWith('/admin') && !ctx.locals.user) return ctx.redirect('/login')
+})
+`
+}
+
+function testTemplate(name: string): string {
+  return `import { describe, expect, it } from 'vitest'
+
+describe('${name}', () => {
+  it('works', () => {
+    expect(true).toBe(true)
+  })
+})
+`
+}
+
 /** Where a generated artifact lands, and its contents. */
 function plan(kind: Kind, name: string, root: string): { path: string; contents: string } {
   switch (kind) {
@@ -106,32 +146,47 @@ function plan(kind: Kind, name: string, root: string): { path: string; contents:
       return { path: join(root, 'stores', `${name}.ts`), contents: storeTemplate(name) }
     case 'layout':
       return { path: join(root, 'layouts', `${name}.alpine`), contents: layoutTemplate() }
+    case 'service':
+      return {
+        path: join(root, 'services', `${pascalCase(name)}Service.ts`),
+        contents: serviceTemplate(name),
+      }
+    case 'test':
+      return { path: join(root, 'tests', `${name}.test.ts`), contents: testTemplate(name) }
+    case 'middleware':
+      return { path: join(root, 'middleware', `${name}.ts`), contents: middlewareTemplate() }
   }
 }
 
 export const makeCommand = defineCommand({
-  meta: { name: 'make', description: 'Generate a page, component, API route, store, or layout' },
+  meta: {
+    name: 'make',
+    description:
+      'Generate a page, component, API route, store, layout, service, test, or middleware',
+  },
   args: {
     kind: {
       type: 'positional',
       required: true,
-      description: 'page | component | api | store | layout',
+      description: 'page | component | api | store | layout | service | test | middleware',
     },
     name: { type: 'positional', required: true, description: 'Name (about, Counter, todos, …)' },
     root: { type: 'string', description: 'Project root', default: '.' },
   },
   run({ args }) {
     const kind = args.kind as Kind
-    if (
-      kind !== 'page' &&
-      kind !== 'component' &&
-      kind !== 'api' &&
-      kind !== 'store' &&
-      kind !== 'layout'
-    ) {
-      console.error(
-        `\n  Unknown type "${args.kind}". Use: page | component | api | store | layout\n`,
-      )
+    const kinds: Kind[] = [
+      'page',
+      'component',
+      'api',
+      'store',
+      'layout',
+      'service',
+      'test',
+      'middleware',
+    ]
+    if (!kinds.includes(kind)) {
+      console.error(`\n  Unknown type "${args.kind}". Use: ${kinds.join(' | ')}\n`)
       process.exit(1)
     }
 

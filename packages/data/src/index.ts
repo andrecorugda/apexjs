@@ -27,6 +27,12 @@ function libsqlUrl(pathOrUrl: string): string {
   return /^(file:|libsql:|https?:|:memory:)/.test(pathOrUrl) ? pathOrUrl : `file:${pathOrUrl}`
 }
 
+// Module types for the optional-peer drivers. Aliases keep the cast lines short
+// so the formatter can't wrap `import(...)` across lines (which breaks esbuild).
+type LibsqlMod = typeof import('@libsql/client')
+type PostgresMod = { default: typeof import('postgres') }
+type PgliteMod = typeof import('@electric-sql/pglite')
+
 /** Load a DB driver (an optional peer) with a clear message if it isn't installed. */
 async function loadDriver(spec: string): Promise<unknown> {
   try {
@@ -49,7 +55,7 @@ export async function createDb(config: CreateDbConfig): Promise<ApexDbHandle> {
   const cfg = typeof config === 'string' ? ({ driver: 'libsql', url: config } as const) : config
 
   if (cfg.driver === 'sqlite' || cfg.driver === 'libsql') {
-    const { createClient } = (await loadDriver('@libsql/client')) as typeof import('@libsql/client')
+    const { createClient } = (await loadDriver('@libsql/client')) as LibsqlMod
     const { drizzle } = await import('drizzle-orm/libsql')
     const client = createClient({ url: libsqlUrl(cfg.url) })
     return {
@@ -66,8 +72,7 @@ export async function createDb(config: CreateDbConfig): Promise<ApexDbHandle> {
   }
 
   if (cfg.driver === 'postgres') {
-    const postgres = ((await loadDriver('postgres')) as { default: typeof import('postgres') })
-      .default
+    const postgres = ((await loadDriver('postgres')) as PostgresMod).default
     const { drizzle } = await import('drizzle-orm/postgres-js')
     const client = postgres(cfg.url)
     return {
@@ -84,9 +89,7 @@ export async function createDb(config: CreateDbConfig): Promise<ApexDbHandle> {
   }
 
   // pglite — embedded Postgres (great for local dev and tests).
-  const { PGlite } = (await loadDriver('@electric-sql/pglite')) as typeof import(
-    '@electric-sql/pglite',
-  )
+  const { PGlite } = (await loadDriver('@electric-sql/pglite')) as PgliteMod
   const { drizzle } = await import('drizzle-orm/pglite')
   // No dir → in-memory (memory://); a dir persists to disk.
   const client = new PGlite((cfg as { dir?: string }).dir ?? 'memory://')

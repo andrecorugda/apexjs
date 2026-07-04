@@ -4,8 +4,21 @@ import { basename, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
 import { banner, color, spinner } from '../ui.js'
+import { offerExtension } from '../vscode.js'
 
 const TEMPLATE_DIR = fileURLToPath(new URL('../templates/default', import.meta.url))
+
+/** Replace the `{{name}}` placeholder in every scaffolded file. */
+function substituteName(dir: string, name: string): void {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, entry.name)
+    if (entry.isDirectory()) substituteName(p, name)
+    else {
+      const txt = readFileSync(p, 'utf8')
+      if (txt.includes('{{name}}')) writeFileSync(p, txt.replaceAll('{{name}}', name))
+    }
+  }
+}
 
 type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun'
 
@@ -54,6 +67,10 @@ export const newCommand = defineCommand({
       default: true,
       description: 'Initialize a git repository (use --no-git to skip)',
     },
+    vscode: {
+      type: 'boolean',
+      description: 'Install the Apex VS Code extension (skip the interactive prompt)',
+    },
   },
   async run({ args }) {
     const dir = String(args.dir)
@@ -73,11 +90,7 @@ export const newCommand = defineCommand({
     cpSync(TEMPLATE_DIR, target, { recursive: true })
     const gitignore = join(target, '_gitignore')
     if (existsSync(gitignore)) renameSync(gitignore, join(target, '.gitignore'))
-    for (const rel of ['package.json', 'README.md']) {
-      const file = join(target, rel)
-      if (existsSync(file))
-        writeFileSync(file, readFileSync(file, 'utf8').replaceAll('{{name}}', name))
-    }
+    substituteName(target, name)
     log(`  ${color.green('✓')} Created ${color.bold(dir)}`)
 
     const pm = detectPackageManager()
@@ -104,6 +117,10 @@ export const newCommand = defineCommand({
       if (installed) sp.succeed(`Dependencies installed with ${pm}`)
       else sp.fail(`Install failed — run ${color.cyan(`${pm} install`)} inside ${dir}`)
     }
+
+    // Offer the .alpine VS Code extension (prompts when interactive; --vscode / --no-vscode skips it).
+    const ext = await offerExtension(args.vscode as boolean | undefined)
+    if (ext) log(`  ${color.green('✓')} ${ext}`)
 
     const runPrefix = pm === 'npm' ? 'npm run' : pm
     log(`\n  ${color.bold('Next steps')}`)

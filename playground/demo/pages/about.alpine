@@ -1,0 +1,17 @@
+<script server lang="ts">
+  export function head() {
+    return { title: 'About — Apex Demo', meta: [{ name: 'description', content: 'What this Apex demo exercises.' }] }
+  }
+</script>
+
+<template x-data>
+  <h1>About this demo</h1>
+  <p>A tiny guestbook that exercises the whole framework end to end:</p>
+  <ul>
+    <li>File routing, including the dynamic <code>/message/[id]</code> route</li>
+    <li>A shared layout and a reusable <code>&lt;MessageCard/&gt;</code> component</li>
+    <li>A <code>defineResource</code> — REST <em>and</em> MCP — backed by libSQL + Drizzle</li>
+    <li>A typed route delegating to <code>GuestbookService</code> (also an MCP tool)</li>
+    <li>A global <code>$store</code>, a composable, shared types, per-page <code>head()</code>, and tests</li>
+  </ul>
+</template>

@@ -34,6 +34,12 @@ export async function buildServer(
       ids.push(`/server/api/${f}`)
     }
   }
+  const mwDir = join(root, 'middleware')
+  if (existsSync(mwDir)) {
+    for (const f of readdirSync(mwDir).filter((f) => /\.(ts|js|mjs)$/.test(f))) {
+      ids.push(`/middleware/${f}`)
+    }
+  }
 
   const input: Record<string, string> = {}
   for (const id of ids) input[entryName(id)] = join(root, id.slice(1))

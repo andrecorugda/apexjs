@@ -1,9 +1,11 @@
 {
   "name": "showcase",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "private": true,
   "type": "module",
-  "scripts": { "dev": "apex dev" },
+  "scripts": {
+    "dev": "apex dev"
+  },
   "dependencies": {
     "alpinejs": "^3.14.8",
     "@apex-stack/core": "workspace:*",

@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
 import { type EventHandler, defineEventHandler, toWebRequest } from 'h3'
 import type { ApiEntry } from '../api/routes.js'
+import type { RuntimeConfig } from '../config/runtime.js'
 
 /** True if any loaded route opted into MCP exposure. */
 export function hasMcpRoutes(entries: ApiEntry[]): boolean {
@@ -9,7 +10,7 @@ export function hasMcpRoutes(entries: ApiEntry[]): boolean {
 }
 
 /** Build a fresh MCP server exposing the given routes as tools. */
-function buildServer(entries: ApiEntry[]): McpServer {
+function buildServer(entries: ApiEntry[], config?: RuntimeConfig): McpServer {
   const server = new McpServer({ name: 'apexjs', version: '0.0.0' })
   for (const entry of entries) {
     server.registerTool(
@@ -22,6 +23,7 @@ function buildServer(entries: ApiEntry[]): McpServer {
         const result = await entry.route.handler({
           input: args ?? {},
           url: `mcp://${entry.mcpName}`,
+          config: config ?? { public: {} },
         })
         return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
       },
@@ -35,11 +37,11 @@ function buildServer(entries: ApiEntry[]): McpServer {
  * exposes every `mcp: true` route — including resource routes — as a tool. Same
  * typed definitions power both REST and AI tool calls.
  */
-export function createMcpHandler(entries: ApiEntry[]): EventHandler {
+export function createMcpHandler(entries: ApiEntry[], config?: RuntimeConfig): EventHandler {
   const mcpEntries = entries.filter((e) => e.route.mcp)
 
   return defineEventHandler(async (event) => {
-    const server = buildServer(mcpEntries)
+    const server = buildServer(mcpEntries, config)
     const transport = new WebStandardStreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,

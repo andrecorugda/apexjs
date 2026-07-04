@@ -8,6 +8,7 @@ import {
   createApp,
   defineEventHandler,
   fromNodeMiddleware,
+  getRequestHeaders,
   setResponseHeader,
   setResponseStatus,
   toNodeListener,
@@ -15,8 +16,10 @@ import {
 import { type PluginOption, type ViteDevServer, createServer as createViteServer } from 'vite'
 import { createApiHandler, loadApiRoutes } from '../api/routes.js'
 import { loadComponents } from '../components/registry.js'
+import { resolveApexConfig } from '../config/resolve.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { createMcpHandler } from '../mcp/server.js'
+import { loadMiddleware, runMiddleware } from '../middleware/run.js'
 import { matchRoute, scanPages } from '../routing/router.js'
 import { loadStores } from '../stores/loader.js'
 import { renderErrorPage, renderNotFoundPage } from './errorPage.js'
@@ -113,12 +116,41 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
     return vite.ssrLoadModule(resolved) as Promise<Record<string, unknown>>
   }
 
+  // Resolve apex.config.ts + .env once at boot. Editing config or .env needs a
+  // dev-server restart (like Nuxt) — routes/pages still hot-reload per request.
+  const { runtimeConfig, publicConfig } = await resolveApexConfig(
+    options.root,
+    (id) => ssrLoad(id) as never,
+  )
+
   const app = createApp()
 
   // Vite handles assets, HMR client, and .alpine module requests. When it has
   // nothing to serve it calls next() and the request falls through to the
   // API / MCP / SSR handlers below.
   app.use(fromNodeMiddleware(vite.middlewares))
+
+  // Run middleware/*.ts before API + page handlers. Loaded per request so edits
+  // apply without a restart. Sets `event.context.apexLocals` for downstream
+  // loaders/handlers; a returned redirect short-circuits the request.
+  app.use(
+    defineEventHandler(async (event) => {
+      const mws = await loadMiddleware(options.root, (id) => ssrLoad(id) as never)
+      if (!mws.length) return
+      const { redirect, locals } = await runMiddleware(mws, {
+        url: event.path || '/',
+        method: event.method,
+        config: runtimeConfig,
+        headers: getRequestHeaders(event) as Record<string, string>,
+      })
+      event.context.apexLocals = locals
+      if (redirect) {
+        setResponseStatus(event, redirect.status)
+        setResponseHeader(event, 'Location', redirect.to)
+        return ''
+      }
+    }),
+  )
 
   // Load server/api/*.ts routes (single routes + resources) per request in dev, so
   // editing a route or resource takes effect without a restart — Vite invalidates the
@@ -127,11 +159,15 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   const loadEntries = () => loadApiRoutes(options.root, (id) => ssrLoad(id) as never)
   app.use(
     '/api',
-    defineEventHandler((event) => loadEntries().then((e) => createApiHandler(e)(event))),
+    defineEventHandler((event) =>
+      loadEntries().then((e) => createApiHandler(e, runtimeConfig)(event)),
+    ),
   )
   app.use(
     '/mcp',
-    defineEventHandler((event) => loadEntries().then((e) => createMcpHandler(e)(event))),
+    defineEventHandler((event) =>
+      loadEntries().then((e) => createMcpHandler(e, runtimeConfig)(event)),
+    ),
   )
 
   app.use(
@@ -169,6 +205,12 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           stores,
           appCss,
           layouts,
+          runtimeConfig,
+          publicConfig,
+          locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
+          errorPageId: existsSync(join(options.root, 'pages', 'error.alpine'))
+            ? '/pages/error.alpine'
+            : undefined,
           transformHtml: (u, doc) => vite.transformIndexHtml(u, doc),
         })
         setResponseHeader(event, 'Content-Type', 'text/html')

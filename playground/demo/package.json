@@ -1,0 +1,22 @@
+{
+  "name": "apex-demo-guestbook",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "apex dev",
+    "build": "apex build --server",
+    "start": "apex start",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@apex-stack/core": "workspace:*",
+    "@apex-stack/data": "workspace:*",
+    "@libsql/client": "^0.17.4",
+    "alpinejs": "^3.14.8",
+    "drizzle-orm": "^0.45.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  }
+}

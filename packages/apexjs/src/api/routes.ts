@@ -10,6 +10,7 @@ import {
   setResponseStatus,
 } from 'h3'
 import { z } from 'zod'
+import type { RuntimeConfig } from '../config/runtime.js'
 import type { ApexRoute, HttpMethod } from './defineRoute.js'
 import { type ApexResource, isApexResource } from './resource.js'
 
@@ -114,7 +115,7 @@ export function matchApi(entries: ApiEntry[], path: string, method: string): Mat
 }
 
 /** A single h3 handler that routes, validates, and dispatches all `/api/*` requests. */
-export function createApiHandler(entries: ApiEntry[]): EventHandler {
+export function createApiHandler(entries: ApiEntry[], config?: RuntimeConfig): EventHandler {
   return defineEventHandler(async (event) => {
     const url = getRequestURL(event)
     const matched = matchApi(entries, url.pathname, event.method)
@@ -139,7 +140,12 @@ export function createApiHandler(entries: ApiEntry[]): EventHandler {
       input = parsed.data
     }
 
-    const result = await entry.route.handler({ input, url: url.toString() })
+    const result = await entry.route.handler({
+      input,
+      url: url.toString(),
+      config: config ?? { public: {} },
+      locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
+    })
     setResponseHeader(event, 'Content-Type', 'application/json')
     return result
   })

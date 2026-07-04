@@ -10,8 +10,15 @@ export type {
   ApexRouteConfig,
   ApexRouteHandlerContext,
   HttpMethod,
+  InferInput,
+  InferOutput,
+  TypedApexRoute,
 } from './api/defineRoute.js'
 export { isApexResource } from './api/resource.js'
 export type { ApexResource, ResourceRoute } from './api/resource.js'
 export { defineStore, isApexStore } from './store.js'
 export type { ApexStore, StoreState } from './store.js'
+export { defineConfig, env, useRuntimeConfig } from './config/runtime.js'
+export type { ApexConfig, RuntimeConfig } from './config/runtime.js'
+export { defineMiddleware } from './middleware/define.js'
+export type { Middleware, MiddlewareContext, MiddlewareResult } from './middleware/define.js'

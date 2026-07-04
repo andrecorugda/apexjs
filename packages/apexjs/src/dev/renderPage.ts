@@ -4,6 +4,7 @@ import {
   renderFragment,
   stateIsland,
 } from '@apex-stack/kit'
+import { type RuntimeConfig, clientConfigScript } from '../config/runtime.js'
 import { type LoadedStore, storesInitialState } from '../stores/loader.js'
 
 /** The shape a compiled `.alpine` SSR module exports (see @apex-stack/vite). */
@@ -17,12 +18,19 @@ export interface HeadInput {
 }
 
 export interface PageModule {
-  loader: (ctx: { params: Record<string, string>; url: string }) => unknown | Promise<unknown>
+  loader: (ctx: {
+    params: Record<string, string>
+    url: string
+    config: RuntimeConfig
+    locals: Record<string, unknown>
+  }) => unknown | Promise<unknown>
   /** Optional per-page head/SEO — receives the loader's data, returns title/meta/link. */
   head?: (ctx: {
     data: Record<string, unknown>
     params: Record<string, string>
     url: string
+    config: RuntimeConfig
+    locals: Record<string, unknown>
   }) => HeadInput | Promise<HeadInput>
   template: string
   rootXData: string | null
@@ -85,6 +93,14 @@ export interface RenderPageOptions {
   appCss?: string
   /** Available layout names (from `layouts/*.alpine`) — enables page-wrapping layouts. */
   layouts?: string[]
+  /** Full resolved runtime config passed to the page loader + head (server-side). */
+  runtimeConfig?: RuntimeConfig
+  /** Public config subset seeded into the client for `useRuntimeConfig()`. */
+  publicConfig?: Record<string, unknown>
+  /** Request-scoped state from middleware, passed to the loader + head. */
+  locals?: Record<string, unknown>
+  /** Error boundary: page id (e.g. `/pages/error.alpine`) rendered with `{ error }` if the loader throws. */
+  errorPageId?: string
 }
 
 /**
@@ -94,12 +110,37 @@ export interface RenderPageOptions {
  * document shell (SSR body + state island + client entry).
  */
 export async function renderPage(opts: RenderPageOptions): Promise<string> {
-  const mod = await opts.loadModule(opts.pageId)
-  const loaderData = ((await mod.loader({ params: opts.params ?? {}, url: opts.url })) ??
-    {}) as Record<string, unknown>
+  let mod = await opts.loadModule(opts.pageId)
+  const cfg = opts.runtimeConfig ?? { public: {} }
+  const locals = opts.locals ?? {}
+
+  // Error boundary: if the loader throws and an error page exists, render THAT
+  // (with `{ error }`) instead of crashing — an in-app, layout-wrapped error UI.
+  let loaderData: Record<string, unknown>
+  try {
+    loaderData = ((await mod.loader({
+      params: opts.params ?? {},
+      url: opts.url,
+      config: cfg,
+      locals,
+    })) ?? {}) as Record<string, unknown>
+  } catch (err) {
+    if (!opts.errorPageId) throw err
+    mod = await opts.loadModule(opts.errorPageId)
+    const e = err as { message?: string; statusCode?: number }
+    loaderData = {
+      error: { message: e.message ?? 'Something went wrong', statusCode: e.statusCode ?? 500 },
+    }
+  }
 
   const head = mod.head
-    ? await mod.head({ data: loaderData, params: opts.params ?? {}, url: opts.url })
+    ? await mod.head({
+        data: loaderData,
+        params: opts.params ?? {},
+        url: opts.url,
+        config: cfg,
+        locals,
+      })
     : undefined
 
   const stores = opts.stores ?? []
@@ -127,16 +168,23 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
           ? 'default'
           : null
 
+  // Nested layouts: wrap the page in its layout, and if that layout itself
+  // declares `export const layout = '<parent>'`, wrap again — outermost last.
+  // `seen` guards against cycles; each layout is applied at most once.
   let body = html
   let layoutCss = ''
-  if (layoutName && available.includes(layoutName)) {
-    const layoutMod = await opts.loadModule(`/layouts/${layoutName}.alpine`)
+  const seen = new Set<string>()
+  let next: string | false | null | undefined = layoutName
+  while (typeof next === 'string' && available.includes(next) && !seen.has(next)) {
+    seen.add(next)
+    const layoutMod = await opts.loadModule(`/layouts/${next}.alpine`)
     const chrome = renderFragment(layoutMod.template, {}, layoutMod.scopeId, opts.registry)
-    // Function replacement so `$` in the page HTML isn't treated as a special token.
+    // Function replacement so `$` in the wrapped HTML isn't treated as a special token.
     body = /<slot\b[^>]*>[\s\S]*?<\/slot>/.test(chrome)
-      ? chrome.replace(/<slot\b[^>]*>[\s\S]*?<\/slot>/, () => html)
-      : chrome + html
-    layoutCss = layoutMod.css
+      ? chrome.replace(/<slot\b[^>]*>[\s\S]*?<\/slot>/, () => body)
+      : chrome + body
+    layoutCss += layoutMod.css
+    next = layoutMod.layout // a layout may declare a parent layout
   }
 
   const doc = shell({
@@ -148,6 +196,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     storeIds: stores.map((s) => s.id),
     appCss: opts.appCss,
     headTags: renderHead(head),
+    configScript: clientConfigScript(opts.publicConfig ?? {}),
   })
 
   return opts.transformHtml ? opts.transformHtml(opts.url, doc) : doc
@@ -162,6 +211,7 @@ interface ShellParts {
   storeIds?: string[]
   appCss?: string
   headTags?: string
+  configScript?: string
 }
 
 function shell({
@@ -173,6 +223,7 @@ function shell({
   storeIds = [],
   appCss,
   headTags = '<title>Apex JS</title>',
+  configScript = '',
 }: ShellParts): string {
   // Register global stores on the client before Alpine.start(): import each store
   // module and call Alpine.store(name, factory()) — same factory the server used,
@@ -206,6 +257,7 @@ ${storeRegs ? `${storeRegs}\n` : ''}  Alpine.start()
 <body>
 ${body}
 ${island}
+${configScript}
 ${clientScript}
 </body>
 </html>`
