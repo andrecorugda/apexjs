@@ -10,6 +10,9 @@ export type {
   ApexRouteConfig,
   ApexRouteHandlerContext,
   HttpMethod,
+  InferInput,
+  InferOutput,
+  TypedApexRoute,
 } from './api/defineRoute.js'
 export { isApexResource } from './api/resource.js'
 export type { ApexResource, ResourceRoute } from './api/resource.js'
