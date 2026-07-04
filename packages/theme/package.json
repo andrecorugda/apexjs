@@ -1,6 +1,6 @@
 {
   "name": "@apex-stack/theme",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Theme tokens + Tailwind preset for Apex JS — one theme, inherited by every component",
   "type": "module",
   "license": "MIT",
