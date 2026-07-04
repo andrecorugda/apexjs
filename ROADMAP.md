@@ -71,46 +71,53 @@ offers, the **Apex way** (HTML-first, ~zero-JS by default, AI-native by construc
 server surface has a schema, it should be AI-callable for free — that's the moat neither Next nor
 Nuxt has.
 
-**Already shipped** (no longer gaps): global store (`defineStore`), composables + `<script client>`,
-layouts (`layouts/*.alpine` + `<slot>`), head/SEO (`head()` export), Tailwind (`@tailwindcss/vite`),
-dynamic + catch-all routes (`[param]` / `[...name]`), component slots, and the `.alpine` VSCode
-extension. Typed API routes, server data loaders (`loader()`), and `defineResource` (REST+MCP) were
-already in place.
+### Capability matrix vs Next.js & Nuxt
 
-**Recently shipped (on `develop`, unreleased):**
-- ✅ **Env vars / runtime config from `.env`** — `defineConfig({ runtimeConfig })` in `apex.config.ts`,
-  `.env`/`.env.<mode>`/`.env.local` loading with `APEX_`/`APEX_PUBLIC_` overrides, `useRuntimeConfig()`
-  + `env('KEY', fallback)`, `config` in loaders/routes (REST + MCP), public-only client seed. Wired
-  through dev, prod (`apex start`), and the static/server build. Tested + E2E-verified.
-- ✅ **Route middleware** — `middleware/*.ts` → `defineMiddleware(ctx => …)`, filename order, runs on
-  every request; `ctx.locals` threaded into loaders + route handlers, `ctx.redirect()` short-circuits.
-  Dev + prod + build. `apex make middleware`. Tested + E2E-verified. Foundation for auth.
-- ✅ **Shared FE/BE types** — `defineApexRoute` carries input/output types; `InferInput`/`InferOutput`
-  derive them on the frontend from one contract (no drift). Type-checked + tested.
-- ✅ **Nested layouts** — a layout can declare `export const layout = '<parent>'`; wraps outward,
-  merges each layer's CSS, cycle-guarded.
-- ✅ **Error boundary** — `pages/error.alpine` renders (with `{ error }`, inside layouts) when a
-  loader throws; dev + prod.
-- ✅ **Form-action sugar** — `createAction(url, opts)` from `@apex-stack/core/client`: pending/error/
-  data state bound to a route, spread into `x-data`.
-- ✅ **Global / shared styles** — `app.css` auto-load + Tailwind auto-detect (now documented in the scaffold README).
-- ✅ **`apex upgrade`** — non-destructive adoption of new scaffold defaults in existing apps.
+The proof of concept: as of **`@apex-stack/core@0.2.x`**, Apex matches the core meta-framework surface
+of Next.js and Nuxt — **and** every server surface with a schema is an MCP tool for free, which
+neither of them has. Legend: ✅ have · 🟡 partial · ❌ not yet.
 
-**Remaining gaps** (Next/Nuxt have them, Apex doesn't yet):
+| Dimension | Next.js | Nuxt | **Apex** | How (Apex) |
+|---|:---:|:---:|:---:|---|
+| File-based routing | ✅ | ✅ | ✅ | `pages/**` + `[param]` |
+| Dynamic / catch-all routes | ✅ | ✅ | ✅ | `[param]`, `[...name]` |
+| Server data loading | ✅ | ✅ | ✅ | `loader()` |
+| Layouts | ✅ | ✅ | ✅ | `layouts/*.alpine` + `<slot>` |
+| **Nested layouts** | ✅ | ✅ | ✅ | layout `export const layout` |
+| Head / SEO / meta | ✅ | ✅ | ✅ | `head()` export |
+| Composables / reusable logic | ✅ | ✅ | ✅ | `<script client>` + plain fns |
+| Global store / shared state | 🟡 | ✅ | ✅ | `defineStore` (SSR-safe) |
+| Typed API routes | ✅ | ✅ | ✅ | `defineApexRoute` |
+| **Shared FE/BE types** | ✅ | ✅ | ✅ | `InferInput`/`InferOutput` |
+| Data / ORM layer | 🟡 | 🟡 | ✅ | `defineResource` (REST+MCP) |
+| **Server actions / form sugar** | ✅ | ✅ | ✅ | `createAction` + routes |
+| **Env vars / runtime config** | ✅ | ✅ | ✅ | `defineConfig` + `.env` |
+| **Middleware** | ✅ | ✅ | ✅ | `middleware/*.ts` |
+| **Error boundary** | ✅ | ✅ | ✅ | `pages/error.alpine` |
+| Component slots / children | ✅ | ✅ | ✅ | `<slot>` + fallback |
+| Scoped styles | 🟡 | ✅ | ✅ | `<style scoped>` |
+| Global / shared styles | ✅ | ✅ | ✅ | `app.css` (auto-loaded) |
+| Tailwind | ✅ | ✅ | ✅ | `@tailwindcss/vite` auto |
+| Editor support | ✅ | ✅ | ✅ | `.alpine` VS Code extension |
+| Prod build (static / SSR / node) | ✅ | ✅ | ✅ | static · islands · server |
+| Islands / partial hydration | 🟡 | 🟡 | ✅ | `client:load\|idle\|visible` |
+| **AI-native — every route is an MCP tool** | ❌ | ❌ | ✅ | **unique moat** |
+| Client-side navigation (SPA) | ✅ | ✅ | ❌ | full page loads (P2, browser-verify) |
+| Loading boundaries | ✅ | ✅ | ❌ | pairs with client-side nav (P2) |
+| Component-level data loaders | ✅ | ✅ | ❌ | props only (P2) |
+| Fine-grained HMR | ✅ | ✅ | 🟡 | full reload (P2, browser-verify) |
+| Template type-checking | ✅ | ✅ | ❌ | Volar-style (P3) |
+| Image / font optimization | ✅ | ✅ | ❌ | (P3) |
+| Auth module | 🟡 | 🟡 | ❌ | Security model below (P3) |
+| Deploy presets (Vercel/CF/…) | ✅ | ✅ | ❌ | node only (P3) |
+| Testing kit for users | ✅ | ✅ | 🟡 | internal tests only (P3) |
+| i18n | 🟡 | ✅ | ❌ | (P3) |
+| Plugin / module ecosystem | ✅ | ✅ | ❌ | (P3) |
 
-| Gap | Apex today | Priority |
-|---|---|---|
-| Client-side navigation (SPA nav / `<Link>`) | ❌ full page loads · needs browser-verify | P2 |
-| Loading boundaries (per-route) | ❌ pairs with client-side nav | P2 |
-| Component-level data loaders | ❌ props only | P2 |
-| Fine-grained HMR (morph vs full reload) | 🟡 full reload · needs browser-verify | P2 |
-| Template type-checking (Volar-style) | ❌ | P3 |
-| Image / font optimization | ❌ | P3 |
-| Env-based auth module | ❌ (see Security model below) | P3 |
-| Deploy presets (Vercel/Netlify/Workers) | ❌ node only | P3 |
-| Testing kit for users | 🟡 internal tests only | P3 |
-| i18n | ❌ | P3 |
-| Plugin / module ecosystem | ❌ | P3 |
+**Scorecard:** ~22 of the core dimensions at parity (✅), plus the AI-native moat that's ✅ for Apex
+and ❌ for both Next and Nuxt. Remaining are the SPA/browser-runtime niceties (client-nav, loading
+boundaries, fine-grained HMR — need live-browser verification), component-level loaders, and the
+P3 ecosystem (deploy presets, image/font, i18n, auth, test kit, Volar, plugins).
 
 **Delivery waves:**
 - **Wave B — "scales to real apps" (P2):** ✅ runtime config, middleware, `InferInput/Output`, nested
