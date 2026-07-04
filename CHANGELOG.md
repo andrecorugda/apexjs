@@ -20,7 +20,7 @@
 - **`@apex-stack/data` 0.1.2** — driver abstraction: `createDb({ driver, url })` for
   **libSQL/Turso**, **Postgres (Supabase/Neon)**, and embedded **PGlite**, all via Drizzle's async
   API, so `defineResource` runs on any of them. `apex migrate` gained `--driver`/`--url`.
-- Deploy guide: [BUILD.md](./BUILD.md).
+- Deploy guide: see the "Production build & deploy" section of [ROADMAP.md](./ROADMAP.md).
 
 ## 0.1.2 — 2026-07-03
 
