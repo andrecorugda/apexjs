@@ -70,3 +70,72 @@ describe('component embedding via renderComponent', () => {
     expect(html).toContain('client:visible')
   })
 })
+
+describe('components inside x-for / x-if (structural expansion)', () => {
+  const registry: ComponentRegistry = {
+    Card: {
+      template: '<div class="card"><slot></slot></div>',
+      scopeId: 'data-apex-card',
+    },
+    Counter: {
+      template: '<button x-text="label + \': \' + count"></button>',
+      rootXData: '{ count: Number(start) }',
+      scopeId: 'data-apex-counter',
+    },
+  }
+  const render = (template: string, loaderData: Record<string, unknown> = {}) =>
+    renderComponent({
+      template,
+      componentId: 'c0',
+      scopeId: 'data-apex-page',
+      loaderData,
+      registry,
+    }).html
+
+  it('expands a slot-only component inside x-for so Alpine clones real markup', () => {
+    const html = render(
+      '<ul><template x-for="p in items" :key="p.id"><li><Card><span x-text="p.name"></span></Card></li></template></ul>',
+      {
+        items: [
+          { id: 1, name: 'A' },
+          { id: 2, name: 'B' },
+        ],
+      },
+    )
+    // The kept <template> holds the EXPANDED card markup (not a raw component tag)
+    // + the unresolved binding — so client-side clones render styled.
+    expect(html).toContain('class="card"')
+    expect(html).toContain('x-text="p.name"')
+    expect(html).not.toContain('<apex-component')
+    expect(html).not.toContain('<card')
+    // SSR clones are resolved per item.
+    expect(html).toContain('data-apex-ssr')
+    expect(html).toContain('>A</span>')
+    expect(html).toContain('>B</span>')
+  })
+
+  it('reconstructs props + component x-data for a component inside x-for', () => {
+    const html = render('<template x-for="n in nums"><Counter :start="n" label="C"/></template>', {
+      nums: [1, 2],
+    })
+    // The kept template carries a runtime x-data that rebuilds props + x-data per clone.
+    expect(html).toContain('Object.assign')
+    // SSR clones resolve count from the loop value.
+    expect(html).toContain('>C: 1</button>')
+    expect(html).toContain('>C: 2</button>')
+  })
+
+  it('expands a component inside x-if', () => {
+    const shown = render('<template x-if="ok"><Card><b x-text="msg"></b></Card></template>', {
+      ok: true,
+      msg: 'Hi',
+    })
+    expect(shown).toContain('class="card"')
+    expect(shown).toContain('>Hi</b>')
+    expect(shown).not.toContain('<apex-component')
+    // Even when the condition is false, the kept template is still expanded.
+    const hidden = render('<template x-if="ok"><Card>x</Card></template>', { ok: false })
+    expect(hidden).toContain('class="card"')
+    expect(hidden).not.toContain('<apex-component')
+  })
+})

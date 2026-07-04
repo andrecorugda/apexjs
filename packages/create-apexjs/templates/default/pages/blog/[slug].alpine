@@ -21,7 +21,7 @@
   <template x-if="post">
     <article class="mt-4">
       <div class="flex items-center gap-2 text-sm text-on-surface/70 dark:text-on-surface-dark/70">
-        <span class="inline-flex items-center rounded-radius border border-outline bg-surface-alt px-2 py-0.5 text-xs font-medium text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark" x-text="post.author"></span>
+        <Badge><span x-text="post.author"></span></Badge>
         <span x-text="post.date"></span>
       </div>
       <h1 class="mt-3 font-title text-3xl font-extrabold text-on-surface-strong dark:text-on-surface-dark-strong" x-text="post.title"></h1>

@@ -17,21 +17,20 @@
   <h1 class="font-title text-3xl font-extrabold text-on-surface-strong dark:text-on-surface-dark-strong">Blog</h1>
   <p class="mt-2 text-on-surface/80 dark:text-on-surface-dark/80">Sample posts served from a service — no database required.</p>
 
-  <!-- Note: Apex components (<Card/> etc.) render statically, not inside x-for.
-       In a loop, use plain markup with the same theme token classes. -->
+  <!-- Apex components work inside x-for/x-if — <Card> here is re-created per item
+       on the client, fully styled. That's the "Alpine Extreme" bit. -->
   <div class="mt-8 grid gap-4 sm:grid-cols-2">
     <template x-for="p in posts" :key="p.slug">
-      <a
-        :href="'/blog/' + p.slug"
-        class="flex flex-col gap-2 rounded-radius border border-outline bg-surface-alt p-6 text-on-surface transition hover:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark"
-      >
-        <div class="flex items-center gap-2 text-xs text-on-surface/70 dark:text-on-surface-dark/70">
-          <span x-text="p.author"></span>
-          <span>·</span>
-          <span x-text="p.date"></span>
-        </div>
-        <h2 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong" x-text="p.title"></h2>
-        <p class="text-sm" x-text="p.excerpt"></p>
+      <a :href="'/blog/' + p.slug" class="block transition hover:opacity-75">
+        <Card>
+          <div class="flex items-center gap-2 text-xs text-on-surface/70 dark:text-on-surface-dark/70">
+            <span x-text="p.author"></span>
+            <span>·</span>
+            <span x-text="p.date"></span>
+          </div>
+          <h2 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong" x-text="p.title"></h2>
+          <p class="text-sm" x-text="p.excerpt"></p>
+        </Card>
       </a>
     </template>
   </div>
