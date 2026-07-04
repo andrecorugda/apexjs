@@ -1,6 +1,6 @@
 {
   "name": "@apex-stack/theme",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Theme tokens + Tailwind preset for Apex JS — one theme, inherited by every component",
   "type": "module",
   "license": "MIT",
@@ -11,7 +11,9 @@
     "directory": "packages/theme"
   },
   "homepage": "https://apexjs.site",
-  "bugs": { "url": "https://github.com/andrecorugda/apexjs/issues" },
+  "bugs": {
+    "url": "https://github.com/andrecorugda/apexjs/issues"
+  },
   "keywords": ["alpine", "alpinejs", "tailwind", "theme", "design-tokens", "apex", "apexjs"],
   "exports": {
     ".": {
@@ -26,6 +28,11 @@
     }
   },
   "files": ["dist"],
-  "scripts": { "build": "tsup", "typecheck": "tsc --noEmit" },
-  "engines": { "node": ">=20.19" }
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
 }
