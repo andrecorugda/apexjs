@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { cpSync, existsSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand, runMain } from 'citty'

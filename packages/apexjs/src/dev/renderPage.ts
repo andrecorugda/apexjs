@@ -4,7 +4,7 @@ import {
   renderFragment,
   stateIsland,
 } from '@apex-stack/kit'
-import { type RuntimeConfig, clientConfigScript } from '../config/runtime.js'
+import { clientConfigScript, type RuntimeConfig } from '../config/runtime.js'
 import { type LoadedStore, storesInitialState } from '../stores/loader.js'
 
 /** The shape a compiled `.alpine` SSR module exports (see @apex-stack/vite). */

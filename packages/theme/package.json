@@ -14,7 +14,15 @@
   "bugs": {
     "url": "https://github.com/andrecorugda/apexjs/issues"
   },
-  "keywords": ["alpine", "alpinejs", "tailwind", "theme", "design-tokens", "apex", "apexjs"],
+  "keywords": [
+    "alpine",
+    "alpinejs",
+    "tailwind",
+    "theme",
+    "design-tokens",
+    "apex",
+    "apexjs"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -23,7 +31,11 @@
     },
     "./theme.css": "./theme.css"
   },
-  "files": ["dist", "theme.css", "NOTICE"],
+  "files": [
+    "dist",
+    "theme.css",
+    "NOTICE"
+  ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit"

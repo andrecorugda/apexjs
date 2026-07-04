@@ -1,4 +1,4 @@
-import { type ScopeLayer, createScopeProxy } from './scope.js'
+import { createScopeProxy, type ScopeLayer } from './scope.js'
 
 /**
  * Server-side expression evaluator, mirroring Alpine 3's own strategy of

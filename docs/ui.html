@@ -288,16 +288,16 @@
 
 <script>
   document.documentElement.classList.add("js");
-  (function () {
+  (() => {
     var root = document.documentElement;
-    document.getElementById("themeToggle").addEventListener("click", function () {
+    document.getElementById("themeToggle").addEventListener("click", () => {
       var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
       root.setAttribute("data-theme", dark ? "light" : "dark");
     });
   })();
 
   // Apex IDE showcase — interactive file tree + editor + live blog demo.
-  (function () {
+  (() => {
     var FILES = {
       "pages/index.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
 "<script server lang=\"ts\">\n" +
@@ -309,11 +309,11 @@
 "  export function loader() {\n" +
 "    return { featured: posts.recent(3) }\n" +
 "  }\n" +
-"<\/script>\n" +
+"</script>\n" +
 "\n" +
 "<script client lang=\"ts\">\n" +
 "  import { useToggle } from '../composables/useToggle'\n" +
-"<\/script>\n" +
+"</script>\n" +
 "\n" +
 "<template x-data=\"useToggle(false)\">\n" +
 "  <h1>Welcome to my-app</h1>\n" +
@@ -344,7 +344,7 @@
 "  export function head({ data }) {\n" +
 "    return { title: data.title }\n" +
 "  }\n" +
-"<\/script>\n" +
+"</script>\n" +
 "\n" +
 "<template x-data>\n" +
 "  <article>\n" +
@@ -363,7 +363,7 @@
 "  export function loader() {\n" +
 "    return { posts: posts.all() }\n" +
 "  }\n" +
-"<\/script>\n" +
+"</script>\n" +
 "\n" +
 "<template x-data=\"{ q: '' }\">\n" +
 "  <main>\n" +
@@ -391,7 +391,7 @@
 "    if (!post) throw new Response('Not found', { status: 404 })\n" +
 "    return { post }\n" +
 "  }\n" +
-"<\/script>\n" +
+"</script>\n" +
 "\n" +
 "<template x-data>\n" +
 "  <article>\n" +
@@ -561,7 +561,7 @@
     function highlight(code){
       var s = esc(code);
       var re = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")|\b(import|from|export|default|async|await|function|const|let|var|return|class|interface|type|extends|implements|new|if|else|for|of|in|throw|true|false|null|undefined|private|public|readonly)\b|(&lt;\/?)([a-zA-Z][\w-]*)|\b(\d+(?:\.\d+)?)\b/g;
-      return s.replace(re, function(m, cmt, str, kw, lt, tag, num){
+      return s.replace(re, (m, cmt, str, kw, lt, tag, num)=> {
         if (cmt) return '<span class="c">'+cmt+'</span>';
         if (str) return '<span class="s">'+str+'</span>';
         if (kw)  return '<span class="k">'+kw+'</span>';
@@ -591,17 +591,17 @@
       tabPath.textContent = parts.length ? "— " + parts.join("/") + "/" : "";
       tabDot.className = "ax-dot " + f.dot;
       langPill.textContent = f.lang;
-      Array.prototype.forEach.call(document.querySelectorAll(".ax-row.file"), function(b){
+      Array.prototype.forEach.call(document.querySelectorAll(".ax-row.file"), (b)=> {
         b.classList.toggle("active", b.getAttribute("data-file") === path);
       });
       if (scroll) scroll.scrollTop = 0;
     }
 
-    Array.prototype.forEach.call(document.querySelectorAll(".ax-row.file"), function(b){
-      b.addEventListener("click", function(){ openFile(b.getAttribute("data-file")); });
+    Array.prototype.forEach.call(document.querySelectorAll(".ax-row.file"), (b)=> {
+      b.addEventListener("click", ()=> { openFile(b.getAttribute("data-file")); });
     });
-    Array.prototype.forEach.call(document.querySelectorAll("#axTree [data-fldr]"), function(b){
-      b.addEventListener("click", function(){ b.parentElement.classList.toggle("collapsed"); });
+    Array.prototype.forEach.call(document.querySelectorAll("#axTree [data-fldr]"), (b)=> {
+      b.addEventListener("click", ()=> { b.parentElement.classList.toggle("collapsed"); });
     });
     openFile("pages/index.alpine");
 
@@ -622,28 +622,26 @@
     var toastT;
     function toast(html){
       toastEl.innerHTML = html; toastEl.classList.add("show");
-      clearTimeout(toastT); toastT = setTimeout(function(){ toastEl.classList.remove("show"); }, 2600);
+      clearTimeout(toastT); toastT = setTimeout(()=> { toastEl.classList.remove("show"); }, 2600);
     }
 
     function render(){
       if (!postsEl) return;
-      var list = POSTS.filter(function(p){ return p.title.toLowerCase().indexOf(q.toLowerCase()) > -1; });
+      var list = POSTS.filter((p)=> p.title.toLowerCase().indexOf(q.toLowerCase()) > -1);
       if (!list.length){ postsEl.innerHTML = '<div class="ax-empty">No posts match “'+esc(q)+'”.</div>'; return; }
-      postsEl.innerHTML = list.map(function(p){
-        return '<a class="ax-post" href="#showcase" onclick="return false"><strong>'+esc(p.title)+'</strong>'+
+      postsEl.innerHTML = list.map((p)=> '<a class="ax-post" href="#showcase" onclick="return false"><strong>'+esc(p.title)+'</strong>'+
                '<span>'+esc(p.excerpt)+'</span>'+
-               '<span class="by">'+esc(p.author)+' · '+p.date+' · /blog/'+esc(p.slug)+'</span></a>';
-      }).join("");
+               '<span class="by">'+esc(p.author)+' · '+p.date+' · /blog/'+esc(p.slug)+'</span></a>').join("");
     }
-    if (filterEl) filterEl.addEventListener("input", function(e){
+    if (filterEl) filterEl.addEventListener("input", (e)=> {
       q = e.target.value;
-      reqlog.textContent = q ? 'filtering client-side · ' + POSTS.filter(function(p){return p.title.toLowerCase().indexOf(q.toLowerCase())>-1;}).length + ' shown' : 'GET /api/posts → 200';
+      reqlog.textContent = q ? 'filtering client-side · ' + POSTS.filter((p)=> p.title.toLowerCase().indexOf(q.toLowerCase())>-1).length + ' shown' : 'GET /api/posts → 200';
       render();
     });
 
     function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32) || "post"; }
     var addForm = document.getElementById("axAddForm");
-    if (addForm) addForm.addEventListener("submit", function(e){
+    if (addForm) addForm.addEventListener("submit", (e)=> {
       e.preventDefault();
       var title = document.getElementById("axTitle").value.trim();
       var author = document.getElementById("axAuthor").value.trim();
@@ -662,9 +660,9 @@
 
   // Apex summit network — a live triangulated mesh drifting beneath the hero
   // and the panorama. Runs on every `.apex-net` canvas.
-  (function () {
+  (() => {
     var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    document.querySelectorAll(".apex-net").forEach(function (canvas) {
+    document.querySelectorAll(".apex-net").forEach((canvas) => {
     var ctx = canvas.getContext("2d");
     var W = 0, H = 0, DPR = 1, nodes = [], raf = null;
 
@@ -751,19 +749,19 @@
       size();
       if (raf) cancelAnimationFrame(raf);
       if (reduce) frame(false); else loop();
-      requestAnimationFrame(function () { canvas.classList.add("drawn"); });
+      requestAnimationFrame(() => { canvas.classList.add("drawn"); });
     }
 
     var rt;
-    window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 160); });
-    new MutationObserver(function () { palette(); if (reduce) frame(false); })
+    window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(start, 160); });
+    new MutationObserver(() => { palette(); if (reduce) frame(false); })
       .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     start();
     });
   })();
 
   // Feature carousel — scroll-snap track with prev/next + dot indicators.
-  (function () {
+  (() => {
     var root = document.querySelector("[data-carousel]");
     if (!root) return;
     var track = root.querySelector("[data-carousel-track]");
@@ -773,18 +771,18 @@
     var next = root.querySelector("[data-carousel-next]");
     var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    var dots = slides.map(function (_, i) {
+    var dots = slides.map((_, i) => {
       var b = document.createElement("button");
       b.type = "button";
       b.setAttribute("aria-label", "Go to feature " + (i + 1));
-      b.addEventListener("click", function () { scrollToIndex(i); });
+      b.addEventListener("click", () => { scrollToIndex(i); });
       dotsWrap.appendChild(b);
       return b;
     });
 
     function current() {
       var c = track.scrollLeft + track.clientWidth / 2, best = 0, bd = 1e12;
-      slides.forEach(function (s, i) {
+      slides.forEach((s, i) => {
         var d = Math.abs(s.offsetLeft + s.offsetWidth / 2 - c);
         if (d < bd) { bd = d; best = i; }
       });
@@ -797,20 +795,20 @@
     }
     function sync() {
       var i = current();
-      dots.forEach(function (d, di) { d.setAttribute("aria-current", di === i ? "true" : "false"); });
+      dots.forEach((d, di) => { d.setAttribute("aria-current", di === i ? "true" : "false"); });
       if (prev) prev.disabled = i === 0;
       if (next) next.disabled = i === slides.length - 1;
     }
-    if (prev) prev.addEventListener("click", function () { scrollToIndex(current() - 1); });
-    if (next) next.addEventListener("click", function () { scrollToIndex(current() + 1); });
+    if (prev) prev.addEventListener("click", () => { scrollToIndex(current() - 1); });
+    if (next) next.addEventListener("click", () => { scrollToIndex(current() + 1); });
     var st;
-    track.addEventListener("scroll", function () { clearTimeout(st); st = setTimeout(sync, 80); });
+    track.addEventListener("scroll", () => { clearTimeout(st); st = setTimeout(sync, 80); });
     window.addEventListener("resize", sync);
     sync();
   })();
 
   // Panorama — vertical auto-advancing carousel.
-  (function () {
+  (() => {
     var root = document.querySelector("[data-pano]");
     if (!root) return;
     var track = root.querySelector("[data-pano-track]");
@@ -820,11 +818,11 @@
     var i = 0;
     var timer = null;
 
-    var dots = slides.map(function (_, k) {
+    var dots = slides.map((_, k) => {
       var b = document.createElement("button");
       b.type = "button";
       b.setAttribute("aria-label", "Panel " + (k + 1));
-      b.addEventListener("click", function () { go(k); restart(); });
+      b.addEventListener("click", () => { go(k); restart(); });
       dotsWrap.appendChild(b);
       return b;
     });
@@ -832,24 +830,24 @@
     function go(k) {
       i = (k + slides.length) % slides.length;
       track.style.transform = "translateY(-" + i * 100 + "%)";
-      dots.forEach(function (d, di) { d.setAttribute("aria-current", di === i ? "true" : "false"); });
+      dots.forEach((d, di) => { d.setAttribute("aria-current", di === i ? "true" : "false"); });
     }
     function restart() {
       if (reduce) return;
       clearInterval(timer);
-      timer = setInterval(function () { go(i + 1); }, 4200);
+      timer = setInterval(() => { go(i + 1); }, 4200);
     }
 
     go(0);
     restart();
-    root.addEventListener("mouseenter", function () { clearInterval(timer); });
+    root.addEventListener("mouseenter", () => { clearInterval(timer); });
     root.addEventListener("mouseleave", restart);
 
     // Scroll to advance: a wheel gesture over the panorama moves one panel.
     // At the ends we DON'T preventDefault, so the page scrolls on past it
     // (no scroll-trapping). One advance per gesture (throttled).
     var lastWheel = 0;
-    root.addEventListener("wheel", function (e) {
+    root.addEventListener("wheel", (e) => {
       var down = e.deltaY > 0;
       var atEnd = down ? i >= slides.length - 1 : i <= 0;
       if (atEnd) return; // release to normal page scroll
@@ -863,8 +861,8 @@
 
     // Touch swipe (mobile): a clear vertical swipe moves one panel.
     var ty = null;
-    root.addEventListener("touchstart", function (e) { ty = e.touches[0].clientY; }, { passive: true });
-    root.addEventListener("touchend", function (e) {
+    root.addEventListener("touchstart", (e) => { ty = e.touches[0].clientY; }, { passive: true });
+    root.addEventListener("touchend", (e) => {
       if (ty == null) return;
       var dy = ty - e.changedTouches[0].clientY;
       ty = null;
@@ -878,10 +876,10 @@
   })();
 </script>
 <script>
-  (function(){
+  (()=> {
     var cbs = Array.prototype.slice.call(document.querySelectorAll('.uikit-cb'));
     var cmd = document.getElementById('cmd'), copy = document.getElementById('copy'), count = document.getElementById('count');
-    function selected(){ return cbs.filter(function(c){return c.checked}).map(function(c){return c.value}); }
+    function selected(){ return cbs.filter((c)=> c.checked).map((c)=> c.value); }
     function render(){
       var s = selected();
       count.textContent = s.length + ' selected';
@@ -889,19 +887,19 @@
       cmd.textContent = s.length === cbs.length ? 'apex add --all' : 'apex add ' + s.join(' ');
       copy.disabled = false;
     }
-    cbs.forEach(function(c){ c.addEventListener('change', render); });
-    document.getElementById('selAll').addEventListener('click', function(){ cbs.forEach(function(c){c.checked=true}); render(); });
-    document.getElementById('clearAll').addEventListener('click', function(){ cbs.forEach(function(c){c.checked=false}); render(); });
-    document.querySelectorAll('.uikit-selcat').forEach(function(b){ b.addEventListener('click', function(e){
+    cbs.forEach((c)=> { c.addEventListener('change', render); });
+    document.getElementById('selAll').addEventListener('click', ()=> { cbs.forEach((c)=> {c.checked=true}); render(); });
+    document.getElementById('clearAll').addEventListener('click', ()=> { cbs.forEach((c)=> {c.checked=false}); render(); });
+    document.querySelectorAll('.uikit-selcat').forEach((b)=> { b.addEventListener('click', (e)=> {
       e.preventDefault();
       var cat = b.getAttribute('data-cat');
-      b.closest('.uikit-cat').querySelectorAll('.uikit-cb').forEach(function(c){ c.checked = true; });
+      b.closest('.uikit-cat').querySelectorAll('.uikit-cb').forEach((c)=> { c.checked = true; });
       render();
     }); });
-    copy.addEventListener('click', function(){
+    copy.addEventListener('click', ()=> {
       var t = cmd.textContent;
       if (navigator.clipboard) navigator.clipboard.writeText(t);
-      var o = copy.textContent; copy.textContent = 'Copied ✓'; setTimeout(function(){ copy.textContent = o; }, 1500);
+      var o = copy.textContent; copy.textContent = 'Copied ✓'; setTimeout(()=> { copy.textContent = o; }, 1500);
     });
     render();
   })();

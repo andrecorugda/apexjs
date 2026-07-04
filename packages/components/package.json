@@ -14,8 +14,18 @@
   "bugs": {
     "url": "https://github.com/andrecorugda/apexjs/issues"
   },
-  "keywords": ["alpine", "alpinejs", "components", "ui", "tailwind", "apex", "apexjs"],
-  "files": ["registry"],
+  "keywords": [
+    "alpine",
+    "alpinejs",
+    "components",
+    "ui",
+    "tailwind",
+    "apex",
+    "apexjs"
+  ],
+  "files": [
+    "registry"
+  ],
   "scripts": {
     "typecheck": "tsc --noEmit || true"
   }

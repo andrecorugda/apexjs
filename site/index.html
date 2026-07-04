@@ -694,16 +694,16 @@
   document.documentElement.classList.add("js");
 
   // Theme toggle — stamps data-theme so it wins over prefers-color-scheme both ways.
-  (function () {
+  (() => {
     var root = document.documentElement;
-    document.getElementById("themeToggle").addEventListener("click", function () {
+    document.getElementById("themeToggle").addEventListener("click", () => {
       var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
       root.setAttribute("data-theme", dark ? "light" : "dark");
     });
   })();
 
   // Apex summit network — a live triangulated mesh drifting beneath the hero.
-  (function () {
+  (() => {
     var canvas = document.getElementById("hero-net");
     if (!canvas) return;
     var ctx = canvas.getContext("2d");
@@ -792,30 +792,30 @@
       size();
       if (raf) cancelAnimationFrame(raf);
       if (reduce) frame(false); else loop();
-      requestAnimationFrame(function () { canvas.classList.add("drawn"); });
+      requestAnimationFrame(() => { canvas.classList.add("drawn"); });
     }
 
     var rt;
-    window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 160); });
-    new MutationObserver(function () { palette(); if (reduce) frame(false); })
+    window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(start, 160); });
+    new MutationObserver(() => { palette(); if (reduce) frame(false); })
       .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     start();
   })();
 
   // Scroll reveals.
-  (function () {
+  (() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      document.querySelectorAll(".reveal").forEach(function (el) { el.classList.add("in"); });
+      document.querySelectorAll(".reveal").forEach((el) => { el.classList.add("in"); });
       return;
     }
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+    var io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
     }, { threshold: 0.12 });
-    document.querySelectorAll(".reveal").forEach(function (el) { io.observe(el); });
+    document.querySelectorAll(".reveal").forEach((el) => { io.observe(el); });
   })();
 
   // Apex Studio — interactive file switcher (self-contained, no deps)
-  (function () {
+  (() => {
     var studio = document.getElementById("apexStudio");
     if (!studio) return;
     var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -850,10 +850,10 @@
     }
 
     function select(file) {
-      buttons.forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.file === file ? "true" : "false"); });
+      buttons.forEach((b) => { b.setAttribute("aria-pressed", b.dataset.file === file ? "true" : "false"); });
       var activeCode = null, activePv = null;
-      codes.forEach(function (c) { var on = c.dataset.code === file; c.classList.toggle("is-active", on); if (on) activeCode = c; });
-      pvs.forEach(function (p) { var on = p.dataset.pv === file; p.classList.toggle("is-active", on); if (on) activePv = p; });
+      codes.forEach((c) => { var on = c.dataset.code === file; c.classList.toggle("is-active", on); if (on) activeCode = c; });
+      pvs.forEach((p) => { var on = p.dataset.pv === file; p.classList.toggle("is-active", on); if (on) activePv = p; });
       if (tabName) tabName.textContent = paths[file];
       if (tabIcon) tabIcon.style.background = (file === "posts" || file === "schema") ? "var(--alpenglow)" : "var(--glacier)";
       placeCaret(activeCode);
@@ -861,13 +861,13 @@
       swap(activePv);
     }
 
-    buttons.forEach(function (b) { b.addEventListener("click", function () { select(b.dataset.file); }); });
+    buttons.forEach((b) => { b.addEventListener("click", () => { select(b.dataset.file); }); });
 
     var filter = studio.querySelector(".mb-filter");
     if (filter) {
       filter.addEventListener("input", function () {
         var q = this.value.toLowerCase();
-        studio.querySelectorAll('.pv[data-pv="index"] .mb-list a').forEach(function (a) {
+        studio.querySelectorAll('.pv[data-pv="index"] .mb-list a').forEach((a) => {
           a.style.display = a.textContent.toLowerCase().indexOf(q) > -1 ? "" : "none";
         });
       });
@@ -876,7 +876,7 @@
     var counter = studio.querySelector(".counter-demo");
     if (counter) {
       var val = counter.querySelector(".cval");
-      counter.addEventListener("click", function () { val.textContent = String(Number(val.textContent) + 1); });
+      counter.addEventListener("click", () => { val.textContent = String(Number(val.textContent) + 1); });
     }
 
     placeCaret(studio.querySelector(".code.is-active"));

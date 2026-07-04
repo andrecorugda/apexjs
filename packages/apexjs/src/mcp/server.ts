@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
-import { type EventHandler, defineEventHandler, toWebRequest } from 'h3'
+import { defineEventHandler, type EventHandler, toWebRequest } from 'h3'
 import type { ApiEntry } from '../api/routes.js'
 import type { RuntimeConfig } from '../config/runtime.js'
 

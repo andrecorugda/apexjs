@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
-import { type Server, createServer as createHttpServer } from 'node:http'
+import { createServer as createHttpServer, type Server } from 'node:http'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import type { ComponentRegistry } from '@apex-stack/kit'
@@ -20,7 +20,7 @@ import { renderIslandsPage } from '../islands/render.js'
 import { createMcpHandler, hasMcpRoutes } from '../mcp/server.js'
 import type { Middleware } from '../middleware/define.js'
 import { runMiddleware } from '../middleware/run.js'
-import { type RouteDef, matchRoute } from '../routing/router.js'
+import { matchRoute, type RouteDef } from '../routing/router.js'
 
 /** The build manifest written by `apex build --server` to `<dist>/apex-manifest.json`. */
 export interface ProdManifest {

@@ -497,16 +497,19 @@ figcaption {
   position: relative;
   overflow: hidden;
   border-bottom: 1px solid var(--line);
-  background: radial-gradient(1100px 620px at 78% -8%, rgba(99, 102, 241, 0.2), transparent 60%),
+  background:
+    radial-gradient(1100px 620px at 78% -8%, rgba(99, 102, 241, 0.2), transparent 60%),
     radial-gradient(900px 560px at 8% 4%, rgba(34, 211, 238, 0.12), transparent 55%), var(--ground);
 }
 :root[data-theme="light"] .home-hero {
-  background: radial-gradient(1100px 620px at 78% -8%, rgba(99, 102, 241, 0.12), transparent 60%),
+  background:
+    radial-gradient(1100px 620px at 78% -8%, rgba(99, 102, 241, 0.12), transparent 60%),
     radial-gradient(900px 560px at 8% 4%, rgba(34, 211, 238, 0.1), transparent 55%), var(--ground);
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) .home-hero {
-    background: radial-gradient(1100px 620px at 78% -8%, rgba(99, 102, 241, 0.12), transparent 60%),
+    background:
+      radial-gradient(1100px 620px at 78% -8%, rgba(99, 102, 241, 0.12), transparent 60%),
       radial-gradient(900px 560px at 8% 4%, rgba(34, 211, 238, 0.1), transparent 55%), var(--ground);
   }
 }
@@ -694,7 +697,10 @@ figcaption {
   cursor: pointer;
   display: grid;
   place-items: center;
-  transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
 }
 .carousel-nav:hover {
   border-color: var(--glacier);
@@ -723,7 +729,9 @@ figcaption {
   padding: 0;
   background: var(--line);
   cursor: pointer;
-  transition: width 0.2s ease, background 0.2s ease;
+  transition:
+    width 0.2s ease,
+    background 0.2s ease;
 }
 .carousel-dots button[aria-current="true"] {
   background: var(--glacier);
@@ -820,7 +828,9 @@ figcaption {
   border-radius: var(--radius-card);
   padding: 1.2rem 1.3rem;
   color: var(--text);
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
 }
 .card:hover {
   text-decoration: none;
@@ -997,14 +1007,20 @@ footer.site-footer {
   border-radius: 14px;
   background: var(--surface);
   overflow: hidden;
-  box-shadow: 0 40px 90px -50px rgba(0, 0, 0, 0.65), 0 4px 14px -8px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 40px 90px -50px rgba(0, 0, 0, 0.65),
+    0 4px 14px -8px rgba(0, 0, 0, 0.4);
 }
 :root[data-theme="light"] .studio {
-  box-shadow: 0 30px 70px -45px rgba(20, 55, 100, 0.35), 0 3px 10px -6px rgba(20, 55, 100, 0.18);
+  box-shadow:
+    0 30px 70px -45px rgba(20, 55, 100, 0.35),
+    0 3px 10px -6px rgba(20, 55, 100, 0.18);
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) .studio {
-    box-shadow: 0 30px 70px -45px rgba(20, 55, 100, 0.35), 0 3px 10px -6px rgba(20, 55, 100, 0.18);
+    box-shadow:
+      0 30px 70px -45px rgba(20, 55, 100, 0.35),
+      0 3px 10px -6px rgba(20, 55, 100, 0.18);
   }
 }
 .studio.intro {
@@ -1150,7 +1166,9 @@ footer.site-footer {
   border-radius: 6px;
   border-left: 2px solid transparent;
   white-space: nowrap;
-  transition: color 0.12s ease, background 0.12s ease;
+  transition:
+    color 0.12s ease,
+    background 0.12s ease;
 }
 .tree-file:hover {
   color: var(--text);
@@ -1528,7 +1546,9 @@ footer.site-footer {
   background: var(--glacier);
   color: #04121f;
   border: 1px solid transparent;
-  transition: transform 0.08s ease, background 0.12s ease;
+  transition:
+    transform 0.08s ease,
+    background 0.12s ease;
 }
 .counter-demo:hover {
   background: var(--glacier-deep);
@@ -1674,7 +1694,8 @@ footer.site-footer {
   border-radius: var(--radius-card);
   overflow: hidden;
   height: clamp(320px, 46vh, 430px);
-  background: radial-gradient(900px 500px at 82% -12%, rgba(99, 102, 241, 0.22), transparent 60%),
+  background:
+    radial-gradient(900px 500px at 82% -12%, rgba(99, 102, 241, 0.22), transparent 60%),
     radial-gradient(700px 460px at 4% 112%, rgba(34, 211, 238, 0.14), transparent 55%),
     var(--ground-deep);
 }
@@ -1752,7 +1773,9 @@ footer.site-footer {
   padding: 0;
   background: var(--line);
   cursor: pointer;
-  transition: height 0.25s ease, background 0.25s ease;
+  transition:
+    height 0.25s ease,
+    background 0.25s ease;
 }
 .pano-dots button[aria-current="true"] {
   background: var(--glacier);
@@ -1849,7 +1872,9 @@ footer.site-footer {
   border-radius: 0.4rem;
   padding: 0.25rem 0.55rem;
   cursor: pointer;
-  transition: color .15s, border-color .15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
 .cb-copy:hover {
   color: var(--text);
@@ -2289,7 +2314,9 @@ pre.ax-term {
   text-decoration: none;
   background: var(--ground-deep);
   color: inherit;
-  transition: border-color 0.15s, transform 0.1s;
+  transition:
+    border-color 0.15s,
+    transform 0.1s;
 }
 .ax-post:hover {
   border-color: var(--glacier);

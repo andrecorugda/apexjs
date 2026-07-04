@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
-import { type InferInput, type InferOutput, defineApexRoute } from './defineRoute.js'
+import { defineApexRoute, type InferInput, type InferOutput } from './defineRoute.js'
 
 describe('defineApexRoute', () => {
   it('normalizes config into a route object', () => {
