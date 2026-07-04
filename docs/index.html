@@ -738,5 +738,36 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
     restart();
     root.addEventListener("mouseenter", function () { clearInterval(timer); });
     root.addEventListener("mouseleave", restart);
+
+    // Scroll to advance: a wheel gesture over the panorama moves one panel.
+    // At the ends we DON'T preventDefault, so the page scrolls on past it
+    // (no scroll-trapping). One advance per gesture (throttled).
+    var lastWheel = 0;
+    root.addEventListener("wheel", function (e) {
+      var down = e.deltaY > 0;
+      var atEnd = down ? i >= slides.length - 1 : i <= 0;
+      if (atEnd) return; // release to normal page scroll
+      e.preventDefault();
+      var now = e.timeStamp || 0;
+      if (now - lastWheel < 700) return;
+      lastWheel = now;
+      go(i + (down ? 1 : -1));
+      restart();
+    }, { passive: false });
+
+    // Touch swipe (mobile): a clear vertical swipe moves one panel.
+    var ty = null;
+    root.addEventListener("touchstart", function (e) { ty = e.touches[0].clientY; }, { passive: true });
+    root.addEventListener("touchend", function (e) {
+      if (ty == null) return;
+      var dy = ty - e.changedTouches[0].clientY;
+      ty = null;
+      if (Math.abs(dy) < 45) return;
+      var down = dy > 0;
+      var atEnd = down ? i >= slides.length - 1 : i <= 0;
+      if (atEnd) return;
+      go(i + (down ? 1 : -1));
+      restart();
+    }, { passive: true });
   })();
 </script>
