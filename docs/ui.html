@@ -22,15 +22,25 @@
   .uikit-cat-head h2 { font-size:1.05rem; margin:0; letter-spacing:-.01em; }
   .uikit-selcat { margin-left:auto; font:inherit; font-size:.78rem; color:var(--muted); background:none; border:0; cursor:pointer; }
   .uikit-selcat:hover { color:var(--glacier); }
-  .uikit-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(15rem,1fr)); gap:.7rem; margin-top:.9rem; }
+  .uikit-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; margin-top:.9rem; }
+  @media (max-width: 820px) { .uikit-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (max-width: 540px) { .uikit-grid { grid-template-columns:1fr; } }
   .uikit-card { display:flex; flex-direction:column; border:1px solid var(--line); border-radius:var(--radius-card); background:var(--surface); overflow:hidden; transition:border-color .15s; }
   .uikit-card:hover { border-color:var(--glacier); }
   .uikit-card:has(.uikit-cb:checked) { border-color:var(--glacier); }
   .uikit-card:has(.uikit-cb:checked) .uikit-pick { background:var(--glacier-soft); }
   /* Live preview stage — renders the real component on its own themed canvas. */
-  .uikit-preview { display:flex; align-items:center; justify-content:center; min-height:9rem; max-height:9rem; padding:1rem; overflow:hidden; border-bottom:1px solid var(--line); background:var(--color-surface,#fff); color:var(--color-on-surface,#525252); font-size:.85rem; }
+  .uikit-preview { display:flex; align-items:center; justify-content:center; min-height:11rem; max-height:11rem; padding:1.25rem; overflow:hidden; border-bottom:1px solid var(--line); background:var(--color-surface,#fff); color:var(--color-on-surface,#525252); font-size:.85rem; }
   html.dark .uikit-preview { background:var(--color-surface-dark,#0a0a0a); color:var(--color-on-surface-dark,#d4d4d4); }
   .uikit-preview > * { max-width:100%; }
+  /* Viewport-scale components (sidebar/carousel) tamed to fit the card. */
+  .uikit-preview[data-pv="sidebar"] { padding:0; }
+  .uikit-preview[data-pv="sidebar"] .fixed { position:relative !important; }
+  .uikit-preview[data-pv="sidebar"] [class*="h-svh"] { height:11rem !important; }
+  .uikit-preview[data-pv="sidebar"] [aria-label="sidebar navigation"] { transform:none !important; }
+  .uikit-preview[data-pv="carousel"] { padding:0; align-items:stretch; }
+  .uikit-preview[data-pv="carousel"] > * { width:100%; }
+  .uikit-preview[data-pv="carousel"] [class*="min-h-"] { min-height:11rem !important; }
   .uikit-pick { position:relative; display:flex; flex-direction:column; gap:.25rem; padding:.7rem .85rem .8rem 2.05rem; cursor:pointer; }
   .uikit-cb { position:absolute; left:.7rem; top:.85rem; width:1rem; height:1rem; accent-color:var(--glacier); }
   .uikit-name { font-weight:650; font-size:.92rem; }

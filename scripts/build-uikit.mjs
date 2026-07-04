@@ -67,9 +67,16 @@ const NEW_CARD_CSS =
   '  .uikit-card:has(.uikit-cb:checked) { border-color:var(--glacier); }\n' +
   '  .uikit-card:has(.uikit-cb:checked) .uikit-pick { background:var(--glacier-soft); }\n' +
   '  /* Live preview stage — renders the real component on its own themed canvas. */\n' +
-  '  .uikit-preview { display:flex; align-items:center; justify-content:center; min-height:9rem; max-height:9rem; padding:1rem; overflow:hidden; border-bottom:1px solid var(--line); background:var(--color-surface,#fff); color:var(--color-on-surface,#525252); font-size:.85rem; }\n' +
+  '  .uikit-preview { display:flex; align-items:center; justify-content:center; min-height:11rem; max-height:11rem; padding:1.25rem; overflow:hidden; border-bottom:1px solid var(--line); background:var(--color-surface,#fff); color:var(--color-on-surface,#525252); font-size:.85rem; }\n' +
   '  html.dark .uikit-preview { background:var(--color-surface-dark,#0a0a0a); color:var(--color-on-surface-dark,#d4d4d4); }\n' +
   '  .uikit-preview > * { max-width:100%; }\n' +
+  '  .uikit-preview[data-pv="sidebar"] { padding:0; }\n' +
+  '  .uikit-preview[data-pv="sidebar"] .fixed { position:relative !important; }\n' +
+  '  .uikit-preview[data-pv="sidebar"] [class*="h-svh"] { height:11rem !important; }\n' +
+  '  .uikit-preview[data-pv="sidebar"] [aria-label="sidebar navigation"] { transform:none !important; }\n' +
+  '  .uikit-preview[data-pv="carousel"] { padding:0; align-items:stretch; }\n' +
+  '  .uikit-preview[data-pv="carousel"] > * { width:100%; }\n' +
+  '  .uikit-preview[data-pv="carousel"] [class*="min-h-"] { min-height:11rem !important; }\n' +
   '  .uikit-pick { position:relative; display:flex; flex-direction:column; gap:.25rem; padding:.7rem .85rem .8rem 2.05rem; cursor:pointer; }\n' +
   '  .uikit-cb { position:absolute; left:.7rem; top:.85rem; width:1rem; height:1rem; accent-color:var(--glacier); }'
 if (ui.includes(OLD_CARD_CSS)) ui = ui.replace(OLD_CARD_CSS, NEW_CARD_CSS)
