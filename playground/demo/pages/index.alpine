@@ -38,7 +38,7 @@
     <input name="author" placeholder="Your name" required />
     <textarea name="body" placeholder="Say something…" maxlength="280" x-model="text"></textarea>
     <div class="row">
-      <span class="count" :class="over && 'over'" x-text="remaining + ' left'"></span>
+      <span class="count" :class="over() && 'over'" x-text="remaining() + ' left'"></span>
       <button type="submit">Sign the book</button>
     </div>
   </form>

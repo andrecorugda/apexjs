@@ -32,6 +32,11 @@ export const buildCommand = defineCommand({
       description: 'Build a Node server (dynamic routes + API/MCP)',
       default: false,
     },
+    base: {
+      type: 'string',
+      description: 'Public base path for a subpath deploy (e.g. /demo/)',
+      default: '/',
+    },
   },
   async run({ args }) {
     const root = resolve(process.cwd(), args.root)
@@ -49,7 +54,7 @@ export const buildCommand = defineCommand({
     // Component mode: build a client bundle per page so the prerendered HTML hydrates.
     const hrefs = args.islands
       ? new Map<string, string>()
-      : await buildClient(root, staticRoutes, outDir)
+      : await buildClient(root, staticRoutes, outDir, args.base)
 
     const vite = await createViteServer({
       root,
