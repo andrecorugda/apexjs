@@ -1,121 +1,130 @@
-// Apex theme — a small set of semantic design tokens exposed as CSS variables.
-// One theme, applied once, is inherited by every component (they style against
-// the `--ax-*` variables via the Tailwind preset or directly). The website theme
-// builder emits a token override that `apex theme` writes into a project.
+// Apex theme — the design-token contract every component inherits.
+//
+// Adopts the PenguinUI token vocabulary (Tailwind v4 `@theme`): semantic color
+// roles (surface / primary / secondary / on-* / outline / info-success-warning-
+// danger), a `-dark` set toggled by a `.dark` ancestor, a radius, and two font
+// roles. Components style against these (`bg-primary`, `text-on-surface`, …), so
+// one theme — applied once — restyles the whole app.
+//
+// Tokens + component patterns adapted from PenguinUI (MIT). See NOTICE.
 
-/** Semantic color roles. Values are any CSS color. */
+/** All color roles (light + `-dark` + scheme-shared). Kebab keys map to `--color-<key>`. */
 export interface ThemeColors {
-  bg: string
-  fg: string
-  muted: string
-  border: string
-  card: string
-  cardFg: string
+  surface: string
+  'surface-alt': string
+  'on-surface': string
+  'on-surface-strong': string
   primary: string
-  primaryFg: string
-  accent: string
-  accentFg: string
+  'on-primary': string
+  secondary: string
+  'on-secondary': string
+  outline: string
+  'outline-strong': string
+  'surface-dark': string
+  'surface-dark-alt': string
+  'on-surface-dark': string
+  'on-surface-dark-strong': string
+  'primary-dark': string
+  'on-primary-dark': string
+  'secondary-dark': string
+  'on-secondary-dark': string
+  'outline-dark': string
+  'outline-dark-strong': string
+  info: string
+  'on-info': string
   success: string
+  'on-success': string
+  warning: string
+  'on-warning': string
   danger: string
+  'on-danger': string
 }
 
 export interface Theme {
-  /** Per-scheme color roles. */
-  colors: { light: ThemeColors; dark: ThemeColors }
-  /** Base border radius (e.g. `0.6rem`). */
+  colors: ThemeColors
   radius: string
-  /** Optional font stacks. */
-  fonts: { sans: string; mono: string }
+  fonts: { body: string; title: string }
 }
 
-/** A partial theme, as produced by the theme builder / passed to `defineTheme`. */
 export type ThemeInput = {
-  colors?: { light?: Partial<ThemeColors>; dark?: Partial<ThemeColors> }
+  colors?: Partial<ThemeColors>
   radius?: string
   fonts?: Partial<Theme['fonts']>
 }
 
-/** The default Apex theme — the glacier (indigo) / alpenglow (cyan) identity. */
+const SANS = 'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"'
+
+/** The default Apex theme — PenguinUI's neutral base, resolved to portable hex. */
 export const defaultTheme: Theme = {
-  radius: '0.6rem',
+  radius: '0.25rem',
   fonts: {
-    sans: 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-    mono: 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace',
+    body: `"Instrument Sans", ${SANS}`,
+    title: `"Montserrat", ${SANS}`,
   },
   colors: {
-    light: {
-      bg: '#ffffff',
-      fg: '#0a0e1a',
-      muted: '#55617e',
-      border: '#e2e8f0',
-      card: '#f8fafc',
-      cardFg: '#0a0e1a',
-      primary: '#4f46e5',
-      primaryFg: '#ffffff',
-      accent: '#0891b2',
-      accentFg: '#ffffff',
-      success: '#0f9d6f',
-      danger: '#dc2626',
-    },
-    dark: {
-      bg: '#0a0e1a',
-      fg: '#f4f7ff',
-      muted: '#9aa6c4',
-      border: '#1e293b',
-      card: '#11172b',
-      cardFg: '#f4f7ff',
-      primary: '#818cf8',
-      primaryFg: '#0a0e1a',
-      accent: '#22d3ee',
-      accentFg: '#0a0e1a',
-      success: '#34d399',
-      danger: '#f87171',
-    },
+    // Light
+    surface: '#ffffff',
+    'surface-alt': '#fafafa',
+    'on-surface': '#525252',
+    'on-surface-strong': '#171717',
+    primary: '#000000',
+    'on-primary': '#f5f5f5',
+    secondary: '#262626',
+    'on-secondary': '#ffffff',
+    outline: '#d4d4d4',
+    'outline-strong': '#262626',
+    // Dark
+    'surface-dark': '#0a0a0a',
+    'surface-dark-alt': '#171717',
+    'on-surface-dark': '#d4d4d4',
+    'on-surface-dark-strong': '#ffffff',
+    'primary-dark': '#ffffff',
+    'on-primary-dark': '#000000',
+    'secondary-dark': '#d4d4d4',
+    'on-secondary-dark': '#000000',
+    'outline-dark': '#404040',
+    'outline-dark-strong': '#d4d4d4',
+    // Shared (scheme-independent status colors)
+    info: '#0ea5e9',
+    'on-info': '#ffffff',
+    success: '#22c55e',
+    'on-success': '#ffffff',
+    warning: '#f59e0b',
+    'on-warning': '#ffffff',
+    danger: '#ef4444',
+    'on-danger': '#ffffff',
   },
 }
 
-/** camelCase color key → kebab CSS-var name (`primaryFg` → `--ax-primary-fg`). */
-function varName(key: string): string {
-  return `--ax-${key.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()}`
-}
-
-function mergeColors(base: ThemeColors, over?: Partial<ThemeColors>): ThemeColors {
-  return { ...base, ...(over ?? {}) }
-}
-
-/** Merge a partial theme onto the default. Deep-merges the two color schemes. */
+/** Merge a partial theme onto the default (flat color merge). */
 export function defineTheme(input: ThemeInput = {}): Theme {
   return {
     radius: input.radius ?? defaultTheme.radius,
     fonts: { ...defaultTheme.fonts, ...(input.fonts ?? {}) },
-    colors: {
-      light: mergeColors(defaultTheme.colors.light, input.colors?.light),
-      dark: mergeColors(defaultTheme.colors.dark, input.colors?.dark),
-    },
+    colors: { ...defaultTheme.colors, ...(input.colors ?? {}) },
   }
 }
 
-function schemeVars(colors: ThemeColors, radius: string, fonts: Theme['fonts']): string {
-  const lines = Object.entries(colors).map(([k, v]) => `  ${varName(k)}: ${v};`)
-  lines.push(`  --ax-radius: ${radius};`)
-  lines.push(`  --ax-font-sans: ${fonts.sans};`)
-  lines.push(`  --ax-font-mono: ${fonts.mono};`)
-  return lines.join('\n')
-}
+/** The Tailwind v4 dark variant used by the components (`dark:` → a `.dark` ancestor). */
+export const darkVariant = '@custom-variant dark (&:where(.dark, .dark *));'
 
 /**
- * Render a theme to a CSS string: light tokens on `:root`, dark tokens under both
- * the OS preference and an explicit `data-theme="dark"` (the toggle wins). Import
- * the output once (e.g. into `app.css`) and every component inherits it.
+ * Render a theme to a Tailwind v4 `@theme` block — registers the tokens as
+ * utilities (`bg-primary`, `rounded-radius`, `font-title`, …) AND exposes them as
+ * runtime CSS variables. Import the output once (e.g. in `app.css`, after
+ * `@import 'tailwindcss'`) and every component inherits it.
  */
 export function renderThemeCss(theme: Theme = defaultTheme): string {
-  const { light, dark } = theme.colors
-  return [
-    `:root {\n${schemeVars(light, theme.radius, theme.fonts)}\n}`,
-    `@media (prefers-color-scheme: dark) {\n  :root:not([data-theme="light"]) {\n${schemeVars(dark, theme.radius, theme.fonts).replace(/^/gm, '  ')}\n  }\n}`,
-    `:root[data-theme="dark"] {\n${schemeVars(dark, theme.radius, theme.fonts)}\n}`,
-  ].join('\n\n')
+  const lines: string[] = [
+    `  --font-body: ${theme.fonts.body};`,
+    `  --font-title: ${theme.fonts.title};`,
+  ]
+  for (const [key, value] of Object.entries(theme.colors)) {
+    lines.push(`  --color-${key}: ${value};`)
+  }
+  lines.push(`  --radius-radius: ${theme.radius};`)
+  return `@theme {\n${lines.join('\n')}\n}`
 }
 
-/** The default theme rendered to CSS — a ready-to-import stylesheet string. */
-export const defaultThemeCss: string = renderThemeCss(defaultTheme)
+/** A ready-to-import stylesheet: the dark variant + the default theme. */
+export const defaultThemeCss: string = `${darkVariant}\n\n${renderThemeCss(defaultTheme)}`

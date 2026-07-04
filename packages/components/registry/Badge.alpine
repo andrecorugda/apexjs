@@ -1,14 +1,6 @@
+<!-- Apex component adapted from Penguin UI (MIT). -->
 <template x-data>
-  <span class="ax-badge" :class="'ax-badge--' + (variant || 'default')"><slot>Badge</slot></span>
+  <span class="inline-flex items-center gap-1 rounded-radius border border-outline bg-surface-alt px-2 py-0.5 text-xs font-medium text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">
+    <slot>Badge</slot>
+  </span>
 </template>
-
-<style scoped>
-  .ax-badge {
-    display: inline-flex; align-items: center; gap: 0.3rem;
-    padding: 0.15rem 0.55rem; font-size: 0.78rem; font-weight: 600; line-height: 1.4;
-    border-radius: 999px; border: 1px solid var(--ax-border, #e2e8f0);
-    background: var(--ax-card, #f1f5f9); color: var(--ax-muted, #55617e);
-  }
-  .ax-badge--primary { background: var(--ax-primary, #4f46e5); color: var(--ax-primary-fg, #fff); border-color: transparent; }
-  .ax-badge--success { background: var(--ax-success, #0f9d6f); color: #fff; border-color: transparent; }
-</style>

@@ -1,0 +1,11 @@
+<!-- Apex component adapted from Penguin UI (MIT). -->
+<template x-data="{ bannerIsVisible: true }">
+    <div x-show="bannerIsVisible" class="relative flex border-outline bg-surface-alt p-4 text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark border-b">
+        <p class="px-6 text-xs sm:text-sm text-pretty mx-auto"><slot></slot></p>
+        <button type="button" @click="bannerIsVisible = false" class="absolute top-1/2 -translate-y-1/2 right-4" aria-label="dismiss banner">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" stroke="currentColor" fill="none" stroke-width="2.5" class="size-4 shrink-0">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+</template>

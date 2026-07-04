@@ -1,6 +1,6 @@
 {
   "name": "@apex-stack/components",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Themeable .alpine components for Apex JS — copied into your project with `apex add`",
   "type": "module",
   "license": "MIT",
