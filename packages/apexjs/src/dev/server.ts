@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { createServer as createHttpServer, type Server } from 'node:http'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
@@ -76,11 +76,13 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
 
   // Optional Tailwind — auto-load @tailwindcss/vite if the project installed it.
   const plugins: PluginOption[] = [apex({ clientRuntime: '@apex-stack/core/client' })]
+  let hasTailwind = false
   try {
     const reqProj = createRequire(join(options.root, 'package.json'))
     const twMod = await import(pathToFileURL(reqProj.resolve('@tailwindcss/vite')).href)
     const tw = (twMod.default ?? twMod) as () => PluginOption
     plugins.unshift(tw())
+    hasTailwind = true
   } catch {
     // Tailwind not installed — fine, it's opt-in.
   }
@@ -89,7 +91,18 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   const appCssRel = ['app.css', 'styles/app.css', 'src/app.css'].find((p) =>
     existsSync(join(options.root, p)),
   )
-  const appCss = appCssRel ? `/${appCssRel}` : undefined
+  let appCss = appCssRel ? `/${appCssRel}` : undefined
+  // If the stylesheet imports Tailwind but it isn't installed, skip it (and warn)
+  // rather than letting Vite/postcss crash with a cryptic "ENOENT … tailwindcss".
+  if (appCssRel && !hasTailwind) {
+    const css = readFileSync(join(options.root, appCssRel), 'utf8')
+    if (/@import\s+['"]tailwindcss['"]|@tailwind\b/.test(css)) {
+      console.warn(
+        `\n  ⚠ ${appCssRel} imports Tailwind, but it isn't installed — skipping it (styles won't apply).\n    Fix: npm i -D tailwindcss @tailwindcss/vite\n`,
+      )
+      appCss = undefined
+    }
+  }
 
   const vite = await createViteServer({
     root: options.root,
