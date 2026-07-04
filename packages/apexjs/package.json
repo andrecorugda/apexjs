@@ -41,7 +41,8 @@
     "vite": "^6.0.7",
     "zod": "^4.4.3",
     "@apex-stack/kit": "workspace:*",
-    "@apex-stack/vite": "workspace:*"
+    "@apex-stack/vite": "workspace:*",
+    "@apex-stack/theme": "workspace:*"
   },
   "peerDependencies": {
     "alpinejs": "^3.14.0"
