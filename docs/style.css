@@ -510,7 +510,7 @@ figcaption {
       radial-gradient(900px 560px at 8% 4%, rgba(34, 211, 238, 0.1), transparent 55%), var(--ground);
   }
 }
-#hero-net {
+.apex-net {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -521,7 +521,7 @@ figcaption {
   -webkit-mask-image: radial-gradient(130% 100% at 74% 16%, #000 42%, transparent 100%);
   mask-image: radial-gradient(130% 100% at 74% 16%, #000 42%, transparent 100%);
 }
-#hero-net.drawn {
+.apex-net.drawn {
   opacity: 1;
 }
 .home-hero .wrap {
@@ -1663,5 +1663,127 @@ footer.site-footer {
   }
   .caret {
     animation: none;
+  }
+}
+
+/* ---------- Panorama (vertical carousel, hero-style backdrop) ---------- */
+.pano {
+  position: relative;
+  margin: 1.8rem 0 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  height: clamp(320px, 46vh, 430px);
+  background: radial-gradient(900px 500px at 82% -12%, rgba(99, 102, 241, 0.22), transparent 60%),
+    radial-gradient(700px 460px at 4% 112%, rgba(34, 211, 238, 0.14), transparent 55%),
+    var(--ground-deep);
+}
+.pano-viewport {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  overflow: hidden;
+}
+.pano-track {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pano-track {
+    transition: none;
+  }
+}
+.pano-slide {
+  flex: 0 0 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: clamp(1.5rem, 5vw, 3.5rem);
+}
+.pano-k {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--alpenglow);
+  margin: 0;
+}
+.pano-slide.accent .pano-k {
+  color: var(--glacier);
+}
+.pano-slide h3 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+  letter-spacing: -0.02em;
+  line-height: 1.14;
+  max-width: 20ch;
+}
+.pano-slide > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.7vw, 1.18rem);
+  max-width: 46ch;
+}
+.pano-slide code {
+  background: var(--glacier-soft);
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  padding: 0.05rem 0.35rem;
+  font-size: 0.88em;
+}
+.pano-dots {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.pano-dots button {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  background: var(--line);
+  cursor: pointer;
+  transition: height 0.25s ease, background 0.25s ease;
+}
+.pano-dots button[aria-current="true"] {
+  background: var(--glacier);
+  height: 1.5rem;
+}
+
+/* ---------- Theme toggle icon (sun in dark, moon in light) ---------- */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  line-height: 0;
+}
+.theme-toggle svg {
+  display: block;
+}
+.theme-toggle .ic-moon {
+  display: none;
+}
+:root[data-theme="light"] .theme-toggle .ic-sun {
+  display: none;
+}
+:root[data-theme="light"] .theme-toggle .ic-moon {
+  display: block;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .theme-toggle .ic-sun {
+    display: none;
+  }
+  :root:not([data-theme="dark"]) .theme-toggle .ic-moon {
+    display: block;
   }
 }
