@@ -1,6 +1,6 @@
 {
   "name": "@apex-stack/data",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Data layer for Apex JS — Drizzle-backed resources that are REST + MCP by default",
   "type": "module",
   "license": "MIT",
@@ -14,15 +14,7 @@
   "bugs": {
     "url": "https://github.com/andrecorugda/apexjs/issues"
   },
-  "keywords": [
-    "alpine",
-    "alpinejs",
-    "drizzle",
-    "orm",
-    "mcp",
-    "apex",
-    "apexjs"
-  ],
+  "keywords": ["alpine", "alpinejs", "drizzle", "orm", "mcp", "apex", "apexjs"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -30,9 +22,7 @@
       "default": "./dist/index.js"
     }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit"

@@ -8,16 +8,8 @@
   "engines": {
     "vscode": "^1.75.0"
   },
-  "categories": [
-    "Programming Languages"
-  ],
-  "keywords": [
-    "alpine",
-    "alpinejs",
-    "apex",
-    "apexjs",
-    "sfc"
-  ],
+  "categories": ["Programming Languages"],
+  "keywords": ["alpine", "alpinejs", "apex", "apexjs", "sfc"],
   "icon": "icon.png",
   "repository": {
     "type": "git",
@@ -32,13 +24,8 @@
     "languages": [
       {
         "id": "alpine",
-        "aliases": [
-          "Apex",
-          "alpine"
-        ],
-        "extensions": [
-          ".alpine"
-        ],
+        "aliases": ["Apex", "alpine"],
+        "extensions": [".alpine"],
         "configuration": "./language-configuration.json",
         "icon": {
           "light": "./icon.png",

@@ -1,37 +1,36 @@
 {
-  "name": "@apex-stack/vite",
-  "version": "0.1.6",
-  "description": "Vite plugin for Apex JS .alpine single-file components",
+  "name": "@apex-stack/theme",
+  "version": "0.2.0",
+  "description": "Theme tokens + Tailwind preset for Apex JS — one theme, inherited by every component",
   "type": "module",
   "license": "MIT",
   "author": "Andre Corugda",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/andrecorugda/apexjs.git",
-    "directory": "packages/vite"
+    "directory": "packages/theme"
   },
   "homepage": "https://apexjs.site",
   "bugs": {
     "url": "https://github.com/andrecorugda/apexjs/issues"
   },
-  "keywords": ["alpine", "alpinejs", "vite", "vite-plugin", "apex", "apexjs"],
+  "keywords": ["alpine", "alpinejs", "tailwind", "theme", "design-tokens", "apex", "apexjs"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./preset": {
+      "types": "./dist/preset.d.ts",
+      "import": "./dist/preset.js",
+      "default": "./dist/preset.js"
     }
   },
   "files": ["dist"],
   "scripts": {
     "build": "tsup",
-    "dev": "tsup --watch",
     "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@apex-stack/kit": "workspace:*"
-  },
-  "peerDependencies": {
-    "vite": "^5.0.0 || ^6.0.0"
   },
   "engines": {
     "node": ">=20.19"

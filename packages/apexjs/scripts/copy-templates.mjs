@@ -12,6 +12,15 @@ if (existsSync(dest)) rmSync(dest, { recursive: true, force: true })
 cpSync(src, dest, { recursive: true })
 console.log('apex: copied scaffold templates from create-apexjs')
 
+// (1b) component registry — so `apex add <name>` can copy components in.
+const compSrc = fileURLToPath(new URL('../../components/registry', import.meta.url))
+const compDest = fileURLToPath(new URL('../components', import.meta.url))
+if (existsSync(compSrc)) {
+  if (existsSync(compDest)) rmSync(compDest, { recursive: true, force: true })
+  cpSync(compSrc, compDest, { recursive: true })
+  console.log('apex: bundled component registry from @apex-stack/components')
+}
+
 // (2) VS Code extension — copy the latest .vsix to a stable, version-less name.
 const extDir = fileURLToPath(new URL('../../../editors/vscode-apex', import.meta.url))
 const vsxDest = fileURLToPath(new URL('../vscode', import.meta.url))

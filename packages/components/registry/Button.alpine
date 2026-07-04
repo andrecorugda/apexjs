@@ -1,0 +1,22 @@
+<template x-data>
+  <button class="ax-btn" :class="'ax-btn--' + (variant || 'primary')" :type="type || 'button'">
+    <slot>Button</slot>
+  </button>
+</template>
+
+<style scoped>
+  /* Styles inherit the Apex theme via --ax-* tokens (with sane fallbacks, so the
+     component looks right even before you apply a theme). */
+  .ax-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    padding: 0.55rem 1rem; font: inherit; font-weight: 600; line-height: 1; cursor: pointer;
+    border: 1px solid transparent; border-radius: var(--ax-radius, 0.6rem);
+    transition: filter 0.15s, background 0.15s, color 0.15s;
+  }
+  .ax-btn--primary { background: var(--ax-primary, #4f46e5); color: var(--ax-primary-fg, #fff); }
+  .ax-btn--danger  { background: var(--ax-danger, #dc2626); color: #fff; }
+  .ax-btn--ghost   { background: transparent; color: var(--ax-fg, #0a0e1a); border-color: var(--ax-border, #e2e8f0); }
+  .ax-btn:hover { filter: brightness(1.06); }
+  .ax-btn--ghost:hover { background: var(--ax-card, #f8fafc); filter: none; }
+  .ax-btn:disabled { opacity: 0.55; cursor: not-allowed; filter: none; }
+</style>

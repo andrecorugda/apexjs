@@ -11,4 +11,5 @@ playwright-report
 *.db-wal
 packages/apexjs/templates/
 packages/apexjs/vscode/
+packages/apexjs/components/
 editors/vscode-apex/node_modules/

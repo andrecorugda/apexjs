@@ -54,6 +54,8 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
 
+  packages/components: {}
+
   packages/create-apexjs:
     dependencies:
       citty:
@@ -99,6 +101,8 @@ importers:
       postcss-selector-parser:
         specifier: ^7.0.0
         version: 7.1.4
+
+  packages/theme: {}
 
   packages/vite:
     dependencies:
