@@ -28,7 +28,7 @@
       "import": "./dist/client.js"
     }
   },
-  "files": ["dist", "templates", "vscode"],
+  "files": ["dist", "templates", "vscode", "components"],
   "scripts": {
     "build": "node scripts/copy-templates.mjs && tsup",
     "dev": "tsup --watch",

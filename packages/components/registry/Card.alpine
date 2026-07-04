@@ -1,0 +1,11 @@
+<template>
+  <div class="ax-card"><slot></slot></div>
+</template>
+
+<style scoped>
+  .ax-card {
+    background: var(--ax-card, #f8fafc); color: var(--ax-card-fg, #0a0e1a);
+    border: 1px solid var(--ax-border, #e2e8f0); border-radius: var(--ax-radius, 0.6rem);
+    padding: 1.25rem;
+  }
+</style>

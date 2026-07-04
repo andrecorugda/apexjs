@@ -1,0 +1,13 @@
+{
+  "button": {
+    "name": "Button",
+    "file": "Button.alpine",
+    "description": "Themeable button with primary/ghost/danger variants."
+  },
+  "card": {
+    "name": "Card",
+    "file": "Card.alpine",
+    "description": "A surface container that inherits the theme."
+  },
+  "badge": { "name": "Badge", "file": "Badge.alpine", "description": "A small status/label pill." }
+}

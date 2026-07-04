@@ -1,0 +1,18 @@
+{
+  "name": "@apex-stack/components",
+  "version": "0.1.0",
+  "description": "Themeable .alpine components for Apex JS — copied into your project with `apex add`",
+  "type": "module",
+  "license": "MIT",
+  "author": "Andre Corugda",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrecorugda/apexjs.git",
+    "directory": "packages/components"
+  },
+  "homepage": "https://apexjs.site",
+  "bugs": { "url": "https://github.com/andrecorugda/apexjs/issues" },
+  "keywords": ["alpine", "alpinejs", "components", "ui", "tailwind", "apex", "apexjs"],
+  "files": ["registry"],
+  "scripts": { "typecheck": "tsc --noEmit || true" }
+}
