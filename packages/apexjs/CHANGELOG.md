@@ -1,5 +1,11 @@
 # @apex-stack/core
 
+## 0.2.2
+
+### Patch Changes
+
+- 3586f27: VS Code extension: proper app-icon tile. The `.alpine` extension icon is now a branded gradient tile (indigo→cyan) with a white faceted "A" — no theme-dependent corner artifacts (the previous versions showed white triangles around the diagonal mark on light backgrounds). Extension → 0.1.2, re-bundled.
+
 ## 0.2.1
 
 ### Patch Changes
