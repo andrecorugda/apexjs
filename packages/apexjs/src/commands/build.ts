@@ -6,6 +6,8 @@ import { createServer as createViteServer } from 'vite'
 import { buildClient } from '../build/buildClient.js'
 import { buildServer } from '../build/buildServer.js'
 import { loadComponents } from '../components/registry.js'
+import { resolveApexConfig } from '../config/resolve.js'
+import type { RuntimeConfig } from '../config/runtime.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { type RouteDef, scanPages } from '../routing/router.js'
@@ -69,6 +71,10 @@ export const buildCommand = defineCommand({
         (id) => vite.ssrLoadModule(id) as never,
       )
       const stores = await loadStores(root, (id) => vite.ssrLoadModule(id) as never)
+      const { runtimeConfig, publicConfig } = await resolveApexConfig(
+        root,
+        (id) => vite.ssrLoadModule(id) as never,
+      )
       const layoutsDir = join(root, 'layouts')
       const layouts = existsSync(layoutsDir)
         ? readdirSync(layoutsDir)
@@ -85,6 +91,8 @@ export const buildCommand = defineCommand({
           componentCss,
           stores,
           layouts,
+          runtimeConfig,
+          publicConfig,
         }
         const html = args.islands
           ? await renderIslandsPage(common)
@@ -126,6 +134,25 @@ async function buildServerTarget(
   const clientHrefs = await buildClient(root, routes, outDir)
   const server = await buildServer(root, routes, outDir)
 
+  // Load apex.config.ts DEFAULTS to bake into the manifest — never the env-resolved
+  // values, so build-time secrets don't get written to dist. The prod server applies
+  // deploy-time .env / process.env over these defaults at start. A short-lived Vite
+  // loads the TS config.
+  let runtimeConfig: RuntimeConfig = { public: {} }
+  const cfgVite = await createViteServer({
+    root,
+    appType: 'custom',
+    server: { middlewareMode: true },
+    plugins: [apex({ clientRuntime: '@apex-stack/core/client' })],
+  })
+  try {
+    const resolved = await resolveApexConfig(root, (id) => cfgVite.ssrLoadModule(id) as never)
+    runtimeConfig = { public: {}, ...(resolved.config.runtimeConfig ?? {}) }
+    if (!runtimeConfig.public) runtimeConfig.public = {}
+  } finally {
+    await cfgVite.close()
+  }
+
   const components: Record<string, string> = {}
   const compDir = join(root, 'components')
   if (existsSync(compDir)) {
@@ -153,6 +180,7 @@ async function buildServerTarget(
     })),
     components,
     api,
+    runtimeConfig,
   }
   writeFileSync(join(outDir, 'apex-manifest.json'), JSON.stringify(manifest, null, 2))
 

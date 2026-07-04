@@ -1,5 +1,5 @@
 ---
-"apexjs": patch
+"@apex-stack/core": patch
 ---
 
 Fix client hydration in `apex build` output and add subpath deploy support.

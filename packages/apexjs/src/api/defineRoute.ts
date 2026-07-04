@@ -1,4 +1,5 @@
 import type { ZodRawShape, z } from 'zod'
+import type { RuntimeConfig } from '../config/runtime.js'
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
@@ -12,6 +13,8 @@ export interface ApexRouteHandlerContext<Shape extends ZodRawShape | undefined> 
   input: InferInput<Shape>
   /** The raw request URL. */
   url: string
+  /** Resolved runtime config (server-side: private + public). */
+  config: RuntimeConfig
 }
 
 export interface ApexRouteConfig<Shape extends ZodRawShape | undefined, Output> {
@@ -42,7 +45,11 @@ export interface ApexRoute {
   inputShape?: ZodRawShape
   mcp: boolean
   mcpName?: string
-  handler: (ctx: { input: unknown; url: string }) => unknown | Promise<unknown>
+  handler: (ctx: {
+    input: unknown
+    url: string
+    config?: RuntimeConfig
+  }) => unknown | Promise<unknown>
 }
 
 /**

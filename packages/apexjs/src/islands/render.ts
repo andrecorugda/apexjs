@@ -1,4 +1,5 @@
 import { type ComponentRegistry, renderIslands } from '@apex-stack/kit'
+import { type RuntimeConfig, clientConfigScript } from '../config/runtime.js'
 import type { PageModule } from '../dev/renderPage.js'
 
 /**
@@ -55,6 +56,8 @@ export interface RenderIslandsPageOptions {
   registry?: ComponentRegistry
   componentCss?: string
   transformHtml?: (url: string, html: string) => string | Promise<string>
+  runtimeConfig?: RuntimeConfig
+  publicConfig?: Record<string, unknown>
 }
 
 /**
@@ -63,8 +66,11 @@ export interface RenderIslandsPageOptions {
  */
 export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise<string> {
   const mod = await opts.loadModule(opts.pageId)
-  const loaderData = ((await mod.loader({ params: opts.params ?? {}, url: opts.url })) ??
-    {}) as Record<string, unknown>
+  const loaderData = ((await mod.loader({
+    params: opts.params ?? {},
+    url: opts.url,
+    config: opts.runtimeConfig ?? { public: {} },
+  })) ?? {}) as Record<string, unknown>
 
   const { html, hydratingCount } = renderIslands(
     mod.template,
@@ -74,6 +80,7 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
   )
 
   const loaderScript = hydratingCount > 0 ? `\n<script type="module">${ISLAND_LOADER}</script>` : ''
+  const configScript = hydratingCount > 0 ? `\n${clientConfigScript(opts.publicConfig ?? {})}` : ''
 
   const doc = `<!DOCTYPE html>
 <html lang="en">
@@ -84,7 +91,7 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
   <style>${mod.css}${opts.componentCss ?? ''}</style>
 </head>
 <body>
-${html}${loaderScript}
+${html}${configScript}${loaderScript}
 </body>
 </html>`
 

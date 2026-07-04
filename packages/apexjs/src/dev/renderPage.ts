@@ -4,6 +4,7 @@ import {
   renderFragment,
   stateIsland,
 } from '@apex-stack/kit'
+import { type RuntimeConfig, clientConfigScript } from '../config/runtime.js'
 import { type LoadedStore, storesInitialState } from '../stores/loader.js'
 
 /** The shape a compiled `.alpine` SSR module exports (see @apex-stack/vite). */
@@ -17,12 +18,17 @@ export interface HeadInput {
 }
 
 export interface PageModule {
-  loader: (ctx: { params: Record<string, string>; url: string }) => unknown | Promise<unknown>
+  loader: (ctx: {
+    params: Record<string, string>
+    url: string
+    config: RuntimeConfig
+  }) => unknown | Promise<unknown>
   /** Optional per-page head/SEO — receives the loader's data, returns title/meta/link. */
   head?: (ctx: {
     data: Record<string, unknown>
     params: Record<string, string>
     url: string
+    config: RuntimeConfig
   }) => HeadInput | Promise<HeadInput>
   template: string
   rootXData: string | null
@@ -85,6 +91,10 @@ export interface RenderPageOptions {
   appCss?: string
   /** Available layout names (from `layouts/*.alpine`) — enables page-wrapping layouts. */
   layouts?: string[]
+  /** Full resolved runtime config passed to the page loader + head (server-side). */
+  runtimeConfig?: RuntimeConfig
+  /** Public config subset seeded into the client for `useRuntimeConfig()`. */
+  publicConfig?: Record<string, unknown>
 }
 
 /**
@@ -95,11 +105,15 @@ export interface RenderPageOptions {
  */
 export async function renderPage(opts: RenderPageOptions): Promise<string> {
   const mod = await opts.loadModule(opts.pageId)
-  const loaderData = ((await mod.loader({ params: opts.params ?? {}, url: opts.url })) ??
-    {}) as Record<string, unknown>
+  const cfg = opts.runtimeConfig ?? { public: {} }
+  const loaderData = ((await mod.loader({
+    params: opts.params ?? {},
+    url: opts.url,
+    config: cfg,
+  })) ?? {}) as Record<string, unknown>
 
   const head = mod.head
-    ? await mod.head({ data: loaderData, params: opts.params ?? {}, url: opts.url })
+    ? await mod.head({ data: loaderData, params: opts.params ?? {}, url: opts.url, config: cfg })
     : undefined
 
   const stores = opts.stores ?? []
@@ -148,6 +162,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     storeIds: stores.map((s) => s.id),
     appCss: opts.appCss,
     headTags: renderHead(head),
+    configScript: clientConfigScript(opts.publicConfig ?? {}),
   })
 
   return opts.transformHtml ? opts.transformHtml(opts.url, doc) : doc
@@ -162,6 +177,7 @@ interface ShellParts {
   storeIds?: string[]
   appCss?: string
   headTags?: string
+  configScript?: string
 }
 
 function shell({
@@ -173,6 +189,7 @@ function shell({
   storeIds = [],
   appCss,
   headTags = '<title>Apex JS</title>',
+  configScript = '',
 }: ShellParts): string {
   // Register global stores on the client before Alpine.start(): import each store
   // module and call Alpine.store(name, factory()) — same factory the server used,
@@ -206,6 +223,7 @@ ${storeRegs ? `${storeRegs}\n` : ''}  Alpine.start()
 <body>
 ${body}
 ${island}
+${configScript}
 ${clientScript}
 </body>
 </html>`

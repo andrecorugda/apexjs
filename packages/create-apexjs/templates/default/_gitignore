@@ -1,3 +1,8 @@
 node_modules
 dist
 *.log
+
+# Local env — keep .env.example committed, never real secrets
+.env
+.env.local
+.env.*.local

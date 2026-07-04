@@ -15,6 +15,7 @@ import {
 import { type PluginOption, type ViteDevServer, createServer as createViteServer } from 'vite'
 import { createApiHandler, loadApiRoutes } from '../api/routes.js'
 import { loadComponents } from '../components/registry.js'
+import { resolveApexConfig } from '../config/resolve.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { createMcpHandler } from '../mcp/server.js'
 import { matchRoute, scanPages } from '../routing/router.js'
@@ -113,6 +114,13 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
     return vite.ssrLoadModule(resolved) as Promise<Record<string, unknown>>
   }
 
+  // Resolve apex.config.ts + .env once at boot. Editing config or .env needs a
+  // dev-server restart (like Nuxt) — routes/pages still hot-reload per request.
+  const { runtimeConfig, publicConfig } = await resolveApexConfig(
+    options.root,
+    (id) => ssrLoad(id) as never,
+  )
+
   const app = createApp()
 
   // Vite handles assets, HMR client, and .alpine module requests. When it has
@@ -127,11 +135,15 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   const loadEntries = () => loadApiRoutes(options.root, (id) => ssrLoad(id) as never)
   app.use(
     '/api',
-    defineEventHandler((event) => loadEntries().then((e) => createApiHandler(e)(event))),
+    defineEventHandler((event) =>
+      loadEntries().then((e) => createApiHandler(e, runtimeConfig)(event)),
+    ),
   )
   app.use(
     '/mcp',
-    defineEventHandler((event) => loadEntries().then((e) => createMcpHandler(e)(event))),
+    defineEventHandler((event) =>
+      loadEntries().then((e) => createMcpHandler(e, runtimeConfig)(event)),
+    ),
   )
 
   app.use(
@@ -169,6 +181,8 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           stores,
           appCss,
           layouts,
+          runtimeConfig,
+          publicConfig,
           transformHtml: (u, doc) => vite.transformIndexHtml(u, doc),
         })
         setResponseHeader(event, 'Content-Type', 'text/html')

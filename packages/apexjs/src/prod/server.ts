@@ -12,6 +12,8 @@ import {
   toNodeListener,
 } from 'h3'
 import { createApiHandler, expandApiModule } from '../api/routes.js'
+import { applyEnvToRuntimeConfig } from '../config/resolve.js'
+import type { RuntimeConfig } from '../config/runtime.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { createMcpHandler, hasMcpRoutes } from '../mcp/server.js'
@@ -23,6 +25,8 @@ export interface ProdManifest {
   routes: Array<RouteDef & { serverFile: string; clientHref?: string }>
   components: Record<string, string>
   api: Array<{ name: string; serverFile: string }>
+  /** runtimeConfig defaults baked at build; env is applied at server start. */
+  runtimeConfig?: RuntimeConfig
 }
 
 const MIME: Record<string, string> = {
@@ -50,6 +54,10 @@ export async function startProdServer(
   const dir = options.dir
   const port = options.port ?? 3000
   const manifest = JSON.parse(readFileSync(join(dir, 'apex-manifest.json'), 'utf8')) as ProdManifest
+
+  // Apply deploy-time .env / process.env over the baked runtimeConfig defaults.
+  const runtimeConfig = applyEnvToRuntimeConfig(manifest.runtimeConfig ?? { public: {} }, dir)
+  const publicConfig = (runtimeConfig.public ?? {}) as Record<string, unknown>
 
   const importServer = (relFile: string) => import(pathToFileURL(join(dir, 'server', relFile)).href)
 
@@ -91,8 +99,8 @@ export async function startProdServer(
     }),
   )
 
-  if (apiEntries.length) app.use('/api', createApiHandler(apiEntries))
-  if (hasMcpRoutes(apiEntries)) app.use('/mcp', createMcpHandler(apiEntries))
+  if (apiEntries.length) app.use('/api', createApiHandler(apiEntries, runtimeConfig))
+  if (hasMcpRoutes(apiEntries)) app.use('/mcp', createMcpHandler(apiEntries, runtimeConfig))
 
   app.use(
     defineEventHandler(async (event) => {
@@ -113,6 +121,8 @@ export async function startProdServer(
         registry,
         componentCss,
         clientHref: route?.clientHref,
+        runtimeConfig,
+        publicConfig,
       })
       setResponseHeader(event, 'Content-Type', 'text/html')
       return html
