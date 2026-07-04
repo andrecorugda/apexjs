@@ -74,8 +74,9 @@ Pages auto-use `default`; override with `export const layout = 'blog'`; opt out 
 `server/api/*.ts` and `.alpine` `<script>` blocks — one TS project, no duplication. (Typed
 `InferInput/Output` from route contracts is the next step — see roadmap.)
 
-**✅ Wave A is complete.** Next: Wave B — client-side navigation, catch-all routes, per-route
-error/loading boundaries, server-action sugar, component slots, middleware/runtime-config, fine-grained HMR.
+**✅ Wave A complete.** Wave B in progress: ✅ catch-all routes (`[...name]`), ✅ component slots.
+Remaining Wave B: client-side navigation (browser-verify-gated), per-route error/loading boundaries,
+server-action sugar, middleware/runtime-config, fine-grained HMR.
 
 ---
 
@@ -106,7 +107,7 @@ Legend: ✅ have · 🟡 partial · ❌ gap
 | Dimension | Next.js | Nuxt | Apex today | Priority |
 |---|---|---|---|---|
 | File-based routing | ✅ app/pages | ✅ pages | ✅ `pages/**` + `[param]` | — |
-| Dynamic/catch-all routes | ✅ `[...slug]` | ✅ | 🟡 `[param]` only (no catch-all) | P2 |
+| Dynamic/catch-all routes | ✅ `[...slug]` | ✅ | ✅ `[param]` + `[...name]` catch-all | ✅ done |
 | **Layouts** | ✅ | ✅ `layouts/` | ✅ `layouts/*.alpine` + `<slot>` (nested: P2) | ✅ done |
 | Client-side navigation (SPA nav) | ✅ `<Link>` | ✅ `<NuxtLink>` | ❌ full page loads | P2 |
 | Loading / error boundaries | ✅ | ✅ | 🟡 dev error page ✅, no per-route boundary | P2 |
@@ -121,7 +122,7 @@ Legend: ✅ have · 🟡 partial · ❌ gap
 | **Tailwind** | ✅ first-class | ✅ module | ❌ not wired | **P1** |
 | Scoped styles | 🟡 CSS Modules | ✅ `<style scoped>` | ✅ `<style scoped>` | — |
 | Global/shared styles | ✅ | ✅ | 🟡 works (import css) undocumented | P2 |
-| **Component slots / children** | ✅ | ✅ | ❌ | P2 |
+| **Component slots / children** | ✅ | ✅ | ✅ `<slot>` + fallback | ✅ done |
 | Component data loaders | ✅ (RSC) | ✅ (async setup) | ❌ props only | P2 |
 | **Editor support (.alpine)** | ✅ (.tsx native) | ✅ Volar | ❌ no highlighting | **P1** |
 | Type-checking of templates | ✅ | ✅ Volar | ❌ | P3 |
