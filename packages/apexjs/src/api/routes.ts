@@ -144,6 +144,7 @@ export function createApiHandler(entries: ApiEntry[], config?: RuntimeConfig): E
       input,
       url: url.toString(),
       config: config ?? { public: {} },
+      locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
     })
     setResponseHeader(event, 'Content-Type', 'application/json')
     return result

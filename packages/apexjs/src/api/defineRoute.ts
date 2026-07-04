@@ -15,6 +15,8 @@ export interface ApexRouteHandlerContext<Shape extends ZodRawShape | undefined> 
   url: string
   /** Resolved runtime config (server-side: private + public). */
   config: RuntimeConfig
+  /** Request-scoped state set by middleware (e.g. an authenticated user). */
+  locals: Record<string, unknown>
 }
 
 export interface ApexRouteConfig<Shape extends ZodRawShape | undefined, Output> {
@@ -49,6 +51,7 @@ export interface ApexRoute {
     input: unknown
     url: string
     config?: RuntimeConfig
+    locals?: Record<string, unknown>
   }) => unknown | Promise<unknown>
 }
 

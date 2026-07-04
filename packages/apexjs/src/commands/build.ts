@@ -171,6 +171,18 @@ async function buildServerTarget(
     }
   }
 
+  // Middleware in filename order (matches dev; prod runs them per request).
+  const middleware: Array<{ serverFile: string }> = []
+  const mwDir = join(root, 'middleware')
+  if (existsSync(mwDir)) {
+    for (const f of readdirSync(mwDir)
+      .filter((f) => /\.(ts|js|mjs)$/.test(f))
+      .sort()) {
+      const sf = server.modules[`/middleware/${f}`]
+      if (sf) middleware.push({ serverFile: sf })
+    }
+  }
+
   const manifest = {
     islands: false,
     routes: routes.map((r) => ({
@@ -180,6 +192,7 @@ async function buildServerTarget(
     })),
     components,
     api,
+    middleware,
     runtimeConfig,
   }
   writeFileSync(join(outDir, 'apex-manifest.json'), JSON.stringify(manifest, null, 2))

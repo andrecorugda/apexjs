@@ -22,6 +22,7 @@ export interface PageModule {
     params: Record<string, string>
     url: string
     config: RuntimeConfig
+    locals: Record<string, unknown>
   }) => unknown | Promise<unknown>
   /** Optional per-page head/SEO — receives the loader's data, returns title/meta/link. */
   head?: (ctx: {
@@ -29,6 +30,7 @@ export interface PageModule {
     params: Record<string, string>
     url: string
     config: RuntimeConfig
+    locals: Record<string, unknown>
   }) => HeadInput | Promise<HeadInput>
   template: string
   rootXData: string | null
@@ -95,6 +97,8 @@ export interface RenderPageOptions {
   runtimeConfig?: RuntimeConfig
   /** Public config subset seeded into the client for `useRuntimeConfig()`. */
   publicConfig?: Record<string, unknown>
+  /** Request-scoped state from middleware, passed to the loader + head. */
+  locals?: Record<string, unknown>
 }
 
 /**
@@ -106,14 +110,22 @@ export interface RenderPageOptions {
 export async function renderPage(opts: RenderPageOptions): Promise<string> {
   const mod = await opts.loadModule(opts.pageId)
   const cfg = opts.runtimeConfig ?? { public: {} }
+  const locals = opts.locals ?? {}
   const loaderData = ((await mod.loader({
     params: opts.params ?? {},
     url: opts.url,
     config: cfg,
+    locals,
   })) ?? {}) as Record<string, unknown>
 
   const head = mod.head
-    ? await mod.head({ data: loaderData, params: opts.params ?? {}, url: opts.url, config: cfg })
+    ? await mod.head({
+        data: loaderData,
+        params: opts.params ?? {},
+        url: opts.url,
+        config: cfg,
+        locals,
+      })
     : undefined
 
   const stores = opts.stores ?? []

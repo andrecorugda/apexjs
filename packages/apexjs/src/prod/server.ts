@@ -6,6 +6,7 @@ import type { ComponentRegistry } from '@apex-stack/kit'
 import {
   createApp,
   defineEventHandler,
+  getRequestHeaders,
   getRequestURL,
   setResponseHeader,
   setResponseStatus,
@@ -17,6 +18,8 @@ import type { RuntimeConfig } from '../config/runtime.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { createMcpHandler, hasMcpRoutes } from '../mcp/server.js'
+import type { Middleware } from '../middleware/define.js'
+import { runMiddleware } from '../middleware/run.js'
 import { type RouteDef, matchRoute } from '../routing/router.js'
 
 /** The build manifest written by `apex build --server` to `<dist>/apex-manifest.json`. */
@@ -25,6 +28,8 @@ export interface ProdManifest {
   routes: Array<RouteDef & { serverFile: string; clientHref?: string }>
   components: Record<string, string>
   api: Array<{ name: string; serverFile: string }>
+  /** Middleware modules in run order. */
+  middleware?: Array<{ serverFile: string }>
   /** runtimeConfig defaults baked at build; env is applied at server start. */
   runtimeConfig?: RuntimeConfig
 }
@@ -77,6 +82,13 @@ export async function startProdServer(
     apiEntries.push(...expandApiModule(name, mod.default))
   }
 
+  // Load middleware modules (in manifest order).
+  const middleware: Middleware[] = []
+  for (const { serverFile } of manifest.middleware ?? []) {
+    const mod = await importServer(serverFile)
+    if (typeof mod.default === 'function') middleware.push(mod.default)
+  }
+
   const serverFileFor = new Map(manifest.routes.map((r) => [r.pageId, r.serverFile]))
   const loadModule = (id: string) =>
     importServer(serverFileFor.get(id) as string) as Promise<PageModule>
@@ -98,6 +110,27 @@ export async function startProdServer(
       return readFileSync(file)
     }),
   )
+
+  // Run middleware before API + page handlers (after static assets, which the
+  // handler above already served). Sets locals; a redirect short-circuits.
+  if (middleware.length) {
+    app.use(
+      defineEventHandler(async (event) => {
+        const { redirect, locals } = await runMiddleware(middleware, {
+          url: getRequestURL(event).pathname,
+          method: event.method,
+          config: runtimeConfig,
+          headers: getRequestHeaders(event) as Record<string, string>,
+        })
+        event.context.apexLocals = locals
+        if (redirect) {
+          setResponseStatus(event, redirect.status)
+          setResponseHeader(event, 'Location', redirect.to)
+          return ''
+        }
+      }),
+    )
+  }
 
   if (apiEntries.length) app.use('/api', createApiHandler(apiEntries, runtimeConfig))
   if (hasMcpRoutes(apiEntries)) app.use('/mcp', createMcpHandler(apiEntries, runtimeConfig))
@@ -123,6 +156,7 @@ export async function startProdServer(
         clientHref: route?.clientHref,
         runtimeConfig,
         publicConfig,
+        locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
       })
       setResponseHeader(event, 'Content-Type', 'text/html')
       return html

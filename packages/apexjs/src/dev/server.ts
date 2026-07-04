@@ -8,6 +8,7 @@ import {
   createApp,
   defineEventHandler,
   fromNodeMiddleware,
+  getRequestHeaders,
   setResponseHeader,
   setResponseStatus,
   toNodeListener,
@@ -18,6 +19,7 @@ import { loadComponents } from '../components/registry.js'
 import { resolveApexConfig } from '../config/resolve.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { createMcpHandler } from '../mcp/server.js'
+import { loadMiddleware, runMiddleware } from '../middleware/run.js'
 import { matchRoute, scanPages } from '../routing/router.js'
 import { loadStores } from '../stores/loader.js'
 import { renderErrorPage, renderNotFoundPage } from './errorPage.js'
@@ -128,6 +130,28 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   // API / MCP / SSR handlers below.
   app.use(fromNodeMiddleware(vite.middlewares))
 
+  // Run middleware/*.ts before API + page handlers. Loaded per request so edits
+  // apply without a restart. Sets `event.context.apexLocals` for downstream
+  // loaders/handlers; a returned redirect short-circuits the request.
+  app.use(
+    defineEventHandler(async (event) => {
+      const mws = await loadMiddleware(options.root, (id) => ssrLoad(id) as never)
+      if (!mws.length) return
+      const { redirect, locals } = await runMiddleware(mws, {
+        url: event.path || '/',
+        method: event.method,
+        config: runtimeConfig,
+        headers: getRequestHeaders(event) as Record<string, string>,
+      })
+      event.context.apexLocals = locals
+      if (redirect) {
+        setResponseStatus(event, redirect.status)
+        setResponseHeader(event, 'Location', redirect.to)
+        return ''
+      }
+    }),
+  )
+
   // Load server/api/*.ts routes (single routes + resources) per request in dev, so
   // editing a route or resource takes effect without a restart — Vite invalidates the
   // module on change, so ssrLoadModule returns fresh code. A `/api` handler validates
@@ -183,6 +207,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           layouts,
           runtimeConfig,
           publicConfig,
+          locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
           transformHtml: (u, doc) => vite.transformIndexHtml(u, doc),
         })
         setResponseHeader(event, 'Content-Type', 'text/html')

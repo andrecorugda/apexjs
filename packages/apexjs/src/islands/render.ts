@@ -58,6 +58,7 @@ export interface RenderIslandsPageOptions {
   transformHtml?: (url: string, html: string) => string | Promise<string>
   runtimeConfig?: RuntimeConfig
   publicConfig?: Record<string, unknown>
+  locals?: Record<string, unknown>
 }
 
 /**
@@ -70,6 +71,7 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
     params: opts.params ?? {},
     url: opts.url,
     config: opts.runtimeConfig ?? { public: {} },
+    locals: opts.locals ?? {},
   })) ?? {}) as Record<string, unknown>
 
   const { html, hydratingCount } = renderIslands(
