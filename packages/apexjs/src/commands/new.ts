@@ -7,6 +7,18 @@ import { banner, color, spinner } from '../ui.js'
 
 const TEMPLATE_DIR = fileURLToPath(new URL('../templates/default', import.meta.url))
 
+/** Replace the `{{name}}` placeholder in every scaffolded file. */
+function substituteName(dir: string, name: string): void {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, entry.name)
+    if (entry.isDirectory()) substituteName(p, name)
+    else {
+      const txt = readFileSync(p, 'utf8')
+      if (txt.includes('{{name}}')) writeFileSync(p, txt.replaceAll('{{name}}', name))
+    }
+  }
+}
+
 type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun'
 
 /** Detect the package manager the user invoked us with. */
@@ -73,11 +85,7 @@ export const newCommand = defineCommand({
     cpSync(TEMPLATE_DIR, target, { recursive: true })
     const gitignore = join(target, '_gitignore')
     if (existsSync(gitignore)) renameSync(gitignore, join(target, '.gitignore'))
-    for (const rel of ['package.json', 'README.md']) {
-      const file = join(target, rel)
-      if (existsSync(file))
-        writeFileSync(file, readFileSync(file, 'utf8').replaceAll('{{name}}', name))
-    }
+    substituteName(target, name)
     log(`  ${color.green('✓')} Created ${color.bold(dir)}`)
 
     const pm = detectPackageManager()

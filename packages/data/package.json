@@ -14,15 +14,7 @@
   "bugs": {
     "url": "https://github.com/andrecorugda/apexjs/issues"
   },
-  "keywords": [
-    "alpine",
-    "alpinejs",
-    "drizzle",
-    "orm",
-    "mcp",
-    "apex",
-    "apexjs"
-  ],
+  "keywords": ["alpine", "alpinejs", "drizzle", "orm", "mcp", "apex", "apexjs"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -30,9 +22,7 @@
       "default": "./dist/index.js"
     }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit"
