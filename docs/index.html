@@ -488,11 +488,11 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
 "  export function loader() {\n" +
 "    return { featured: posts.recent(3) }\n" +
 "  }\n" +
-"</script>\n" +
+"<\/script>\n" +
 "\n" +
 "<script client lang=\"ts\">\n" +
 "  import { useToggle } from '../composables/useToggle'\n" +
-"</script>\n" +
+"<\/script>\n" +
 "\n" +
 "<template x-data=\"useToggle(false)\">\n" +
 "  <h1>Welcome to my-app</h1>\n" +
@@ -523,7 +523,7 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
 "  export function head({ data }) {\n" +
 "    return { title: data.title }\n" +
 "  }\n" +
-"</script>\n" +
+"<\/script>\n" +
 "\n" +
 "<template x-data>\n" +
 "  <article>\n" +
@@ -542,7 +542,7 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
 "  export function loader() {\n" +
 "    return { posts: posts.all() }\n" +
 "  }\n" +
-"</script>\n" +
+"<\/script>\n" +
 "\n" +
 "<template x-data=\"{ q: '' }\">\n" +
 "  <main>\n" +
@@ -570,7 +570,7 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
 "    if (!post) throw new Response('Not found', { status: 404 })\n" +
 "    return { post }\n" +
 "  }\n" +
-"</script>\n" +
+"<\/script>\n" +
 "\n" +
 "<template x-data>\n" +
 "  <article>\n" +
