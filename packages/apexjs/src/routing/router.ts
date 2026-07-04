@@ -4,6 +4,8 @@ import { join, relative, sep } from 'node:path'
 interface Segment {
   literal?: string
   param?: string
+  /** Catch-all segment `[...name]` — captures all remaining path segments (joined by `/`). */
+  catchAll?: string
 }
 
 export interface RouteDef {
@@ -36,6 +38,7 @@ function walkAlpine(dir: string): string[] {
  *   pages/about.alpine        → /about
  *   pages/blog/index.alpine   → /blog
  *   pages/blog/[slug].alpine  → /blog/:slug
+ *   pages/docs/[...path].alpine → /docs/:path*  (catch-all)
  */
 export function scanPages(root: string): RouteDef[] {
   const dir = join(root, 'pages')
@@ -49,16 +52,22 @@ export function scanPages(root: string): RouteDef[] {
     if (parts[parts.length - 1] === 'index') parts.pop()
 
     const segments: Segment[] = parts.map((p) => {
+      const catchAll = /^\[\.\.\.(.+)\]$/.exec(p)
+      if (catchAll) return { catchAll: catchAll[1] }
       const m = /^\[(.+)\]$/.exec(p)
       return m ? { param: m[1] } : { literal: p }
     })
-    const isDynamic = segments.some((s) => s.param !== undefined)
-    const pattern = `/${segments.map((s) => (s.param ? `:${s.param}` : s.literal)).join('/')}`
+    const isDynamic = segments.some((s) => s.param !== undefined || s.catchAll !== undefined)
+    const pattern = `/${segments
+      .map((s) => (s.catchAll ? `:${s.catchAll}*` : s.param ? `:${s.param}` : s.literal))
+      .join('/')}`
     return { pageId, pattern, segments, isDynamic }
   })
 
-  // Static routes take precedence over dynamic ones.
-  return routes.sort((a, b) => Number(a.isDynamic) - Number(b.isDynamic))
+  // Precedence: static (0) < dynamic param (1) < catch-all (2).
+  const rank = (r: RouteDef) =>
+    r.segments.some((s) => s.catchAll) ? 2 : r.isDynamic ? 1 : 0
+  return routes.sort((a, b) => rank(a) - rank(b))
 }
 
 /** Split a URL path into non-empty segments. */
@@ -71,6 +80,29 @@ function pathSegments(url: string): string[] {
 export function matchRoute(routes: RouteDef[], url: string): MatchedRoute | null {
   const segs = pathSegments(url)
   for (const route of routes) {
+    const last = route.segments[route.segments.length - 1]
+    const isCatchAll = Boolean(last?.catchAll)
+
+    if (isCatchAll) {
+      // Leading segments match exactly; the catch-all captures the rest (>= 1 segment).
+      const lead = route.segments.slice(0, -1)
+      if (segs.length < lead.length + 1) continue
+      const params: Record<string, string> = {}
+      let ok = true
+      for (let i = 0; i < lead.length; i++) {
+        const rs = lead[i] as Segment
+        const value = segs[i] as string
+        if (rs.param) params[rs.param] = decodeURIComponent(value)
+        else if (rs.literal !== value) {
+          ok = false
+          break
+        }
+      }
+      if (!ok) continue
+      params[last?.catchAll as string] = segs.slice(lead.length).map(decodeURIComponent).join('/')
+      return { pageId: route.pageId, params }
+    }
+
     if (route.segments.length !== segs.length) continue
     const params: Record<string, string> = {}
     let ok = true

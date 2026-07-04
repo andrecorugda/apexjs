@@ -77,3 +77,50 @@ describe('scanPages', () => {
     rmSync(empty, { recursive: true, force: true })
   })
 })
+
+describe('catch-all routes ([...name])', () => {
+  const routes: RouteDef[] = [
+    { pageId: '/pages/docs/index.alpine', pattern: '/docs', segments: [{ literal: 'docs' }], isDynamic: false },
+    {
+      pageId: '/pages/docs/[section].alpine',
+      pattern: '/docs/:section',
+      segments: [{ literal: 'docs' }, { param: 'section' }],
+      isDynamic: true,
+    },
+    {
+      pageId: '/pages/docs/[...path].alpine',
+      pattern: '/docs/:path*',
+      segments: [{ literal: 'docs' }, { catchAll: 'path' }],
+      isDynamic: true,
+    },
+  ]
+
+  it('captures all remaining segments joined by /', () => {
+    expect(matchRoute(routes, '/docs/a/b/c')).toEqual({
+      pageId: '/pages/docs/[...path].alpine',
+      params: { path: 'a/b/c' },
+    })
+  })
+
+  it('prefers a static route over the catch-all', () => {
+    expect(matchRoute(routes, '/docs')?.pageId).toBe('/pages/docs/index.alpine')
+  })
+
+  it('prefers a single dynamic param over the catch-all for one segment', () => {
+    expect(matchRoute(routes, '/docs/intro')?.pageId).toBe('/pages/docs/[section].alpine')
+  })
+
+  it('decodes each captured segment', () => {
+    expect(matchRoute(routes, '/docs/a%20b/c')?.params.path).toBe('a b/c')
+  })
+
+  it('scanPages parses [...path] into a catch-all pattern', () => {
+    const root = mkdtempSync(join(tmpdir(), 'apex-catchall-'))
+    mkdirSync(join(root, 'pages', 'docs'), { recursive: true })
+    writeFileSync(join(root, 'pages', 'docs', '[...path].alpine'), '<template></template>')
+    const r = scanPages(root).find((x) => x.pageId.includes('[...path]'))
+    expect(r?.pattern).toBe('/docs/:path*')
+    expect(r?.segments.at(-1)?.catchAll).toBe('path')
+    rmSync(root, { recursive: true, force: true })
+  })
+})

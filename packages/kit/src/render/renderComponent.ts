@@ -207,7 +207,7 @@ function walkElement(
 
   // Component usage (`<Counter/>` was rewritten to <apex-component data-apex-name>).
   if (tag === 'apex-component') {
-    renderComponentInstance(el, layers, document, registry)
+    renderComponentInstance(el, layers, scopeId, document, registry)
     return
   }
 
@@ -273,6 +273,7 @@ function walkElement(
 function renderComponentInstance(
   el: AnyEl,
   layers: ScopeLayer[],
+  scopeId: string,
   document: AnyEl,
   registry: ComponentRegistry,
 ): void {
@@ -282,6 +283,11 @@ function renderComponentInstance(
     el.replaceWith(document.createComment(` apex: unknown component "${name}" `))
     return
   }
+
+  // Slot content = the children of the usage tag, rendered in the PARENT scope
+  // (authored where the component is used, styled by the parent's scope).
+  const slotSource = String(el.innerHTML ?? '')
+  const slotHtml = slotSource.trim() ? renderFragmentInternal(slotSource, layers, scopeId, registry) : ''
 
   const props: Record<string, unknown> = {}
   let clientDirective: string | null = null
@@ -314,7 +320,11 @@ function renderComponentInstance(
   root.setAttribute('data-apex-component', name)
   root.setAttribute(entry.scopeId, '')
   if (clientDirective) root.setAttribute(clientDirective, '')
-  root.innerHTML = innerHtml
+  // Inject slot content into the component's <slot> (keeping fallback when none given).
+  root.innerHTML = innerHtml.replace(
+    /<slot\b[^>]*>([\s\S]*?)<\/slot>/,
+    (_m: string, fallback: string) => slotHtml || fallback,
+  )
   el.replaceWith(root)
 }
 

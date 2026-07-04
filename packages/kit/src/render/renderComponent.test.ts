@@ -134,3 +134,29 @@ describe('renderComponent', () => {
     expect(html).not.toContain('x-cloak')
   })
 })
+
+describe('component slots', () => {
+  const withCard = (usage: string, cardTemplate: string) =>
+    renderComponent({
+      template: usage,
+      rootXData: null,
+      componentId: 'c0',
+      scopeId: 'data-apex-test',
+      loaderData: {},
+      registry: { Card: { template: cardTemplate, rootXData: null, scopeId: 'data-apex-card' } },
+    }).html
+
+  it('injects slot content from the usage children', () => {
+    const html = withCard('<Card><p>Slotted!</p></Card>', '<div class="card"><slot>fallback</slot></div>')
+    expect(html).toContain('class="card"')
+    expect(html).toContain('Slotted!')
+    expect(html).not.toContain('<slot')
+    expect(html).not.toContain('fallback')
+  })
+
+  it('keeps the slot fallback when no content is provided', () => {
+    const html = withCard('<Card />', '<div><slot>Default content</slot></div>')
+    expect(html).toContain('Default content')
+    expect(html).not.toContain('<slot')
+  })
+})
