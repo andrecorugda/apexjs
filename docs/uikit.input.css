@@ -9,5 +9,6 @@
 /* Apex design tokens (@theme colors + --radius-radius + the `dark` variant). */
 @import "../packages/theme/theme.css";
 
-/* Scan the injected component markup for the classes to generate. */
+/* Scan the injected component markup + theme builder preview for classes. */
 @source "./ui.html";
+@source "./theme.html";
