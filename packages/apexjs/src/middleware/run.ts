@@ -2,7 +2,7 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import type { RuntimeConfig } from '../config/runtime.js'
-import { type Middleware, type MiddlewareResult, isRedirect } from './define.js'
+import { isRedirect, type Middleware, type MiddlewareResult } from './define.js'
 
 /**
  * Discover and load `middleware/*.ts` in filename order (prefix with `01.`, `02.`

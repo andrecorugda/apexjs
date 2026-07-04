@@ -210,9 +210,9 @@ apex migrate --driver postgres --url $DATABASE_URL</code></pre>
 <script src="./enhance.js" defer></script>
 <script>
   document.documentElement.classList.add("js");
-  (function () {
+  (() => {
     var root = document.documentElement;
-    document.getElementById("themeToggle").addEventListener("click", function () {
+    document.getElementById("themeToggle").addEventListener("click", () => {
       var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
       root.setAttribute("data-theme", dark ? "light" : "dark");
     });

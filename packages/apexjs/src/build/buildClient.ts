@@ -1,7 +1,7 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { apex } from '@apex-stack/vite'
-import { type Plugin, build } from 'vite'
+import { build, type Plugin } from 'vite'
 import type { RouteDef } from '../routing/router.js'
 
 const VIRT = 'virtual:apex-client:'

@@ -1,5 +1,5 @@
 import { existsSync, readdirSync } from 'node:fs'
-import { type Server, createServer as createHttpServer } from 'node:http'
+import { createServer as createHttpServer, type Server } from 'node:http'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -13,7 +13,7 @@ import {
   setResponseStatus,
   toNodeListener,
 } from 'h3'
-import { type PluginOption, type ViteDevServer, createServer as createViteServer } from 'vite'
+import { createServer as createViteServer, type PluginOption, type ViteDevServer } from 'vite'
 import { createApiHandler, loadApiRoutes } from '../api/routes.js'
 import { loadComponents } from '../components/registry.js'
 import { resolveApexConfig } from '../config/resolve.js'

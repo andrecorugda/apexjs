@@ -20,7 +20,7 @@
     "release": "changeset publish"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "^2.5.2",
     "@changesets/cli": "^2.27.11",
     "@types/node": "^22",
     "tsup": "^8.3.5",

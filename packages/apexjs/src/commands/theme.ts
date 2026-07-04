@@ -1,11 +1,11 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import {
-  type ThemeInput,
   darkVariant,
   defaultThemeCss,
   defineTheme,
   renderThemeCss,
+  type ThemeInput,
 } from '@apex-stack/theme'
 import { defineCommand } from 'citty'
 import { banner, color } from '../ui.js'

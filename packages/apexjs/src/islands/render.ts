@@ -1,5 +1,5 @@
 import { type ComponentRegistry, renderIslands } from '@apex-stack/kit'
-import { type RuntimeConfig, clientConfigScript } from '../config/runtime.js'
+import { clientConfigScript, type RuntimeConfig } from '../config/runtime.js'
 import type { PageModule } from '../dev/renderPage.js'
 
 /**

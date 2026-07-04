@@ -14,11 +14,20 @@
   "bugs": {
     "url": "https://github.com/andrecorugda/apexjs/issues"
   },
-  "keywords": ["alpine", "alpinejs", "apex", "apexjs", "create"],
+  "keywords": [
+    "alpine",
+    "alpinejs",
+    "apex",
+    "apexjs",
+    "create"
+  ],
   "bin": {
     "create-apexjs": "./dist/index.js"
   },
-  "files": ["dist", "templates"],
+  "files": [
+    "dist",
+    "templates"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

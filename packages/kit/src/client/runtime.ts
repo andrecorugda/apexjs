@@ -72,6 +72,6 @@ function removeSsrClones(): void {
   for (let i = 0; i < clones.length; i++) clones[i]?.remove()
 }
 
+export type { ActionOptions, ActionState } from './action.js'
 // Form-action sugar (see ./action.ts).
 export { createAction } from './action.js'
-export type { ActionOptions, ActionState } from './action.js'

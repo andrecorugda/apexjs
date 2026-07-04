@@ -1,9 +1,9 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
-import { VERSION, banner, color } from '../ui.js'
+import { banner, color, VERSION } from '../ui.js'
 import { offerExtension } from '../vscode.js'
 
 const TEMPLATE_DIR = fileURLToPath(new URL('../templates/default', import.meta.url))
