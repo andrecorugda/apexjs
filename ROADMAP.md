@@ -77,11 +77,16 @@ dynamic + catch-all routes (`[param]` / `[...name]`), component slots, and the `
 extension. Typed API routes, server data loaders (`loader()`), and `defineResource` (REST+MCP) were
 already in place.
 
+**Recently shipped (on `develop`, unreleased):**
+- ✅ **Env vars / runtime config from `.env`** — `defineConfig({ runtimeConfig })` in `apex.config.ts`,
+  `.env`/`.env.<mode>`/`.env.local` loading with `APEX_`/`APEX_PUBLIC_` overrides, `useRuntimeConfig()`
+  + `env('KEY', fallback)`, `config` in loaders/routes (REST + MCP), public-only client seed. Wired
+  through dev, prod (`apex start`), and the static/server build. Tested + E2E-verified.
+
 **Remaining gaps** (Next/Nuxt have them, Apex doesn't yet):
 
 | Gap | Apex today | Priority |
 |---|---|---|
-| Env vars / runtime config from `.env` | 🟡 `process.env` only → **`defineConfig` + `useRuntimeConfig`** | **in progress (this session)** |
 | Client-side navigation (SPA nav / `<Link>`) | ❌ full page loads | P2 |
 | Loading / error boundaries (per-route) | 🟡 dev error page only | P2 |
 | Server actions / form-action sugar | 🟡 REST via `defineApexRoute`, no form sugar | P2 |
