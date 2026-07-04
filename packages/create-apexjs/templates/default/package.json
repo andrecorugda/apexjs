@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "apex dev",
     "dev:islands": "apex dev --islands",
-    "build": "apex build",
+    "build": "apex build --server",
+    "build:static": "apex build",
     "start": "apex start",
     "test": "vitest run",
     "test:watch": "vitest",

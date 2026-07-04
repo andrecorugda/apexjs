@@ -329,6 +329,101 @@ function renderComponentInstance(
   el.replaceWith(root)
 }
 
+/**
+ * Expand embedded components INSIDE a <template>'s content (x-for / x-if) into
+ * their resolved markup, in place, keeping bindings RAW. Alpine re-creates a
+ * <template>'s children per clone on the client — but it doesn't know the
+ * `<apex-component>` tag, so without this the component would hydrate unstyled.
+ * Expanding it here means every clone gets real markup. This is what lets Apex
+ * components work in loops/conditionals — the bit raw Alpine can't do.
+ */
+function expandTemplateComponents(
+  template: AnyEl,
+  document: AnyEl,
+  registry: ComponentRegistry,
+): void {
+  // linkedom serializes a <template> from an internal child list, NOT from
+  // `.content` — mutating `.content` reaches cloneNode but not the serialized
+  // output Alpine ships to the client. Writing back `innerHTML` syncs both.
+  template.innerHTML = expandComponentsHtml(template.innerHTML, document, registry)
+}
+
+/** Expand `<apex-component>` tags in an HTML string into structural markup. */
+function expandComponentsHtml(html: string, document: AnyEl, registry: ComponentRegistry): string {
+  const holder = document.createElement('div')
+  holder.innerHTML = html
+  expandComponentsInEl(holder, document, registry)
+  return holder.innerHTML
+}
+
+function expandComponentsInEl(
+  container: AnyEl,
+  document: AnyEl,
+  registry: ComponentRegistry,
+): void {
+  // Snapshot: replaceWith mutates the child list as we go.
+  for (const node of Array.from(container.childNodes ?? []) as AnyEl[]) {
+    if (node.nodeType !== ELEMENT_NODE) continue
+    const tag = String(node.tagName).toLowerCase()
+    if (tag === 'apex-component') {
+      const repl = buildStructuralComponent(node, document, registry)
+      node.replaceWith(repl)
+      expandComponentsInEl(repl, document, registry) // nested components in the expansion
+    } else if (tag === 'template') {
+      // A nested x-for/x-if — recurse via innerHTML so it too serializes expanded.
+      node.innerHTML = expandComponentsHtml(node.innerHTML, document, registry)
+    } else {
+      expandComponentsInEl(node, document, registry)
+    }
+  }
+}
+
+/**
+ * Build the structural (unresolved) expansion of one `<apex-component>`: the
+ * component's template with `<slot>` replaced by the usage's children, wrapped in
+ * a div whose `x-data` reconstructs props (static + loop-bound) and the
+ * component's own x-data at runtime — so Alpine resolves them per clone.
+ */
+function buildStructuralComponent(el: AnyEl, document: AnyEl, registry: ComponentRegistry): AnyEl {
+  const name = el.getAttribute('data-apex-name') as string
+  const entry = registry[name]
+  if (!entry) return document.createComment(` apex: unknown component "${name}" `)
+
+  const staticEntries: string[] = []
+  const dynEntries: string[] = []
+  for (const attr of Array.from(el.attributes) as AnyEl[]) {
+    const n = attr.name as string
+    if (n === 'data-apex-name' || n.startsWith('client:')) continue
+    if (n.startsWith(':')) dynEntries.push(`${JSON.stringify(n.slice(1))}: (${attr.value})`)
+    else if (n.startsWith('x-bind:'))
+      dynEntries.push(`${JSON.stringify(n.slice('x-bind:'.length))}: (${attr.value})`)
+    else staticEntries.push(`${JSON.stringify(n)}: ${JSON.stringify(attr.value)}`)
+  }
+  const propObj = `{ ${[...staticEntries, ...dynEntries].join(', ')} }`
+  const hasProps = staticEntries.length + dynEntries.length > 0
+  const rootXData = entry.rootXData?.trim()
+  let xData: string | null = null
+  if (rootXData) {
+    // Props are in scope (as bare names) for the component's x-data, then merged.
+    xData = `(function(p){with(p){return Object.assign({},p,(${rootXData}))}})(${propObj})`
+  } else if (hasProps) {
+    xData = propObj
+  }
+
+  const slotSource = String(el.innerHTML ?? '').trim()
+  const inner = rewriteComponentTags(entry.template, Object.keys(registry)).replace(
+    /<slot\b[^>]*>([\s\S]*?)<\/slot>/,
+    (_m: string, fallback: string) => slotSource || fallback,
+  )
+
+  const root = document.createElement('div')
+  root.setAttribute('data-apex-component', name)
+  root.setAttribute(entry.scopeId, '')
+  if (xData) root.setAttribute('x-data', xData)
+  root.innerHTML = inner
+  return root
+}
+
 function renderFor(
   template: AnyEl,
   expr: string,
@@ -337,6 +432,9 @@ function renderFor(
   document: AnyEl,
   registry: ComponentRegistry,
 ): void {
+  // Expand components in the template ONCE so both the SSR clones (walked below)
+  // and the kept <template> (cloned by Alpine on the client) get real markup.
+  expandTemplateComponents(template, document, registry)
   const parsed = parseForExpression(expr)
   if (!parsed) return
   const pairs = toIterablePairs(evaluate(parsed.items, layers))
@@ -368,6 +466,7 @@ function renderIf(
   document: AnyEl,
   registry: ComponentRegistry,
 ): void {
+  expandTemplateComponents(template, document, registry)
   if (!evaluate(expr, layers)) return
   const frag = template.content.cloneNode(true)
   const clones = Array.from(frag.childNodes) as AnyEl[]
