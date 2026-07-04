@@ -17,6 +17,7 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "typecheck": "pnpm -r --filter \"./packages/*\" typecheck",
+    "docs:uikit": "node scripts/build-uikit.mjs && pnpm dlx @tailwindcss/cli@4 -i docs/uikit.input.css -o docs/uikit.css --minify",
     "release": "changeset publish"
   },
   "devDependencies": {
