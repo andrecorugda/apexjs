@@ -71,3 +71,7 @@ function removeSsrClones(): void {
   const clones = document.querySelectorAll('[data-apex-ssr]')
   for (let i = 0; i < clones.length; i++) clones[i]?.remove()
 }
+
+// Form-action sugar (see ./action.ts).
+export { createAction } from './action.js'
+export type { ActionOptions, ActionState } from './action.js'

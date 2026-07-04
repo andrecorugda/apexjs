@@ -174,7 +174,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
   let body = html
   let layoutCss = ''
   const seen = new Set<string>()
-  let next: string | false | undefined = layoutName
+  let next: string | false | null | undefined = layoutName
   while (typeof next === 'string' && available.includes(next) && !seen.has(next)) {
     seen.add(next)
     const layoutMod = await opts.loadModule(`/layouts/${next}.alpine`)
