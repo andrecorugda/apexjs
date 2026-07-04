@@ -1,16 +1,36 @@
-<title>Apex JS — HTML-first apps, AI-native APIs</title>
+<title>UI Kit — Apex JS components</title>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="description" content="Apex JS is the full-stack meta-framework for Alpine.js: file routing, SSR, islands, and every typed API route is also an MCP tool your AI can call." />
+<meta name="description" content="Browse Apex JS themeable components, tick the ones you want, and copy a single apex add command to scaffold them all." />
 <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
-<link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
-<meta property="og:title" content="Apex JS — HTML-first apps, AI-native APIs" />
-<meta property="og:description" content="The meta-framework for Alpine.js: file routing, SSR, islands, and every typed API route is also an MCP tool." />
-<meta property="og:image" content="https://apexjs.site/assets/og-image.png" />
-<meta property="og:url" content="https://apexjs.site/" />
-<meta property="og:type" content="website" />
-<meta name="twitter:card" content="summary_large_image" />
 <link rel="stylesheet" href="./style.css" />
+<style>
+  .uikit-hero { padding-block: clamp(2rem,6vh,3.5rem) 1rem; }
+  .uikit-hero h1 { font-size: clamp(1.8rem,4vw,2.6rem); letter-spacing:-.02em; font-weight:800; margin:0; }
+  .uikit-hero p { color: var(--muted); margin:.7rem 0 0; max-width:60ch; }
+  .uikit-toolbar { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin:1.4rem 0 .5rem; }
+  .uikit-toolbar button { font:inherit; font-size:.85rem; padding:.4rem .8rem; border:1px solid var(--line); border-radius:var(--radius-btn); background:var(--surface); color:var(--text); cursor:pointer; }
+  .uikit-toolbar button:hover { border-color:var(--glacier); }
+  .uikit-count { color:var(--muted); font-size:.85rem; margin-left:auto; }
+  .uikit-cat { margin-top:2rem; }
+  .uikit-cat-head { display:flex; align-items:baseline; gap:1rem; border-bottom:1px solid var(--line); padding-bottom:.4rem; }
+  .uikit-cat-head h2 { font-size:1.05rem; margin:0; letter-spacing:-.01em; }
+  .uikit-selcat { margin-left:auto; font:inherit; font-size:.78rem; color:var(--muted); background:none; border:0; cursor:pointer; }
+  .uikit-selcat:hover { color:var(--glacier); }
+  .uikit-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(15rem,1fr)); gap:.7rem; margin-top:.9rem; }
+  .uikit-card { display:flex; flex-direction:column; gap:.25rem; position:relative; padding:.85rem .9rem .85rem 2.1rem; border:1px solid var(--line); border-radius:var(--radius-card); background:var(--surface); cursor:pointer; transition:border-color .15s,background .15s; }
+  .uikit-card:hover { border-color:var(--glacier); }
+  .uikit-card:has(.uikit-cb:checked) { border-color:var(--glacier); background:var(--glacier-soft); }
+  .uikit-cb { position:absolute; left:.8rem; top:.95rem; width:1rem; height:1rem; accent-color:var(--glacier); }
+  .uikit-name { font-weight:650; font-size:.92rem; }
+  .uikit-name code { font-family:var(--mono); font-size:.78em; color:var(--muted); font-weight:400; }
+  .uikit-desc { color:var(--muted); font-size:.82rem; }
+  .uikit-bar { position:sticky; bottom:0; z-index:30; margin-top:2.5rem; background:color-mix(in srgb,var(--ground) 88%,transparent); backdrop-filter:blur(10px); border-top:1px solid var(--line); }
+  .uikit-bar-in { display:flex; flex-wrap:wrap; align-items:center; gap:.7rem; max-width:var(--maxw); margin:0 auto; padding:.9rem var(--pad); }
+  .uikit-cmd { flex:1; min-width:14rem; font-family:var(--mono); font-size:.85rem; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-btn); padding:.6rem .8rem; overflow-x:auto; white-space:nowrap; color:var(--text); }
+  .uikit-copy { font:inherit; font-weight:650; font-size:.85rem; padding:.6rem 1.1rem; border:none; border-radius:var(--radius-btn); background:linear-gradient(96deg,var(--glacier-deep),var(--alpenglow)); color:#05070f; cursor:pointer; }
+  .uikit-copy:disabled { opacity:.5; cursor:not-allowed; }
+</style>
 
 <a class="skip-link" href="#main">Skip to content</a>
 
@@ -21,7 +41,7 @@
       Apex&nbsp;JS
     </a>
     <nav class="site-nav" aria-label="Documentation">
-      <a href="./index.html" aria-current="page">Home</a>
+      <a href="./index.html" >Home</a>
       <a href="./getting-started.html">Start</a>
       <a href="./ui.html">UI Kit</a>
       <a href="./components.html">Components</a>
@@ -36,435 +56,236 @@
   </div>
 </header>
 
-<main id="main">
-  <section class="home-hero">
-    <canvas id="hero-net" class="apex-net" aria-hidden="true"></canvas>
-    <div class="wrap">
-      <div class="hero-copy">
-        <h1>HTML-first apps.<br /><span class="ai">AI-native</span> APIs.</h1>
-        <p class="lede">
-          Apex is to Alpine what Next.js is to React — file routing, server rendering, and islands.
-          Then it does what <strong>no other framework does</strong>: every typed API route is also
-          an MCP tool your AI can call. No extra library.
-        </p>
-        <div class="cta-row">
-          <span class="terminal"><span class="prompt">$</span> npm i -g @apex-stack/core</span>
-          <a class="btn" href="./getting-started.html">Get started →</a>
-          <a class="btn ghost" href="https://github.com/andrecorugda/apexjs">GitHub</a>
-        </div>
-      </div>
-    </div>
-  </section>
+<main id="main" class="wrap">
+  <div class="uikit-hero">
+    <h1>UI Kit</h1>
+    <p>Tick the components you want, then copy one <code>apex add</code> command to drop them all into your project. They're themeable — restyle everything with <code>apex theme</code>. 36 components.</p>
+  </div>
 
-  <section class="section" aria-label="Project showcase" id="showcase">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">The anatomy of an Apex app</p>
-        <h2>A real project, file by file.</h2>
-        <p>Click through the tree — every file is the actual code Apex scaffolds. Folders nest with proper indent guides, so <code>pages/blog/[slug]</code> sits two levels deep, not flat.</p>
-      </div>
+  <div class="uikit-toolbar">
+    <button type="button" id="selAll">Select all</button>
+    <button type="button" id="clearAll">Clear</button>
+    <span class="uikit-count" id="count">0 selected</span>
+  </div>
 
-      <div class="ax-ide">
-        <div class="ax-titlebar">
-          <span class="ax-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="ax-tbtitle"><b>my-app</b> — Apex JS</span>
-          <span class="ax-tbtag">workspace</span>
-        </div>
-        <div class="ax-body">
-          <div class="ax-explorer">
-            <div class="ax-explabel">Explorer</div>
-            <ul class="ax-tree" id="axTree">
-              <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>my-app</button>
-                <ul>
-                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>pages</button>
-                    <ul>
-                      <li><button class="ax-row file" data-file="pages/index.alpine"><span class="ax-dot alpine"></span>index.alpine</button></li>
-                      <li><button class="ax-row file" data-file="pages/about.alpine"><span class="ax-dot alpine"></span>about.alpine</button></li>
-                      <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>blog</button>
-                        <ul>
-                          <li><button class="ax-row file" data-file="pages/blog/index.alpine"><span class="ax-dot alpine"></span>index.alpine</button></li>
-                          <li><button class="ax-row file" data-file="pages/blog/[slug].alpine"><span class="ax-dot alpine"></span>[slug].alpine</button></li>
-                        </ul>
-                      </li>
-                    </ul>
-                  </li>
-                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>components</button>
-                    <ul><li><button class="ax-row file" data-file="components/Counter.alpine"><span class="ax-dot alpine"></span>Counter.alpine</button></li></ul>
-                  </li>
-                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>layouts</button>
-                    <ul><li><button class="ax-row file" data-file="layouts/default.alpine"><span class="ax-dot alpine"></span>default.alpine</button></li></ul>
-                  </li>
-                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>server</button>
-                    <ul><li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>api</button>
-                      <ul><li><button class="ax-row file" data-file="server/api/posts.ts"><span class="ax-dot ts"></span>posts.ts</button></li></ul>
-                    </li></ul>
-                  </li>
-                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>services</button>
-                    <ul><li><button class="ax-row file" data-file="services/PostService.ts"><span class="ax-dot ts"></span>PostService.ts</button></li></ul>
-                  </li>
-                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>stores</button>
-                    <ul><li><button class="ax-row file" data-file="stores/ui.ts"><span class="ax-dot ts"></span>ui.ts</button></li></ul>
-                  </li>
-                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>composables</button>
-                    <ul><li><button class="ax-row file" data-file="composables/useToggle.ts"><span class="ax-dot ts"></span>useToggle.ts</button></li></ul>
-                  </li>
-                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>shared</button>
-                    <ul><li><button class="ax-row file" data-file="shared/types.ts"><span class="ax-dot ts"></span>types.ts</button></li></ul>
-                  </li>
-                  <li><button class="ax-row file" data-file="apex.config.ts"><span class="ax-dot cfg"></span>apex.config.ts</button></li>
-                  <li><button class="ax-row file" data-file="package.json"><span class="ax-dot cfg"></span>package.json</button></li>
-                </ul>
-              </li>
-            </ul>
-          </div>
-
-          <div class="ax-editor">
-            <div class="ax-tabs">
-              <span class="ax-tab"><span class="ax-dot alpine" id="axTabDot"></span><span id="axTabName">index.alpine</span> <span class="ax-tabpath" id="axTabPath">— pages/</span></span>
-              <span class="ax-lang" id="axLang">ALPINE SFC</span>
-            </div>
-            <div class="ax-scroll">
-              <div class="ax-coderow">
-                <div class="ax-gutter" id="axGutter">1</div>
-                <pre class="ax-code"><code id="axCode"></code></pre>
-              </div>
-            </div>
-
-            <div class="ax-terminal">
-              <div class="ax-termbar">Terminal <span class="ax-live"><i></i> dev server</span></div>
-              <pre class="ax-term"><span class="prompt">PS </span><span class="path">C:\dev\my-app</span><span class="prompt">&gt; </span><span class="inp">apex dev</span>
-<span class="banner">
-   █████╗ ██████╗ ███████╗██╗  ██╗
-  ██╔══██╗██╔══██╗██╔════╝╚██╗██╔╝
-  ███████║██████╔╝█████╗   ╚███╔╝
-  ██╔══██║██╔═══╝ ██╔══╝   ██╔██╗
-  ██║  ██║██║     ███████╗██╔╝ ██╗
-  ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝</span>
-  <span class="ver">v0.1.20</span>  <span class="sub">·  The full-stack, AI-native meta-framework for Alpine.js</span>
-  <span class="ok">✓</span> Dev server ready
-
-  <span class="arw">➜</span>  <span class="lbl">Local</span>   <span class="url">http://localhost:3000/</span>
-  <span class="arw">➜</span>  <span class="lbl">MCP</span>     <span class="url">http://localhost:3000/mcp</span><span class="ax-cursor"></span></pre>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="ax-panel">
-        <div class="ax-panelh"><b>my-app</b> · /blog <span class="ax-reqlog" id="axReqlog">GET /api/posts → 200</span></div>
-        <div class="ax-demoapp">
-          <div class="ax-demomain">
-            <input class="ax-filter" id="axFilter" type="text" placeholder="Filter posts…" aria-label="Filter posts" />
-            <div class="ax-posts" id="axPosts"></div>
-          </div>
-          <div class="ax-demoside">
-            <h4>Publish a post</h4>
-            <p>The same code, running on sample data — no database. Posts a JSON body and prepends the result.</p>
-            <form id="axAddForm">
-              <span class="ax-field"><label for="axTitle">Title</label><input id="axTitle" required placeholder="What's on your mind?" /></span>
-              <span class="ax-field"><label for="axAuthor">Author</label><input id="axAuthor" required placeholder="Your name" /></span>
-              <button class="btn" type="submit" style="width:100%;justify-content:center">Publish post</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-  <section class="section" aria-label="Features">
-    <div class="wrap">
-      <div class="section-head">
-        <h2>Everything you need, in one framework.</h2>
-        <p>File routing, server rendering, islands, components, a typed data layer, and AI-native APIs — the essentials, out of the box.</p>
-      </div>
-
-      <div class="carousel" data-carousel>
-        <button type="button" class="carousel-nav prev" data-carousel-prev aria-label="Previous feature">&#8249;</button>
-        <div class="carousel-track" data-carousel-track tabindex="0" aria-label="Feature slides, scrollable">
-
-          <article class="feature-slide">
-            <span class="fs-num">01</span>
-            <h3>Server rendering</h3>
-            <p>Every page renders to real HTML on the server through a typed <code>loader()</code> — fast first paint, real SEO, no client round-trip.</p>
-            <pre><code><span class="k">export async function</span> <span class="f">loader</span>() {
-  <span class="k">return</span> { posts: <span class="k">await</span> db.select().from(schema.posts) }
-}</code></pre>
-          </article>
-
-          <article class="feature-slide">
-            <span class="fs-num">02</span>
-            <h3>Islands, on demand</h3>
-            <p>Ship almost no JavaScript. Hydrate only what's interactive, exactly when you choose.</p>
-            <pre><code>&lt;<span class="t">div</span> <span class="a">x-data</span>=<span class="s">"counter()"</span> <span class="a">client:visible</span>&gt;…&lt;/<span class="t">div</span>&gt;
-<span class="c">// client:load | idle | visible | none</span></code></pre>
-          </article>
-
-          <article class="feature-slide">
-            <span class="fs-num">03</span>
-            <h3>Components</h3>
-            <p>Single-file <code>.alpine</code> components with props and scoped styles — reused across pages.</p>
-            <pre><code>&lt;<span class="t">Counter</span> <span class="a">start</span>=<span class="s">"5"</span> <span class="a">:label</span>=<span class="s">"'Likes'"</span> /&gt;</code></pre>
-          </article>
-
-          <article class="feature-slide">
-            <span class="fs-num">04</span>
-            <h3>File-based routing</h3>
-            <p>Your <code>pages/</code> folder is your route map — nested folders and dynamic segments included.</p>
-            <pre><code>pages/index.alpine        → <span class="s">/</span>
-pages/blog/[slug].alpine  → <span class="s">/blog/:slug</span></code></pre>
-          </article>
-
-          <article class="feature-slide">
-            <span class="fs-num">05</span>
-            <h3>Typed data layer</h3>
-            <p>One <code>defineResource</code> gives you CRUD over Drizzle — SQLite, Postgres, Turso or Neon.</p>
-            <pre><code><span class="k">export default</span> <span class="f">defineResource</span>(<span class="s">'posts'</span>, {
-  db, table: schema.posts,
-  insert: { title: <span class="f">z</span>.string() },
-})</code></pre>
-          </article>
-
-          <article class="feature-slide accent">
-            <span class="fs-num">06</span>
-            <h3>AI-native APIs</h3>
-            <p>The part no one else has: every typed route is <em>also</em> a live MCP tool your AI can call — no extra library.</p>
-            <pre><code><span class="k">export default</span> <span class="f">defineApexRoute</span>({
-  input: { a: <span class="f">z</span>.number(), b: <span class="f">z</span>.number() },
-  <span class="a">mcp</span>: <span class="k">true</span>,   <span class="c">// → REST endpoint + MCP tool</span>
-  handler: ({ input }) =&gt; ({ sum: input.a + input.b }),
-})</code></pre>
-          </article>
-
-        </div>
-        <button type="button" class="carousel-nav next" data-carousel-next aria-label="Next feature">&#8250;</button>
-      </div>
-      <div class="carousel-dots" data-carousel-dots></div>
-
-      <p class="code-label">server/api/features.ts — the whole backend of the demo</p>
-      <pre><code><span class="c">// One definition → REST endpoints AND MCP tools</span>
-<span class="c">// (features_list / get / create / update / delete). The UI</span>
-<span class="c">// below and an AI assistant call the SAME handlers.</span>
-<span class="k">export default</span> defineResource(<span class="s">'features'</span>, {
-  db,
-  table: schema.features,
-  insert: { name: z.string(), tag: z.string().optional() },
-})</code></pre>
-
-      <p class="code-label">pages/index.alpine — the list is rendered from the DB on the server</p>
-      <pre><code>&lt;<span class="t">script</span> <span class="k">server</span> <span class="k">lang</span>=<span class="s">"ts"</span>&gt;
-  <span class="k">import</span> { db, schema } <span class="k">from</span> <span class="s">'../db/index.js'</span>
-  <span class="k">export async function</span> loader() {
-    <span class="k">const</span> features = <span class="k">await</span> db.select().from(schema.features)
-    <span class="k">return</span> { features }   <span class="c">// → Alpine x-data, in the first HTML</span>
-  }
-&lt;/<span class="t">script</span>&gt;</code></pre>
-
-      <p class="muted">
-        The browser's "Add" and the "Simulate an AI" button both <code>POST /api/features</code> — the
-        exact endpoint exposed as the MCP tool <code>features_create</code>. One
-        <code>defineResource</code>, and the UI and an assistant operate on the same rows.
-        <a href="./data.html">See the Data guide →</a>
-      </p>
-
-      <div class="pano" data-pano aria-roledescription="carousel" aria-label="What Apex gives you">
-        <canvas class="apex-net" aria-hidden="true"></canvas>
-        <div class="pano-viewport">
-          <div class="pano-track" data-pano-track>
-            <article class="pano-slide">
-              <p class="pano-k">Server-first</p>
-              <h3>Real HTML on first paint</h3>
-              <p>Every page renders on the server from a typed <code>loader()</code> — fast, crawlable, no client round-trip.</p>
-            </article>
-            <article class="pano-slide">
-              <p class="pano-k">Islands</p>
-              <h3>Ship almost no JavaScript</h3>
-              <p>Static by default; regions hydrate on <code>client:load | idle | visible</code>. A page with no islands ships zero framework JS.</p>
-            </article>
-            <article class="pano-slide">
-              <p class="pano-k">Data</p>
-              <h3>One definition, two surfaces</h3>
-              <p><code>defineResource</code> turns a table into REST endpoints <em>and</em> MCP tools — one database, no drift.</p>
-            </article>
-            <article class="pano-slide">
-              <p class="pano-k">Reusable logic</p>
-              <h3>Composables &amp; shared stores</h3>
-              <p>Import <code>useX()</code> into <code>x-data</code>, and share reactive state across pages, components and islands with <code>$store</code>.</p>
-            </article>
-            <article class="pano-slide accent">
-              <p class="pano-k">AI-native</p>
-              <h3>Every route is an MCP tool</h3>
-              <p>The part no one else has: expose a typed route and an assistant can call it — no extra library.</p>
-            </article>
-          </div>
-        </div>
-        <div class="pano-dots" data-pano-dots aria-hidden="true"></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">Three pillars</p>
-        <h2>Light where it counts. Full-stack where you need it. AI-native by default.</h2>
-      </div>
-
-      <div class="pillars">
-        <article class="pillar">
-          <span class="tag">Light</span>
-          <h3>Ship almost no JavaScript</h3>
-          <p>Static-first pages. Islands hydrate only when they need to — many pages ship zero framework JS until you scroll.</p>
-          <pre><code><span class="c">&lt;!-- wakes on scroll, not on load --&gt;</span>
-&lt;<span class="t">section</span> <span class="k">x-data</span>=<span class="s">"{ n: 0 }"</span> <span class="k">client:visible</span>&gt;
-  &lt;<span class="t">button</span> <span class="k">@click</span>=<span class="s">"n++"</span> <span class="k">x-text</span>=<span class="s">"n"</span>&gt;&lt;/<span class="t">button</span>&gt;
-&lt;/<span class="t">section</span>&gt;</code></pre>
-        </article>
-
-        <article class="pillar">
-          <span class="tag">Full-stack</span>
-          <h3>Routing, SSR, typed routes</h3>
-          <p>File-based routing, server-side rendering, and a component you already know how to write. On Node — no PHP required.</p>
-          <pre><code><span class="c">// pages/blog/[slug].alpine</span>
-&lt;<span class="t">script</span> <span class="k">server</span>&gt;
-  <span class="k">export function</span> loader({ params }) {
-    <span class="k">return</span> { post: getPost(params.slug) }
-  }
-&lt;/<span class="t">script</span>&gt;</code></pre>
-        </article>
-
-        <article class="pillar ai">
-          <span class="tag">AI-native</span>
-          <h3>Your API is a tool</h3>
-          <p>Write a route once. It's a REST endpoint <em>and</em> an MCP tool. Point Claude at <code>/mcp</code> and it can call your app.</p>
-          <pre><code><span class="c">// server/api/add.ts</span>
-<span class="k">export default</span> defineApexRoute({
-  description: <span class="s">'Add two numbers'</span>,
-  input: { a: z.number(), b: z.number() },
-  <span class="k">mcp</span>: <span class="k">true</span>,
-  handler: ({ input }) =&gt; ({ sum: input.a + input.b }),
-})</code></pre>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow warm">The unfair advantage</p>
-        <h2>One definition. Two surfaces.</h2>
-        <p>
-          Because every route carries a strict, typed schema, exposing it to an AI is automatic.
-          The framework carries the MCP transport — you install nothing extra.
-        </p>
-      </div>
-      <div class="flow">
-        <div class="node">
-          <div class="h">defineApexRoute</div>
-          <code>server/api/add.ts</code>
-        </div>
-        <div class="arm">↓ generates ↓</div>
-        <div class="node rest">
-          <div class="h">REST endpoint</div>
-          <code>POST /api/add → { "sum": 5 }</code>
-        </div>
-        <div class="node mcp">
-          <div class="h">MCP tool</div>
-          <code>tools/call add → { "sum": 5 }</code>
-        </div>
-      </div>
-      <p><a href="./ai-native.html">Read the AI-native guide →</a></p>
-    </div>
-  </section>
-
-
-  <section class="section">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">Quickstart</p>
-        <h2>Scaffold and run in under a minute.</h2>
-      </div>
-      <pre><code><span class="c"># install the CLI once, then use `apex` everywhere</span>
-npm i -g @apex-stack/core
-apex new my-app        <span class="c"># scaffold + install deps + git init</span>
-cd my-app
-apex dev               <span class="c"># http://localhost:3000</span>
-apex dev --islands     <span class="c"># static-first islands mode</span></code></pre>
-      <p class="muted">
-        <code>apex new</code> installs everything and sets up git for you; the app ships a server-rendered
-        page (<code>pages/index.alpine</code>) and an API route that is also an MCP tool
-        (<code>server/api/hello.ts</code>). Don't want a global install? Run
-        <code>npm create apexjs@latest my-app</code> and use <code>npm run dev</code> — same result, local CLI.
-      </p>
-
-      <div class="card-grid cols-3">
-        <a class="card" href="./getting-started.html">
-          <span class="k">Start here</span>
-          <h3>Getting started</h3>
-          <p>Install, project structure, and the dev → build → deploy lifecycle.</p>
-        </a>
-        <a class="card" href="./components.html">
-          <span class="k">Author</span>
-          <h3>Components</h3>
-          <p>The <code>.alpine</code> single-file format and component embedding with props.</p>
-        </a>
-        <a class="card" href="./ai-native.html">
-          <span class="k">Signature</span>
-          <h3>AI-native APIs</h3>
-          <p>REST + MCP from one <code>defineApexRoute</code>, and the <code>/mcp</code> endpoint.</p>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">Early, but real</p>
-        <h2>Not a manifesto — a working framework.</h2>
-      </div>
-      <div class="stats">
-        <div class="stat"><div class="n">3</div><div class="l">Pillars, all shipping</div></div>
-        <div class="stat"><div class="n">76</div><div class="l">Tests passing</div></div>
-        <div class="stat"><div class="n">~15KB</div><div class="l">Alpine — one runtime</div></div>
-        <div class="stat"><div class="n">MIT</div><div class="l">Built in the open</div></div>
-      </div>
-      <div class="callout warm">
-        <span class="h">Status · v0.1.4</span>
-        <p>
-          Apex JS is on npm under <code>@apex-stack/*</code>. SSR + hydration, islands, file routing,
-          components, AI-native APIs, a multi-database data layer, and a full production build (static
-          or Node server) are all proven and covered by tests. Jobs/queues and Nitro deploy presets
-          are next — see the <a href="https://github.com/andrecorugda/apexjs/blob/main/ROADMAP.md">roadmap</a>.
-        </p>
-      </div>
-    </div>
-  </section>
+  
+      <section class="uikit-cat">
+        <div class="uikit-cat-head"><h2>Actions</h2><button type="button" class="uikit-selcat" data-cat="Actions">Select all</button></div>
+        <div class="uikit-grid">
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="button" data-name="Button" />
+          <span class="uikit-name">Button <code>&lt;Button/&gt;</code></span>
+          <span class="uikit-desc">Primary button; edit classes for secondary/outline/ghost.</span>
+        </label></div>
+      </section>
+      <section class="uikit-cat">
+        <div class="uikit-cat-head"><h2>Forms</h2><button type="button" class="uikit-selcat" data-cat="Forms">Select all</button></div>
+        <div class="uikit-grid">
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="text-input" data-name="TextInput" />
+          <span class="uikit-name">TextInput <code>&lt;TextInput/&gt;</code></span>
+          <span class="uikit-desc">Labeled text input with focus/disabled states.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="textarea" data-name="Textarea" />
+          <span class="uikit-name">Textarea <code>&lt;Textarea/&gt;</code></span>
+          <span class="uikit-desc">Labeled textarea with focus/disabled states.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="select" data-name="Select" />
+          <span class="uikit-name">Select <code>&lt;Select/&gt;</code></span>
+          <span class="uikit-desc">Native select with floating label + chevron.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="checkbox" data-name="Checkbox" />
+          <span class="uikit-name">Checkbox <code>&lt;Checkbox/&gt;</code></span>
+          <span class="uikit-desc">Checkbox with label and animated check.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="radio" data-name="Radio" />
+          <span class="uikit-name">Radio <code>&lt;Radio/&gt;</code></span>
+          <span class="uikit-desc">Radio button with slotted label.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="toggle" data-name="Toggle" />
+          <span class="uikit-name">Toggle <code>&lt;Toggle/&gt;</code></span>
+          <span class="uikit-desc">Accessible on/off switch with animated knob.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="range" data-name="Range" />
+          <span class="uikit-name">Range <code>&lt;Range/&gt;</code></span>
+          <span class="uikit-desc">Styled range slider with themed thumb.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="file-input" data-name="FileInput" />
+          <span class="uikit-name">FileInput <code>&lt;FileInput/&gt;</code></span>
+          <span class="uikit-desc">Native file upload with styled button + label.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="rating" data-name="Rating" />
+          <span class="uikit-name">Rating <code>&lt;Rating/&gt;</code></span>
+          <span class="uikit-desc">Interactive 5-star radio rating.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="combobox" data-name="Combobox" />
+          <span class="uikit-name">Combobox <code>&lt;Combobox/&gt;</code></span>
+          <span class="uikit-desc">Searchable single-select with keyboard nav.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="counter" data-name="Counter" />
+          <span class="uikit-name">Counter <code>&lt;Counter/&gt;</code></span>
+          <span class="uikit-desc">Numeric stepper with min/max clamping.</span>
+        </label></div>
+      </section>
+      <section class="uikit-cat">
+        <div class="uikit-cat-head"><h2>Overlays</h2><button type="button" class="uikit-selcat" data-cat="Overlays">Select all</button></div>
+        <div class="uikit-grid">
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="modal" data-name="Modal" />
+          <span class="uikit-name">Modal <code>&lt;Modal/&gt;</code></span>
+          <span class="uikit-desc">Dialog with focus-trap, esc/click-outside close.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="dropdown" data-name="Dropdown" />
+          <span class="uikit-name">Dropdown <code>&lt;Dropdown/&gt;</code></span>
+          <span class="uikit-desc">Menu with keyboard nav + click-outside close.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="accordion" data-name="Accordion" />
+          <span class="uikit-name">Accordion <code>&lt;Accordion/&gt;</code></span>
+          <span class="uikit-desc">Collapsible item with title + body slots.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="tooltip" data-name="Tooltip" />
+          <span class="uikit-name">Tooltip <code>&lt;Tooltip/&gt;</code></span>
+          <span class="uikit-desc">Hover/focus tooltip; content via slot.</span>
+        </label></div>
+      </section>
+      <section class="uikit-cat">
+        <div class="uikit-cat-head"><h2>Navigation</h2><button type="button" class="uikit-selcat" data-cat="Navigation">Select all</button></div>
+        <div class="uikit-grid">
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="navbar" data-name="Navbar" />
+          <span class="uikit-name">Navbar <code>&lt;Navbar/&gt;</code></span>
+          <span class="uikit-desc">Responsive top nav with mobile hamburger menu.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="sidebar" data-name="Sidebar" />
+          <span class="uikit-name">Sidebar <code>&lt;Sidebar/&gt;</code></span>
+          <span class="uikit-desc">Responsive off-canvas sidebar with nav links.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="breadcrumbs" data-name="Breadcrumbs" />
+          <span class="uikit-name">Breadcrumbs <code>&lt;Breadcrumbs/&gt;</code></span>
+          <span class="uikit-desc">Chevron-separated breadcrumb navigation.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="pagination" data-name="Pagination" />
+          <span class="uikit-name">Pagination <code>&lt;Pagination/&gt;</code></span>
+          <span class="uikit-desc">Numbered pagination with prev/next.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="steps" data-name="Steps" />
+          <span class="uikit-name">Steps <code>&lt;Steps/&gt;</code></span>
+          <span class="uikit-desc">Horizontal step progress indicator.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="tabs" data-name="Tabs" />
+          <span class="uikit-name">Tabs <code>&lt;Tabs/&gt;</code></span>
+          <span class="uikit-desc">Tablist with arrow-key focus + panel slots.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="link" data-name="Link" />
+          <span class="uikit-name">Link <code>&lt;Link/&gt;</code></span>
+          <span class="uikit-desc">Styled inline anchor with slotted label.</span>
+        </label></div>
+      </section>
+      <section class="uikit-cat">
+        <div class="uikit-cat-head"><h2>Feedback</h2><button type="button" class="uikit-selcat" data-cat="Feedback">Select all</button></div>
+        <div class="uikit-grid">
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="alert" data-name="Alert" />
+          <span class="uikit-name">Alert <code>&lt;Alert/&gt;</code></span>
+          <span class="uikit-desc">Dismissible info alert with icon, message slot, and close button.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="banner" data-name="Banner" />
+          <span class="uikit-name">Banner <code>&lt;Banner/&gt;</code></span>
+          <span class="uikit-desc">Full-width dismissible top banner with a text slot.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="toast" data-name="Toast" />
+          <span class="uikit-name">Toast <code>&lt;Toast/&gt;</code></span>
+          <span class="uikit-desc">Stacking toast notifications with auto-dismiss.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="badge" data-name="Badge" />
+          <span class="uikit-name">Badge <code>&lt;Badge/&gt;</code></span>
+          <span class="uikit-desc">A small status/label pill.</span>
+        </label></div>
+      </section>
+      <section class="uikit-cat">
+        <div class="uikit-cat-head"><h2>Loading</h2><button type="button" class="uikit-selcat" data-cat="Loading">Select all</button></div>
+        <div class="uikit-grid">
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="spinner" data-name="Spinner" />
+          <span class="uikit-name">Spinner <code>&lt;Spinner/&gt;</code></span>
+          <span class="uikit-desc">SVG loading spinner (motion-safe).</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="progress" data-name="Progress" />
+          <span class="uikit-name">Progress <code>&lt;Progress/&gt;</code></span>
+          <span class="uikit-desc">Progress bar with ARIA value bindings.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="skeleton" data-name="Skeleton" />
+          <span class="uikit-name">Skeleton <code>&lt;Skeleton/&gt;</code></span>
+          <span class="uikit-desc">Pulsing placeholder skeleton loader.</span>
+        </label></div>
+      </section>
+      <section class="uikit-cat">
+        <div class="uikit-cat-head"><h2>Data &amp; media</h2><button type="button" class="uikit-selcat" data-cat="Data &amp; media">Select all</button></div>
+        <div class="uikit-grid">
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="table" data-name="Table" />
+          <span class="uikit-name">Table <code>&lt;Table/&gt;</code></span>
+          <span class="uikit-desc">Bordered data table with header + rows.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="card" data-name="Card" />
+          <span class="uikit-name">Card <code>&lt;Card/&gt;</code></span>
+          <span class="uikit-desc">A surface container that inherits the theme.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="avatar" data-name="Avatar" />
+          <span class="uikit-name">Avatar <code>&lt;Avatar/&gt;</code></span>
+          <span class="uikit-desc">Circular initials avatar; content via slot.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="kbd" data-name="Kbd" />
+          <span class="uikit-name">Kbd <code>&lt;Kbd/&gt;</code></span>
+          <span class="uikit-desc">Keyboard key indicator; key label via slot.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="chat-bubble" data-name="ChatBubble" />
+          <span class="uikit-name">ChatBubble <code>&lt;ChatBubble/&gt;</code></span>
+          <span class="uikit-desc">Received/sent chat message bubbles; text via slot.</span>
+        </label>
+        <label class="uikit-card">
+          <input type="checkbox" class="uikit-cb" value="carousel" data-name="Carousel" />
+          <span class="uikit-name">Carousel <code>&lt;Carousel/&gt;</code></span>
+          <span class="uikit-desc">Slide carousel with prev/next + dot indicators.</span>
+        </label></div>
+      </section>
 </main>
 
-<footer class="site-footer">
-  <div class="wrap">
-    <div class="cols">
-      <div class="brand-col">
-        <a class="brand" href="./index.html">
-          <img src="./assets/apex-mark.svg" alt="Apex JS" class="brand-mark" width="22" height="22" />
-          Apex&nbsp;JS
-        </a>
-        <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
-      </div>
-      <div class="links">
-        <a href="https://github.com/andrecorugda/apexjs">GitHub</a>
-        <a href="./getting-started.html">Get started</a>
-        <a href="./ai-native.html">AI-native</a>
-        <a href="./cli.html">CLI</a>
-      </div>
-    </div>
-    <p class="foot-note">Apex&nbsp;JS · MIT · built by Andre Corugda · npm create apexjs@latest</p>
+<div class="uikit-bar">
+  <div class="uikit-bar-in">
+    <code class="uikit-cmd" id="cmd">apex add …</code>
+    <button class="uikit-copy" id="copy" disabled>Copy</button>
   </div>
-</footer>
+</div>
 
-<script src="./enhance.js" defer></script>
 <script>
   document.documentElement.classList.add("js");
   (function () {
@@ -1054,5 +875,34 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
       go(i + (down ? 1 : -1));
       restart();
     }, { passive: true });
+  })();
+</script>
+<script>
+  (function(){
+    var cbs = Array.prototype.slice.call(document.querySelectorAll('.uikit-cb'));
+    var cmd = document.getElementById('cmd'), copy = document.getElementById('copy'), count = document.getElementById('count');
+    function selected(){ return cbs.filter(function(c){return c.checked}).map(function(c){return c.value}); }
+    function render(){
+      var s = selected();
+      count.textContent = s.length + ' selected';
+      if (!s.length){ cmd.textContent = 'apex add …'; copy.disabled = true; return; }
+      cmd.textContent = s.length === cbs.length ? 'apex add --all' : 'apex add ' + s.join(' ');
+      copy.disabled = false;
+    }
+    cbs.forEach(function(c){ c.addEventListener('change', render); });
+    document.getElementById('selAll').addEventListener('click', function(){ cbs.forEach(function(c){c.checked=true}); render(); });
+    document.getElementById('clearAll').addEventListener('click', function(){ cbs.forEach(function(c){c.checked=false}); render(); });
+    document.querySelectorAll('.uikit-selcat').forEach(function(b){ b.addEventListener('click', function(e){
+      e.preventDefault();
+      var cat = b.getAttribute('data-cat');
+      b.closest('.uikit-cat').querySelectorAll('.uikit-cb').forEach(function(c){ c.checked = true; });
+      render();
+    }); });
+    copy.addEventListener('click', function(){
+      var t = cmd.textContent;
+      if (navigator.clipboard) navigator.clipboard.writeText(t);
+      var o = copy.textContent; copy.textContent = 'Copied ✓'; setTimeout(function(){ copy.textContent = o; }, 1500);
+    });
+    render();
   })();
 </script>
