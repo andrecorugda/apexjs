@@ -87,18 +87,23 @@ already in place.
   Dev + prod + build. `apex make middleware`. Tested + E2E-verified. Foundation for auth.
 - ✅ **Shared FE/BE types** — `defineApexRoute` carries input/output types; `InferInput`/`InferOutput`
   derive them on the frontend from one contract (no drift). Type-checked + tested.
+- ✅ **Nested layouts** — a layout can declare `export const layout = '<parent>'`; wraps outward,
+  merges each layer's CSS, cycle-guarded.
+- ✅ **Error boundary** — `pages/error.alpine` renders (with `{ error }`, inside layouts) when a
+  loader throws; dev + prod.
+- ✅ **Form-action sugar** — `createAction(url, opts)` from `@apex-stack/core/client`: pending/error/
+  data state bound to a route, spread into `x-data`.
+- ✅ **Global / shared styles** — `app.css` auto-load + Tailwind auto-detect (now documented in the scaffold README).
+- ✅ **`apex upgrade`** — non-destructive adoption of new scaffold defaults in existing apps.
 
 **Remaining gaps** (Next/Nuxt have them, Apex doesn't yet):
 
 | Gap | Apex today | Priority |
 |---|---|---|
-| Client-side navigation (SPA nav / `<Link>`) | ❌ full page loads | P2 |
-| Loading / error boundaries (per-route) | 🟡 dev error page only | P2 |
-| Server actions / form-action sugar | 🟡 REST via `defineApexRoute`, no form sugar | P2 |
-| Global / shared styles (documented `app.css`) | 🟡 works, undocumented | P2 |
+| Client-side navigation (SPA nav / `<Link>`) | ❌ full page loads · needs browser-verify | P2 |
+| Loading boundaries (per-route) | ❌ pairs with client-side nav | P2 |
 | Component-level data loaders | ❌ props only | P2 |
-| Fine-grained HMR (morph vs full reload) | 🟡 full reload | P2 |
-| Nested layouts | ✅ single layout, nesting pending | P2 |
+| Fine-grained HMR (morph vs full reload) | 🟡 full reload · needs browser-verify | P2 |
 | Template type-checking (Volar-style) | ❌ | P3 |
 | Image / font optimization | ❌ | P3 |
 | Env-based auth module | ❌ (see Security model below) | P3 |
@@ -108,9 +113,10 @@ already in place.
 | Plugin / module ecosystem | ❌ | P3 |
 
 **Delivery waves:**
-- **Wave B — "scales to real apps" (P2):** ✅ runtime config, ✅ middleware, ✅ `InferInput/Output`
-  shipped. Remaining: client-side navigation, per-route error/loading boundaries, server-action/form
-  sugar, component-level loaders, global-styles docs, fine-grained HMR, nested layouts.
+- **Wave B — "scales to real apps" (P2):** ✅ runtime config, middleware, `InferInput/Output`, nested
+  layouts, error boundary, form-action sugar, global styles, `apex upgrade` shipped. Remaining:
+  client-side navigation + loading boundaries + fine-grained HMR (all need live-browser verification),
+  component-level loaders.
 - **Wave C — "ecosystem & polish" (P3):** deploy presets, image/font optimization, i18n, auth
   module, test kit, template type-checking (Volar), plugin/module system.
 

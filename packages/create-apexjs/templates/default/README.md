@@ -49,7 +49,31 @@ apex make api todos
 apex make service Billing     # → services/BillingService.ts (OO class)
 apex make store cart
 apex make layout marketing
-apex make test billing        # → tests/billing.test.ts
+apex make middleware auth      # → middleware/auth.ts (runs on every request)
+apex make test billing         # → tests/billing.test.ts
+```
+
+## Styling
+
+- **Scoped by default.** A `<style scoped>` block in an `.alpine` file is scoped to that component.
+- **Global / shared styles.** Create `app.css` (also `styles/app.css` or `src/app.css`) in the
+  project root — Apex auto-loads and processes it (Vite HMR in dev, bundled in build).
+- **Tailwind.** `npm i tailwindcss @tailwindcss/vite`, then `@import "tailwindcss";` at the top of
+  `app.css`. Apex auto-detects `@tailwindcss/vite` — no extra config.
+
+## Config & environment
+
+`apex.config.ts` declares `runtimeConfig` (see the file's comments). `public.*` values reach the
+browser; everything else is server-only. Override any value from `.env` — `APEX_<KEY>` (private) /
+`APEX_PUBLIC_<KEY>` (public). Read it via the loader/route `config` argument, `useRuntimeConfig()`,
+or `env('KEY', fallback)`. Real environment variables always win — build once, deploy with env.
+
+## Upgrading
+
+Adopt new scaffold defaults in this app without touching your code:
+
+```bash
+apex upgrade        # adds any new template files; never overwrites yours (package.json preserved)
 ```
 
 Full docs: https://apexjs.site
