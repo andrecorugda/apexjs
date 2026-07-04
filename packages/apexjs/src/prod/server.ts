@@ -95,6 +95,7 @@ export async function startProdServer(
   }
 
   const serverFileFor = new Map(manifest.routes.map((r) => [r.pageId, r.serverFile]))
+  const errorPageId = serverFileFor.has('/pages/error.alpine') ? '/pages/error.alpine' : undefined
   const loadModule = (id: string) =>
     importServer(serverFileFor.get(id) as string) as Promise<PageModule>
 
@@ -162,6 +163,7 @@ export async function startProdServer(
         runtimeConfig,
         publicConfig,
         locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
+        errorPageId,
       })
       setResponseHeader(event, 'Content-Type', 'text/html')
       return html

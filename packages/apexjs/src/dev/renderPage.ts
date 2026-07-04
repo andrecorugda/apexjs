@@ -99,6 +99,8 @@ export interface RenderPageOptions {
   publicConfig?: Record<string, unknown>
   /** Request-scoped state from middleware, passed to the loader + head. */
   locals?: Record<string, unknown>
+  /** Error boundary: page id (e.g. `/pages/error.alpine`) rendered with `{ error }` if the loader throws. */
+  errorPageId?: string
 }
 
 /**
@@ -108,15 +110,28 @@ export interface RenderPageOptions {
  * document shell (SSR body + state island + client entry).
  */
 export async function renderPage(opts: RenderPageOptions): Promise<string> {
-  const mod = await opts.loadModule(opts.pageId)
+  let mod = await opts.loadModule(opts.pageId)
   const cfg = opts.runtimeConfig ?? { public: {} }
   const locals = opts.locals ?? {}
-  const loaderData = ((await mod.loader({
-    params: opts.params ?? {},
-    url: opts.url,
-    config: cfg,
-    locals,
-  })) ?? {}) as Record<string, unknown>
+
+  // Error boundary: if the loader throws and an error page exists, render THAT
+  // (with `{ error }`) instead of crashing — an in-app, layout-wrapped error UI.
+  let loaderData: Record<string, unknown>
+  try {
+    loaderData = ((await mod.loader({
+      params: opts.params ?? {},
+      url: opts.url,
+      config: cfg,
+      locals,
+    })) ?? {}) as Record<string, unknown>
+  } catch (err) {
+    if (!opts.errorPageId) throw err
+    mod = await opts.loadModule(opts.errorPageId)
+    const e = err as { message?: string; statusCode?: number }
+    loaderData = {
+      error: { message: e.message ?? 'Something went wrong', statusCode: e.statusCode ?? 500 },
+    }
+  }
 
   const head = mod.head
     ? await mod.head({
@@ -153,16 +168,23 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
           ? 'default'
           : null
 
+  // Nested layouts: wrap the page in its layout, and if that layout itself
+  // declares `export const layout = '<parent>'`, wrap again — outermost last.
+  // `seen` guards against cycles; each layout is applied at most once.
   let body = html
   let layoutCss = ''
-  if (layoutName && available.includes(layoutName)) {
-    const layoutMod = await opts.loadModule(`/layouts/${layoutName}.alpine`)
+  const seen = new Set<string>()
+  let next: string | false | undefined = layoutName
+  while (typeof next === 'string' && available.includes(next) && !seen.has(next)) {
+    seen.add(next)
+    const layoutMod = await opts.loadModule(`/layouts/${next}.alpine`)
     const chrome = renderFragment(layoutMod.template, {}, layoutMod.scopeId, opts.registry)
-    // Function replacement so `$` in the page HTML isn't treated as a special token.
+    // Function replacement so `$` in the wrapped HTML isn't treated as a special token.
     body = /<slot\b[^>]*>[\s\S]*?<\/slot>/.test(chrome)
-      ? chrome.replace(/<slot\b[^>]*>[\s\S]*?<\/slot>/, () => html)
-      : chrome + html
-    layoutCss = layoutMod.css
+      ? chrome.replace(/<slot\b[^>]*>[\s\S]*?<\/slot>/, () => body)
+      : chrome + body
+    layoutCss += layoutMod.css
+    next = layoutMod.layout // a layout may declare a parent layout
   }
 
   const doc = shell({

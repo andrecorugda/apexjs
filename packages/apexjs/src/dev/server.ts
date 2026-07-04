@@ -208,6 +208,9 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           runtimeConfig,
           publicConfig,
           locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
+          errorPageId: existsSync(join(options.root, 'pages', 'error.alpine'))
+            ? '/pages/error.alpine'
+            : undefined,
           transformHtml: (u, doc) => vite.transformIndexHtml(u, doc),
         })
         setResponseHeader(event, 'Content-Type', 'text/html')

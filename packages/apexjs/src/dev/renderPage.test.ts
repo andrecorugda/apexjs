@@ -61,6 +61,45 @@ describe('renderPage — head/SEO', () => {
   })
 })
 
+describe('renderPage — error boundary', () => {
+  it('renders the error page with { error } when a loader throws', async () => {
+    const boom = makeModule({
+      loader: () => {
+        const e = new Error('DB is down') as Error & { statusCode?: number }
+        e.statusCode = 503
+        throw e
+      },
+    })
+    const errorPage: PageModule = {
+      loader: ({ locals }) => ({ locals }),
+      template: '<h1 id="err" x-text="error.statusCode + &quot;: &quot; + error.message"></h1>',
+      rootXData: null,
+      componentId: 'e0',
+      scopeId: 'data-apex-err',
+      css: '',
+    }
+    const load = async (id: string) => (id.includes('/error.alpine') ? errorPage : boom)
+    const html = await renderPage({
+      loadModule: load,
+      pageId: '/pages/index.alpine',
+      url: '/',
+      errorPageId: '/pages/error.alpine',
+    })
+    expect(html).toContain('503: DB is down')
+  })
+
+  it('rethrows when no error boundary is configured', async () => {
+    const boom = makeModule({
+      loader: () => {
+        throw new Error('unhandled')
+      },
+    })
+    await expect(
+      renderPage({ loadModule: async () => boom, pageId: '/pages/index.alpine', url: '/' }),
+    ).rejects.toThrow('unhandled')
+  })
+})
+
 const layoutMod = (): PageModule => ({
   loader: () => ({}),
   template: '<header>NAV</header><slot></slot><footer>FOOT</footer>',
@@ -105,6 +144,41 @@ describe('renderPage — layouts', () => {
       layouts: ['blog'],
     })
     expect(requested).toBe('/layouts/blog.alpine')
+  })
+
+  it('nests layouts when a layout declares its own parent layout', async () => {
+    const page = makeModule({ template: '<p>page body</p>', layout: 'blog' })
+    const blog: PageModule = {
+      loader: () => ({}),
+      template: '<section id="blog"><slot></slot></section>',
+      rootXData: null,
+      componentId: 'b0',
+      scopeId: 'data-apex-blog',
+      css: '.blog{}',
+      layout: 'root', // blog layout is itself wrapped by root
+    }
+    const root: PageModule = {
+      loader: () => ({}),
+      template: '<div id="root"><slot></slot></div>',
+      rootXData: null,
+      componentId: 'r0',
+      scopeId: 'data-apex-root',
+      css: '.root{}',
+    }
+    const load = async (id: string) =>
+      id.includes('/blog.alpine') ? blog : id.includes('/root.alpine') ? root : page
+    const html = await renderPage({
+      loadModule: load,
+      pageId: '/pages/index.alpine',
+      url: '/',
+      layouts: ['default', 'blog', 'root'],
+    })
+    // Outermost (root) wraps blog wraps the page.
+    expect(html).toMatch(
+      /id="root"[\s\S]*id="blog"[\s\S]*page body[\s\S]*<\/section>[\s\S]*<\/div>/,
+    )
+    expect(html).toContain('.blog{}')
+    expect(html).toContain('.root{}') // both layers' CSS included
   })
 
   it('opts out of layouts with layout: false', async () => {
