@@ -4,6 +4,7 @@ import { basename, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
 import { banner, color, spinner } from '../ui.js'
+import { offerExtension } from '../vscode.js'
 
 const TEMPLATE_DIR = fileURLToPath(new URL('../templates/default', import.meta.url))
 
@@ -66,6 +67,10 @@ export const newCommand = defineCommand({
       default: true,
       description: 'Initialize a git repository (use --no-git to skip)',
     },
+    vscode: {
+      type: 'boolean',
+      description: 'Install the Apex VS Code extension (skip the interactive prompt)',
+    },
   },
   async run({ args }) {
     const dir = String(args.dir)
@@ -112,6 +117,10 @@ export const newCommand = defineCommand({
       if (installed) sp.succeed(`Dependencies installed with ${pm}`)
       else sp.fail(`Install failed — run ${color.cyan(`${pm} install`)} inside ${dir}`)
     }
+
+    // Offer the .alpine VS Code extension (prompts when interactive; --vscode / --no-vscode skips it).
+    const ext = await offerExtension(args.vscode as boolean | undefined)
+    if (ext) log(`  ${color.green('✓')} ${ext}`)
 
     const runPrefix = pm === 'npm' ? 'npm run' : pm
     log(`\n  ${color.bold('Next steps')}`)

@@ -1,8 +1,10 @@
+import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
-import { banner, color } from '../ui.js'
+import { VERSION, banner, color } from '../ui.js'
+import { offerExtension } from '../vscode.js'
 
 const TEMPLATE_DIR = fileURLToPath(new URL('../templates/default', import.meta.url))
 
@@ -15,6 +17,36 @@ function projectName(root: string): string {
   } catch {
     return basename(root)
   }
+}
+
+/** Bump every `@apex-stack/*` dependency to this CLI's version. Returns the count. */
+function bumpApexDeps(root: string): number {
+  const pkgPath = join(root, 'package.json')
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
+  let bumped = 0
+  for (const field of ['dependencies', 'devDependencies']) {
+    const deps = pkg[field] as Record<string, string> | undefined
+    if (!deps) continue
+    for (const dep of Object.keys(deps)) {
+      // Leave local `file:`/`link:`/`workspace:` refs (dev setups) alone.
+      if (dep.startsWith('@apex-stack/') && /^[\d^~]/.test(deps[dep] ?? '')) {
+        if (deps[dep] !== `^${VERSION}`) {
+          deps[dep] = `^${VERSION}`
+          bumped++
+        }
+      }
+    }
+  }
+  if (bumped) writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
+  return bumped
+}
+
+function detectPm(): 'npm' | 'pnpm' | 'yarn' | 'bun' {
+  const ua = process.env.npm_config_user_agent || ''
+  if (ua.startsWith('pnpm')) return 'pnpm'
+  if (ua.startsWith('yarn')) return 'yarn'
+  if (ua.startsWith('bun')) return 'bun'
+  return 'npm'
 }
 
 function walk(dir: string, onFile: (absFile: string) => void): void {
@@ -42,8 +74,17 @@ export const upgradeCommand = defineCommand({
       default: false,
       description: 'Re-sync files that differ from the template (package.json is always preserved)',
     },
+    install: {
+      type: 'boolean',
+      default: true,
+      description: 'Run the package manager after bumping @apex-stack/* (use --no-install to skip)',
+    },
+    vscode: {
+      type: 'boolean',
+      description: 'Install the Apex VS Code extension (skip the prompt)',
+    },
   },
-  run({ args }) {
+  async run({ args }) {
     const root = resolve(process.cwd(), String(args.root))
     // biome-ignore lint/suspicious/noConsole: CLI output
     const log = console.log
@@ -90,19 +131,48 @@ export const upgradeCommand = defineCommand({
       log(`\n  ${color.cyan('~')} Re-synced ${updated.length} file(s):`)
       for (const f of updated.sort()) log(`      ${color.cyan(f)}`)
     }
-    if (!added.length && !updated.length) {
-      log(`\n  ${color.green('✓')} Already up to date — no new scaffold defaults to add.`)
-    } else {
+    if (added.length || updated.length) {
       log(`\n  ${color.gray(`${unchanged} existing file(s) left untouched.`)}`)
     }
 
+    // Bump the framework to this CLI's version so the project actually updates.
+    const bumped = bumpApexDeps(root)
+    if (bumped)
+      log(`\n  ${color.cyan('↑')} Bumped ${bumped} @apex-stack/* dependency → ^${VERSION}`)
+
+    if (!added.length && !updated.length && !bumped) {
+      log(`\n  ${color.green('✓')} Already up to date.`)
+    }
+
+    // Install so the bump takes effect (skippable, and never in CI without a TTY).
+    if (bumped && args.install) {
+      const pm = detectPm()
+      log(`\n  ${color.gray(`Installing with ${pm}…`)}`)
+      const ok =
+        spawnSync(pm, ['install'], {
+          cwd: root,
+          stdio: 'inherit',
+          shell: process.platform === 'win32',
+        }).status === 0
+      log(
+        ok
+          ? `  ${color.green('✓')} Dependencies updated`
+          : `  ${color.red('✗')} Install failed — run ${color.cyan(`${pm} install`)} yourself`,
+      )
+    } else if (bumped) {
+      log(
+        `  ${color.gray('Run')} ${color.cyan(`${detectPm()} install`)} ${color.gray('to apply.')}`,
+      )
+    }
+
+    // Offer the VS Code extension (prompt when interactive; --vscode / --no-vscode to skip it).
+    const ext = await offerExtension(args.vscode as boolean | undefined)
+    if (ext) log(`  ${color.green('✓')} ${ext}`)
+
     log(
-      `\n  ${color.gray('Non-destructive: existing files are never overwritten')}${
+      `\n  ${color.gray('Non-destructive: your files are never overwritten')}${
         args.force ? color.gray(' except with --force') : color.gray(' (use --force to re-sync)')
-      }${color.gray('; package.json is always preserved.')}`,
-    )
-    log(
-      `  ${color.gray('Bump the runtime separately:')} ${color.cyan('npm i @apex-stack/core@latest')}\n`,
+      }${color.gray('; package.json entries are only version-bumped.')}\n`,
     )
   },
 })
