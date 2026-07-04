@@ -1,38 +1,67 @@
 <script server lang="ts">
+  import { PostService } from '../services/PostService'
+
+  const posts = new PostService()
+
+  // Runs on the server. Its return value becomes the page's x-data — so the
+  // HTML is rendered from real data before a single byte of JS runs.
   export function loader() {
     return {
       title: 'Welcome to {{name}}',
-      tagline: 'The meta-framework for Alpine.js — server-rendered, then hydrated.',
+      tagline: 'A full-stack, server-rendered app built on Alpine.js — themed, typed, and AI-native.',
+      recent: posts.recent(3),
     }
   }
 </script>
 
-<template x-data="{ open: false }">
-  <h1 x-text="title"></h1>
-  <p class="tagline" x-text="tagline"></p>
-
-  <section class="card">
-    <p>
-      This was rendered on the server from <code>pages/index.alpine</code>, wrapped in
-      <code>layouts/default.alpine</code>, then hydrated by Alpine. Edit and save to see it live.
-    </p>
-    <button type="button" @click="open = !open" x-text="open ? 'Hide' : 'Show me how'"></button>
-    <div x-show="open" x-transition class="details">
-      <p>The <code>loader()</code> runs on the server and hands its data to Alpine's <code>x-data</code>.</p>
-      <p>Open <code>server/api/hello.ts</code>: a thin route → <code>GreetingService</code>, exposed as REST <em>and</em> an MCP tool.</p>
+<template x-data="{ show: false }">
+  <!-- Hero -->
+  <section class="py-8 text-center">
+    <h1 class="font-title text-4xl font-extrabold tracking-tight text-on-surface-strong sm:text-5xl dark:text-on-surface-dark-strong" x-text="title"></h1>
+    <p class="mx-auto mt-4 max-w-2xl text-lg" x-text="tagline"></p>
+    <div class="mt-6 flex flex-wrap justify-center gap-3">
+      <a href="/blog"><Button>Read the blog</Button></a>
+      <a href="https://apexjs.site" class="inline-flex items-center justify-center rounded-radius border border-outline px-4 py-2 text-sm font-medium text-on-surface transition hover:opacity-75 dark:border-outline-dark dark:text-on-surface-dark">Docs</a>
     </div>
   </section>
 
-  <p class="hint">A reusable component that hydrates in the browser:</p>
-  <Counter start="0" label="Clicks" />
-</template>
+  <!-- Feature cards -->
+  <section class="mt-6 grid gap-4 sm:grid-cols-3">
+    <Card>
+      <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">Server-rendered</h3>
+      <p class="text-sm">Every page is real HTML from a <code>loader()</code>, then hydrated by Alpine — fast and indexable.</p>
+    </Card>
+    <Card>
+      <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">Themed</h3>
+      <p class="text-sm">All components use theme tokens. Restyle the whole app with one <code>apex theme</code> command.</p>
+    </Card>
+    <Card>
+      <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">AI-native</h3>
+      <p class="text-sm">Every typed API route is also an MCP tool your AI can call. See <code>server/api/posts.ts</code>.</p>
+    </Card>
+  </section>
 
-<style scoped>
-  h1 { color: #2563eb; font-size: 2.25rem; margin-bottom: 0.25rem; }
-  .tagline { font-size: 1.1rem; color: #475569; margin-top: 0; }
-  .card { margin-top: 1.5rem; padding: 1.25rem; border: 1px solid #e2e8f0; border-radius: 0.75rem; background: #f8fafc; }
-  .card button { margin-top: 0.5rem; padding: 0.55rem 1rem; font-weight: 600; color: #fff; background: #2563eb; border: none; border-radius: 0.5rem; cursor: pointer; }
-  .details { margin-top: 1rem; }
-  code { padding: 0.1rem 0.35rem; background: #e2e8f0; border-radius: 0.35rem; font-size: 0.9em; }
-  .hint { margin-top: 1.5rem; color: #64748b; font-size: 0.95rem; }
-</style>
+  <!-- Recent posts, from the loader -->
+  <section class="mt-10">
+    <h2 class="font-title text-xl font-bold text-on-surface-strong dark:text-on-surface-dark-strong">Recent posts</h2>
+    <ul class="mt-3 divide-y divide-outline dark:divide-outline-dark">
+      <template x-for="p in recent" :key="p.slug">
+        <li class="py-3">
+          <a :href="'/blog/' + p.slug" class="font-medium text-primary hover:opacity-75 dark:text-primary-dark" x-text="p.title"></a>
+          <p class="text-sm text-on-surface/80 dark:text-on-surface-dark/80" x-text="p.excerpt"></p>
+        </li>
+      </template>
+    </ul>
+  </section>
+
+  <!-- A hydrated, interactive component -->
+  <section class="mt-10 flex flex-col items-start gap-3">
+    <p class="text-sm text-on-surface/80 dark:text-on-surface-dark/80">Hydrated in the browser — click it:</p>
+    <Counter start="0" label="Clicks" />
+    <button type="button" class="text-sm text-primary hover:opacity-75 dark:text-primary-dark" @click="show = !show" x-text="show ? 'Hide details' : 'How does this work?'"></button>
+    <p x-show="show" x-transition class="max-w-2xl text-sm text-on-surface/80 dark:text-on-surface-dark/80">
+      This page is <code>pages/index.alpine</code>, wrapped in <code>layouts/default.alpine</code>.
+      The server ran <code>loader()</code>, rendered the HTML, and Alpine took over in the browser — the counter and this toggle are proof.
+    </p>
+  </section>
+</template>
