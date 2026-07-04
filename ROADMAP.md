@@ -120,6 +120,24 @@ already in place.
 - **Wave C — "ecosystem & polish" (P3):** deploy presets, image/font optimization, i18n, auth
   module, test kit, template type-checking (Volar), plugin/module system.
 
+## Big epic — Apex Stack Components + Theme Builder
+
+The scaffold's current demo is a placeholder — the real "great start" comes from a first-class
+component library + theming story:
+
+1. **`@apex-stack/components`** — a curated library of TypeScript `.alpine` components (sourced/adapted
+   from the free Alpine component ecosystem), paired with Tailwind. Installed as a package; `apex add`
+   pulls components into a project.
+2. **Theme builder on apexjs.site** — a visual builder (colors, radius, typography, spacing) that
+   emits a single **CLI command** (e.g. `apex theme apply <token>`). Running it writes the theme
+   (Tailwind config + CSS variables) into the project.
+3. **Inherited theming** — one theme, applied once, is **inherited by every component** automatically
+   (components read the shared design tokens), so restyling the whole app is one command.
+4. A richer default scaffold built on these components (replaces the current placeholder demo).
+
+Sequencing: component library foundation → theme token system (CSS vars + Tailwind preset) → website
+theme builder → `apex add` / `apex theme` CLI → new default scaffold.
+
 ## Security model (planned)
 
 *Status: design, not yet built.* One auth policy enforced on the server, applied to **every**
