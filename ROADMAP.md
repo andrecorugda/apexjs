@@ -82,6 +82,11 @@ already in place.
   `.env`/`.env.<mode>`/`.env.local` loading with `APEX_`/`APEX_PUBLIC_` overrides, `useRuntimeConfig()`
   + `env('KEY', fallback)`, `config` in loaders/routes (REST + MCP), public-only client seed. Wired
   through dev, prod (`apex start`), and the static/server build. Tested + E2E-verified.
+- ✅ **Route middleware** — `middleware/*.ts` → `defineMiddleware(ctx => …)`, filename order, runs on
+  every request; `ctx.locals` threaded into loaders + route handlers, `ctx.redirect()` short-circuits.
+  Dev + prod + build. `apex make middleware`. Tested + E2E-verified. Foundation for auth.
+- ✅ **Shared FE/BE types** — `defineApexRoute` carries input/output types; `InferInput`/`InferOutput`
+  derive them on the frontend from one contract (no drift). Type-checked + tested.
 
 **Remaining gaps** (Next/Nuxt have them, Apex doesn't yet):
 
@@ -92,9 +97,7 @@ already in place.
 | Server actions / form-action sugar | 🟡 REST via `defineApexRoute`, no form sugar | P2 |
 | Global / shared styles (documented `app.css`) | 🟡 works, undocumented | P2 |
 | Component-level data loaders | ❌ props only | P2 |
-| Route middleware | ❌ | P2 |
 | Fine-grained HMR (morph vs full reload) | 🟡 full reload | P2 |
-| Shared FE/BE types (`InferInput/Output` from contracts) | 🟡 possible, undocumented | P2 |
 | Nested layouts | ✅ single layout, nesting pending | P2 |
 | Template type-checking (Volar-style) | ❌ | P3 |
 | Image / font optimization | ❌ | P3 |
@@ -105,9 +108,9 @@ already in place.
 | Plugin / module ecosystem | ❌ | P3 |
 
 **Delivery waves:**
-- **Wave B — "scales to real apps" (P2):** client-side navigation, per-route error/loading
-  boundaries, server-action/form sugar, runtime config + middleware, component-level loaders,
-  global-styles docs, `InferInput/Output`, fine-grained HMR, nested layouts.
+- **Wave B — "scales to real apps" (P2):** ✅ runtime config, ✅ middleware, ✅ `InferInput/Output`
+  shipped. Remaining: client-side navigation, per-route error/loading boundaries, server-action/form
+  sugar, component-level loaders, global-styles docs, fine-grained HMR, nested layouts.
 - **Wave C — "ecosystem & polish" (P3):** deploy presets, image/font optimization, i18n, auth
   module, test kit, template type-checking (Volar), plugin/module system.
 
