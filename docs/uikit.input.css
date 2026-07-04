@@ -1,0 +1,13 @@
+/* Source for docs/uikit.css — the scoped stylesheet behind the UI Kit previews.
+   No preflight (so it never touches the docs chrome): only theme tokens + the
+   utilities actually used by the component markup injected into ui.html.
+   Rebuild: pnpm dlx @tailwindcss/cli@4 -i docs/uikit.input.css -o docs/uikit.css --minify */
+@layer theme, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* Apex design tokens (@theme colors + --radius-radius + the `dark` variant). */
+@import "../packages/theme/theme.css";
+
+/* Scan the injected component markup for the classes to generate. */
+@source "./ui.html";

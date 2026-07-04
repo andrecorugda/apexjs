@@ -4,10 +4,15 @@
 <meta name="description" content="Browse Apex JS themeable components, tick the ones you want, and copy a single apex add command to scaffold them all." />
 <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
 <link rel="stylesheet" href="./style.css" />
+<link rel="stylesheet" href="./uikit.css" />
+<script defer src="./assets/alpine.min.js"></script>
 <style>
   .uikit-hero { padding-block: clamp(2rem,6vh,3.5rem) 1rem; }
   .uikit-hero h1 { font-size: clamp(1.8rem,4vw,2.6rem); letter-spacing:-.02em; font-weight:800; margin:0; }
   .uikit-hero p { color: var(--muted); margin:.7rem 0 0; max-width:60ch; }
+  .uikit-credit { font-size:.82rem; }
+  .uikit-credit a { color:var(--glacier); text-decoration:none; border-bottom:1px solid color-mix(in srgb,var(--glacier) 40%,transparent); }
+  .uikit-credit a:hover { border-bottom-color:var(--glacier); }
   .uikit-toolbar { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin:1.4rem 0 .5rem; }
   .uikit-toolbar button { font:inherit; font-size:.85rem; padding:.4rem .8rem; border:1px solid var(--line); border-radius:var(--radius-btn); background:var(--surface); color:var(--text); cursor:pointer; }
   .uikit-toolbar button:hover { border-color:var(--glacier); }
@@ -18,10 +23,16 @@
   .uikit-selcat { margin-left:auto; font:inherit; font-size:.78rem; color:var(--muted); background:none; border:0; cursor:pointer; }
   .uikit-selcat:hover { color:var(--glacier); }
   .uikit-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(15rem,1fr)); gap:.7rem; margin-top:.9rem; }
-  .uikit-card { display:flex; flex-direction:column; gap:.25rem; position:relative; padding:.85rem .9rem .85rem 2.1rem; border:1px solid var(--line); border-radius:var(--radius-card); background:var(--surface); cursor:pointer; transition:border-color .15s,background .15s; }
+  .uikit-card { display:flex; flex-direction:column; border:1px solid var(--line); border-radius:var(--radius-card); background:var(--surface); overflow:hidden; transition:border-color .15s; }
   .uikit-card:hover { border-color:var(--glacier); }
-  .uikit-card:has(.uikit-cb:checked) { border-color:var(--glacier); background:var(--glacier-soft); }
-  .uikit-cb { position:absolute; left:.8rem; top:.95rem; width:1rem; height:1rem; accent-color:var(--glacier); }
+  .uikit-card:has(.uikit-cb:checked) { border-color:var(--glacier); }
+  .uikit-card:has(.uikit-cb:checked) .uikit-pick { background:var(--glacier-soft); }
+  /* Live preview stage — renders the real component on its own themed canvas. */
+  .uikit-preview { display:flex; align-items:center; justify-content:center; min-height:9rem; max-height:9rem; padding:1rem; overflow:hidden; border-bottom:1px solid var(--line); background:var(--color-surface,#fff); color:var(--color-on-surface,#525252); font-size:.85rem; }
+  html.dark .uikit-preview { background:var(--color-surface-dark,#0a0a0a); color:var(--color-on-surface-dark,#d4d4d4); }
+  .uikit-preview > * { max-width:100%; }
+  .uikit-pick { position:relative; display:flex; flex-direction:column; gap:.25rem; padding:.7rem .85rem .8rem 2.05rem; cursor:pointer; }
+  .uikit-cb { position:absolute; left:.7rem; top:.85rem; width:1rem; height:1rem; accent-color:var(--glacier); }
   .uikit-name { font-weight:650; font-size:.92rem; }
   .uikit-name code { font-family:var(--mono); font-size:.78em; color:var(--muted); font-weight:400; }
   .uikit-desc { color:var(--muted); font-size:.82rem; }
@@ -59,7 +70,8 @@
 <main id="main" class="wrap">
   <div class="uikit-hero">
     <h1>UI Kit</h1>
-    <p>Tick the components you want, then copy one <code>apex add</code> command to drop them all into your project. They're themeable — restyle everything with <code>apex theme</code>. 36 components.</p>
+    <p>Tick the components you want, then copy one <code>apex add</code> command to drop them all into your project. They're themeable — restyle everything with <code>apex theme</code>. 36 components, each previewed live below.</p>
+    <p class="uikit-credit">Components are adapted from <a href="https://penguinui.com" target="_blank" rel="noopener">Penguin UI</a> (MIT) and re-tokenised for the Apex theme system. Thanks to the Penguin UI authors.</p>
   </div>
 
   <div class="uikit-toolbar">
@@ -72,210 +84,983 @@
       <section class="uikit-cat">
         <div class="uikit-cat-head"><h2>Actions</h2><button type="button" class="uikit-selcat" data-cat="Actions">Select all</button></div>
         <div class="uikit-grid">
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="button" data-name="Button" />
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="button"><div x-data>
+  <button
+    type="button"
+    class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark"
+  >
+    Button
+  </button>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="button" data-name="Button" />
           <span class="uikit-name">Button <code>&lt;Button/&gt;</code></span>
           <span class="uikit-desc">Primary button; edit classes for secondary/outline/ghost.</span>
-        </label></div>
+        </label>
+        </div></div>
       </section>
       <section class="uikit-cat">
         <div class="uikit-cat-head"><h2>Forms</h2><button type="button" class="uikit-selcat" data-cat="Forms">Select all</button></div>
         <div class="uikit-grid">
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="text-input" data-name="TextInput" />
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="text-input"><div>
+  <div class="flex w-full max-w-xs flex-col gap-1 text-on-surface dark:text-on-surface-dark">
+    <label for="pv-text-input-textInputDefault" class="w-fit pl-0.5 text-sm">Name</label>
+    <input id="pv-text-input-textInputDefault" type="text" class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" name="name" placeholder="Enter your name" autocomplete="name" />
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="text-input" data-name="TextInput" />
           <span class="uikit-name">TextInput <code>&lt;TextInput/&gt;</code></span>
           <span class="uikit-desc">Labeled text input with focus/disabled states.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="textarea" data-name="Textarea" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="textarea"><div>
+  <div class="flex w-full max-w-md flex-col gap-1 text-on-surface dark:text-on-surface-dark">
+    <label for="pv-textarea-textArea" class="w-fit pl-0.5 text-sm">Comment</label>
+    <textarea id="pv-textarea-textArea" class="w-full rounded-radius border border-outline bg-surface-alt px-2.5 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" rows="3" placeholder="We'd love to hear from you..."></textarea>
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="textarea" data-name="Textarea" />
           <span class="uikit-name">Textarea <code>&lt;Textarea/&gt;</code></span>
           <span class="uikit-desc">Labeled textarea with focus/disabled states.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="select" data-name="Select" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="select"><div>
+  <div class="relative flex w-full max-w-xs flex-col gap-1 text-on-surface dark:text-on-surface-dark">
+    <label for="pv-select-os" class="w-fit pl-0.5 text-sm">Operating System</label>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="absolute pointer-events-none right-4 top-8 size-5">
+      <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+    </svg>
+    <select id="pv-select-os" name="os" class="w-full appearance-none rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark">
+      <option selected>Please Select</option>
+      <option value="mac">Mac</option>
+      <option value="windows">Windows</option>
+      <option value="linux">Linux</option>
+    </select>
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="select" data-name="Select" />
           <span class="uikit-name">Select <code>&lt;Select/&gt;</code></span>
           <span class="uikit-desc">Native select with floating label + chevron.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="checkbox" data-name="Checkbox" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="checkbox"><div>
+  <label for="pv-checkbox-checkboxDefault" class="flex items-center gap-2 text-sm font-medium text-on-surface dark:text-on-surface-dark has-checked:text-on-surface-strong dark:has-checked:text-on-surface-dark-strong has-disabled:cursor-not-allowed has-disabled:opacity-75">
+    <span class="relative flex items-center">
+      <input id="pv-checkbox-checkboxDefault" type="checkbox" class="before:content[''] peer relative size-4 appearance-none overflow-hidden rounded-sm border border-outline bg-surface-alt before:absolute before:inset-0 checked:border-primary checked:before:bg-primary focus:outline-2 focus:outline-offset-2 focus:outline-outline-strong checked:focus:outline-primary active:outline-offset-0 disabled:cursor-not-allowed dark:border-outline-dark dark:bg-surface-dark-alt dark:checked:border-primary-dark dark:checked:before:bg-primary-dark dark:focus:outline-outline-dark-strong dark:checked:focus:outline-primary-dark" />
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" stroke="currentColor" fill="none" stroke-width="4" class="pointer-events-none invisible absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 text-on-primary peer-checked:visible dark:text-on-primary-dark">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+      </svg>
+    </span>
+    <span>Notifications</span>
+  </label>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="checkbox" data-name="Checkbox" />
           <span class="uikit-name">Checkbox <code>&lt;Checkbox/&gt;</code></span>
           <span class="uikit-desc">Checkbox with label and animated check.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="radio" data-name="Radio" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="radio"><div>
+  <div class="flex items-center justify-start gap-2 font-medium text-on-surface has-disabled:opacity-75 dark:text-on-surface-dark">
+    <input id="pv-radio-radioDefault" type="radio" class="before:content[''] relative h-4 w-4 appearance-none rounded-full border border-outline bg-surface-alt before:invisible before:absolute before:left-1/2 before:top-1/2 before:h-1.5 before:w-1.5 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:bg-on-primary checked:border-primary checked:bg-primary checked:before:visible focus:outline-2 focus:outline-offset-2 focus:outline-outline-strong checked:focus:outline-primary disabled:cursor-not-allowed dark:border-outline-dark dark:bg-surface-dark-alt dark:before:bg-on-primary-dark dark:checked:border-primary-dark dark:checked:bg-primary-dark dark:focus:outline-outline-dark-strong dark:checked:focus:outline-primary-dark" name="radioDefault" value="" />
+    <label for="pv-radio-radioDefault" class="text-sm">Option</label>
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="radio" data-name="Radio" />
           <span class="uikit-name">Radio <code>&lt;Radio/&gt;</code></span>
           <span class="uikit-desc">Radio button with slotted label.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="toggle" data-name="Toggle" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="toggle"><div x-data="{ on: true }">
+    <label for="pv-toggle-apexToggle" class="inline-flex items-center gap-3">
+        <input id="pv-toggle-apexToggle" type="checkbox" class="peer sr-only" role="switch" x-model="on" />
+        <span class="trancking-wide text-sm font-medium text-on-surface peer-checked:text-on-surface-strong peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-on-surface-dark dark:peer-checked:text-on-surface-dark-strong">Toggle</span>
+        <div class="relative h-6 w-11 after:h-5 after:w-5 peer-checked:after:translate-x-5 rounded-full border border-outline bg-surface-alt after:absolute after:bottom-0 after:left-[0.0625rem] after:top-0 after:my-auto after:rounded-full after:bg-on-surface after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:bg-on-primary peer-focus:outline-2 peer-focus:outline-offset-2 peer-focus:outline-outline-strong peer-focus:peer-checked:outline-primary peer-active:outline-offset-0 peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:border-outline-dark dark:bg-surface-dark-alt dark:after:bg-on-surface-dark dark:peer-checked:bg-primary-dark dark:peer-checked:after:bg-on-primary-dark dark:peer-focus:outline-outline-dark-strong dark:peer-focus:peer-checked:outline-primary-dark" aria-hidden="true"></div>
+    </label>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="toggle" data-name="Toggle" />
           <span class="uikit-name">Toggle <code>&lt;Toggle/&gt;</code></span>
           <span class="uikit-desc">Accessible on/off switch with animated knob.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="range" data-name="Range" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="range"><div>
+    <div class="flex w-full flex-col gap-4 text-on-surface dark:text-on-surface-dark">
+        <label for="pv-range-rangeSlider" class="w-fit pl-0.5 text-sm">Mood Meter</label>
+        <input id="pv-range-rangeSlider" type="range" class="h-2 w-full appearance-none bg-on-surface/15 focus:outline-primary dark:bg-on-surface-dark/15 dark:focus:outline-primary-dark [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:bg-primary dark:[&::-moz-range-thumb]:bg-primary-dark active:[&::-moz-range-thumb]:scale-110 [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:border-none [&::-webkit-slider-thumb]:bg-primary active:[&::-webkit-slider-thumb]:scale-110 dark:[&::-webkit-slider-thumb]:bg-primary-dark [&::-moz-range-thumb]:rounded-full [&::-webkit-slider-thumb]:rounded-full rounded-full" value="20" min="0" max="100" step="1" />
+    </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="range" data-name="Range" />
           <span class="uikit-name">Range <code>&lt;Range/&gt;</code></span>
           <span class="uikit-desc">Styled range slider with themed thumb.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="file-input" data-name="FileInput" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="file-input"><div>
+  <div class="relative flex w-full max-w-sm flex-col gap-1">
+    <label class="w-fit pl-0.5 text-sm text-on-surface dark:text-on-surface-dark" for="pv-file-input-fileInput">Upload File</label>
+    <input id="pv-file-input-fileInput" type="file" class="w-full overflow-clip rounded-radius border border-outline bg-surface-alt/50 text-sm text-on-surface file:mr-4 file:border-none file:bg-surface-alt file:px-4 file:py-2 file:font-medium file:text-on-surface-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark dark:file:bg-surface-dark-alt dark:file:text-on-surface-dark-strong dark:focus-visible:outline-primary-dark" />
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="file-input" data-name="FileInput" />
           <span class="uikit-name">FileInput <code>&lt;FileInput/&gt;</code></span>
           <span class="uikit-desc">Native file upload with styled button + label.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="rating" data-name="Rating" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="rating"><div x-data="{ currentVal: 3 }">
+  <div class="flex items-center gap-1">
+    <label for="pv-rating-oneStar" class="transition hover:scale-125 has-focus:scale-125">
+      <span class="sr-only">one star</span>
+      <input x-model="currentVal" id="pv-rating-oneStar" type="radio" class="sr-only" name="rating" value="1">
+      <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="size-5" x-bind:class="currentVal > 0 ? 'text-amber-500' : 'text-on-surface dark:text-on-surface-dark'">
+        <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd">
+      </svg>
+    </label>
+    <label for="pv-rating-twoStars" class="transition hover:scale-125 has-focus:scale-125">
+      <span class="sr-only">two stars</span>
+      <input x-model="currentVal" id="pv-rating-twoStars" type="radio" class="sr-only" name="rating" value="2">
+      <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="size-5" x-bind:class="currentVal > 1 ? 'text-amber-500' : 'text-on-surface dark:text-on-surface-dark'">
+        <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd">
+      </svg>
+    </label>
+    <label for="pv-rating-threeStars" class="transition hover:scale-125 has-focus:scale-125">
+      <span class="sr-only">three stars</span>
+      <input x-model="currentVal" id="pv-rating-threeStars" type="radio" class="sr-only" name="rating" value="3">
+      <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="size-5" x-bind:class="currentVal > 2 ? 'text-amber-500' : 'text-on-surface dark:text-on-surface-dark'">
+        <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd">
+      </svg>
+    </label>
+    <label for="pv-rating-fourStars" class="transition hover:scale-125 has-focus:scale-125">
+      <span class="sr-only">four stars</span>
+      <input x-model="currentVal" id="pv-rating-fourStars" type="radio" class="sr-only" name="rating" value="4">
+      <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="size-5" x-bind:class="currentVal > 3 ? 'text-amber-500' : 'text-on-surface dark:text-on-surface-dark'">
+        <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd">
+      </svg>
+    </label>
+    <label for="pv-rating-fiveStars" class="transition hover:scale-125 has-focus:scale-125">
+      <span class="sr-only">five stars</span>
+      <input x-model="currentVal" id="pv-rating-fiveStars" type="radio" class="sr-only" name="rating" value="5">
+      <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="size-5" x-bind:class="currentVal > 4 ? 'text-amber-500' : 'text-on-surface dark:text-on-surface-dark'">
+        <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd">
+      </svg>
+    </label>
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="rating" data-name="Rating" />
           <span class="uikit-name">Rating <code>&lt;Rating/&gt;</code></span>
           <span class="uikit-desc">Interactive 5-star radio rating.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="combobox" data-name="Combobox" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="combobox"><div x-data="{
+    allOptions: [
+        { label: 'Acura', value: 'Acura' },
+        { label: 'Audi', value: 'Audi' },
+        { label: 'BMW', value: 'BMW' },
+        { label: 'Ford', value: 'Ford' },
+        { label: 'Honda', value: 'Honda' },
+        { label: 'Tesla', value: 'Tesla' },
+        { label: 'Toyota', value: 'Toyota' },
+    ],
+    options: [],
+    isOpen: false,
+    openedWithKeyboard: false,
+    selectedOption: null,
+    setSelectedOption(option) {
+        this.selectedOption = option
+        this.isOpen = false
+        this.openedWithKeyboard = false
+        this.$refs.hiddenTextField.value = option.value
+    },
+    getFilteredOptions(query) {
+        this.options = this.allOptions.filter((option) =>
+            option.label.toLowerCase().includes(query.toLowerCase()),
+        )
+        if (this.options.length === 0) {
+            this.$refs.noResultsMessage.classList.remove('hidden')
+        } else {
+            this.$refs.noResultsMessage.classList.add('hidden')
+        }
+    },
+    handleKeydownOnOptions(event) {
+        // if the user presses backspace or the alpha-numeric keys, focus on the search field
+        if ((event.keyCode >= 65 && event.keyCode <= 90) || (event.keyCode >= 48 && event.keyCode <= 57) || event.keyCode === 8) {
+            this.$refs.searchField.focus()
+        }
+    },
+}">
+  <div class="flex w-full max-w-xs flex-col gap-1" x-on:keydown="handleKeydownOnOptions($event)" x-on:keydown.esc.window="isOpen = false, openedWithKeyboard = false" x-init="options = allOptions">
+    <label for="pv-combobox-make" class="w-fit pl-0.5 text-sm text-on-surface dark:text-on-surface-dark">Make</label>
+    <div class="relative">
+
+      
+      <button type="button" class="inline-flex w-full items-center justify-between gap-2 border border-outline rounded-radius bg-surface-alt px-4 py-2 text-sm font-medium tracking-wide text-on-surface transition hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark dark:focus-visible:outline-primary-dark" role="combobox" aria-controls="pv-combobox-makesList" aria-haspopup="listbox" x-on:click="isOpen = ! isOpen" x-on:keydown.down.prevent="openedWithKeyboard = true" x-on:keydown.enter.prevent="openedWithKeyboard = true" x-on:keydown.space.prevent="openedWithKeyboard = true" x-bind:aria-expanded="isOpen || openedWithKeyboard" x-bind:aria-label="selectedOption ? selectedOption.value : 'Please Select'" >
+        <span class="text-sm font-normal" x-text="selectedOption ? selectedOption.value : 'Please Select'"></span>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5" aria-hidden="true">
+          <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+
+      
+      <input id="pv-combobox-make" name="make" x-ref="hiddenTextField" hidden=""/>
+      <div x-show="isOpen || openedWithKeyboard" id="pv-combobox-makesList" class="absolute left-0 top-11 z-10 w-full overflow-hidden rounded-radius border border-outline bg-surface-alt dark:border-outline-dark dark:bg-surface-dark-alt" role="listbox" aria-label="industries list" x-on:click.outside="isOpen = false, openedWithKeyboard = false" x-on:keydown.down.prevent="$focus.wrap().next()" x-on:keydown.up.prevent="$focus.wrap().previous()" x-transition x-trap="openedWithKeyboard">
+
+        
+        <div class="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5" class="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-on-surface/50 dark:text-on-surface-dark/50" aria-hidden="true" >
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
+          </svg>
+          <input type="text" class="w-full border-b border-outline bg-surface-alt py-2.5 pl-11 pr-4 text-sm text-on-surface focus:outline-hidden focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark dark:focus-visible:border-primary-dark" name="searchField" aria-label="Search" x-on:input="getFilteredOptions($el.value)" x-ref="searchField" placeholder="Search" />
+        </div>
+
+        
+        <ul class="flex max-h-44 flex-col overflow-y-auto">
+          <li class="hidden px-4 py-2 text-sm text-on-surface dark:text-on-surface-dark" x-ref="noResultsMessage">
+            <span>No matches found</span>
+          </li>
+          <template x-for="(item, index) in options" x-bind:key="item.value">
+            <li class="combobox-option inline-flex justify-between gap-6 bg-surface-alt px-4 py-2 text-sm text-on-surface hover:bg-surface-dark-alt/5 hover:text-on-surface-strong focus-visible:bg-surface-dark-alt/5 focus-visible:text-on-surface-strong focus-visible:outline-hidden dark:bg-surface-dark-alt dark:text-on-surface-dark dark:hover:bg-surface-alt/5 dark:hover:text-on-surface-dark-strong dark:focus-visible:bg-surface-alt/10 dark:focus-visible:text-on-surface-dark-strong" role="option" x-on:click="setSelectedOption(item)" x-on:keydown.enter="setSelectedOption(item)" x-bind:id="'option-' + index" tabindex="0">
+              
+              <span x-bind:class="selectedOption == item ? 'font-bold' : null" x-text="item.label"></span>
+              
+              <span class="sr-only" x-text="selectedOption == item ? 'selected' : null"></span>
+              
+              <svg x-cloak x-show="selectedOption == item" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" class="size-4" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+              </svg>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="combobox" data-name="Combobox" />
           <span class="uikit-name">Combobox <code>&lt;Combobox/&gt;</code></span>
           <span class="uikit-desc">Searchable single-select with keyboard nav.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="counter" data-name="Counter" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="counter"><div x-data="{ currentVal: 1, minVal: 0, maxVal: 10, decimalPoints: 0, incrementAmount: 1 }">
+    <div class="flex flex-col gap-1">
+        <label for="pv-counter-counterInput" class="pl-1 text-sm text-on-surface dark:text-on-surface-dark">Items(s)</label>
+        <div x-on:dblclick.prevent class="flex items-center">
+            <button x-on:click="currentVal = Math.max(minVal, currentVal - incrementAmount)" class="flex h-10 items-center justify-center rounded-l-radius border border-outline bg-surface-alt px-4 py-2 text-on-surface hover:opacity-75 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark dark:focus-visible:outline-primary-dark" aria-label="subtract">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" stroke="currentColor" fill="none" stroke-width="2" class="size-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15"/>
+                </svg>
+            </button>
+            <input x-model="currentVal.toFixed(decimalPoints)" id="pv-counter-counterInput" type="text" class="border-x-none h-10 w-20 rounded-none border-y border-outline bg-surface-alt/50 text-center text-on-surface-strong focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark-strong dark:focus-visible:outline-primary-dark" readonly />
+            <button x-on:click="currentVal = Math.min(maxVal, currentVal + incrementAmount)" class="flex h-10 items-center justify-center rounded-r-radius border border-outline bg-surface-alt px-4 py-2 text-on-surface hover:opacity-75 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark dark:focus-visible:outline-primary-dark" aria-label="add">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" stroke="currentColor" fill="none" stroke-width="2" class="size-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="counter" data-name="Counter" />
           <span class="uikit-name">Counter <code>&lt;Counter/&gt;</code></span>
           <span class="uikit-desc">Numeric stepper with min/max clamping.</span>
-        </label></div>
+        </label>
+        </div></div>
       </section>
       <section class="uikit-cat">
         <div class="uikit-cat-head"><h2>Overlays</h2><button type="button" class="uikit-selcat" data-cat="Overlays">Select all</button></div>
         <div class="uikit-grid">
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="modal" data-name="Modal" />
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="modal"><div x-data="{ modalIsOpen: false }">
+  <div>
+    <button x-on:click="modalIsOpen = true" type="button" class="whitespace-nowrap rounded-radius border border-primary dark:border-primary-dark bg-primary px-4 py-2 text-center text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 dark:bg-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark">Open Modal</button>
+    <div x-cloak x-show="modalIsOpen" x-transition.opacity.duration.200ms x-trap.inert.noscroll="modalIsOpen" x-on:keydown.esc.window="modalIsOpen = false" x-on:click.self="modalIsOpen = false" class="fixed inset-0 z-30 flex items-end justify-center bg-black/20 p-4 pb-8 backdrop-blur-md sm:items-center lg:p-8" role="dialog" aria-modal="true" aria-labelledby="pv-modal-modalTitle">
+      <div x-show="modalIsOpen" x-transition:enter="transition ease-out duration-200 delay-100 motion-reduce:transition-opacity" x-transition:enter-start="opacity-0 scale-50" x-transition:enter-end="opacity-100 scale-100" class="flex max-w-lg flex-col gap-4 overflow-hidden rounded-radius border border-outline bg-surface text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">
+        <div class="flex items-center justify-between border-b border-outline bg-surface-alt/60 p-4 dark:border-outline-dark dark:bg-surface-dark/20">
+          <h3 id="pv-modal-modalTitle" class="font-semibold tracking-wide text-on-surface-strong dark:text-on-surface-dark-strong"><slot name="title">Modal Title</slot></h3>
+          <button x-on:click="modalIsOpen = false" aria-label="close modal">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" stroke="currentColor" fill="none" stroke-width="1.4" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="px-4 py-8">
+          Modal body content.
+        </div>
+        <div class="flex flex-col-reverse justify-between gap-2 border-t border-outline bg-surface-alt/60 p-4 dark:border-outline-dark dark:bg-surface-dark/20 sm:flex-row sm:items-center md:justify-end">
+          <button x-on:click="modalIsOpen = false" type="button" class="whitespace-nowrap rounded-radius px-4 py-2 text-center text-sm font-medium tracking-wide text-on-surface transition hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 dark:text-on-surface-dark dark:focus-visible:outline-primary-dark">Cancel</button>
+          <button x-on:click="modalIsOpen = false" type="button" class="whitespace-nowrap rounded-radius bg-primary border border-primary dark:border-primary-dark px-4 py-2 text-center text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 dark:bg-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="modal" data-name="Modal" />
           <span class="uikit-name">Modal <code>&lt;Modal/&gt;</code></span>
           <span class="uikit-desc">Dialog with focus-trap, esc/click-outside close.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="dropdown" data-name="Dropdown" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="dropdown"><div x-data="{ isOpen: false, openedWithKeyboard: false }">
+  <div class="relative w-fit" x-on:keydown.esc.window="isOpen = false, openedWithKeyboard = false">
+    <button type="button" x-on:click="isOpen = ! isOpen" class="inline-flex items-center gap-2 whitespace-nowrap rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm font-medium tracking-wide transition hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline-strong dark:border-outline-dark dark:bg-surface-dark-alt dark:focus-visible:outline-outline-dark-strong" aria-haspopup="true" x-on:keydown.space.prevent="openedWithKeyboard = true" x-on:keydown.enter.prevent="openedWithKeyboard = true" x-on:keydown.down.prevent="openedWithKeyboard = true" x-bind:class="isOpen || openedWithKeyboard ? 'text-on-surface-strong dark:text-on-surface-dark-strong' : 'text-on-surface dark:text-on-surface-dark'" x-bind:aria-expanded="isOpen || openedWithKeyboard">
+      Actions Menu
+      <svg aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4 rotate-0">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+      </svg>
+    </button>
+    <div x-cloak x-show="isOpen || openedWithKeyboard" x-transition x-trap="openedWithKeyboard" x-on:click.outside="isOpen = false, openedWithKeyboard = false" x-on:keydown.down.prevent="$focus.wrap().next()" x-on:keydown.up.prevent="$focus.wrap().previous()" class="absolute top-11 left-0 flex w-fit min-w-48 flex-col overflow-hidden rounded-radius border border-outline bg-surface-alt dark:border-outline-dark dark:bg-surface-dark-alt" role="menu">
+      <a href="#" class="bg-surface-alt px-4 py-2 text-sm text-on-surface hover:bg-surface-dark-alt/5 hover:text-on-surface-strong focus-visible:bg-surface-dark-alt/10 focus-visible:text-on-surface-strong focus-visible:outline-hidden dark:bg-surface-dark-alt dark:text-on-surface-dark dark:hover:bg-surface-alt/5 dark:hover:text-on-surface-dark-strong dark:focus-visible:bg-surface-alt/10 dark:focus-visible:text-on-surface-dark-strong" role="menuitem">Dashboard</a>
+        <a href="#" class="bg-surface-alt px-4 py-2 text-sm text-on-surface hover:bg-surface-dark-alt/5 hover:text-on-surface-strong focus-visible:bg-surface-dark-alt/10 focus-visible:text-on-surface-strong focus-visible:outline-hidden dark:bg-surface-dark-alt dark:text-on-surface-dark dark:hover:bg-surface-alt/5 dark:hover:text-on-surface-dark-strong dark:focus-visible:bg-surface-alt/10 dark:focus-visible:text-on-surface-dark-strong" role="menuitem">Settings</a>
+        <a href="#" class="bg-surface-alt px-4 py-2 text-sm text-on-surface hover:bg-surface-dark-alt/5 hover:text-on-surface-strong focus-visible:bg-surface-dark-alt/10 focus-visible:text-on-surface-strong focus-visible:outline-hidden dark:bg-surface-dark-alt dark:text-on-surface-dark dark:hover:bg-surface-alt/5 dark:hover:text-on-surface-dark-strong dark:focus-visible:bg-surface-alt/10 dark:focus-visible:text-on-surface-dark-strong" role="menuitem">Sign Out</a>
+    </div>
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="dropdown" data-name="Dropdown" />
           <span class="uikit-name">Dropdown <code>&lt;Dropdown/&gt;</code></span>
           <span class="uikit-desc">Menu with keyboard nav + click-outside close.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="accordion" data-name="Accordion" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="accordion"><div x-data="{ isExpanded: false }">
+  <div class="w-full overflow-hidden rounded-radius border border-outline bg-surface-alt/40 text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark">
+    <button id="pv-accordion-accordionControl" type="button"
+      class="flex w-full items-center justify-between gap-4 bg-surface-alt p-4 text-left underline-offset-2 hover:bg-surface-alt/75 focus-visible:bg-surface-alt/75 focus-visible:underline focus-visible:outline-hidden dark:bg-surface-dark-alt dark:hover:bg-surface-dark-alt/75 dark:focus-visible:bg-surface-dark-alt/75"
+      aria-controls="pv-accordion-accordionPanel" x-on:click="isExpanded = ! isExpanded"
+      x-bind:class="isExpanded ? 'text-on-surface-strong dark:text-on-surface-dark-strong font-bold' : 'text-on-surface dark:text-on-surface-dark font-medium'"
+      x-bind:aria-expanded="isExpanded ? 'true' : 'false'">
+      <slot name="title">Accordion title</slot>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2"
+        stroke="currentColor" class="size-5 shrink-0 transition" aria-hidden="true"
+        x-bind:class="isExpanded ? 'rotate-180' : ''">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+      </svg>
+    </button>
+    <div x-cloak x-show="isExpanded" id="pv-accordion-accordionPanel" role="region" aria-labelledby="pv-accordion-accordionControl" x-collapse>
+      <div class="p-4 text-sm sm:text-base text-pretty">
+        Accordion panel content
+      </div>
+    </div>
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="accordion" data-name="Accordion" />
           <span class="uikit-name">Accordion <code>&lt;Accordion/&gt;</code></span>
           <span class="uikit-desc">Collapsible item with title + body slots.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="tooltip" data-name="Tooltip" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="tooltip"><div x-data>
+  <div class="relative w-fit">
+    <button type="button" class="peer rounded-radius bg-surface-alt border border-surface-alt px-4 py-2 font-medium tracking-wide text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:bg-surface-dark-alt dark:border-surface-dark-alt dark:text-on-surface-dark dark:focus-visible:outline-primary-dark" aria-describedby="pv-tooltip-tooltipContent">Hover Me</button>
+    <div id="pv-tooltip-tooltipContent" class="absolute -top-9 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-sm bg-surface-dark px-2 py-1 text-center text-sm text-on-surface-dark-strong opacity-0 transition-all ease-out peer-hover:opacity-100 peer-focus:opacity-100 dark:bg-surface dark:text-on-surface-strong" role="tooltip">Tooltip top</div>
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="tooltip" data-name="Tooltip" />
           <span class="uikit-name">Tooltip <code>&lt;Tooltip/&gt;</code></span>
           <span class="uikit-desc">Hover/focus tooltip; content via slot.</span>
-        </label></div>
+        </label>
+        </div></div>
       </section>
       <section class="uikit-cat">
         <div class="uikit-cat-head"><h2>Navigation</h2><button type="button" class="uikit-selcat" data-cat="Navigation">Select all</button></div>
         <div class="uikit-grid">
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="navbar" data-name="Navbar" />
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="navbar"><div x-data="{ mobileMenuIsOpen: false }">
+	<nav x-on:click.away="mobileMenuIsOpen = false" class="flex items-center justify-between border-b border-outline px-6 py-4 dark:border-outline-dark" aria-label="apex ui menu">
+		
+		<a href="#" class="text-2xl font-bold text-on-surface-strong dark:text-on-surface-dark-strong">
+			<span>Ap<span class="text-primary dark:text-primary-dark">e</span>x</span>
+		</a>
+		
+		<ul class="hidden items-center gap-4 md:flex">
+			<li><a href="#" class="font-bold text-primary underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-primary-dark dark:hover:text-primary-dark" aria-current="page">Products</a></li>
+			<li><a href="#" class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark">Pricing</a></li>
+			<li><a href="#" class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark">Blog</a></li>
+			<li><a href="#" class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark">Login</a></li>
+		</ul>
+		
+		<button x-on:click="mobileMenuIsOpen = !mobileMenuIsOpen" x-bind:aria-expanded="mobileMenuIsOpen" x-bind:class="mobileMenuIsOpen ? 'fixed top-6 right-6 z-20' : null" type="button" class="flex text-on-surface dark:text-on-surface-dark md:hidden" aria-label="mobile menu" aria-controls="pv-navbar-mobileMenu">
+			<svg x-cloak x-show="!mobileMenuIsOpen" xmlns="http://www.w3.org/2000/svg" fill="none" aria-hidden="true" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-6">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+			</svg>
+			<svg x-cloak x-show="mobileMenuIsOpen" xmlns="http://www.w3.org/2000/svg" fill="none" aria-hidden="true" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-6">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+			</svg>
+		</button>
+		
+		<ul x-cloak x-show="mobileMenuIsOpen" x-transition:enter="transition motion-reduce:transition-none ease-out duration-300" x-transition:enter-start="-translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transition motion-reduce:transition-none ease-out duration-300" x-transition:leave-start="translate-y-0" x-transition:leave-end="-translate-y-full" id="pv-navbar-mobileMenu" class="fixed max-h-svh overflow-y-auto inset-x-0 top-0 z-10 flex flex-col divide-y divide-outline rounded-b-radius border-b border-outline bg-surface-alt px-6 pb-6 pt-20 dark:divide-outline-dark dark:border-outline-dark dark:bg-surface-dark-alt md:hidden">
+			<li class="py-4"><a href="#" class="w-full text-lg font-bold text-primary focus:underline dark:text-primary-dark" aria-current="page">Products</a></li>
+			<li class="py-4"><a href="#" class="w-full text-lg font-medium text-on-surface focus:underline dark:text-on-surface-dark">Pricing</a></li>
+			<li class="py-4"><a href="#" class="w-full text-lg font-medium text-on-surface focus:underline dark:text-on-surface-dark">Blog</a></li>
+			<li class="py-4"><a href="#" class="w-full text-lg font-medium text-on-surface focus:underline dark:text-on-surface-dark">Login</a></li>
+		</ul>
+	</nav>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="navbar" data-name="Navbar" />
           <span class="uikit-name">Navbar <code>&lt;Navbar/&gt;</code></span>
           <span class="uikit-desc">Responsive top nav with mobile hamburger menu.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="sidebar" data-name="Sidebar" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="sidebar"><div x-data="{ showSidebar: false }">
+    <div class="relative flex w-full flex-col md:flex-row">
+        
+        <a class="sr-only" href="#pv-sidebar-main-content">skip to the main content</a>
+
+        
+        <div x-cloak x-show="showSidebar" class="fixed inset-0 z-10 bg-surface-dark/10 backdrop-blur-xs md:hidden" aria-hidden="true" x-on:click="showSidebar = false" x-transition.opacity ></div>
+
+        <nav x-cloak class="fixed left-0 z-20 flex h-svh w-60 shrink-0 flex-col border-r border-outline bg-surface-alt p-4 transition-transform duration-300 md:w-64 md:translate-x-0 md:relative dark:border-outline-dark dark:bg-surface-dark-alt" x-bind:class="showSidebar ? 'translate-x-0' : '-translate-x-60'" aria-label="sidebar navigation">
+            
+            <a href="#" class="ml-2 w-fit text-2xl font-bold text-on-surface-strong dark:text-on-surface-dark-strong">
+                <span class="sr-only">homepage</span>
+                <span>Ap<span class="text-primary dark:text-primary-dark">e</span>x</span>
+            </a>
+
+            
+            <div class="relative my-4 flex w-full max-w-xs flex-col gap-1 text-on-surface dark:text-on-surface-dark">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" class="absolute left-2 top-1/2 size-5 -translate-y-1/2 text-on-surface/50 dark:text-on-surface-dark/50" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
+                </svg>
+                <input type="search" class="w-full border border-outline rounded-radius bg-surface px-2 py-1.5 pl-9 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark/50 dark:focus-visible:outline-primary-dark" name="search" aria-label="Search" placeholder="Search"/>
+            </div>
+
+            
+            <div class="flex flex-col gap-2 overflow-y-auto pb-6">
+
+                <a href="#" class="flex items-center rounded-radius gap-2 px-2 py-1.5 text-sm font-medium text-on-surface underline-offset-2 hover:bg-primary/5 hover:text-on-surface-strong focus-visible:underline focus:outline-hidden dark:text-on-surface-dark dark:hover:bg-primary-dark/5 dark:hover:text-on-surface-dark-strong">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 shrink-0" aria-hidden="true">
+                        <path d="M15.5 2A1.5 1.5 0 0 0 14 3.5v13a1.5 1.5 0 0 0 1.5 1.5h1a1.5 1.5 0 0 0 1.5-1.5v-13A1.5 1.5 0 0 0 16.5 2h-1ZM9.5 6A1.5 1.5 0 0 0 8 7.5v9A1.5 1.5 0 0 0 9.5 18h1a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 10.5 6h-1ZM3.5 10A1.5 1.5 0 0 0 2 11.5v5A1.5 1.5 0 0 0 3.5 18h1A1.5 1.5 0 0 0 6 16.5v-5A1.5 1.5 0 0 0 4.5 10h-1Z"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="#" class="flex items-center rounded-radius gap-2 bg-primary/10 px-2 py-1.5 text-sm font-medium text-on-surface-strong underline-offset-2 focus-visible:underline focus:outline-hidden dark:bg-primary-dark/10 dark:text-on-surface-dark-strong">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 shrink-0" aria-hidden="true">
+                        <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z"/>
+                    </svg>
+                    <span>Profile</span>
+                    <span class="sr-only">active</span>
+                </a>
+
+                <a href="#" class="flex items-center rounded-radius gap-2 px-2 py-1.5 text-sm font-medium text-on-surface underline-offset-2 hover:bg-primary/5 hover:text-on-surface-strong focus-visible:underline focus:outline-hidden dark:text-on-surface-dark dark:hover:bg-primary-dark/5 dark:hover:text-on-surface-dark-strong">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 shrink-0" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M10 2c-2.236 0-4.43.18-6.57.524C1.993 2.755 1 4.014 1 5.426v5.148c0 1.413.993 2.67 2.43 2.902 1.168.188 2.352.327 3.55.414.28.02.521.18.642.413l1.713 3.293a.75.75 0 0 0 1.33 0l1.713-3.293a.783.783 0 0 1 .642-.413 41.102 41.102 0 0 0 3.55-.414c1.437-.231 2.43-1.49 2.43-2.902V5.426c0-1.413-.993-2.67-2.43-2.902A41.289 41.289 0 0 0 10 2ZM6.75 6a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 2.5a.75.75 0 0 0 0 1.5h3.5a.75.75 0 0 0 0-1.5h-3.5Z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>Inbox</span>
+                </a>
+
+                <a href="#" class="flex items-center rounded-radius gap-2 px-2 py-1.5 text-sm font-medium text-on-surface underline-offset-2 hover:bg-primary/5 hover:text-on-surface-strong focus-visible:underline focus:outline-hidden dark:text-on-surface-dark dark:hover:bg-primary-dark/5 dark:hover:text-on-surface-dark-strong">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 shrink-0" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M10 2a6 6 0 0 0-6 6c0 1.887-.454 3.665-1.257 5.234a.75.75 0 0 0 .515 1.076 32.91 32.91 0 0 0 3.256.508 3.5 3.5 0 0 0 6.972 0 32.903 32.903 0 0 0 3.256-.508.75.75 0 0 0 .515-1.076A11.448 11.448 0 0 1 16 8a6 6 0 0 0-6-6ZM8.05 14.943a33.54 33.54 0 0 0 3.9 0 2 2 0 0 1-3.9 0Z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>Notifications</span>
+                </a>
+
+                <a href="#" class="flex items-center rounded-radius gap-2 px-2 py-1.5 text-sm font-medium text-on-surface underline-offset-2 hover:bg-primary/5 hover:text-on-surface-strong focus-visible:underline focus:outline-hidden dark:text-on-surface-dark dark:hover:bg-primary-dark/5 dark:hover:text-on-surface-dark-strong">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 shrink-0" aria-hidden="true">
+                        <path d="M7.84 1.804A1 1 0 0 1 8.82 1h2.36a1 1 0 0 1 .98.804l.331 1.652a6.993 6.993 0 0 1 1.929 1.115l1.598-.54a1 1 0 0 1 1.186.447l1.18 2.044a1 1 0 0 1-.205 1.251l-1.267 1.113a7.047 7.047 0 0 1 0 2.228l1.267 1.113a1 1 0 0 1 .206 1.25l-1.18 2.045a1 1 0 0 1-1.187.447l-1.598-.54a6.993 6.993 0 0 1-1.929 1.115l-.33 1.652a1 1 0 0 1-.98.804H8.82a1 1 0 0 1-.98-.804l-.331-1.652a6.993 6.993 0 0 1-1.929-1.115l-1.598.54a1 1 0 0 1-1.186-.447l-1.18-2.044a1 1 0 0 1 .205-1.251l1.267-1.114a7.05 7.05 0 0 1 0-2.227L1.821 7.773a1 1 0 0 1-.206-1.25l1.18-2.045a1 1 0 0 1 1.187-.447l1.598.54A6.992 6.992 0 0 1 7.51 3.456l.33-1.652ZM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>Settings</span>
+                </a>
+            </div>
+        </nav>
+
+        
+        <div id="pv-sidebar-main-content" class="h-svh w-full overflow-y-auto p-4 bg-surface dark:bg-surface-dark">
+            
+        </div>
+
+        
+        <button class="fixed right-4 top-4 z-20 rounded-full bg-primary p-4 md:hidden text-on-primary dark:bg-primary-dark dark:text-on-primary-dark" x-on:click="showSidebar = ! showSidebar">
+            <svg x-show="showSidebar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-5" aria-hidden="true">
+                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+            </svg>
+            <svg x-show="! showSidebar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-5" aria-hidden="true">
+                <path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm5-1v12h9a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM4 2H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h2z"/>
+            </svg>
+            <span class="sr-only">sidebar toggle</span>
+        </button>
+    </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="sidebar" data-name="Sidebar" />
           <span class="uikit-name">Sidebar <code>&lt;Sidebar/&gt;</code></span>
           <span class="uikit-desc">Responsive off-canvas sidebar with nav links.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="breadcrumbs" data-name="Breadcrumbs" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="breadcrumbs"><div>
+    <nav class="text-sm font-medium text-on-surface dark:text-on-surface-dark" aria-label="breadcrumb">
+        <ol class="flex flex-wrap items-center gap-1">
+            <li class="flex items-center gap-1">
+                <a href="#" class="hover:text-on-surface-strong dark:hover:text-on-surface-dark-strong">Home</a>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true" stroke-width="2" stroke="currentColor" class="size-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                </svg>
+            </li>
+            <li class="flex items-center gap-1">
+                <a href="#" class="hover:text-on-surface-strong dark:hover:text-on-surface-dark-strong">Components</a>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true" stroke-width="2" stroke="currentColor" class="size-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                </svg>
+            </li>
+            <li class="flex items-center text-on-surface-strong gap-1 font-bold dark:text-on-surface-dark-strong" aria-current="page">Breadcrumb</li>
+        </ol>
+    </nav>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="breadcrumbs" data-name="Breadcrumbs" />
           <span class="uikit-name">Breadcrumbs <code>&lt;Breadcrumbs/&gt;</code></span>
           <span class="uikit-desc">Chevron-separated breadcrumb navigation.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="pagination" data-name="Pagination" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="pagination"><div>
+  <nav aria-label="pagination">
+    <ul class="flex shrink-0 items-center gap-2 text-sm font-medium">
+      <li>
+        <a href="#" class="flex items-center rounded-radius p-1 text-on-surface hover:text-primary dark:text-on-surface-dark dark:hover:text-primary-dark" aria-label="previous page">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-6">
+            <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+          </svg>
+          Previous
+        </a>
+      </li>
+      <li><a href="#" class="flex size-6 items-center justify-center rounded-radius p-1 text-on-surface hover:text-primary dark:text-on-surface-dark dark:hover:text-primary-dark" aria-label="page 1">1</a></li>
+      <li><a href="#" class="flex size-6 items-center justify-center rounded-radius bg-primary p-1 font-bold text-on-primary dark:bg-primary-dark dark:text-on-primary-dark" aria-current="page" aria-label="page 2">2</a></li>
+      <li><a href="#" class="flex size-6 items-center justify-center rounded-radius p-1 text-on-surface hover:text-primary dark:text-on-surface-dark dark:hover:text-primary-dark" aria-label="page 3">3</a></li>
+      <li><a href="#" class="flex size-6 items-center justify-center rounded-radius p-1 text-on-surface hover:text-primary dark:text-on-surface-dark dark:hover:text-primary-dark" aria-label="page 4">4</a></li>
+      <li>
+        <a href="#" class="flex items-center rounded-radius p-1 text-on-surface hover:text-primary dark:text-on-surface-dark dark:hover:text-primary-dark" aria-label="next page">
+          Next
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-6">
+            <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+          </svg>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="pagination" data-name="Pagination" />
           <span class="uikit-name">Pagination <code>&lt;Pagination/&gt;</code></span>
           <span class="uikit-desc">Numbered pagination with prev/next.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="steps" data-name="Steps" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="steps"><div>
+  <ol class="flex w-full items-center gap-2" aria-label="registration progress">
+    
+    <li class="text-sm">
+      <div class="flex items-center gap-2" aria-label="create an account">
+        <span class="flex size-6 items-center justify-center rounded-full border-primary bg-primary text-on-primary dark:border-primary-dark dark:bg-primary-dark dark:text-on-primary-dark">
+          <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+          </svg>
+          <span class="sr-only">completed</span>
+        </span>
+      </div>
+    </li>
+    
+    <li class="flex w-full items-center text-sm" aria-current="step" aria-label="choose a plan">
+      <span class="h-0.5 w-full bg-primary dark:bg-primary-dark" aria-hidden="true"></span>
+      <div class="flex items-center gap-2 pl-2">
+        <span class="flex size-6 shrink-0 items-center justify-center rounded-full border-primary bg-primary font-bold text-on-primary outline outline-2 outline-offset-2 outline-primary dark:border-primary-dark dark:bg-primary-dark dark:text-on-primary-dark dark:outline-primary-dark">2</span>
+      </div>
+    </li>
+    <li class="flex w-full items-center text-sm" aria-label="checkout">
+      <span class="h-0.5 w-full bg-outline dark:bg-outline-dark" aria-hidden="true"></span>
+      <div class="flex items-center gap-2 pl-2">
+        <span class="flex size-6 shrink-0 items-center justify-center rounded-full border-outline bg-surface-alt font-medium text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">3</span>
+      </div>
+    </li>
+    <li aria-label="start trial" class="flex w-full items-center text-sm">
+      <span aria-hidden="true" class="h-0.5 w-full bg-outline dark:bg-outline-dark"></span>
+      <div class="flex items-center gap-2 pl-2">
+        <span class="flex size-6 shrink-0 items-center justify-center rounded-full border-outline bg-surface-alt font-medium text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">4</span>
+      </div>
+    </li>
+  </ol>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="steps" data-name="Steps" />
           <span class="uikit-name">Steps <code>&lt;Steps/&gt;</code></span>
           <span class="uikit-desc">Horizontal step progress indicator.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="tabs" data-name="Tabs" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="tabs"><div x-data="{ selectedTab: 'groups' }">
+  <div class="w-full">
+    <div x-on:keydown.right.prevent="$focus.wrap().next()" x-on:keydown.left.prevent="$focus.wrap().previous()" class="flex gap-2 overflow-x-auto border-b border-outline dark:border-outline-dark" role="tablist" aria-label="tab options">
+      <button x-on:click="selectedTab = 'groups'" x-bind:aria-selected="selectedTab === 'groups'" x-bind:tabindex="selectedTab === 'groups' ? '0' : '-1'" x-bind:class="selectedTab === 'groups' ? 'font-bold text-primary border-b-2 border-primary dark:border-primary-dark dark:text-primary-dark' : 'text-on-surface font-medium dark:text-on-surface-dark dark:hover:border-b-outline-dark-strong dark:hover:text-on-surface-dark-strong hover:border-b-2 hover:border-b-outline-strong hover:text-on-surface-strong'" class="h-min px-4 py-2 text-sm" type="button" role="tab" aria-controls="pv-tabs-tabpanelGroups">Groups</button>
+      <button x-on:click="selectedTab = 'likes'" x-bind:aria-selected="selectedTab === 'likes'" x-bind:tabindex="selectedTab === 'likes' ? '0' : '-1'" x-bind:class="selectedTab === 'likes' ? 'font-bold text-primary border-b-2 border-primary dark:border-primary-dark dark:text-primary-dark' : 'text-on-surface font-medium dark:text-on-surface-dark dark:hover:border-b-outline-dark-strong dark:hover:text-on-surface-dark-strong hover:border-b-2 hover:border-b-outline-strong hover:text-on-surface-strong'" class="h-min px-4 py-2 text-sm" type="button" role="tab" aria-controls="pv-tabs-tabpanelLikes">Likes</button>
+      <button x-on:click="selectedTab = 'comments'" x-bind:aria-selected="selectedTab === 'comments'" x-bind:tabindex="selectedTab === 'comments' ? '0' : '-1'" x-bind:class="selectedTab === 'comments' ? 'font-bold text-primary border-b-2 border-primary dark:border-primary-dark dark:text-primary-dark' : 'text-on-surface font-medium dark:text-on-surface-dark dark:hover:border-b-outline-dark-strong dark:hover:text-on-surface-dark-strong hover:border-b-2 hover:border-b-outline-strong hover:text-on-surface-strong'" class="h-min px-4 py-2 text-sm" type="button" role="tab" aria-controls="pv-tabs-tabpanelComments">Comments</button>
+      <button x-on:click="selectedTab = 'saved'" x-bind:aria-selected="selectedTab === 'saved'" x-bind:tabindex="selectedTab === 'saved' ? '0' : '-1'" x-bind:class="selectedTab === 'saved' ? 'font-bold text-primary border-b-2 border-primary dark:border-primary-dark dark:text-primary-dark' : 'text-on-surface font-medium dark:text-on-surface-dark dark:hover:border-b-outline-dark-strong dark:hover:text-on-surface-dark-strong hover:border-b-2 hover:border-b-outline-strong hover:text-on-surface-strong'" class="h-min px-4 py-2 text-sm" type="button" role="tab" aria-controls="pv-tabs-tabpanelSaved">Saved</button>
+    </div>
+    <div class="px-2 py-4 text-on-surface dark:text-on-surface-dark">
+      <div x-cloak x-show="selectedTab === 'groups'" id="pv-tabs-tabpanelGroups" role="tabpanel" aria-label="groups"><slot name="groups">Groups tab content</slot></div>
+      <div x-cloak x-show="selectedTab === 'likes'" id="pv-tabs-tabpanelLikes" role="tabpanel" aria-label="likes"><slot name="likes">Likes tab content</slot></div>
+      <div x-cloak x-show="selectedTab === 'comments'" id="pv-tabs-tabpanelComments" role="tabpanel" aria-label="comments"><slot name="comments">Comments tab content</slot></div>
+      <div x-cloak x-show="selectedTab === 'saved'" id="pv-tabs-tabpanelSaved" role="tabpanel" aria-label="saved"><slot name="saved">Saved tab content</slot></div>
+    </div>
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="tabs" data-name="Tabs" />
           <span class="uikit-name">Tabs <code>&lt;Tabs/&gt;</code></span>
           <span class="uikit-desc">Tablist with arrow-key focus + panel slots.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="link" data-name="Link" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="link"><div>
+    <a href="#" class="font-medium text-primary underline-offset-2 hover:underline focus:underline focus:outline-hidden dark:text-primary-dark">Read if bored</a>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="link" data-name="Link" />
           <span class="uikit-name">Link <code>&lt;Link/&gt;</code></span>
           <span class="uikit-desc">Styled inline anchor with slotted label.</span>
-        </label></div>
+        </label>
+        </div></div>
       </section>
       <section class="uikit-cat">
         <div class="uikit-cat-head"><h2>Feedback</h2><button type="button" class="uikit-selcat" data-cat="Feedback">Select all</button></div>
         <div class="uikit-grid">
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="alert" data-name="Alert" />
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="alert"><div x-data="{ alertIsVisible: true }">
+    <div x-show="alertIsVisible"
+        class="relative w-full overflow-hidden rounded-radius border border-info bg-surface text-on-surface dark:bg-surface-dark dark:text-on-surface-dark"
+        role="alert" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-90">
+        <div class="flex w-full items-center gap-2 bg-info/10 p-4">
+            <div class="bg-info/15 text-info rounded-full p-1" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-6"
+                    aria-hidden="true">
+                    <path fill-rule="evenodd"
+                        d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z"
+                        clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-2 text-xs font-medium sm:text-sm">
+                Alert
+            </div>
+            <button type="button" @click="alertIsVisible = false" class="ml-auto" aria-label="dismiss alert">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" stroke="currentColor"
+                    fill="none" stroke-width="2.5" class="w-4 h-4 shrink-0">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+    </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="alert" data-name="Alert" />
           <span class="uikit-name">Alert <code>&lt;Alert/&gt;</code></span>
           <span class="uikit-desc">Dismissible info alert with icon, message slot, and close button.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="banner" data-name="Banner" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="banner"><div x-data="{ bannerIsVisible: true }">
+    <div x-show="bannerIsVisible" class="relative flex border-outline bg-surface-alt p-4 text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark border-b">
+        <p class="px-6 text-xs sm:text-sm text-pretty mx-auto">Banner</p>
+        <button type="button" @click="bannerIsVisible = false" class="absolute top-1/2 -translate-y-1/2 right-4" aria-label="dismiss banner">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" stroke="currentColor" fill="none" stroke-width="2.5" class="size-4 shrink-0">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="banner" data-name="Banner" />
           <span class="uikit-name">Banner <code>&lt;Banner/&gt;</code></span>
           <span class="uikit-desc">Full-width dismissible top banner with a text slot.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="toast" data-name="Toast" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="toast"><div x-data="{
+        notifications: [],
+        displayDuration: 8000,
+
+        addNotification({ variant = 'info', title = null, message = null }) {
+            const id = Date.now()
+            const notification = { id, variant, title, message }
+
+            // Keep only the most recent 20 notifications
+            if (this.notifications.length >= 20) {
+                this.notifications.splice(0, this.notifications.length - 19)
+            }
+
+            // Add the new notification to the notifications stack
+            this.notifications.push(notification)
+        },
+        removeNotification(id) {
+            setTimeout(() => {
+                this.notifications = this.notifications.filter(
+                    (notification) => notification.id !== id,
+                )
+            }, 400);
+        },
+    }">
+  <div x-on:notify.window="addNotification({
+            variant: $event.detail.variant,
+            title: $event.detail.title,
+            message: $event.detail.message,
+        })">
+
+    
+    <button x-on:click="$dispatch('notify', { variant: 'info', title: 'Update Available',  message: 'A new version of the app is ready for you. Update now to enjoy the latest features!' })" type="button" class="whitespace-nowrap rounded-radius bg-info px-4 py-2 text-center text-sm font-medium tracking-wide text-on-info transition hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info active:opacity-100 active:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-75">Info</button>
+
+    
+    <div x-on:mouseenter="$dispatch('pause-auto-dismiss')" x-on:mouseleave="$dispatch('resume-auto-dismiss')" class="group pointer-events-none fixed inset-x-8 top-0 z-99 flex max-w-full flex-col gap-2 bg-transparent px-6 py-6 md:bottom-0 md:left-[unset] md:right-0 md:top-[unset] md:max-w-sm">
+      <template x-for="(notification, index) in notifications" x-bind:key="notification.id">
+        
+        <div>
+          
+          <template x-if="notification.variant === 'info'">
+            <div x-data="{ isVisible: false, timeout: null }" x-cloak x-show="isVisible" class="pointer-events-auto relative rounded-radius border border-info bg-surface text-on-surface dark:bg-surface-dark dark:text-on-surface-dark" role="alert" x-on:pause-auto-dismiss.window="clearTimeout(timeout)" x-on:resume-auto-dismiss.window=" timeout = setTimeout(() => {(isVisible = false), removeNotification(notification.id) }, displayDuration)" x-init="$nextTick(() => { isVisible = true }), (timeout = setTimeout(() => { isVisible = false, removeNotification(notification.id)}, displayDuration))" x-transition:enter="transition duration-300 ease-out" x-transition:enter-end="translate-y-0" x-transition:enter-start="translate-y-8" x-transition:leave="transition duration-300 ease-in" x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24" x-transition:leave-start="translate-x-0 opacity-100">
+              <div class="flex w-full items-center gap-2.5 bg-info/10 rounded-radius p-4 transition-all duration-300">
+
+                
+                <div class="rounded-full bg-info/15 p-0.5 text-info" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+
+                
+                <div class="flex flex-col gap-2">
+                  <h3 x-cloak x-show="notification.title" class="text-sm font-semibold text-info" x-text="notification.title"></h3>
+                  <p x-cloak x-show="notification.message" class="text-pretty text-sm" x-text="notification.message"></p>
+                </div>
+
+                
+                <button type="button" class="ml-auto" aria-label="dismiss notification" x-on:click="(isVisible = false), removeNotification(notification.id)">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" class="size-5 shrink-0" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+    </div>
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="toast" data-name="Toast" />
           <span class="uikit-name">Toast <code>&lt;Toast/&gt;</code></span>
           <span class="uikit-desc">Stacking toast notifications with auto-dismiss.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="badge" data-name="Badge" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="badge"><div x-data>
+  <span class="inline-flex items-center gap-1 rounded-radius border border-outline bg-surface-alt px-2 py-0.5 text-xs font-medium text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">
+    Badge
+  </span>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="badge" data-name="Badge" />
           <span class="uikit-name">Badge <code>&lt;Badge/&gt;</code></span>
           <span class="uikit-desc">A small status/label pill.</span>
-        </label></div>
+        </label>
+        </div></div>
       </section>
       <section class="uikit-cat">
         <div class="uikit-cat-head"><h2>Loading</h2><button type="button" class="uikit-selcat" data-cat="Loading">Select all</button></div>
         <div class="uikit-grid">
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="spinner" data-name="Spinner" />
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="spinner"><div>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="size-5 fill-on-surface motion-safe:animate-spin dark:fill-on-surface-dark">
+        <path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25" />
+        <path d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z" />
+    </svg>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="spinner" data-name="Spinner" />
           <span class="uikit-name">Spinner <code>&lt;Spinner/&gt;</code></span>
           <span class="uikit-desc">SVG loading spinner (motion-safe).</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="progress" data-name="Progress" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="progress"><div x-data="{ currentVal: 20 ,minVal: 0 ,maxVal: 100, calcPercentage(min, max, val){return ((val-min)/(max-min))*100} }">
+    <div class="flex h-2.5 w-full overflow-hidden rounded-radius bg-surface-alt dark:bg-surface-dark-alt" role="progressbar" aria-label="default progress bar" x-bind:aria-valuenow="currentVal" x-bind:aria-valuemin="minVal" x-bind:aria-valuemax="maxVal">
+        <div class="h-full rounded-radius bg-primary dark:bg-primary-dark" x-bind:style="`width: ${calcPercentage(minVal, maxVal, currentVal)}%`"></div>
+    </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="progress" data-name="Progress" />
           <span class="uikit-name">Progress <code>&lt;Progress/&gt;</code></span>
           <span class="uikit-desc">Progress bar with ARIA value bindings.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="skeleton" data-name="Skeleton" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="skeleton"><div>
+    <div class="flex w-full flex-col gap-2">
+        <div class="h-3.5 w-full animate-pulse rounded-radius bg-on-surface/30 dark:bg-on-surface-dark/30" aria-hidden="true"></div>
+        <div class="h-3.5 w-full animate-pulse rounded-radius bg-on-surface/30 dark:bg-on-surface-dark/30" aria-hidden="true"></div>
+        <div class="h-3.5 w-full animate-pulse rounded-radius bg-on-surface/30 dark:bg-on-surface-dark/30" aria-hidden="true"></div>
+        <div class="h-3.5 w-1/2 animate-pulse rounded-radius bg-on-surface/30 dark:bg-on-surface-dark/30" aria-hidden="true"></div>
+        <span class="sr-only">loading</span>
+    </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="skeleton" data-name="Skeleton" />
           <span class="uikit-name">Skeleton <code>&lt;Skeleton/&gt;</code></span>
           <span class="uikit-desc">Pulsing placeholder skeleton loader.</span>
-        </label></div>
+        </label>
+        </div></div>
       </section>
       <section class="uikit-cat">
         <div class="uikit-cat-head"><h2>Data &amp; media</h2><button type="button" class="uikit-selcat" data-cat="Data &amp; media">Select all</button></div>
         <div class="uikit-grid">
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="table" data-name="Table" />
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="table"><div>
+  <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+    <table class="w-full text-left text-sm text-on-surface dark:text-on-surface-dark">
+      <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark-strong">
+        <tr>
+          <th scope="col" class="p-4">CustomerID</th>
+          <th scope="col" class="p-4">Name</th>
+          <th scope="col" class="p-4">Email</th>
+          <th scope="col" class="p-4">Membership</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline dark:divide-outline-dark">
+        <tr>
+          <td class="p-4">2335</td>
+          <td class="p-4">Alice Brown</td>
+          <td class="p-4">alice.brown@gmail.com</td>
+          <td class="p-4">Silver</td>
+        </tr>
+        <tr>
+          <td class="p-4">2338</td>
+          <td class="p-4">Bob Johnson</td>
+          <td class="p-4">johnson.bob@outlook.com</td>
+          <td class="p-4">Gold</td>
+        </tr>
+        <tr>
+          <td class="p-4">2342</td>
+          <td class="p-4">Sarah Adams</td>
+          <td class="p-4">s.adams@gmail.com</td>
+          <td class="p-4">Gold</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="table" data-name="Table" />
           <span class="uikit-name">Table <code>&lt;Table/&gt;</code></span>
           <span class="uikit-desc">Bordered data table with header + rows.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="card" data-name="Card" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="card"><div>
+  <div class="flex flex-col gap-4 rounded-radius border border-outline bg-surface-alt p-6 text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">
+    Card
+  </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="card" data-name="Card" />
           <span class="uikit-name">Card <code>&lt;Card/&gt;</code></span>
           <span class="uikit-desc">A surface container that inherits the theme.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="avatar" data-name="Avatar" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="avatar"><div>
+    <span class="flex size-14 items-center justify-center overflow-hidden rounded-full border border-outline bg-surface-alt text-2xl font-bold tracking-wider text-on-surface/80 dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark/80">JS</span>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="avatar" data-name="Avatar" />
           <span class="uikit-name">Avatar <code>&lt;Avatar/&gt;</code></span>
           <span class="uikit-desc">Circular initials avatar; content via slot.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="kbd" data-name="Kbd" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="kbd"><div>
+    <kbd class="inline-block size-min whitespace-nowrap rounded-md border border-outline bg-surface-alt px-2 py-1 font-mono text-xs font-semibold text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">Ctrl</kbd>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="kbd" data-name="Kbd" />
           <span class="uikit-name">Kbd <code>&lt;Kbd/&gt;</code></span>
           <span class="uikit-desc">Keyboard key indicator; key label via slot.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="chat-bubble" data-name="ChatBubble" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="chat-bubble"><div>
+    <div class="flex w-full flex-col gap-4">
+        
+        <div class="mr-auto flex max-w-[80%] flex-col gap-2 rounded-r-radius rounded-tl-radius bg-surface-alt p-4 md:max-w-[60%] dark:bg-surface-dark-alt">
+            <span class="font-semibold text-on-surface-strong dark:text-on-surface-dark-strong">Penguin UI</span>
+            <div class="text-sm text-on-surface dark:text-on-surface-dark">
+                ChatBubble
+            </div>
+        </div>
+
+        
+        <div class="ml-auto flex max-w-[80%] flex-col gap-2 rounded-l-radius rounded-tr-radius bg-primary p-4 text-sm text-on-primary md:max-w-[60%] dark:bg-primary-dark dark:text-on-primary-dark">
+            ChatBubble
+        </div>
+    </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="chat-bubble" data-name="ChatBubble" />
           <span class="uikit-name">ChatBubble <code>&lt;ChatBubble/&gt;</code></span>
           <span class="uikit-desc">Received/sent chat message bubbles; text via slot.</span>
         </label>
-        <label class="uikit-card">
-          <input type="checkbox" class="uikit-cb" value="carousel" data-name="Carousel" />
+        </div>
+        <div class="uikit-card">
+          <div class="uikit-preview" data-pv="carousel"><div x-data="{
+    slides: [
+        { label: 'Slide 1' },
+        { label: 'Slide 2' },
+        { label: 'Slide 3' },
+    ],
+    currentSlideIndex: 1,
+    previous() {
+        if (this.currentSlideIndex > 1) {
+            this.currentSlideIndex = this.currentSlideIndex - 1
+        } else {
+            // If it's the first slide, go to the last slide
+            this.currentSlideIndex = this.slides.length
+        }
+    },
+    next() {
+        if (this.currentSlideIndex < this.slides.length) {
+            this.currentSlideIndex = this.currentSlideIndex + 1
+        } else {
+            // If it's the last slide, go to the first slide
+            this.currentSlideIndex = 1
+        }
+    },
+}">
+    <div class="relative w-full overflow-hidden">
+
+        
+        <button type="button" class="absolute left-5 top-1/2 z-20 flex rounded-full -translate-y-1/2 items-center justify-center bg-surface/40 p-2 text-on-surface transition hover:bg-surface/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:outline-offset-0 dark:bg-surface-dark/40 dark:text-on-surface-dark dark:hover:bg-surface-dark/60 dark:focus-visible:outline-primary-dark" aria-label="previous slide" x-on:click="previous()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="3" class="size-5 md:size-6 pr-0.5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            </svg>
+        </button>
+
+        
+        <button type="button" class="absolute right-5 top-1/2 z-20 flex rounded-full -translate-y-1/2 items-center justify-center bg-surface/40 p-2 text-on-surface transition hover:bg-surface/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:outline-offset-0 dark:bg-surface-dark/40 dark:text-on-surface-dark dark:hover:bg-surface-dark/60 dark:focus-visible:outline-primary-dark" aria-label="next slide" x-on:click="next()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="3" class="size-5 md:size-6 pl-0.5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+        </button>
+
+        
+        
+        <div class="relative min-h-[50svh] w-full">
+            <template x-for="(slide, index) in slides">
+                <div x-show="currentSlideIndex == index + 1" class="absolute inset-0" x-transition.opacity.duration.1000ms>
+                    <div class="absolute inset-0 flex h-full w-full items-center justify-center bg-surface-alt text-on-surface dark:bg-surface-dark-alt dark:text-on-surface-dark" x-text="slide.label"></div>
+                </div>
+            </template>
+        </div>
+
+        
+        <div class="absolute rounded-radius bottom-3 md:bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-4 md:gap-3 bg-surface/75 px-1.5 py-1 md:px-2 dark:bg-surface-dark/75" role="group" aria-label="slides">
+            <template x-for="(slide, index) in slides">
+                <button class="size-2 rounded-full transition bg-on-surface dark:bg-on-surface-dark" x-on:click="currentSlideIndex = index + 1" x-bind:class="[currentSlideIndex === index + 1 ? 'bg-on-surface dark:bg-on-surface-dark' : 'bg-on-surface/50 dark:bg-on-surface-dark/50']" x-bind:aria-label="'slide ' + (index + 1)"></button>
+            </template>
+        </div>
+    </div>
+</div></div>
+          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="carousel" data-name="Carousel" />
           <span class="uikit-name">Carousel <code>&lt;Carousel/&gt;</code></span>
           <span class="uikit-desc">Slide carousel with prev/next + dot indicators.</span>
-        </label></div>
+        </label>
+        </div></div>
       </section>
 </main>
 
@@ -290,9 +1075,15 @@
   document.documentElement.classList.add("js");
   (() => {
     var root = document.documentElement;
+    function syncPreviewTheme() {
+      var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
+      root.classList.toggle("dark", dark);
+    }
+    syncPreviewTheme();
     document.getElementById("themeToggle").addEventListener("click", () => {
       var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
       root.setAttribute("data-theme", dark ? "light" : "dark");
+      syncPreviewTheme();
     });
   })();
 
