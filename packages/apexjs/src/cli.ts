@@ -12,7 +12,8 @@ const COMMANDS: Array<[string, string]> = [
   ['dev', 'Start the dev server (SSR + hydrate, API + MCP)'],
   ['build', 'Build for production (static, islands, or server)'],
   ['start', 'Run a production server build'],
-  ['make', 'Generate a page, component, or API route'],
+  ['make', 'Generate a page, component, route, store, middleware…'],
+  ['upgrade', 'Adopt new scaffold defaults (non-destructive)'],
   ['migrate', 'Apply pending database migrations'],
   ['mcp', 'Inspect the MCP server — list or call tools'],
 ]
@@ -29,6 +30,7 @@ const main = defineCommand({
     build: () => import('./commands/build.js').then((m) => m.buildCommand),
     start: () => import('./commands/start.js').then((m) => m.startCommand),
     make: () => import('./commands/make.js').then((m) => m.makeCommand),
+    upgrade: () => import('./commands/upgrade.js').then((m) => m.upgradeCommand),
     migrate: () => import('./commands/migrate.js').then((m) => m.migrateCommand),
     mcp: () => import('./commands/mcp.js').then((m) => m.mcpCommand),
   },

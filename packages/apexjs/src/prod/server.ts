@@ -61,7 +61,12 @@ export async function startProdServer(
   const manifest = JSON.parse(readFileSync(join(dir, 'apex-manifest.json'), 'utf8')) as ProdManifest
 
   // Apply deploy-time .env / process.env over the baked runtimeConfig defaults.
-  const runtimeConfig = applyEnvToRuntimeConfig(manifest.runtimeConfig ?? { public: {} }, dir)
+  // Load .env from the working directory (where the operator runs `apex start`,
+  // i.e. the deploy root) — not from the build dir — matching where users keep it.
+  const runtimeConfig = applyEnvToRuntimeConfig(
+    manifest.runtimeConfig ?? { public: {} },
+    process.cwd(),
+  )
   const publicConfig = (runtimeConfig.public ?? {}) as Record<string, unknown>
 
   const importServer = (relFile: string) => import(pathToFileURL(join(dir, 'server', relFile)).href)

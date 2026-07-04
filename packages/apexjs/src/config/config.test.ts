@@ -104,6 +104,22 @@ describe('resolveApexConfig', () => {
     }
   })
 
+  it('does not mutate the loaded config defaults when applying env', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'apex-nomutate-'))
+    try {
+      writeFileSync(join(dir, 'apex.config.ts'), '// present')
+      process.env.APEX_PUBLIC_APP_NAME = 'runtime-name'
+      const original = defineConfig({ runtimeConfig: { public: { appName: 'default-name' } } })
+      await resolveApexConfig(dir, async () => ({ default: original }))
+      // The build bakes these DEFAULTS into the manifest — they must stay pristine.
+      expect((original.runtimeConfig?.public as Record<string, unknown>).appName).toBe(
+        'default-name',
+      )
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
   it('returns an empty public config when no apex.config exists', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'apex-nocfg-'))
     try {

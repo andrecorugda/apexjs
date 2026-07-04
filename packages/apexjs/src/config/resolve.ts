@@ -118,7 +118,10 @@ export async function resolveApexConfig(
       config = {}
     }
   }
-  const runtimeConfig: RuntimeConfig = { public: {}, ...(config.runtimeConfig ?? {}) }
+  // Deep-clone so applying env overrides never mutates the loaded config's own
+  // defaults — the build bakes those pristine defaults into the manifest, and the
+  // prod server applies deploy-time env over them at start.
+  const runtimeConfig: RuntimeConfig = structuredClone(config.runtimeConfig ?? {})
   if (!runtimeConfig.public) runtimeConfig.public = {}
   applyEnvToRuntimeConfig(runtimeConfig, root)
   return {
