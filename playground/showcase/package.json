@@ -8,7 +8,7 @@
     "alpinejs": "^3.14.8",
     "@apex-stack/core": "workspace:*",
     "@apex-stack/data": "workspace:*",
-    "drizzle-orm": "^0.38.0",
+    "drizzle-orm": "^0.45.2",
     "zod": "^4.4.3"
   }
 }
