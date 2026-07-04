@@ -1,0 +1,16 @@
+<template>
+  <header class="nav">
+    <a class="brand" href="/">📖 Guestbook</a>
+    <nav><a href="/">Home</a><a href="/about">About</a></nav>
+  </header>
+  <main><slot></slot></main>
+  <footer class="foot">An Apex JS demo — SSR · components · resources · MCP · stores · islands</footer>
+</template>
+
+<style scoped>
+  .nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
+  .brand { font-weight: 700; text-decoration: none; color: #111827; }
+  .nav nav a { margin-left: 1rem; color: #4f46e5; text-decoration: none; }
+  main { max-width: 42rem; margin: 0 auto; padding: 2rem 1.5rem; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #1e293b; line-height: 1.6; }
+  .foot { text-align: center; color: #94a3b8; font-size: 0.85rem; padding: 2rem 1rem; border-top: 1px solid #e5e7eb; }
+</style>

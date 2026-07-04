@@ -9,6 +9,7 @@ import { loadComponents } from '../components/registry.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { type RouteDef, scanPages } from '../routing/router.js'
+import { loadStores } from '../stores/loader.js'
 
 /** `/` → index.html, `/about` → about/index.html. */
 function outFile(pattern: string): string {
@@ -62,6 +63,13 @@ export const buildCommand = defineCommand({
         root,
         (id) => vite.ssrLoadModule(id) as never,
       )
+      const stores = await loadStores(root, (id) => vite.ssrLoadModule(id) as never)
+      const layoutsDir = join(root, 'layouts')
+      const layouts = existsSync(layoutsDir)
+        ? readdirSync(layoutsDir)
+            .filter((f) => f.endsWith('.alpine'))
+            .map((f) => f.replace(/\.alpine$/, ''))
+        : []
 
       for (const route of staticRoutes) {
         const common = {
@@ -70,6 +78,8 @@ export const buildCommand = defineCommand({
           url: route.pattern,
           registry,
           componentCss,
+          stores,
+          layouts,
         }
         const html = args.islands
           ? await renderIslandsPage(common)

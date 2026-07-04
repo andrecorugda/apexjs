@@ -1,0 +1,63 @@
+<script server lang="ts">
+  import { db, schema } from '../db/index.js'
+  import { GuestbookService } from '../services/GuestbookService.js'
+  const service = new GuestbookService()
+  export async function loader() {
+    const rows = await db.select().from(schema.messages)
+    return { messages: rows.map((r) => service.decorate(r)) }
+  }
+  export function head({ data }: { data: { messages: unknown[] } }) {
+    return {
+      title: `Guestbook (${data.messages.length}) — Apex Demo`,
+      meta: [{ name: 'description', content: 'A full Apex demo: SSR, resources, MCP, stores, islands.' }],
+    }
+  }
+</script>
+
+<script client lang="ts">
+  import { useCharCount } from '../composables/useCharCount.js'
+</script>
+
+<template x-data="{ ...useCharCount(280), async submit(e) { const f = new FormData(e.target); await fetch('/api/messages', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ author: f.get('author'), body: f.get('body') }) }); location.reload() } }">
+  <h1>Guestbook</h1>
+  <button class="toggle" @click="$store.ui.toggle()" x-text="$store.ui.compact ? 'Comfortable view' : 'Compact view'"></button>
+
+  <ul class="messages" :class="$store.ui.compact && 'compact'">
+    <template x-for="m in messages" :key="m.id">
+      <li class="msg">
+        <span class="avatar" x-text="m.initials"></span>
+        <div>
+          <p class="body" x-text="m.body"></p>
+          <p class="meta"><a :href="'/message/' + m.id"><strong x-text="m.author"></strong></a> · <span x-text="m.ago"></span></p>
+        </div>
+      </li>
+    </template>
+  </ul>
+
+  <form class="sign" @submit.prevent="submit($event)">
+    <input name="author" placeholder="Your name" required />
+    <textarea name="body" placeholder="Say something…" maxlength="280" x-model="text"></textarea>
+    <div class="row">
+      <span class="count" :class="over && 'over'" x-text="remaining + ' left'"></span>
+      <button type="submit">Sign the book</button>
+    </div>
+  </form>
+</template>
+
+<style scoped>
+  .toggle { margin: 0.25rem 0 1rem; padding: 0.35rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; background: #f8fafc; cursor: pointer; font: inherit; }
+  .messages { list-style: none; padding: 0; margin: 0 0 1.5rem; }
+  .msg { display: flex; gap: 0.75rem; padding: 0.9rem 0; border-bottom: 1px solid #eef2f7; }
+  .messages.compact .msg { padding: 0.4rem 0; }
+  .avatar { flex: none; width: 2.4rem; height: 2.4rem; border-radius: 999px; background: #6366f1; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 0.85rem; }
+  .messages.compact .avatar { width: 1.6rem; height: 1.6rem; font-size: 0.7rem; }
+  .body { margin: 0; }
+  .meta { margin: 0.2rem 0 0; color: #6b7280; font-size: 0.85rem; }
+  .meta a { color: inherit; text-decoration: none; }
+  .sign { display: grid; gap: 0.5rem; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 0.6rem; background: #f8fafc; }
+  .sign input, .sign textarea { padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.4rem; font: inherit; }
+  .row { display: flex; align-items: center; justify-content: space-between; }
+  .count { color: #64748b; font-size: 0.85rem; }
+  .count.over { color: #ef4444; }
+  .sign button { padding: 0.5rem 1rem; border: none; border-radius: 0.5rem; background: #4f46e5; color: #fff; font-weight: 600; cursor: pointer; }
+</style>
