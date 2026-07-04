@@ -32,14 +32,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Build first so workspace packages' .d.ts exist before typecheck
+      # (e.g. @apex-stack/vite typechecks against @apex-stack/kit's types).
+      - name: Build
+        run: pnpm build
+
       - name: Lint (Biome)
         run: pnpm lint
 
       - name: Typecheck
         run: pnpm typecheck
-
-      - name: Build
-        run: pnpm build
 
       - name: Test
         run: pnpm test
