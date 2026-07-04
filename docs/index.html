@@ -52,135 +52,124 @@
           <a class="btn ghost" href="https://github.com/andrecorugda/apexjs">GitHub</a>
         </div>
       </div>
+    </div>
+  </section>
 
-      <div class="studio" id="apexStudio">
-        <div class="studio-chrome">
-          <span class="studio-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="studio-titlebar">apex dev</span>
-          <span class="studio-address"><span class="lock" aria-hidden="true">&#9107;</span>localhost:3000</span>
+  <section class="section" aria-label="Project showcase" id="showcase">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">The anatomy of an Apex app</p>
+        <h2>A real project, file by file.</h2>
+        <p>Click through the tree — every file is the actual code Apex scaffolds. Folders nest with proper indent guides, so <code>pages/blog/[slug]</code> sits two levels deep, not flat.</p>
+      </div>
+
+      <div class="ax-ide">
+        <div class="ax-titlebar">
+          <span class="ax-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="ax-tbtitle"><b>my-app</b> — Apex JS</span>
+          <span class="ax-tbtag">workspace</span>
         </div>
-
-        <div class="studio-body">
-          <nav class="studio-tree" aria-label="Project files">
-            <p class="tree-root">my-app</p>
-            <div class="tree-group"><span class="ic-folder" aria-hidden="true"></span>pages</div>
-            <button type="button" class="tree-file ext-alpine lvl-1" data-file="index" aria-pressed="true"><span class="ic-file" aria-hidden="true"></span>index.alpine</button>
-            <div class="tree-group lvl-1"><span class="ic-folder" aria-hidden="true"></span>blog</div>
-            <button type="button" class="tree-file ext-alpine lvl-2" data-file="slug" aria-pressed="false"><span class="ic-file" aria-hidden="true"></span>[slug].alpine</button>
-            <div class="tree-group"><span class="ic-folder" aria-hidden="true"></span>components</div>
-            <button type="button" class="tree-file ext-alpine lvl-1" data-file="counter" aria-pressed="false"><span class="ic-file" aria-hidden="true"></span>Counter.alpine</button>
-            <div class="tree-group"><span class="ic-folder" aria-hidden="true"></span>server / api</div>
-            <button type="button" class="tree-file ext-ts lvl-1" data-file="posts" aria-pressed="false"><span class="ic-file" aria-hidden="true"></span>posts.ts</button>
-            <div class="tree-group"><span class="ic-folder" aria-hidden="true"></span>db</div>
-            <button type="button" class="tree-file ext-ts lvl-1" data-file="schema" aria-pressed="false"><span class="ic-file" aria-hidden="true"></span>schema.ts</button>
-          </nav>
-
-          <div class="studio-editor">
-            <div class="editor-tabs">
-              <span class="editor-tab"><span class="ic-file" aria-hidden="true"></span><span class="tab-name">pages/index.alpine</span><span class="tab-x" aria-hidden="true">&times;</span></span>
-            </div>
-            <div class="editor-scroll">
-<pre class="code is-active" data-code="index"><code><span class="line">&lt;<span class="t">script</span> <span class="a">server</span> <span class="a">lang</span>=<span class="s">"ts"</span>&gt;</span><span class="line">  <span class="k">import</span> { db, schema } <span class="k">from</span> <span class="s">'../db'</span></span><span class="line">  <span class="c">// Runs on the server — the page arrives as real HTML.</span></span><span class="line">  <span class="k">export async function</span> <span class="f">loader</span>() {</span><span class="line">    <span class="k">return</span> { posts: <span class="k">await</span> db.select().from(schema.posts) }</span><span class="line">  }</span><span class="line">&lt;/<span class="t">script</span>&gt;</span><span class="line"></span><span class="line">&lt;<span class="t">template</span> <span class="a">x-data</span>=<span class="s">"{ q: '' }"</span>&gt;</span><span class="line">  &lt;<span class="t">main</span>&gt;</span><span class="line">    &lt;<span class="t">h1</span>&gt;My blog&lt;/<span class="t">h1</span>&gt;</span><span class="line">    &lt;<span class="t">input</span> <span class="a">x-model</span>=<span class="s">"q"</span> <span class="a">placeholder</span>=<span class="s">"Filter…"</span> /&gt;</span><span class="line">    &lt;<span class="t">template</span> <span class="a">x-for</span>=<span class="s">"p in posts"</span> <span class="a">:key</span>=<span class="s">"p.id"</span>&gt;</span><span class="line">      &lt;<span class="t">a</span> <span class="a">:href</span>=<span class="s">"'/blog/' + p.slug"</span> <span class="a">x-show</span>=<span class="s">"p.title.includes(q)"</span> <span class="a">x-text</span>=<span class="s">"p.title"</span>&gt;&lt;/<span class="t">a</span>&gt;</span><span class="line">    &lt;/<span class="t">template</span>&gt;</span><span class="line">  &lt;/<span class="t">main</span>&gt;</span><span class="line">&lt;/<span class="t">template</span>&gt;</span><span class="line"></span><span class="line">&lt;<span class="t">style</span> <span class="a">scoped</span>&gt;</span><span class="line">  <span class="t">main</span> { max-width: 40rem; margin: 2rem auto; }</span><span class="line">&lt;/<span class="t">style</span>&gt;</span></code></pre>
-<pre class="code" data-code="slug"><code><span class="line">&lt;<span class="t">script</span> <span class="a">server</span> <span class="a">lang</span>=<span class="s">"ts"</span>&gt;</span><span class="line">  <span class="k">export function</span> <span class="f">loader</span>({ params }) {</span><span class="line">    <span class="k">return</span> { slug: params.slug }</span><span class="line">  }</span><span class="line">&lt;/<span class="t">script</span>&gt;</span><span class="line"></span><span class="line">&lt;<span class="t">template</span> <span class="a">x-data</span>&gt;</span><span class="line">  &lt;<span class="t">article</span>&gt;</span><span class="line">    &lt;<span class="t">h1</span> <span class="a">x-text</span>=<span class="s">"'Post: ' + slug"</span>&gt;&lt;/<span class="t">h1</span>&gt;</span><span class="line">  &lt;/<span class="t">article</span>&gt;</span><span class="line">&lt;/<span class="t">template</span>&gt;</span></code></pre>
-<pre class="code" data-code="counter"><code><span class="line">&lt;<span class="t">template</span> <span class="a">x-data</span>=<span class="s">"{ count: Number(start) }"</span>&gt;</span><span class="line">  &lt;<span class="t">button</span> <span class="a">@click</span>=<span class="s">"count++"</span> <span class="a">x-text</span>=<span class="s">"label + ': ' + count"</span>&gt;&lt;/<span class="t">button</span>&gt;</span><span class="line">&lt;/<span class="t">template</span>&gt;</span></code></pre>
-<pre class="code" data-code="posts"><code><span class="line"><span class="k">import</span> { defineResource } <span class="k">from</span> <span class="s">'@apex-stack/data'</span></span><span class="line"><span class="k">import</span> { z } <span class="k">from</span> <span class="s">'zod'</span></span><span class="line"><span class="k">import</span> { db, schema } <span class="k">from</span> <span class="s">'../../db'</span></span><span class="line"></span><span class="line"><span class="c">// One definition → REST endpoints AND MCP tools at /mcp.</span></span><span class="line"><span class="k">export default</span> <span class="f">defineResource</span>(<span class="s">'posts'</span>, {</span><span class="line">  db,</span><span class="line">  table: schema.posts,</span><span class="line">  insert: { title: <span class="f">z</span>.string(), slug: <span class="f">z</span>.string() },</span><span class="line">})</span></code></pre>
-<pre class="code" data-code="schema"><code><span class="line"><span class="k">import</span> { integer, sqliteTable, text } <span class="k">from</span> <span class="s">'drizzle-orm/sqlite-core'</span></span><span class="line"></span><span class="line"><span class="k">export const</span> posts = <span class="f">sqliteTable</span>(<span class="s">'posts'</span>, {</span><span class="line">  id: <span class="f">integer</span>(<span class="s">'id'</span>).primaryKey({ autoIncrement: <span class="k">true</span> }),</span><span class="line">  title: <span class="f">text</span>(<span class="s">'title'</span>).notNull(),</span><span class="line">  slug: <span class="f">text</span>(<span class="s">'slug'</span>).notNull(),</span><span class="line">})</span></code></pre>
-            </div>
+        <div class="ax-body">
+          <div class="ax-explorer">
+            <div class="ax-explabel">Explorer</div>
+            <ul class="ax-tree" id="axTree">
+              <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>my-app</button>
+                <ul>
+                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>pages</button>
+                    <ul>
+                      <li><button class="ax-row file" data-file="pages/index.alpine"><span class="ax-dot alpine"></span>index.alpine</button></li>
+                      <li><button class="ax-row file" data-file="pages/about.alpine"><span class="ax-dot alpine"></span>about.alpine</button></li>
+                      <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>blog</button>
+                        <ul>
+                          <li><button class="ax-row file" data-file="pages/blog/index.alpine"><span class="ax-dot alpine"></span>index.alpine</button></li>
+                          <li><button class="ax-row file" data-file="pages/blog/[slug].alpine"><span class="ax-dot alpine"></span>[slug].alpine</button></li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </li>
+                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>components</button>
+                    <ul><li><button class="ax-row file" data-file="components/Counter.alpine"><span class="ax-dot alpine"></span>Counter.alpine</button></li></ul>
+                  </li>
+                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>layouts</button>
+                    <ul><li><button class="ax-row file" data-file="layouts/default.alpine"><span class="ax-dot alpine"></span>default.alpine</button></li></ul>
+                  </li>
+                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>server</button>
+                    <ul><li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>api</button>
+                      <ul><li><button class="ax-row file" data-file="server/api/posts.ts"><span class="ax-dot ts"></span>posts.ts</button></li></ul>
+                    </li></ul>
+                  </li>
+                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>services</button>
+                    <ul><li><button class="ax-row file" data-file="services/PostService.ts"><span class="ax-dot ts"></span>PostService.ts</button></li></ul>
+                  </li>
+                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>stores</button>
+                    <ul><li><button class="ax-row file" data-file="stores/ui.ts"><span class="ax-dot ts"></span>ui.ts</button></li></ul>
+                  </li>
+                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>composables</button>
+                    <ul><li><button class="ax-row file" data-file="composables/useToggle.ts"><span class="ax-dot ts"></span>useToggle.ts</button></li></ul>
+                  </li>
+                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>shared</button>
+                    <ul><li><button class="ax-row file" data-file="shared/types.ts"><span class="ax-dot ts"></span>types.ts</button></li></ul>
+                  </li>
+                  <li><button class="ax-row file" data-file="apex.config.ts"><span class="ax-dot cfg"></span>apex.config.ts</button></li>
+                  <li><button class="ax-row file" data-file="package.json"><span class="ax-dot cfg"></span>package.json</button></li>
+                </ul>
+              </li>
+            </ul>
           </div>
 
-          <div class="studio-preview">
-            <div class="preview-inner">
-              <div class="pv is-active" data-pv="index">
-                <div class="mini-browser">
-                  <div class="mb-bar"><span class="mb-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="mb-url">localhost:3000/</span></div>
-                  <div class="mb-view">
-                    <h4>My blog</h4>
-                    <input class="mb-filter" type="text" placeholder="Filter…" aria-label="Filter posts (live demo)" />
-                    <div class="mb-list">
-                      <a>Hello, Apex</a>
-                      <a>Islands on demand</a>
-                      <a>REST + MCP, one file</a>
-                    </div>
-                  </div>
-                </div>
-                <p class="preview-caption">server-rendered, then hydrated</p>
+          <div class="ax-editor">
+            <div class="ax-tabs">
+              <span class="ax-tab"><span class="ax-dot alpine" id="axTabDot"></span><span id="axTabName">index.alpine</span> <span class="ax-tabpath" id="axTabPath">— pages/</span></span>
+              <span class="ax-lang" id="axLang">ALPINE SFC</span>
+            </div>
+            <div class="ax-scroll">
+              <div class="ax-coderow">
+                <div class="ax-gutter" id="axGutter">1</div>
+                <pre class="ax-code"><code id="axCode"></code></pre>
               </div>
+            </div>
 
-              <div class="pv" data-pv="slug">
-                <div class="mini-browser">
-                  <div class="mb-bar"><span class="mb-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="mb-url">localhost:3000/blog/hello-apex</span></div>
-                  <div class="mb-view">
-                    <h4>Post: hello-apex</h4>
-                    <p class="mb-body">Rendered on the server from the <code>[slug]</code> route param, then delivered as real HTML.</p>
-                  </div>
-                </div>
-                <p class="preview-caption">dynamic route, server-rendered</p>
-              </div>
+            <div class="ax-terminal">
+              <div class="ax-termbar">Terminal <span class="ax-live"><i></i> dev server</span></div>
+              <pre class="ax-term"><span class="prompt">PS </span><span class="path">C:\dev\my-app</span><span class="prompt">&gt; </span><span class="inp">apex dev</span>
+<span class="banner">
+   █████╗ ██████╗ ███████╗██╗  ██╗
+  ██╔══██╗██╔══██╗██╔════╝╚██╗██╔╝
+  ███████║██████╔╝█████╗   ╚███╔╝
+  ██╔══██║██╔═══╝ ██╔══╝   ██╔██╗
+  ██║  ██║██║     ███████╗██╔╝ ██╗
+  ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝</span>
+  <span class="ver">v0.1.20</span>  <span class="sub">·  The full-stack, AI-native meta-framework for Alpine.js</span>
+  <span class="ok">✓</span> Dev server ready
 
-              <div class="pv" data-pv="counter">
-                <div class="mini-browser">
-                  <div class="mb-bar"><span class="mb-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="mb-url">localhost:3000/</span></div>
-                  <div class="mb-view mb-center">
-                    <button type="button" class="counter-demo"><span class="clabel">Likes</span>: <span class="cval">3</span></button>
-                    <p class="mb-hint">click it — hydrated island</p>
-                  </div>
-                </div>
-                <p class="preview-caption">reusable, with props</p>
-              </div>
-
-              <div class="pv" data-pv="posts">
-                <div class="surfaces">
-                  <div class="surface rest">
-                    <span class="s-h">REST endpoint</span>
-                    <code>GET /api/posts → [ … ]</code>
-                  </div>
-                  <div class="surface mcp">
-                    <span class="s-h">MCP tools · /mcp</span>
-                    <div class="chips">
-                      <span class="chip">posts_list</span>
-                      <span class="chip">posts_create</span>
-                      <span class="chip">posts_get</span>
-                      <span class="chip">posts_update</span>
-                      <span class="chip">posts_delete</span>
-                    </div>
-                  </div>
-                </div>
-                <p class="preview-caption warm">one definition — REST endpoint + MCP tool</p>
-              </div>
-
-              <div class="pv" data-pv="schema">
-                <div class="schema-card">
-                  <div class="sc-h">table <b>posts</b></div>
-                  <div class="sc-row"><span class="col">id</span><span class="typ">integer · pk</span></div>
-                  <div class="sc-row"><span class="col">title</span><span class="typ">text</span></div>
-                  <div class="sc-row"><span class="col">slug</span><span class="typ">text</span></div>
-                </div>
-                <p class="schema-arrow">↓ powers <code>defineResource('posts')</code> ↓</p>
-                <div class="surfaces">
-                  <div class="surface rest">
-                    <span class="s-h">REST endpoint</span>
-                    <code>GET /api/posts → [ … ]</code>
-                  </div>
-                  <div class="surface mcp">
-                    <span class="s-h">MCP tools · /mcp</span>
-                    <div class="chips">
-                      <span class="chip">posts_list</span>
-                      <span class="chip">posts_create</span>
-                      <span class="chip">posts_get</span>
-                      <span class="chip">posts_update</span>
-                      <span class="chip">posts_delete</span>
-                    </div>
-                  </div>
-                </div>
-                <p class="preview-caption warm">the schema powers both surfaces</p>
-              </div>
+  <span class="arw">➜</span>  <span class="lbl">Local</span>   <span class="url">http://localhost:3000/</span>
+  <span class="arw">➜</span>  <span class="lbl">MCP</span>     <span class="url">http://localhost:3000/mcp</span><span class="ax-cursor"></span></pre>
             </div>
           </div>
         </div>
       </div>
-      <p class="studio-note">Click any file — this is the framework running, not a recording.</p>
+
+      <div class="ax-panel">
+        <div class="ax-panelh"><b>my-app</b> · /blog <span class="ax-reqlog" id="axReqlog">GET /api/posts → 200</span></div>
+        <div class="ax-demoapp">
+          <div class="ax-demomain">
+            <input class="ax-filter" id="axFilter" type="text" placeholder="Filter posts…" aria-label="Filter posts" />
+            <div class="ax-posts" id="axPosts"></div>
+          </div>
+          <div class="ax-demoside">
+            <h4>Publish a post</h4>
+            <p>The same code, running on sample data — no database. Posts a JSON body and prepends the result.</p>
+            <form id="axAddForm">
+              <span class="ax-field"><label for="axTitle">Title</label><input id="axTitle" required placeholder="What's on your mind?" /></span>
+              <span class="ax-field"><label for="axAuthor">Author</label><input id="axAuthor" required placeholder="Your name" /></span>
+              <button class="btn" type="submit" style="width:100%;justify-content:center">Publish post</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
+
 
   <section class="section" aria-label="Features">
     <div class="wrap">
@@ -473,6 +462,7 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
   </div>
 </footer>
 
+<script src="./enhance.js" defer></script>
 <script>
   document.documentElement.classList.add("js");
   (function () {
@@ -483,76 +473,369 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
     });
   })();
 
-  // Apex Studio — interactive file switcher (self-contained, no deps)
+  // Apex IDE showcase — interactive file tree + editor + live blog demo.
   (function () {
-    var studio = document.getElementById("apexStudio");
-    if (!studio) return;
-    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var paths = {
-      index: "pages/index.alpine",
-      slug: "pages/blog/[slug].alpine",
-      counter: "components/Counter.alpine",
-      posts: "server/api/posts.ts",
-      schema: "db/schema.ts"
+    var FILES = {
+      "pages/index.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
+"<script server lang=\"ts\">\n" +
+"  import { PostService } from '../services/PostService'\n" +
+"  const posts = new PostService()\n" +
+"\n" +
+"  // Runs on the server. The page arrives as real, indexable HTML —\n" +
+"  // then Alpine hydrates it in the browser.\n" +
+"  export function loader() {\n" +
+"    return { featured: posts.recent(3) }\n" +
+"  }\n" +
+"<\/script>\n" +
+"\n" +
+"<script client lang=\"ts\">\n" +
+"  import { useToggle } from '../composables/useToggle'\n" +
+"<\/script>\n" +
+"\n" +
+"<template x-data=\"useToggle(false)\">\n" +
+"  <h1>Welcome to my-app</h1>\n" +
+"  <p class=\"tagline\">Server-rendered with Alpine, then hydrated.</p>\n" +
+"\n" +
+"  <button @click=\"toggle()\" x-text=\"on ? 'Hide' : 'Show recent posts'\"></button>\n" +
+"\n" +
+"  <ul x-show=\"on\" x-transition>\n" +
+"    <template x-for=\"p in featured\" :key=\"p.id\">\n" +
+"      <li><a :href=\"'/blog/' + p.slug\" x-text=\"p.title\"></a></li>\n" +
+"    </template>\n" +
+"  </ul>\n" +
+"\n" +
+"  <Counter start=\"0\" label=\"Clicks\" />\n" +
+"</template>\n" +
+"\n" +
+"<style scoped>\n" +
+"  h1 { color: #6366f1; font-size: 2rem; }\n" +
+"  .tagline { color: #64748b; }\n" +
+"</style>\n" },
+
+      "pages/about.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
+"<script server lang=\"ts\">\n" +
+"  export function loader() {\n" +
+"    return { title: 'About my-app' }\n" +
+"  }\n" +
+"  // Exported head() drives <title> and meta — SEO, server-side.\n" +
+"  export function head({ data }) {\n" +
+"    return { title: data.title }\n" +
+"  }\n" +
+"<\/script>\n" +
+"\n" +
+"<template x-data>\n" +
+"  <article>\n" +
+"    <h1 x-text=\"title\"></h1>\n" +
+"    <p>A tiny app that shows off Apex: routing, SSR, islands and MCP.</p>\n" +
+"  </article>\n" +
+"</template>\n" },
+
+      "pages/blog/index.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
+"<script server lang=\"ts\">\n" +
+"  import { PostService } from '../../services/PostService'\n" +
+"  const posts = new PostService()\n" +
+"\n" +
+"  // No database — PostService holds sample data. Swap it for a real\n" +
+"  // repository later and this loader never changes.\n" +
+"  export function loader() {\n" +
+"    return { posts: posts.all() }\n" +
+"  }\n" +
+"<\/script>\n" +
+"\n" +
+"<template x-data=\"{ q: '' }\">\n" +
+"  <main>\n" +
+"    <h1>The Apex Blog</h1>\n" +
+"    <input x-model=\"q\" placeholder=\"Filter posts…\" />\n" +
+"\n" +
+"    <template x-for=\"p in posts\" :key=\"p.id\">\n" +
+"      <a class=\"post\" :href=\"'/blog/' + p.slug\"\n" +
+"         x-show=\"p.title.toLowerCase().includes(q.toLowerCase())\">\n" +
+"        <strong x-text=\"p.title\"></strong>\n" +
+"        <span x-text=\"p.excerpt\"></span>\n" +
+"      </a>\n" +
+"    </template>\n" +
+"  </main>\n" +
+"</template>\n" },
+
+      "pages/blog/[slug].alpine": { lang: "ALPINE SFC", dot: "alpine", code:
+"<script server lang=\"ts\">\n" +
+"  import { PostService } from '../../services/PostService'\n" +
+"  const posts = new PostService()\n" +
+"\n" +
+"  // `params.slug` comes straight from the file name: [slug].alpine\n" +
+"  export function loader({ params }: { params: { slug: string } }) {\n" +
+"    const post = posts.bySlug(params.slug)\n" +
+"    if (!post) throw new Response('Not found', { status: 404 })\n" +
+"    return { post }\n" +
+"  }\n" +
+"<\/script>\n" +
+"\n" +
+"<template x-data>\n" +
+"  <article>\n" +
+"    <a href=\"/blog\">← All posts</a>\n" +
+"    <h1 x-text=\"post.title\"></h1>\n" +
+"    <p class=\"meta\" x-text=\"post.author + ' · ' + post.date\"></p>\n" +
+"    <p x-text=\"post.body\"></p>\n" +
+"  </article>\n" +
+"</template>\n" },
+
+      "components/Counter.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
+"<template x-data=\"{ count: Number(start) }\">\n" +
+"  <button class=\"counter\" @click=\"count++\" x-text=\"label + ': ' + count\"></button>\n" +
+"</template>\n" +
+"\n" +
+"<style scoped>\n" +
+"  .counter {\n" +
+"    padding: 0.45rem 0.9rem;\n" +
+"    border: 1px solid #6366f1;\n" +
+"    border-radius: 0.5rem;\n" +
+"    background: #eef2ff;\n" +
+"    color: #3730a3;\n" +
+"    cursor: pointer;\n" +
+"  }\n" +
+"</style>\n" },
+
+      "layouts/default.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
+"<template>\n" +
+"  <header class=\"site-header\">\n" +
+"    <a class=\"brand\" href=\"/\">my-app</a>\n" +
+"    <nav>\n" +
+"      <a href=\"/\">Home</a>\n" +
+"      <a href=\"/blog\">Blog</a>\n" +
+"    </nav>\n" +
+"  </header>\n" +
+"\n" +
+"  <main>\n" +
+"    <slot></slot>\n" +
+"  </main>\n" +
+"\n" +
+"  <footer>Built with Apex JS</footer>\n" +
+"</template>\n" +
+"\n" +
+"<style scoped>\n" +
+"  .site-header { display: flex; justify-content: space-between; padding: 1rem 1.5rem; }\n" +
+"  .brand { font-weight: 700; color: #6366f1; text-decoration: none; }\n" +
+"  main { max-width: 44rem; margin: 0 auto; padding: 2.5rem 1.5rem; }\n" +
+"</style>\n" },
+
+      "server/api/posts.ts": { lang: "TYPESCRIPT", dot: "ts", code:
+"import { defineApexRoute } from '@apex-stack/core'\n" +
+"import { z } from 'zod'\n" +
+"import { PostService } from '../../services/PostService'\n" +
+"\n" +
+"const posts = new PostService()\n" +
+"\n" +
+"// GET /api/posts  ·  MCP tool \"posts_list\"\n" +
+"// Because mcp: true, this handler is a REST endpoint AND a tool your\n" +
+"// AI can call at /mcp. One definition, two consumers.\n" +
+"export default defineApexRoute({\n" +
+"  method: 'GET',\n" +
+"  description: 'List blog posts, optionally filtered by tag',\n" +
+"  input: { tag: z.string().optional() },\n" +
+"  mcp: true,\n" +
+"  handler: ({ input }) => posts.all(input.tag),\n" +
+"})\n" },
+
+      "services/PostService.ts": { lang: "TYPESCRIPT", dot: "ts", code:
+"import type { Post } from '../shared/types'\n" +
+"\n" +
+"// Sample data stands in for a database. Every route, loader and job talks\n" +
+"// to this service — swap the array for a real query and nothing else changes.\n" +
+"const SEED: Post[] = [\n" +
+"  { id: 1, slug: 'hello-apex', title: 'Hello, Apex',\n" +
+"    excerpt: 'Why Alpine deserved a meta-framework.',\n" +
+"    author: 'Ada Lovelace', date: '2026-02-01', body: '…' },\n" +
+"  { id: 2, slug: 'ssr-then-hydrate', title: 'SSR, then hydrate',\n" +
+"    excerpt: 'Real HTML first. Interactivity second.',\n" +
+"    author: 'Grace Hopper', date: '2026-02-08', body: '…' },\n" +
+"  { id: 3, slug: 'routes-are-tools', title: 'Every route is an MCP tool',\n" +
+"    excerpt: 'Ship an API your AI can call.',\n" +
+"    author: 'Alan Turing', date: '2026-02-15', body: '…' },\n" +
+"]\n" +
+"\n" +
+"export class PostService {\n" +
+"  private posts = [...SEED]\n" +
+"\n" +
+"  all(tag?: string): Post[] {\n" +
+"    return tag ? this.posts.filter((p) => p.tags?.includes(tag)) : this.posts\n" +
+"  }\n" +
+"\n" +
+"  recent(n: number): Post[] {\n" +
+"    return this.posts.slice(0, n)\n" +
+"  }\n" +
+"\n" +
+"  bySlug(slug: string): Post | undefined {\n" +
+"    return this.posts.find((p) => p.slug === slug)\n" +
+"  }\n" +
+"}\n" },
+
+      "stores/ui.ts": { lang: "TYPESCRIPT", dot: "ts", code:
+"import { defineStore } from '@apex-stack/core'\n" +
+"\n" +
+"// Global, SSR-safe state shared across pages, components and islands: $store.ui\n" +
+"export default defineStore('ui', () => ({\n" +
+"  menuOpen: false,\n" +
+"  toggleMenu() {\n" +
+"    this.menuOpen = !this.menuOpen\n" +
+"  },\n" +
+"}))\n" },
+
+      "composables/useToggle.ts": { lang: "TYPESCRIPT", dot: "ts", code:
+"// Reusable client logic. Import it in a <script client> block, then use it\n" +
+"// in x-data. Expose methods (not getters) so object-spread keeps them reactive.\n" +
+"export function useToggle(initial = false) {\n" +
+"  return {\n" +
+"    on: initial,\n" +
+"    toggle() {\n" +
+"      this.on = !this.on\n" +
+"    },\n" +
+"  }\n" +
+"}\n" },
+
+      "shared/types.ts": { lang: "TYPESCRIPT", dot: "ts", code:
+"// One source of truth for shapes shared by the backend and the frontend.\n" +
+"// Change a shape here and the compiler enforces it everywhere it's used.\n" +
+"export interface Post {\n" +
+"  id: number\n" +
+"  slug: string\n" +
+"  title: string\n" +
+"  excerpt: string\n" +
+"  author: string\n" +
+"  date: string\n" +
+"  body: string\n" +
+"  tags?: string[]\n" +
+"}\n" },
+
+      "apex.config.ts": { lang: "TYPESCRIPT", dot: "cfg", code:
+"import { defineConfig } from 'apexjs'\n" +
+"\n" +
+"export default defineConfig({\n" +
+"  // File routing from ./pages, API + MCP from ./server/api.\n" +
+"  server: { mcp: true },\n" +
+"  // Islands: ship zero JS by default, hydrate only what's interactive.\n" +
+"  islands: true,\n" +
+"})\n" },
+
+      "package.json": { lang: "JSON", dot: "cfg", code:
+"{\n" +
+"  \"name\": \"my-app\",\n" +
+"  \"type\": \"module\",\n" +
+"  \"scripts\": {\n" +
+"    \"dev\": \"apex dev\",\n" +
+"    \"build\": \"apex build --server\",\n" +
+"    \"start\": \"apex start\",\n" +
+"    \"test\": \"vitest run\"\n" +
+"  },\n" +
+"  \"dependencies\": {\n" +
+"    \"@apex-stack/core\": \"^0.1.20\",\n" +
+"    \"alpinejs\": \"^3.14.0\",\n" +
+"    \"zod\": \"^3.23.0\"\n" +
+"  }\n" +
+"}\n" }
     };
-    var buttons = studio.querySelectorAll(".tree-file");
-    var codes = studio.querySelectorAll(".code");
-    var pvs = studio.querySelectorAll(".pv");
-    var tabName = studio.querySelector(".tab-name");
-    var tabIcon = studio.querySelector(".editor-tab .ic-file");
-    var caret = null;
 
-    function placeCaret(codeEl) {
-      if (reduce || !codeEl) return;
-      if (!caret) { caret = document.createElement("span"); caret.className = "caret"; }
-      var lines = codeEl.querySelectorAll(".line");
-      for (var i = lines.length - 1; i >= 0; i--) {
-        if (lines[i].textContent.trim() !== "") { lines[i].appendChild(caret); break; }
-      }
-    }
-
-    function swap(el) {
-      if (reduce || !el) return;
-      el.classList.remove("sw");
-      void el.offsetWidth;
-      el.classList.add("sw");
-    }
-
-    function select(file) {
-      buttons.forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.file === file ? "true" : "false"); });
-      var activeCode = null, activePv = null;
-      codes.forEach(function (c) { var on = c.dataset.code === file; c.classList.toggle("is-active", on); if (on) activeCode = c; });
-      pvs.forEach(function (p) { var on = p.dataset.pv === file; p.classList.toggle("is-active", on); if (on) activePv = p; });
-      if (tabName) tabName.textContent = paths[file];
-      if (tabIcon) tabIcon.style.background = (file === "posts" || file === "schema") ? "var(--alpenglow)" : "var(--glacier)";
-      placeCaret(activeCode);
-      swap(activeCode);
-      swap(activePv);
-    }
-
-    buttons.forEach(function (b) { b.addEventListener("click", function () { select(b.dataset.file); }); });
-
-    // live filter — demonstrates client-side hydration on the index preview
-    var filter = studio.querySelector(".mb-filter");
-    if (filter) {
-      filter.addEventListener("input", function () {
-        var q = this.value.toLowerCase();
-        studio.querySelectorAll('.pv[data-pv="index"] .mb-list a').forEach(function (a) {
-          a.style.display = a.textContent.toLowerCase().indexOf(q) > -1 ? "" : "none";
-        });
+    function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+    function highlight(code){
+      var s = esc(code);
+      var re = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")|\b(import|from|export|default|async|await|function|const|let|var|return|class|interface|type|extends|implements|new|if|else|for|of|in|throw|true|false|null|undefined|private|public|readonly)\b|(&lt;\/?)([a-zA-Z][\w-]*)|\b(\d+(?:\.\d+)?)\b/g;
+      return s.replace(re, function(m, cmt, str, kw, lt, tag, num){
+        if (cmt) return '<span class="c">'+cmt+'</span>';
+        if (str) return '<span class="s">'+str+'</span>';
+        if (kw)  return '<span class="k">'+kw+'</span>';
+        if (tag) return lt+'<span class="t">'+tag+'</span>';
+        if (num) return '<span class="n">'+num+'</span>';
+        return m;
       });
     }
 
-    // interactive counter island
-    var counter = studio.querySelector(".counter-demo");
-    if (counter) {
-      var val = counter.querySelector(".cval");
-      counter.addEventListener("click", function () { val.textContent = String(Number(val.textContent) + 1); });
+    var codeEl = document.getElementById("axCode");
+    if (!codeEl) return;
+    var gutterEl = document.getElementById("axGutter");
+    var tabName = document.getElementById("axTabName");
+    var tabPath = document.getElementById("axTabPath");
+    var tabDot = document.getElementById("axTabDot");
+    var langPill = document.getElementById("axLang");
+    var scroll = codeEl.closest(".ax-scroll");
+
+    function openFile(path){
+      var f = FILES[path]; if (!f) return;
+      codeEl.innerHTML = highlight(f.code);
+      var n = f.code.replace(/\n$/,"").split("\n").length;
+      var g = ""; for (var i=1;i<=n;i++) g += i + (i<n?"\n":"");
+      gutterEl.textContent = g;
+      var parts = path.split("/");
+      tabName.textContent = parts.pop();
+      tabPath.textContent = parts.length ? "— " + parts.join("/") + "/" : "";
+      tabDot.className = "ax-dot " + f.dot;
+      langPill.textContent = f.lang;
+      Array.prototype.forEach.call(document.querySelectorAll(".ax-row.file"), function(b){
+        b.classList.toggle("active", b.getAttribute("data-file") === path);
+      });
+      if (scroll) scroll.scrollTop = 0;
     }
 
-    placeCaret(studio.querySelector(".code.is-active"));
-    if (!reduce) studio.classList.add("intro");
+    Array.prototype.forEach.call(document.querySelectorAll(".ax-row.file"), function(b){
+      b.addEventListener("click", function(){ openFile(b.getAttribute("data-file")); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("#axTree [data-fldr]"), function(b){
+      b.addEventListener("click", function(){ b.parentElement.classList.toggle("collapsed"); });
+    });
+    openFile("pages/index.alpine");
+
+    // Live blog demo — sample data, filter + publish (no DB).
+    var POSTS = [
+      { id: 3, slug: "routes-are-tools", title: "Every route is an MCP tool", excerpt: "Ship an API your AI can call.", author: "Alan Turing", date: "2026-02-15" },
+      { id: 2, slug: "ssr-then-hydrate", title: "SSR, then hydrate", excerpt: "Real HTML first. Interactivity second.", author: "Grace Hopper", date: "2026-02-08" },
+      { id: 1, slug: "hello-apex", title: "Hello, Apex", excerpt: "Why Alpine deserved a meta-framework.", author: "Ada Lovelace", date: "2026-02-01" }
+    ];
+    var nextId = 4, q = "";
+    var postsEl = document.getElementById("axPosts");
+    var reqlog = document.getElementById("axReqlog");
+    var filterEl = document.getElementById("axFilter");
+
+    var toastEl = document.createElement("div");
+    toastEl.className = "ax-toast";
+    document.body.appendChild(toastEl);
+    var toastT;
+    function toast(html){
+      toastEl.innerHTML = html; toastEl.classList.add("show");
+      clearTimeout(toastT); toastT = setTimeout(function(){ toastEl.classList.remove("show"); }, 2600);
+    }
+
+    function render(){
+      if (!postsEl) return;
+      var list = POSTS.filter(function(p){ return p.title.toLowerCase().indexOf(q.toLowerCase()) > -1; });
+      if (!list.length){ postsEl.innerHTML = '<div class="ax-empty">No posts match “'+esc(q)+'”.</div>'; return; }
+      postsEl.innerHTML = list.map(function(p){
+        return '<a class="ax-post" href="#showcase" onclick="return false"><strong>'+esc(p.title)+'</strong>'+
+               '<span>'+esc(p.excerpt)+'</span>'+
+               '<span class="by">'+esc(p.author)+' · '+p.date+' · /blog/'+esc(p.slug)+'</span></a>';
+      }).join("");
+    }
+    if (filterEl) filterEl.addEventListener("input", function(e){
+      q = e.target.value;
+      reqlog.textContent = q ? 'filtering client-side · ' + POSTS.filter(function(p){return p.title.toLowerCase().indexOf(q.toLowerCase())>-1;}).length + ' shown' : 'GET /api/posts → 200';
+      render();
+    });
+
+    function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32) || "post"; }
+    var addForm = document.getElementById("axAddForm");
+    if (addForm) addForm.addEventListener("submit", function(e){
+      e.preventDefault();
+      var title = document.getElementById("axTitle").value.trim();
+      var author = document.getElementById("axAuthor").value.trim();
+      if (!title || !author) return;
+      var post = { id: nextId++, slug: slugify(title), title: title, excerpt: "Just published from the demo form.", author: author, date: "2026-02-20" };
+      POSTS.unshift(post);
+      q = ""; if (filterEl) filterEl.value = "";
+      render();
+      reqlog.textContent = 'POST /api/posts → 201';
+      toast('POST /api/posts → <span class="ax-code2">201 Created</span>  ·  id ' + post.id);
+      e.target.reset();
+    });
+    render();
   })();
+
 
   // Apex summit network — a live triangulated mesh drifting beneath the hero
   // and the panorama. Runs on every `.apex-net` canvas.
