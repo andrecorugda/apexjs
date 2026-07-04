@@ -28,7 +28,11 @@ describe('renderPage — head/SEO', () => {
         }
       },
     })
-    const html = await renderPage({ loadModule: async () => mod, pageId: '/pages/index.alpine', url: '/' })
+    const html = await renderPage({
+      loadModule: async () => mod,
+      pageId: '/pages/index.alpine',
+      url: '/',
+    })
 
     expect(html).toContain('<title>My Post — Blog</title>')
     expect(html).toContain('<meta name="description" content="An intro to Apex head tags." />')
@@ -37,13 +41,21 @@ describe('renderPage — head/SEO', () => {
   })
 
   it('falls back to the default title when no head() is exported', async () => {
-    const html = await renderPage({ loadModule: async () => makeModule(), pageId: '/pages/index.alpine', url: '/' })
+    const html = await renderPage({
+      loadModule: async () => makeModule(),
+      pageId: '/pages/index.alpine',
+      url: '/',
+    })
     expect(html).toContain('<title>Apex JS</title>')
   })
 
   it('escapes head values to prevent markup injection', async () => {
     const mod = makeModule({ head: () => ({ title: '<script>alert(1)</script>' }) })
-    const html = await renderPage({ loadModule: async () => mod, pageId: '/pages/index.alpine', url: '/' })
+    const html = await renderPage({
+      loadModule: async () => mod,
+      pageId: '/pages/index.alpine',
+      url: '/',
+    })
     expect(html).toContain('<title>&lt;script&gt;alert(1)&lt;/script&gt;</title>')
     expect(html).not.toContain('<title><script>alert(1)')
   })
@@ -62,7 +74,12 @@ describe('renderPage — layouts', () => {
   it('wraps the page in the default layout, injecting at <slot>', async () => {
     const page = makeModule({ template: '<p>page body</p>' })
     const load = async (id: string) => (id.startsWith('/layouts/') ? layoutMod() : page)
-    const html = await renderPage({ loadModule: load, pageId: '/pages/index.alpine', url: '/', layouts: ['default'] })
+    const html = await renderPage({
+      loadModule: load,
+      pageId: '/pages/index.alpine',
+      url: '/',
+      layouts: ['default'],
+    })
     expect(html).toContain('NAV')
     expect(html).toContain('page body')
     expect(html).toContain('FOOT')
@@ -81,14 +98,24 @@ describe('renderPage — layouts', () => {
       }
       return page
     }
-    await renderPage({ loadModule: load, pageId: '/pages/index.alpine', url: '/', layouts: ['blog'] })
+    await renderPage({
+      loadModule: load,
+      pageId: '/pages/index.alpine',
+      url: '/',
+      layouts: ['blog'],
+    })
     expect(requested).toBe('/layouts/blog.alpine')
   })
 
   it('opts out of layouts with layout: false', async () => {
     const page = makeModule({ template: '<p>bare</p>', layout: false })
     const load = async (id: string) => (id.startsWith('/layouts/') ? layoutMod() : page)
-    const html = await renderPage({ loadModule: load, pageId: '/pages/index.alpine', url: '/', layouts: ['default'] })
+    const html = await renderPage({
+      loadModule: load,
+      pageId: '/pages/index.alpine',
+      url: '/',
+      layouts: ['default'],
+    })
     expect(html).toContain('bare')
     expect(html).not.toContain('NAV')
   })

@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
-import { defineEventHandler, type EventHandler, toWebRequest } from 'h3'
+import { type EventHandler, defineEventHandler, toWebRequest } from 'h3'
 import type { ApiEntry } from '../api/routes.js'
 
 /** True if any loaded route opted into MCP exposure. */
@@ -19,7 +19,10 @@ function buildServer(entries: ApiEntry[]): McpServer {
         inputSchema: entry.route.inputShape ?? {},
       },
       async (args: Record<string, unknown>) => {
-        const result = await entry.route.handler({ input: args ?? {}, url: `mcp://${entry.mcpName}` })
+        const result = await entry.route.handler({
+          input: args ?? {},
+          url: `mcp://${entry.mcpName}`,
+        })
         return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
       },
     )

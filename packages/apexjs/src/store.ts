@@ -35,5 +35,7 @@ export function defineStore(name: string, factory: () => StoreState): ApexStore 
 }
 
 export function isApexStore(x: unknown): x is ApexStore {
-  return typeof x === 'object' && x !== null && (x as { __apexStore?: unknown }).__apexStore === true
+  return (
+    typeof x === 'object' && x !== null && (x as { __apexStore?: unknown }).__apexStore === true
+  )
 }

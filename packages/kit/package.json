@@ -14,13 +14,7 @@
   "bugs": {
     "url": "https://github.com/andrecorugda/apexjs/issues"
   },
-  "keywords": [
-    "alpine",
-    "alpinejs",
-    "ssr",
-    "apex",
-    "apexjs"
-  ],
+  "keywords": ["alpine", "alpinejs", "ssr", "apex", "apexjs"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -31,9 +25,7 @@
       "import": "./dist/client/runtime.js"
     }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

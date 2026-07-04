@@ -7,7 +7,11 @@ export const devCommand = defineCommand({
   args: {
     root: { type: 'positional', required: false, description: 'Project root', default: '.' },
     port: { type: 'string', description: 'Port to listen on', default: '3000' },
-    islands: { type: 'boolean', description: 'Render in islands mode (static-first)', default: false },
+    islands: {
+      type: 'boolean',
+      description: 'Render in islands mode (static-first)',
+      default: false,
+    },
   },
   async run({ args }) {
     const root = resolve(process.cwd(), String(args.root))

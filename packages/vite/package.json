@@ -14,23 +14,14 @@
   "bugs": {
     "url": "https://github.com/andrecorugda/apexjs/issues"
   },
-  "keywords": [
-    "alpine",
-    "alpinejs",
-    "vite",
-    "vite-plugin",
-    "apex",
-    "apexjs"
-  ],
+  "keywords": ["alpine", "alpinejs", "vite", "vite-plugin", "apex", "apexjs"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

@@ -122,9 +122,12 @@ describe('renderComponent', () => {
   })
 
   it('merges authored x-data defaults under loader data', () => {
-    const html = render('<template x-data="{ n: 1, m: 2 }"><span x-text="n + m"></span></template>', {
-      n: 10,
-    })
+    const html = render(
+      '<template x-data="{ n: 1, m: 2 }"><span x-text="n + m"></span></template>',
+      {
+        n: 10,
+      },
+    )
     // loader n=10 wins over authored n=1; authored m=2 remains → 12
     expect(html).toContain('>12</span>')
   })
@@ -147,7 +150,10 @@ describe('component slots', () => {
     }).html
 
   it('injects slot content from the usage children', () => {
-    const html = withCard('<Card><p>Slotted!</p></Card>', '<div class="card"><slot>fallback</slot></div>')
+    const html = withCard(
+      '<Card><p>Slotted!</p></Card>',
+      '<div class="card"><slot>fallback</slot></div>',
+    )
     expect(html).toContain('class="card"')
     expect(html).toContain('Slotted!')
     expect(html).not.toContain('<slot')

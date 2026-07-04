@@ -9,7 +9,11 @@
   "categories": ["Programming Languages"],
   "keywords": ["alpine", "alpinejs", "apex", "apexjs", "sfc"],
   "icon": "icon.png",
-  "repository": { "type": "git", "url": "https://github.com/andrecorugda/apexjs", "directory": "editors/vscode-apex" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/andrecorugda/apexjs",
+    "directory": "editors/vscode-apex"
+  },
   "homepage": "https://apexjs.site",
   "bugs": { "url": "https://github.com/andrecorugda/apexjs/issues" },
   "contributes": {

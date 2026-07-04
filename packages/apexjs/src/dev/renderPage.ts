@@ -1,4 +1,9 @@
-import { type ComponentRegistry, renderComponent, renderFragment, stateIsland } from '@apex-stack/kit'
+import {
+  type ComponentRegistry,
+  renderComponent,
+  renderFragment,
+  stateIsland,
+} from '@apex-stack/kit'
 import { type LoadedStore, storesInitialState } from '../stores/loader.js'
 
 /** The shape a compiled `.alpine` SSR module exports (see @apex-stack/vite). */
@@ -40,10 +45,18 @@ function escAttr(s: unknown): string {
 function renderHead(head: HeadInput | undefined): string {
   const parts = [`<title>${head?.title ? escAttr(head.title) : 'Apex JS'}</title>`]
   for (const m of head?.meta ?? []) {
-    parts.push(`<meta ${Object.entries(m).map(([k, v]) => `${k}="${escAttr(v)}"`).join(' ')} />`)
+    parts.push(
+      `<meta ${Object.entries(m)
+        .map(([k, v]) => `${k}="${escAttr(v)}"`)
+        .join(' ')} />`,
+    )
   }
   for (const l of head?.link ?? []) {
-    parts.push(`<link ${Object.entries(l).map(([k, v]) => `${k}="${escAttr(v)}"`).join(' ')} />`)
+    parts.push(
+      `<link ${Object.entries(l)
+        .map(([k, v]) => `${k}="${escAttr(v)}"`)
+        .join(' ')} />`,
+    )
   }
   return parts.join('\n  ')
 }
@@ -82,10 +95,8 @@ export interface RenderPageOptions {
  */
 export async function renderPage(opts: RenderPageOptions): Promise<string> {
   const mod = await opts.loadModule(opts.pageId)
-  const loaderData = ((await mod.loader({ params: opts.params ?? {}, url: opts.url })) ?? {}) as Record<
-    string,
-    unknown
-  >
+  const loaderData = ((await mod.loader({ params: opts.params ?? {}, url: opts.url })) ??
+    {}) as Record<string, unknown>
 
   const head = mod.head
     ? await mod.head({ data: loaderData, params: opts.params ?? {}, url: opts.url })
@@ -166,8 +177,12 @@ function shell({
   // Register global stores on the client before Alpine.start(): import each store
   // module and call Alpine.store(name, factory()) — same factory the server used,
   // so hydration is value-identical.
-  const storeImports = storeIds.map((id, i) => `  import __s${i} from ${JSON.stringify(id)}`).join('\n')
-  const storeRegs = storeIds.map((_, i) => `  Alpine.store(__s${i}.name, __s${i}.factory())`).join('\n')
+  const storeImports = storeIds
+    .map((id, i) => `  import __s${i} from ${JSON.stringify(id)}`)
+    .join('\n')
+  const storeRegs = storeIds
+    .map((_, i) => `  Alpine.store(__s${i}.name, __s${i}.factory())`)
+    .join('\n')
 
   // Production build → reference the built, hashed client bundle. Dev → inline
   // the module so Vite serves + HMRs it.

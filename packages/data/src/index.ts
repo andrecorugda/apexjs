@@ -1,8 +1,8 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { type ApexResource, defineApexRoute } from '@apex-stack/core'
 import { eq } from 'drizzle-orm'
-import { z, type ZodRawShape } from 'zod'
+import { type ZodRawShape, z } from 'zod'
 
 export type Dialect = 'sqlite' | 'postgres'
 
@@ -103,7 +103,9 @@ export async function applyMigrations(handle: ApexDbHandle, dir: string): Promis
     (await handle.query('SELECT name FROM _apex_migrations')).map((r) => r.name as string),
   )
   const done: string[] = []
-  for (const file of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
+  for (const file of readdirSync(dir)
+    .filter((f) => f.endsWith('.sql'))
+    .sort()) {
     if (applied.has(file)) continue
     await handle.exec(readFileSync(join(dir, file), 'utf8'))
     const at = new Date().toISOString()
@@ -164,7 +166,12 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           input: { id: z.coerce.number() },
           mcp: true,
           handler: async ({ input }) =>
-            (await db.select().from(table).where(eq(pkCol, (input as { id: number }).id)))[0] ?? null,
+            (
+              await db
+                .select()
+                .from(table)
+                .where(eq(pkCol, (input as { id: number }).id))
+            )[0] ?? null,
         }),
       },
       {
@@ -176,7 +183,12 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           input: insert,
           mcp: true,
           handler: async ({ input }) =>
-            (await db.insert(table).values(input as never).returning())[0],
+            (
+              await db
+                .insert(table)
+                .values(input as never)
+                .returning()
+            )[0],
         }),
       },
       {
@@ -202,8 +214,12 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           input: { id: z.coerce.number() },
           mcp: true,
           handler: async ({ input }) =>
-            (await db.delete(table).where(eq(pkCol, (input as { id: number }).id)).returning())[0] ??
-            null,
+            (
+              await db
+                .delete(table)
+                .where(eq(pkCol, (input as { id: number }).id))
+                .returning()
+            )[0] ?? null,
         }),
       },
     ],

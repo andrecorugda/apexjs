@@ -21,8 +21,16 @@ export const buildCommand = defineCommand({
   args: {
     root: { type: 'positional', required: false, description: 'Project root', default: '.' },
     outDir: { type: 'string', description: 'Output directory', default: 'dist' },
-    islands: { type: 'boolean', description: 'Static-first islands mode (zero-JS static)', default: false },
-    server: { type: 'boolean', description: 'Build a Node server (dynamic routes + API/MCP)', default: false },
+    islands: {
+      type: 'boolean',
+      description: 'Static-first islands mode (zero-JS static)',
+      default: false,
+    },
+    server: {
+      type: 'boolean',
+      description: 'Build a Node server (dynamic routes + API/MCP)',
+      default: false,
+    },
   },
   async run({ args }) {
     const root = resolve(process.cwd(), args.root)
@@ -38,7 +46,9 @@ export const buildCommand = defineCommand({
     }
 
     // Component mode: build a client bundle per page so the prerendered HTML hydrates.
-    const hrefs = args.islands ? new Map<string, string>() : await buildClient(root, staticRoutes, outDir)
+    const hrefs = args.islands
+      ? new Map<string, string>()
+      : await buildClient(root, staticRoutes, outDir)
 
     const vite = await createViteServer({
       root,
@@ -77,8 +87,7 @@ export const buildCommand = defineCommand({
 
       // biome-ignore lint/suspicious/noConsole: CLI output
       console.log(
-        `\n  Built ${staticRoutes.length} page(s) → ${args.outDir}/` +
-          (args.islands ? ' (islands / static-first)' : ' (prerendered + hydrated)'),
+        `\n  Built ${staticRoutes.length} page(s) → ${args.outDir}/${args.islands ? ' (islands / static-first)' : ' (prerendered + hydrated)'}`,
       )
       if (dynamic.length) {
         console.log(
@@ -93,7 +102,12 @@ export const buildCommand = defineCommand({
 })
 
 /** Build a deployable Node server: client bundles + SSR modules + a run manifest. */
-async function buildServerTarget(root: string, outDir: string, outLabel: string, routes: RouteDef[]) {
+async function buildServerTarget(
+  root: string,
+  outDir: string,
+  outLabel: string,
+  routes: RouteDef[],
+) {
   const clientHrefs = await buildClient(root, routes, outDir)
   const server = await buildServer(root, routes, outDir)
 

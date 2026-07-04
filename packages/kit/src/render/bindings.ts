@@ -70,8 +70,14 @@ function camelToKebab(s: string): string {
 
 /** Apply a generic `:attr` / `x-bind:attr` binding. */
 export function applyAttrBinding(el: El, attr: string, value: unknown): void {
-  if (attr === 'class') return applyClassBinding(el, value)
-  if (attr === 'style') return applyStyleBinding(el, value)
+  if (attr === 'class') {
+    applyClassBinding(el, value)
+    return
+  }
+  if (attr === 'style') {
+    applyStyleBinding(el, value)
+    return
+  }
 
   if (BOOLEAN_ATTRS.has(attr)) {
     if (value) el.setAttribute(attr, '')

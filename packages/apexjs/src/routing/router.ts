@@ -65,8 +65,7 @@ export function scanPages(root: string): RouteDef[] {
   })
 
   // Precedence: static (0) < dynamic param (1) < catch-all (2).
-  const rank = (r: RouteDef) =>
-    r.segments.some((s) => s.catchAll) ? 2 : r.isDynamic ? 1 : 0
+  const rank = (r: RouteDef) => (r.segments.some((s) => s.catchAll) ? 2 : r.isDynamic ? 1 : 0)
   return routes.sort((a, b) => rank(a) - rank(b))
 }
 

@@ -66,7 +66,9 @@ describe('parseAlpineFile', () => {
   })
 
   it('rejects duplicate <template>', () => {
-    expect(() => parseAlpineFile('<template></template><template></template>')).toThrow(/only have one/)
+    expect(() => parseAlpineFile('<template></template><template></template>')).toThrow(
+      /only have one/,
+    )
   })
 
   it('rejects duplicate <script server>', () => {

@@ -72,9 +72,7 @@ export function renderComponent(input: RenderComponentInput): RenderComponentRes
   const authoredExpr = rootXData ?? undefined
   const authoredDefaults =
     input.authoredDefaults ??
-    (authoredExpr && authoredExpr.trim()
-      ? ((evaluate(authoredExpr, [{}]) as Record<string, unknown>) ?? {})
-      : {})
+    (authoredExpr?.trim() ? ((evaluate(authoredExpr, [{}]) as Record<string, unknown>) ?? {}) : {})
   const rootData: Record<string, unknown> = { ...authoredDefaults, ...loaderData }
 
   const idCounter = { n: 0 }
@@ -100,12 +98,7 @@ export function renderFragment(
   registry: ComponentRegistry = {},
 ): string {
   const idCounter = { n: 0 }
-  return renderFragmentInternal(
-    templateHtml,
-    [createMagicsFor(idCounter), data],
-    scopeId,
-    registry,
-  )
+  return renderFragmentInternal(templateHtml, [createMagicsFor(idCounter), data], scopeId, registry)
 }
 
 export type ClientDirective = 'load' | 'idle' | 'visible' | 'none'
@@ -214,9 +207,15 @@ function walkElement(
   // Structural directives live on <template> elements.
   if (tag === 'template') {
     const xFor = el.getAttribute('x-for')
-    if (xFor != null) return renderFor(el, xFor, layers, scopeId, document, registry)
+    if (xFor != null) {
+      renderFor(el, xFor, layers, scopeId, document, registry)
+      return
+    }
     const xIf = el.getAttribute('x-if')
-    if (xIf != null) return renderIf(el, xIf, layers, scopeId, document, registry)
+    if (xIf != null) {
+      renderIf(el, xIf, layers, scopeId, document, registry)
+      return
+    }
     // A plain <template> (no structural directive) is left untouched.
     return
   }
@@ -227,7 +226,7 @@ function walkElement(
   // A nested x-data introduces its own scope layer for this subtree.
   let scoped = layers
   const nestedData = el.getAttribute('x-data')
-  if (nestedData != null && nestedData.trim()) {
+  if (nestedData?.trim()) {
     const obj = (evaluate(nestedData, layers) as Record<string, unknown>) ?? {}
     scoped = [...layers, obj]
   }
@@ -287,7 +286,9 @@ function renderComponentInstance(
   // Slot content = the children of the usage tag, rendered in the PARENT scope
   // (authored where the component is used, styled by the parent's scope).
   const slotSource = String(el.innerHTML ?? '')
-  const slotHtml = slotSource.trim() ? renderFragmentInternal(slotSource, layers, scopeId, registry) : ''
+  const slotHtml = slotSource.trim()
+    ? renderFragmentInternal(slotSource, layers, scopeId, registry)
+    : ''
 
   const props: Record<string, unknown> = {}
   let clientDirective: string | null = null
@@ -299,14 +300,14 @@ function renderComponentInstance(
       continue
     }
     if (n.startsWith(':')) props[n.slice(1)] = evaluate(attr.value, layers)
-    else if (n.startsWith('x-bind:')) props[n.slice('x-bind:'.length)] = evaluate(attr.value, layers)
+    else if (n.startsWith('x-bind:'))
+      props[n.slice('x-bind:'.length)] = evaluate(attr.value, layers)
     else props[n] = attr.value
   }
 
-  const dataObj =
-    entry.rootXData && entry.rootXData.trim()
-      ? ((evaluate(entry.rootXData, [props]) as Record<string, unknown>) ?? {})
-      : {}
+  const dataObj = entry.rootXData?.trim()
+    ? ((evaluate(entry.rootXData, [props]) as Record<string, unknown>) ?? {})
+    : {}
   // Props first so component x-data can override; both are available in the
   // component's scope and baked into the hydration literal.
   const merged = { ...props, ...dataObj }

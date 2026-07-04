@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { defineCommand, runMain } from 'citty'
 import { newCommand } from './commands/new.js'
-import { banner, color, VERSION } from './ui.js'
+import { VERSION, banner, color } from './ui.js'
 
 // Heavy commands (dev/build/start/make/migrate/mcp) are imported lazily so that
 // `apex new`, the banner, and `--help` never pull in Vite + rollup — which can
@@ -38,12 +38,16 @@ const main = defineCommand({
     process.stdout.write(banner())
     // biome-ignore lint/suspicious/noConsole: CLI output
     const log = console.log
-    log(`  ${color.bold('Usage')}  ${color.gray('apex')} ${color.cyan('<command>')} ${color.gray('[options]')}\n`)
+    log(
+      `  ${color.bold('Usage')}  ${color.gray('apex')} ${color.cyan('<command>')} ${color.gray('[options]')}\n`,
+    )
     log(`  ${color.bold('Commands')}`)
     for (const [name, desc] of COMMANDS) {
       log(`    ${color.cyan(`apex ${name}`.padEnd(13))} ${color.gray(desc)}`)
     }
-    log(`\n  ${color.gray('Run')} ${color.cyan('apex <command> --help')} ${color.gray('for details.')}\n`)
+    log(
+      `\n  ${color.gray('Run')} ${color.cyan('apex <command> --help')} ${color.gray('for details.')}\n`,
+    )
   },
 })
 

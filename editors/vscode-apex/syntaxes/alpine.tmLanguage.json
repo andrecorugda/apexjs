@@ -2,11 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "Apex",
   "scopeName": "source.alpine",
-  "patterns": [
-    { "include": "#script" },
-    { "include": "#style" },
-    { "include": "text.html.basic" }
-  ],
+  "patterns": [{ "include": "#script" }, { "include": "#style" }, { "include": "text.html.basic" }],
   "injections": {
     "L:text.html.basic -comment -string.quoted": {
       "patterns": [

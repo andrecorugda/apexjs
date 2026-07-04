@@ -1,8 +1,8 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import {
-  defineEventHandler,
   type EventHandler,
+  defineEventHandler,
   getQuery,
   getRequestURL,
   readBody,
@@ -39,12 +39,20 @@ function sanitizeName(name: string): string {
   return name.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64)
 }
 
-function entryFor(pattern: string, method: HttpMethod, mcpName: string, route: ApexRoute): ApiEntry {
+function entryFor(
+  pattern: string,
+  method: HttpMethod,
+  mcpName: string,
+  route: ApexRoute,
+): ApiEntry {
   return { pattern, segments: toSegments(pattern), method, mcpName, route }
 }
 
 /** Expand one API module's default export (single route or resource) into entries. */
-export function expandApiModule(name: string, def: ApexRoute | ApexResource | undefined): ApiEntry[] {
+export function expandApiModule(
+  name: string,
+  def: ApexRoute | ApexResource | undefined,
+): ApiEntry[] {
   if (!def) return []
   if (isApexResource(def)) {
     return def.routes.map((r) =>

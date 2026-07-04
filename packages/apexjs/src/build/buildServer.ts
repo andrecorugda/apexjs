@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { apex } from '@apex-stack/vite'
-import { build, type Rollup } from 'vite'
+import { type Rollup, build } from 'vite'
 import type { RouteDef } from '../routing/router.js'
 
 export interface ServerBuild {

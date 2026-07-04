@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process'
-import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
@@ -20,7 +20,9 @@ function detectPackageManager(): PackageManager {
 
 /** Synchronous, silent command (git plumbing). Returns true on success. */
 function runSync(cmd: string, args: string[], cwd: string): boolean {
-  return spawnSync(cmd, args, { cwd, stdio: 'ignore', shell: process.platform === 'win32' }).status === 0
+  return (
+    spawnSync(cmd, args, { cwd, stdio: 'ignore', shell: process.platform === 'win32' }).status === 0
+  )
 }
 
 /** Async install so the spinner can animate while it runs. */
@@ -36,9 +38,22 @@ function installAsync(pm: PackageManager, cwd: string): Promise<boolean> {
 export const newCommand = defineCommand({
   meta: { name: 'new', description: 'Scaffold a new Apex JS app' },
   args: {
-    dir: { type: 'positional', required: false, description: 'Target directory', default: 'apex-app' },
-    install: { type: 'boolean', default: true, description: 'Install dependencies (use --no-install to skip)' },
-    git: { type: 'boolean', default: true, description: 'Initialize a git repository (use --no-git to skip)' },
+    dir: {
+      type: 'positional',
+      required: false,
+      description: 'Target directory',
+      default: 'apex-app',
+    },
+    install: {
+      type: 'boolean',
+      default: true,
+      description: 'Install dependencies (use --no-install to skip)',
+    },
+    git: {
+      type: 'boolean',
+      default: true,
+      description: 'Initialize a git repository (use --no-git to skip)',
+    },
   },
   async run({ args }) {
     const dir = String(args.dir)
@@ -60,7 +75,8 @@ export const newCommand = defineCommand({
     if (existsSync(gitignore)) renameSync(gitignore, join(target, '.gitignore'))
     for (const rel of ['package.json', 'README.md']) {
       const file = join(target, rel)
-      if (existsSync(file)) writeFileSync(file, readFileSync(file, 'utf8').replaceAll('{{name}}', name))
+      if (existsSync(file))
+        writeFileSync(file, readFileSync(file, 'utf8').replaceAll('{{name}}', name))
     }
     log(`  ${color.green('✓')} Created ${color.bold(dir)}`)
 
@@ -68,7 +84,9 @@ export const newCommand = defineCommand({
 
     let gitOk = false
     if (args.git) {
-      const hasGit = spawnSync('git', ['--version'], { stdio: 'ignore', shell: process.platform === 'win32' }).status === 0
+      const hasGit =
+        spawnSync('git', ['--version'], { stdio: 'ignore', shell: process.platform === 'win32' })
+          .status === 0
       if (hasGit && runSync('git', ['init', '-q'], target)) {
         runSync('git', ['add', '-A'], target)
         runSync('git', ['commit', '-m', 'Initial commit from Apex JS', '--no-gpg-sign'], target)
@@ -79,7 +97,9 @@ export const newCommand = defineCommand({
 
     let installed = false
     if (args.install) {
-      const sp = spinner(`Installing dependencies with ${pm}…  ${color.dim('(first run can take a minute)')}`)
+      const sp = spinner(
+        `Installing dependencies with ${pm}…  ${color.dim('(first run can take a minute)')}`,
+      )
       installed = await installAsync(pm, target)
       if (installed) sp.succeed(`Dependencies installed with ${pm}`)
       else sp.fail(`Install failed — run ${color.cyan(`${pm} install`)} inside ${dir}`)
@@ -90,7 +110,11 @@ export const newCommand = defineCommand({
     log(`    ${color.cyan(`cd ${dir}`)}`)
     if (!installed) log(`    ${color.cyan(pm === 'yarn' ? 'yarn' : `${pm} install`)}`)
     log(`    ${color.cyan('apex dev')}          ${color.gray('# → http://localhost:3000')}`)
-    log(`\n  ${color.gray('Not installed globally? Use')} ${color.cyan(`${runPrefix} dev`)}${color.gray('.')}`)
-    log(`  ${color.gray('Islands mode:')} ${color.cyan('apex dev --islands')}${color.gray('  ·  API routes are also MCP tools at /mcp.')}\n`)
+    log(
+      `\n  ${color.gray('Not installed globally? Use')} ${color.cyan(`${runPrefix} dev`)}${color.gray('.')}`,
+    )
+    log(
+      `  ${color.gray('Islands mode:')} ${color.cyan('apex dev --islands')}${color.gray('  ·  API routes are also MCP tools at /mcp.')}\n`,
+    )
   },
 })

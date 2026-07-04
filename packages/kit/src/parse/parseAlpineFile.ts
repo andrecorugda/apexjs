@@ -93,7 +93,10 @@ export function parseAlpineFile(source: string, filename = 'anonymous.alpine'): 
           return
         }
         if (!TOP_LEVEL_BLOCKS.has(tag)) {
-          fail(`unexpected top-level <${tag}>; only <script>, <template> and <style> are allowed`, parser.startIndex)
+          fail(
+            `unexpected top-level <${tag}>; only <script>, <template> and <style> are allowed`,
+            parser.startIndex,
+          )
         }
         state.depth = 1
         state.open = {
@@ -140,7 +143,10 @@ function commitBlock(
       const isClient = 'client' in block.attrs
       const isServer = 'server' in block.attrs
       if (!isClient && !isServer) {
-        fail('<script> must be marked `server` or `client` (e.g. <script server> or <script client>)', loc.start)
+        fail(
+          '<script> must be marked `server` or `client` (e.g. <script server> or <script client>)',
+          loc.start,
+        )
       }
       const lang = block.attrs.lang === 'ts' || block.attrs.lang === 'js' ? block.attrs.lang : 'ts'
       if (isClient) {
@@ -153,7 +159,8 @@ function commitBlock(
       return
     }
     case 'template': {
-      if (descriptor.template) fail('a .alpine file may only have one top-level <template>', loc.start)
+      if (descriptor.template)
+        fail('a .alpine file may only have one top-level <template>', loc.start)
       descriptor.template = { content, attrs: block.attrs, loc }
       return
     }

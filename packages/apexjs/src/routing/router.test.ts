@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
-import { matchRoute, type RouteDef, scanPages } from './router.js'
+import { type RouteDef, matchRoute, scanPages } from './router.js'
 
 describe('matchRoute', () => {
   const routes: RouteDef[] = [
@@ -80,7 +80,12 @@ describe('scanPages', () => {
 
 describe('catch-all routes ([...name])', () => {
   const routes: RouteDef[] = [
-    { pageId: '/pages/docs/index.alpine', pattern: '/docs', segments: [{ literal: 'docs' }], isDynamic: false },
+    {
+      pageId: '/pages/docs/index.alpine',
+      pattern: '/docs',
+      segments: [{ literal: 'docs' }],
+      isDynamic: false,
+    },
     {
       pageId: '/pages/docs/[section].alpine',
       pattern: '/docs/:section',

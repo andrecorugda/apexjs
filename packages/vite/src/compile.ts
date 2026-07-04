@@ -40,8 +40,12 @@ export function compileAlpine(
     // and guarantee a `loader` export exists.
     const scriptContent = descriptor.script?.content?.trim() ?? ''
     const hasLoader =
-      /export\s+(async\s+)?function\s+loader\b|export\s+(const|let|var)\s+loader\b/.test(scriptContent)
-    const loaderExport = hasLoader ? scriptContent : `${scriptContent}\nexport const loader = () => ({})`
+      /export\s+(async\s+)?function\s+loader\b|export\s+(const|let|var)\s+loader\b/.test(
+        scriptContent,
+      )
+    const loaderExport = hasLoader
+      ? scriptContent
+      : `${scriptContent}\nexport const loader = () => ({})`
 
     const rootXData = descriptor.template?.attrs['x-data'] ?? null
     // When a client script exists, compile x-data into a real factory so its
@@ -75,7 +79,7 @@ export function compileAlpine(
     `import { registerApexComponent } from ${JSON.stringify(runtime)}`,
     clientCode,
     `registerApexComponent(${JSON.stringify(componentId)}, () => (${authoredExpr}))`,
-    `if (import.meta.hot) import.meta.hot.accept()`,
+    'if (import.meta.hot) import.meta.hot.accept()',
   ]
     .filter(Boolean)
     .join('\n')

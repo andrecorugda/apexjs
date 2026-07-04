@@ -63,10 +63,8 @@ export interface RenderIslandsPageOptions {
  */
 export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise<string> {
   const mod = await opts.loadModule(opts.pageId)
-  const loaderData = ((await mod.loader({ params: opts.params ?? {}, url: opts.url })) ?? {}) as Record<
-    string,
-    unknown
-  >
+  const loaderData = ((await mod.loader({ params: opts.params ?? {}, url: opts.url })) ??
+    {}) as Record<string, unknown>
 
   const { html, hydratingCount } = renderIslands(
     mod.template,
@@ -75,8 +73,7 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
     opts.registry,
   )
 
-  const loaderScript =
-    hydratingCount > 0 ? `\n<script type="module">${ISLAND_LOADER}</script>` : ''
+  const loaderScript = hydratingCount > 0 ? `\n<script type="module">${ISLAND_LOADER}</script>` : ''
 
   const doc = `<!DOCTYPE html>
 <html lang="en">

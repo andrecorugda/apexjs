@@ -96,7 +96,10 @@ function plan(kind: Kind, name: string, root: string): { path: string; contents:
     case 'page':
       return { path: join(root, 'pages', `${name}.alpine`), contents: pageTemplate(name) }
     case 'component':
-      return { path: join(root, 'components', `${pascalCase(name)}.alpine`), contents: componentTemplate() }
+      return {
+        path: join(root, 'components', `${pascalCase(name)}.alpine`),
+        contents: componentTemplate(),
+      }
     case 'api':
       return { path: join(root, 'server', 'api', `${name}.ts`), contents: apiTemplate(name) }
     case 'store':
@@ -109,14 +112,26 @@ function plan(kind: Kind, name: string, root: string): { path: string; contents:
 export const makeCommand = defineCommand({
   meta: { name: 'make', description: 'Generate a page, component, API route, store, or layout' },
   args: {
-    kind: { type: 'positional', required: true, description: 'page | component | api | store | layout' },
+    kind: {
+      type: 'positional',
+      required: true,
+      description: 'page | component | api | store | layout',
+    },
     name: { type: 'positional', required: true, description: 'Name (about, Counter, todos, …)' },
     root: { type: 'string', description: 'Project root', default: '.' },
   },
   run({ args }) {
     const kind = args.kind as Kind
-    if (kind !== 'page' && kind !== 'component' && kind !== 'api' && kind !== 'store' && kind !== 'layout') {
-      console.error(`\n  Unknown type "${args.kind}". Use: page | component | api | store | layout\n`)
+    if (
+      kind !== 'page' &&
+      kind !== 'component' &&
+      kind !== 'api' &&
+      kind !== 'store' &&
+      kind !== 'layout'
+    ) {
+      console.error(
+        `\n  Unknown type "${args.kind}". Use: page | component | api | store | layout\n`,
+      )
       process.exit(1)
     }
 

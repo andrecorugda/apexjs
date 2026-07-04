@@ -1,13 +1,16 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { apex } from '@apex-stack/vite'
-import { build, type Plugin } from 'vite'
+import { type Plugin, build } from 'vite'
 import type { RouteDef } from '../routing/router.js'
 
 const VIRT = 'virtual:apex-client:'
 
 function entryName(pageId: string): string {
-  return pageId.replace(/^\/pages\//, '').replace(/\.alpine$/, '').replace(/[^a-zA-Z0-9]+/g, '_')
+  return pageId
+    .replace(/^\/pages\//, '')
+    .replace(/\.alpine$/, '')
+    .replace(/[^a-zA-Z0-9]+/g, '_')
 }
 
 /**
@@ -34,8 +37,8 @@ export async function buildClient(
         return [
           `import Alpine from 'alpinejs'`,
           `import ${JSON.stringify(pageId)}`,
-          `window.Alpine = Alpine`,
-          `Alpine.start()`,
+          'window.Alpine = Alpine',
+          'Alpine.start()',
         ].join('\n')
       }
     },
@@ -55,10 +58,9 @@ export async function buildClient(
 
   // Vite writes the manifest to <outDir>/.vite/manifest.json. Its keys are the
   // resolved entry ids; match by the virtual page id we fed in.
-  const manifest = JSON.parse(readFileSync(join(outDir, '.vite', 'manifest.json'), 'utf8')) as Record<
-    string,
-    { file: string; isEntry?: boolean; src?: string }
-  >
+  const manifest = JSON.parse(
+    readFileSync(join(outDir, '.vite', 'manifest.json'), 'utf8'),
+  ) as Record<string, { file: string; isEntry?: boolean; src?: string }>
 
   const hrefs = new Map<string, string>()
   for (const r of routes) {

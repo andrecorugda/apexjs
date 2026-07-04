@@ -1,7 +1,7 @@
-import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { cpSync, existsSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { spawnSync } from 'node:child_process'
 import { defineCommand, runMain } from 'citty'
 
 const TEMPLATE_DIR = fileURLToPath(new URL('../templates/default', import.meta.url))
@@ -39,9 +39,22 @@ const main = defineCommand({
     description: 'Scaffold a new Apex JS app',
   },
   args: {
-    dir: { type: 'positional', required: false, description: 'Target directory', default: 'apex-app' },
-    install: { type: 'boolean', default: true, description: 'Install dependencies (use --no-install to skip)' },
-    git: { type: 'boolean', default: true, description: 'Initialize a git repository (use --no-git to skip)' },
+    dir: {
+      type: 'positional',
+      required: false,
+      description: 'Target directory',
+      default: 'apex-app',
+    },
+    install: {
+      type: 'boolean',
+      default: true,
+      description: 'Install dependencies (use --no-install to skip)',
+    },
+    git: {
+      type: 'boolean',
+      default: true,
+      description: 'Initialize a git repository (use --no-git to skip)',
+    },
   },
   run({ args }) {
     const target = resolve(process.cwd(), args.dir)
@@ -73,7 +86,9 @@ const main = defineCommand({
     // Initialize git (like create-next-app / nuxi) — best-effort, never fatal.
     let gitOk = false
     if (args.git) {
-      const hasGit = spawnSync('git', ['--version'], { stdio: 'ignore', shell: process.platform === 'win32' }).status === 0
+      const hasGit =
+        spawnSync('git', ['--version'], { stdio: 'ignore', shell: process.platform === 'win32' })
+          .status === 0
       if (hasGit && run('git', ['init', '-q'], target, true)) {
         run('git', ['add', '-A'], target, true)
         run('git', ['commit', '-m', 'Initial commit from Apex JS', '--no-gpg-sign'], target, true)
@@ -86,11 +101,15 @@ const main = defineCommand({
     // of long "stuck" hangs after the packages are already on disk.
     let installed = false
     if (args.install) {
-      console.log(`\n  Installing dependencies with ${c.cyan(pm)}… ${c.dim('(first install can take a minute)')}\n`)
+      console.log(
+        `\n  Installing dependencies with ${c.cyan(pm)}… ${c.dim('(first install can take a minute)')}\n`,
+      )
       const installArgs = pm === 'npm' ? ['install', '--no-audit', '--no-fund'] : ['install']
       installed = run(pm, installArgs, target)
       if (!installed) {
-        console.log(`\n  ${c.yellow('⚠')}  Dependency install failed — run it yourself after cd'ing in.\n`)
+        console.log(
+          `\n  ${c.yellow('⚠')}  Dependency install failed — run it yourself after cd'ing in.\n`,
+        )
       }
     }
 
@@ -99,13 +118,15 @@ const main = defineCommand({
 
     const steps: string[] = [`cd ${args.dir}`]
     if (!installed) steps.push(pm === 'yarn' ? 'yarn' : `${pm} install`)
-    steps.push(`${runPrefix} dev          ${c.dim('# start the dev server → http://localhost:3000')}`)
+    steps.push(
+      `${runPrefix} dev          ${c.dim('# start the dev server → http://localhost:3000')}`,
+    )
 
     console.log(`
   ${installed ? c.green('Ready.') : 'Next steps:'}
 ${steps.map((s) => `    ${s}`).join('\n')}
 
-  ${c.yellow('Run the CLI with:')} ${c.cyan(runPrefix + ' dev')}   ${c.dim('(or ' + 'npx apex dev' + ')')}
+  ${c.yellow('Run the CLI with:')} ${c.cyan(`${runPrefix} dev`)}   ${c.dim('(or ' + 'npx apex dev' + ')')}
         A bare ${c.cyan('apex')} won't resolve — it's a local dependency, like ${c.cyan('next')} or ${c.cyan('vite')}.
         ${c.dim('Prefer a global command? ')}${c.cyan('npm i -g @apex-stack/core')}${c.dim(' → then `apex dev` works anywhere.')}
   ${c.dim('Islands mode:')} ${runPrefix} dev:islands

@@ -1,5 +1,5 @@
 import { existsSync, readdirSync } from 'node:fs'
-import { createServer as createHttpServer, type Server } from 'node:http'
+import { type Server, createServer as createHttpServer } from 'node:http'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -12,11 +12,11 @@ import {
   setResponseStatus,
   toNodeListener,
 } from 'h3'
-import { createServer as createViteServer, type PluginOption, type ViteDevServer } from 'vite'
+import { type PluginOption, type ViteDevServer, createServer as createViteServer } from 'vite'
 import { createApiHandler, loadApiRoutes } from '../api/routes.js'
-import { createMcpHandler } from '../mcp/server.js'
 import { loadComponents } from '../components/registry.js'
 import { renderIslandsPage } from '../islands/render.js'
+import { createMcpHandler } from '../mcp/server.js'
 import { matchRoute, scanPages } from '../routing/router.js'
 import { loadStores } from '../stores/loader.js'
 import { renderErrorPage, renderNotFoundPage } from './errorPage.js'
@@ -83,7 +83,9 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   }
 
   // A project global stylesheet (Tailwind entry + shared styles), Vite-processed.
-  const appCssRel = ['app.css', 'styles/app.css', 'src/app.css'].find((p) => existsSync(join(options.root, p)))
+  const appCssRel = ['app.css', 'styles/app.css', 'src/app.css'].find((p) =>
+    existsSync(join(options.root, p)),
+  )
   const appCss = appCssRel ? `/${appCssRel}` : undefined
 
   const vite = await createViteServer({
@@ -105,7 +107,9 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   // already under root) to an absolute forward-slash path; identical on POSIX + Windows.
   const ssrLoad = (id: string): Promise<Record<string, unknown>> => {
     const resolved =
-      id[0] === '/' && !id.startsWith(options.root) ? join(options.root, id).replace(/\\/g, '/') : id
+      id[0] === '/' && !id.startsWith(options.root)
+        ? join(options.root, id).replace(/\\/g, '/')
+        : id
     return vite.ssrLoadModule(resolved) as Promise<Record<string, unknown>>
   }
 
@@ -121,8 +125,14 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   // module on change, so ssrLoadModule returns fresh code. A `/api` handler validates
   // and dispatches them; `/mcp` exposes every `mcp: true` entry as an AI-callable tool.
   const loadEntries = () => loadApiRoutes(options.root, (id) => ssrLoad(id) as never)
-  app.use('/api', defineEventHandler((event) => loadEntries().then((e) => createApiHandler(e)(event))))
-  app.use('/mcp', defineEventHandler((event) => loadEntries().then((e) => createMcpHandler(e)(event))))
+  app.use(
+    '/api',
+    defineEventHandler((event) => loadEntries().then((e) => createApiHandler(e)(event))),
+  )
+  app.use(
+    '/mcp',
+    defineEventHandler((event) => loadEntries().then((e) => createMcpHandler(e)(event))),
+  )
 
   app.use(
     defineEventHandler(async (event) => {
@@ -188,9 +198,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
     port,
     close: async () => {
       await vite.close()
-      await new Promise<void>((resolve, reject) =>
-        server.close((e) => (e ? reject(e) : resolve())),
-      )
+      await new Promise<void>((resolve, reject) => server.close((e) => (e ? reject(e) : resolve())))
     },
   }
 }

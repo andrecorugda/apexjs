@@ -37,7 +37,7 @@ export const mcpCommand = defineCommand({
       })
       console.log(`\n  \x1b[36m${args.call}\x1b[0m(${args.args}) →`)
       for (const part of result.content as Array<{ type: string; text?: string }>) {
-        console.log('  ' + (part.text ?? JSON.stringify(part)))
+        console.log(`  ${part.text ?? JSON.stringify(part)}`)
       }
       console.log()
     } else {

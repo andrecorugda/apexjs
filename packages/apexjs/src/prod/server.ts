@@ -1,7 +1,8 @@
-import { createServer as createHttpServer, type Server } from 'node:http'
 import { existsSync, readFileSync, statSync } from 'node:fs'
+import { type Server, createServer as createHttpServer } from 'node:http'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import type { ComponentRegistry } from '@apex-stack/kit'
 import {
   createApp,
   defineEventHandler,
@@ -10,12 +11,11 @@ import {
   setResponseStatus,
   toNodeListener,
 } from 'h3'
-import type { ComponentRegistry } from '@apex-stack/kit'
 import { createApiHandler, expandApiModule } from '../api/routes.js'
-import { createMcpHandler, hasMcpRoutes } from '../mcp/server.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
 import { renderIslandsPage } from '../islands/render.js'
-import { matchRoute, type RouteDef } from '../routing/router.js'
+import { createMcpHandler, hasMcpRoutes } from '../mcp/server.js'
+import { type RouteDef, matchRoute } from '../routing/router.js'
 
 /** The build manifest written by `apex build --server` to `<dist>/apex-manifest.json`. */
 export interface ProdManifest {
@@ -44,13 +44,14 @@ export interface ProdServerOptions {
 }
 
 /** Run the built app: dynamic routes, API + MCP, and static assets — no Vite. */
-export async function startProdServer(options: ProdServerOptions): Promise<{ server: Server; port: number }> {
+export async function startProdServer(
+  options: ProdServerOptions,
+): Promise<{ server: Server; port: number }> {
   const dir = options.dir
   const port = options.port ?? 3000
   const manifest = JSON.parse(readFileSync(join(dir, 'apex-manifest.json'), 'utf8')) as ProdManifest
 
-  const importServer = (relFile: string) =>
-    import(pathToFileURL(join(dir, 'server', relFile)).href)
+  const importServer = (relFile: string) => import(pathToFileURL(join(dir, 'server', relFile)).href)
 
   // Build the component registry from the built component modules.
   const registry: ComponentRegistry = {}
@@ -69,7 +70,8 @@ export async function startProdServer(options: ProdServerOptions): Promise<{ ser
   }
 
   const serverFileFor = new Map(manifest.routes.map((r) => [r.pageId, r.serverFile]))
-  const loadModule = (id: string) => importServer(serverFileFor.get(id) as string) as Promise<PageModule>
+  const loadModule = (id: string) =>
+    importServer(serverFileFor.get(id) as string) as Promise<PageModule>
 
   const app = createApp()
 
@@ -83,7 +85,8 @@ export async function startProdServer(options: ProdServerOptions): Promise<{ ser
       if (!file.startsWith(dir) || !existsSync(file) || !statSync(file).isFile()) return
       const ext = path.slice(path.lastIndexOf('.'))
       setResponseHeader(event, 'Content-Type', MIME[ext] ?? 'application/octet-stream')
-      if (path.startsWith('/assets/')) setResponseHeader(event, 'Cache-Control', 'public, max-age=31536000, immutable')
+      if (path.startsWith('/assets/'))
+        setResponseHeader(event, 'Cache-Control', 'public, max-age=31536000, immutable')
       return readFileSync(file)
     }),
   )

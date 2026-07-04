@@ -30,7 +30,9 @@ export const migrateCommand = defineCommand({
       const require = createRequire(join(root, 'package.json'))
       data = (await import(pathToFileURL(require.resolve('@apex-stack/data')).href)) as DataModule
     } catch {
-      console.error('\n  @apex-stack/data is not installed in this project. Run: npm i @apex-stack/data\n')
+      console.error(
+        '\n  @apex-stack/data is not installed in this project. Run: npm i @apex-stack/data\n',
+      )
       process.exit(1)
     }
 

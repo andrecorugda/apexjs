@@ -1,4 +1,4 @@
-import type { z, ZodRawShape } from 'zod'
+import type { ZodRawShape, z } from 'zod'
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 

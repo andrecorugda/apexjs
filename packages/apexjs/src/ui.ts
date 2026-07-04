@@ -10,7 +10,10 @@ const RESET = '\x1b[0m'
 /** This package's version, read from its own package.json (for the banner + `apex --version`). */
 export const VERSION: string = (() => {
   try {
-    return JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')).version || ''
+    return (
+      JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'))
+        .version || ''
+    )
   } catch {
     return ''
   }
@@ -46,7 +49,9 @@ const FROM: [number, number, number] = [99, 102, 241] // indigo
 const TO: [number, number, number] = [34, 211, 238] // cyan
 
 /** The Apex brand banner: the APEX wordmark with a left→right indigo→cyan gradient. */
-export function banner(subtitle = 'The full-stack, AI-native meta-framework for Alpine.js'): string {
+export function banner(
+  subtitle = 'The full-stack, AI-native meta-framework for Alpine.js',
+): string {
   const width = LOGO[0]?.length ?? 0
   const rows = LOGO.map((line) => {
     if (!TTY) return `  ${line}`

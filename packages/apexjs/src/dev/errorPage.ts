@@ -5,7 +5,9 @@ import type { RouteDef } from '../routing/router.js'
 // (inline CSS), theme-aware, with a code frame around the failing line.
 
 function esc(s: string): string {
-  return s.replace(/[&<>"]/g, (c) => (c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&quot;'))
+  return s.replace(/[&<>"]/g, (c) =>
+    c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&quot;',
+  )
 }
 
 interface Frame {
@@ -17,16 +19,17 @@ interface Frame {
 /** Pull the first stack frame that points at a real file on disk. */
 function firstFileFrame(stack: string, root: string): Frame | undefined {
   const re = /(?:file:\/\/\/?)?((?:[A-Za-z]:[\\/]|\/)[^\s():]+):(\d+):(\d+)/g
-  let m: RegExpExecArray | null
   const frames: Frame[] = []
-  while ((m = re.exec(stack))) {
+  let m = re.exec(stack)
+  while (m) {
     const raw = m[1]
-    if (!raw) continue
-    if (/^[A-Za-z]:[\\/]/.test(raw) === false && !raw.startsWith('/')) continue
-    const file = raw.replace(/\//g, process.platform === 'win32' ? '\\' : '/')
-    if (existsSync(file) && !file.includes('node_modules')) {
-      frames.push({ file, line: Number(m[2] ?? 0), col: Number(m[3] ?? 0) })
+    if (raw && (/^[A-Za-z]:[\\/]/.test(raw) || raw.startsWith('/'))) {
+      const file = raw.replace(/\//g, process.platform === 'win32' ? '\\' : '/')
+      if (existsSync(file) && !file.includes('node_modules')) {
+        frames.push({ file, line: Number(m[2] ?? 0), col: Number(m[3] ?? 0) })
+      }
     }
+    m = re.exec(stack)
   }
   // Prefer a frame inside the project root, else the first real file.
   return frames.find((f) => f.file.startsWith(root)) ?? frames[0]
