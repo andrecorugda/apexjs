@@ -27,17 +27,29 @@ function libsqlUrl(pathOrUrl: string): string {
   return /^(file:|libsql:|https?:|:memory:)/.test(pathOrUrl) ? pathOrUrl : `file:${pathOrUrl}`
 }
 
+/** Load a DB driver (an optional peer) with a clear message if it isn't installed. */
+async function loadDriver(spec: string): Promise<unknown> {
+  try {
+    return await import(spec)
+  } catch {
+    throw new Error(
+      `@apex-stack/data: the "${spec}" driver isn't installed. Install only the driver your database needs — e.g. \`npm i ${spec}\`.`,
+    )
+  }
+}
+
 /**
  * Open a database and wrap it with Drizzle behind a driver-agnostic handle.
  * All drivers use Drizzle's async query API, so `defineResource` works unchanged
  * across SQLite (libSQL/Turso), Postgres (Supabase/Neon) and embedded PGlite.
- * Postgres/PGlite drivers are loaded on demand — install only what you use.
+ * Every driver is an OPTIONAL peer dependency, loaded on demand — install only
+ * the one your database uses (`@libsql/client`, `postgres`, or `@electric-sql/pglite`).
  */
 export async function createDb(config: CreateDbConfig): Promise<ApexDbHandle> {
   const cfg = typeof config === 'string' ? ({ driver: 'libsql', url: config } as const) : config
 
   if (cfg.driver === 'sqlite' || cfg.driver === 'libsql') {
-    const { createClient } = await import('@libsql/client')
+    const { createClient } = (await loadDriver('@libsql/client')) as typeof import('@libsql/client')
     const { drizzle } = await import('drizzle-orm/libsql')
     const client = createClient({ url: libsqlUrl(cfg.url) })
     return {
@@ -54,7 +66,8 @@ export async function createDb(config: CreateDbConfig): Promise<ApexDbHandle> {
   }
 
   if (cfg.driver === 'postgres') {
-    const postgres = (await import('postgres')).default
+    const postgres = ((await loadDriver('postgres')) as { default: typeof import('postgres') })
+      .default
     const { drizzle } = await import('drizzle-orm/postgres-js')
     const client = postgres(cfg.url)
     return {
@@ -71,7 +84,9 @@ export async function createDb(config: CreateDbConfig): Promise<ApexDbHandle> {
   }
 
   // pglite — embedded Postgres (great for local dev and tests).
-  const { PGlite } = await import('@electric-sql/pglite')
+  const { PGlite } = (await loadDriver('@electric-sql/pglite')) as typeof import(
+    '@electric-sql/pglite',
+  )
   const { drizzle } = await import('drizzle-orm/pglite')
   // No dir → in-memory (memory://); a dir persists to disk.
   const client = new PGlite((cfg as { dir?: string }).dir ?? 'memory://')
