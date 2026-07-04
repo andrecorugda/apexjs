@@ -1,6 +1,6 @@
 {
   "name": "@apex-stack/core",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "The full-stack meta-framework for Alpine.js — CLI and runtime",
   "type": "module",
   "license": "MIT",
@@ -41,7 +41,8 @@
     "vite": "^6.0.7",
     "zod": "^4.4.3",
     "@apex-stack/kit": "workspace:*",
-    "@apex-stack/vite": "workspace:*"
+    "@apex-stack/vite": "workspace:*",
+    "@apex-stack/theme": "workspace:*"
   },
   "peerDependencies": {
     "alpinejs": "^3.14.0"

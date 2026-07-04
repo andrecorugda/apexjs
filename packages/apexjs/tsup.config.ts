@@ -11,4 +11,6 @@ export default defineConfig({
   clean: true,
   target: 'node20',
   external: ['vite', 'alpinejs'],
+  // Bundle the (pure) theme package so `apex theme` works from a global install.
+  noExternal: [/@apex-stack\/theme/],
 })

@@ -32,6 +32,9 @@ importers:
       '@apex-stack/kit':
         specifier: workspace:*
         version: link:../kit
+      '@apex-stack/theme':
+        specifier: workspace:*
+        version: link:../theme
       '@apex-stack/vite':
         specifier: workspace:*
         version: link:../vite

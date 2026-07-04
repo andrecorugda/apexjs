@@ -79,8 +79,17 @@ export const addCommand = defineCommand({
     cpSync(join(REGISTRY_DIR, entry.file), dest)
     log(`  ${color.green('+')} Added ${color.bold(`components/${entry.name}.alpine`)}`)
     log(`\n  Use it:  ${color.cyan(`<${entry.name} />`)}  ${color.gray('in any page/component.')}`)
-    log(
-      `  ${color.gray('It inherits your theme via --ax-* tokens (see')} ${color.cyan('@apex-stack/theme')}${color.gray(').')}\n`,
-    )
+
+    // Components style via Tailwind + theme tokens — nudge if the project isn't wired.
+    const appCss = ['app.css', 'styles/app.css', 'src/app.css']
+      .map((p) => join(root, p))
+      .find(existsSync)
+    const themed = appCss ? readFileSync(appCss, 'utf8').includes('@theme') : false
+    if (!themed) {
+      log(
+        `  ${color.gray('Tip: run')} ${color.cyan('apex theme')} ${color.gray('to set up Tailwind + the theme so it styles up (apps from')} ${color.cyan('apex new')} ${color.gray('already have it).')}`,
+      )
+    }
+    log('')
   },
 })
