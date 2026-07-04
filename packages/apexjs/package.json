@@ -14,14 +14,7 @@
   "bugs": {
     "url": "https://github.com/andrecorugda/apexjs/issues"
   },
-  "keywords": [
-    "alpine",
-    "alpinejs",
-    "framework",
-    "ssr",
-    "apex",
-    "apexjs"
-  ],
+  "keywords": ["alpine", "alpinejs", "framework", "ssr", "apex", "apexjs"],
   "bin": {
     "apex": "./dist/cli.js"
   },
@@ -35,11 +28,7 @@
       "import": "./dist/client.js"
     }
   },
-  "files": [
-    "dist",
-    "templates",
-    "vscode"
-  ],
+  "files": ["dist", "templates", "vscode"],
   "scripts": {
     "build": "node scripts/copy-templates.mjs && tsup",
     "dev": "tsup --watch",
