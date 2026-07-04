@@ -2,7 +2,7 @@
   "button": {
     "name": "Button",
     "file": "Button.alpine",
-    "description": "Themeable button with primary/ghost/danger variants."
+    "description": "Primary button; edit classes for secondary/outline/ghost."
   },
   "card": {
     "name": "Card",

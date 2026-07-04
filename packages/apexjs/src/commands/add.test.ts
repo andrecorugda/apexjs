@@ -17,11 +17,14 @@ describe('component registry', () => {
     expect(registry.button?.name).toBe('Button')
   })
 
-  it('every entry points at a real .alpine file that reads theme tokens', () => {
+  it('every entry points at a real .alpine file that inherits the theme tokens', () => {
     for (const entry of Object.values(registry)) {
       const file = join(REG, entry.file)
       expect(existsSync(file), `${entry.file} exists`).toBe(true)
-      expect(readFileSync(file, 'utf8')).toContain('var(--ax-') // inherits the theme
+      // Themeable: styled via the theme's token utilities (bg-primary, surface, rounded-radius…).
+      expect(readFileSync(file, 'utf8')).toMatch(
+        /\b(bg-primary|surface|rounded-radius|on-surface)\b/,
+      )
     }
   })
 })

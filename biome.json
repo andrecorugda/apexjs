@@ -6,7 +6,13 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignore": ["dist", "node_modules", "**/*.snap", "playground/spike/e2e/**"]
+    "ignore": [
+      "dist",
+      "node_modules",
+      "**/*.snap",
+      "playground/spike/e2e/**",
+      "packages/theme/theme.css"
+    ]
   },
   "formatter": {
     "enabled": true,
