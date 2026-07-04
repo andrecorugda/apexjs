@@ -1,5 +1,11 @@
 # @apex-stack/core
 
+## 0.5.0
+
+### Minor Changes
+
+- 033bdaa: `apex add` now takes multiple components at once — `apex add button card modal` (or `apex add --all`). Pairs with the new UI Kit gallery on apexjs.site: tick the components you want and copy the single generated command.
+
 ## 0.4.1
 
 ### Patch Changes
