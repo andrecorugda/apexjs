@@ -23,6 +23,10 @@ that *every model, route, and job is AI-callable by construction* — nothing el
 
 ## Status
 
+**Latest release (npm):** `@apex-stack/core@0.6.0` · `@apex-stack/kit@0.3.0` · `create-apexjs@0.4.0`
+· `@apex-stack/theme@0.3.0` · `@apex-stack/data@0.1.13` · `@apex-stack/vite@0.1.7`. Docs + UI Kit +
+Theme Builder live at **apexjs.site**.
+
 ### ✅ Phase 0 — Spike
 `.alpine` SFC → SSR (hydration-safe, no flash) + Vite HMR. Proven.
 
@@ -36,8 +40,12 @@ zero JS until an island needs it.
 ### ✅ Phase 1 — Base Camp
 - File-based routing: `pages/**/*.alpine`, static + `[param]` dynamic segments, 404s.
 - Component embedding: `<Counter start="5" />` → `components/Counter.alpine`, props (static + `:bound`),
-  resolved x-data baked as a prop-free literal for hydration; works as component islands too.
-- `create-apexjs` scaffolder: `npm create apexjs@latest`.
+  resolved x-data baked as a prop-free literal for hydration; works as component islands too, **and
+  inside `x-for` / `x-if`** (components in loops/conditionals hydrate fully styled — the bit raw
+  Alpine can't do).
+- `create-apexjs` scaffolder: `npm create apexjs@latest` — scaffolds a **real themed demo app**
+  (layout + navbar + dark toggle, landing, blog list + dynamic `[slug]`, About with SEO, an
+  MCP-exposed API route, bundled themed components).
 
 ### ◑ Phase 2 — Data
 - **Done:** `@apex-stack/data` — Drizzle + SQLite, `createDb`, SQL-file `applyMigrations`, and
@@ -59,8 +67,11 @@ zero JS until an island needs it.
 Jobs/queues, events/observers, auth — all MCP-aware.
 
 ## Known deferrals
-- `x-for`/`x-if` inside islands (per-island clone removal at `initTree`).
-- Component `<script server>` loaders, slots.
+- `x-for`/`x-if` inside **islands** (per-island clone removal at `initTree`). *(Note: in the
+  standard SSR/hydration path, components in `x-for`/`x-if` now work — this deferral is islands-only.)*
+- Component `<script server>` loaders. *(Slots shipped.)*
+- Component-in-loop where the component's **root x-data computes from props** (Counter-in-loop) uses
+  a `with()` runtime shim — works, but a factory-based (`Alpine.data`) approach would be cleaner.
 - Nitro production build + deploy presets (dev server is h3 + Vite middleware today).
 - `outputSchema` → MCP structured content; route-level auth scoping for tools.
 
@@ -73,7 +84,7 @@ Nuxt has.
 
 ### Capability matrix vs Next.js & Nuxt
 
-The proof of concept: as of **`@apex-stack/core@0.2.x`**, Apex matches the core meta-framework surface
+The proof of concept: as of **`@apex-stack/core@0.6.x`**, Apex matches the core meta-framework surface
 of Next.js and Nuxt — **and** every server surface with a schema is an MCP tool for free, which
 neither of them has. Legend: ✅ have · 🟡 partial · ❌ not yet.
 
@@ -98,6 +109,7 @@ neither of them has. Legend: ✅ have · 🟡 partial · ❌ not yet.
 | Scoped styles | 🟡 | ✅ | ✅ | `<style scoped>` |
 | Global / shared styles | ✅ | ✅ | ✅ | `app.css` (auto-loaded) |
 | Tailwind | ✅ | ✅ | ✅ | `@tailwindcss/vite` auto |
+| **Component library + theming** | 🟡 | ✅ | ✅ | 36 UI Kit components, `apex add`, `apex theme` |
 | Editor support | ✅ | ✅ | ✅ | `.alpine` VS Code extension |
 | Prod build (static / SSR / node) | ✅ | ✅ | ✅ | static · islands · server |
 | Islands / partial hydration | 🟡 | 🟡 | ✅ | `client:load\|idle\|visible` |
@@ -127,23 +139,24 @@ P3 ecosystem (deploy presets, image/font, i18n, auth, test kit, Volar, plugins).
 - **Wave C — "ecosystem & polish" (P3):** deploy presets, image/font optimization, i18n, auth
   module, test kit, template type-checking (Volar), plugin/module system.
 
-## Big epic — Apex Stack Components + Theme Builder
+## ✅ Big epic — Apex Stack Components + Theme Builder (SHIPPED)
 
-The scaffold's current demo is a placeholder — the real "great start" comes from a first-class
-component library + theming story:
+A first-class component library + theming story, all delivered:
 
-1. **`@apex-stack/components`** — a curated library of TypeScript `.alpine` components (sourced/adapted
-   from the free Alpine component ecosystem), paired with Tailwind. Installed as a package; `apex add`
-   pulls components into a project.
-2. **Theme builder on apexjs.site** — a visual builder (colors, radius, typography, spacing) that
-   emits a single **CLI command** (e.g. `apex theme apply <token>`). Running it writes the theme
-   (Tailwind config + CSS variables) into the project.
-3. **Inherited theming** — one theme, applied once, is **inherited by every component** automatically
-   (components read the shared design tokens), so restyling the whole app is one command.
-4. A richer default scaffold built on these components (replaces the current placeholder demo).
+1. ✅ **`@apex-stack/components`** — 36 curated `.alpine` components adapted from Penguin UI (MIT),
+   token-driven. `apex add <name...>` / `apex add --all` copies them into a project (registry bundled
+   into core). Browse + tick-to-generate at **apexjs.site/ui.html** (each previewed live).
+2. ✅ **`@apex-stack/theme`** — Tailwind v4 `@theme` token contract (colors/radius/fonts + `dark`
+   variant). `apex theme --primary … --radius … --font-*` rewrites the managed block in `app.css`.
+3. ✅ **Visual theme builder** at **apexjs.site/theme.html** — pick colors/radius/fonts, live preview,
+   copy the `apex theme …` command (only changed flags).
+4. ✅ **Inherited theming** — every component reads the shared tokens, so one `apex theme` restyles
+   the whole app.
+5. ✅ **New default scaffold** built on these components + theme (replaces the old placeholder demo).
+6. ✅ **Components work in `x-for`/`x-if`** — component-driven lists hydrate fully styled.
 
-Sequencing: component library foundation → theme token system (CSS vars + Tailwind preset) → website
-theme builder → `apex add` / `apex theme` CLI → new default scaffold.
+**Deferred within this area:** heavier AI-oriented components (`ai-*`); scaffold `.dark` persisted via
+SSR (today it's a client-side toggle); factory-based x-data for prop-computed component roots in loops.
 
 ## Security model (planned)
 
