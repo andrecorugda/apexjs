@@ -50,7 +50,7 @@ function escAttr(s: unknown): string {
 }
 
 /** Build `<head>` inner tags from a page's head data. Always emits a <title>. */
-function renderHead(head: HeadInput | undefined): string {
+export function renderHead(head: HeadInput | undefined): string {
   const parts = [`<title>${head?.title ? escAttr(head.title) : 'Apex JS'}</title>`]
   for (const m of head?.meta ?? []) {
     parts.push(
@@ -251,6 +251,7 @@ ${storeRegs ? `${storeRegs}\n` : ''}  Alpine.start()
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   ${headTags}
   <style>${css}</style>
 </head>

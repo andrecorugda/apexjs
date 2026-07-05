@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Apex">
+  <defs>
+    <linearGradient id="apexLit" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <!-- Apex mark: an "A" that is also a summit. Left face lit, right face in shadow. -->
+  <path d="M32 7 L32 35 L20 56 L4 56 Z" fill="url(#apexLit)"/>
+  <path d="M32 7 L60 56 L44 56 L32 35 Z" fill="#6366f1"/>
+</svg>
