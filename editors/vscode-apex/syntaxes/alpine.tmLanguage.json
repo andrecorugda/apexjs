@@ -4,7 +4,7 @@
   "scopeName": "source.alpine",
   "patterns": [{ "include": "#script" }, { "include": "#style" }, { "include": "text.html.basic" }],
   "injections": {
-    "L:text.html.basic -comment -string.quoted -source.ts -source.css": {
+    "L:source.alpine -comment -string.quoted -source.ts -source.css": {
       "patterns": [
         {
           "comment": "PascalCase component tag: <Button> / </Card> — colored like a type.",
