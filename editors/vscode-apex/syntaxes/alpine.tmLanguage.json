@@ -36,7 +36,58 @@
           "name": "keyword.control.island.alpine"
         },
         {
-          "comment": "Alpine directive: x-data / x-for / x-bind:attr / x-on:evt / x-transition:enter …",
+          "comment": "Alpine directive WITH an expression value: x-text=\"…\" / x-for=\"…\" / x-on:evt=\"…\". Consumes name + = + quoted value so the base HTML grammar never sees a dangling '=' (which it would flag invalid). Value is embedded as JS.",
+          "begin": "(?<=[\\s\"'])(x-[a-zA-Z][\\w-]*)(?:(:)([\\w.-]+))?((?:\\.[\\w.-]+)*)\\s*(=)\\s*([\"'])",
+          "beginCaptures": {
+            "1": { "name": "keyword.control.directive.alpine" },
+            "2": { "name": "punctuation.separator.alpine" },
+            "3": { "name": "entity.other.attribute-name.alpine" },
+            "4": { "name": "support.function.modifier.alpine" },
+            "5": { "name": "punctuation.separator.key-value.html" },
+            "6": { "name": "string.quoted.alpine punctuation.definition.string.begin.html" }
+          },
+          "end": "\\6",
+          "endCaptures": {
+            "0": { "name": "string.quoted.alpine punctuation.definition.string.end.html" }
+          },
+          "contentName": "meta.embedded.expression.alpine source.ts",
+          "patterns": [{ "include": "source.ts" }]
+        },
+        {
+          "comment": "Event shorthand WITH a handler: @click=\"…\" / @keydown.enter.prevent=\"…\". Value embedded as JS.",
+          "begin": "(?<=[\\s\"'])(@)([a-zA-Z][\\w-]*)((?:\\.[\\w.-]+)*)\\s*(=)\\s*([\"'])",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.keyword.alpine" },
+            "2": { "name": "keyword.control.event.alpine" },
+            "3": { "name": "support.function.modifier.alpine" },
+            "4": { "name": "punctuation.separator.key-value.html" },
+            "5": { "name": "string.quoted.alpine punctuation.definition.string.begin.html" }
+          },
+          "end": "\\5",
+          "endCaptures": {
+            "0": { "name": "string.quoted.alpine punctuation.definition.string.end.html" }
+          },
+          "contentName": "meta.embedded.expression.alpine source.ts",
+          "patterns": [{ "include": "source.ts" }]
+        },
+        {
+          "comment": "Bind shorthand WITH a value: :class=\"…\" / :href=\"…\" / :aria-label=\"…\". Value embedded as JS.",
+          "begin": "(?<=[\\s\"'])(:)([a-zA-Z][\\w:.-]*)\\s*(=)\\s*([\"'])",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.keyword.alpine" },
+            "2": { "name": "keyword.control.bind.alpine" },
+            "3": { "name": "punctuation.separator.key-value.html" },
+            "4": { "name": "string.quoted.alpine punctuation.definition.string.begin.html" }
+          },
+          "end": "\\4",
+          "endCaptures": {
+            "0": { "name": "string.quoted.alpine punctuation.definition.string.end.html" }
+          },
+          "contentName": "meta.embedded.expression.alpine source.ts",
+          "patterns": [{ "include": "source.ts" }]
+        },
+        {
+          "comment": "Valueless / boolean directives & shorthands: x-cloak, @click.away with no handler, :key edge cases.",
           "match": "(?<=[\\s\"'])(x-[a-zA-Z][\\w-]*)((:)([\\w.-]+))?",
           "captures": {
             "1": { "name": "keyword.control.directive.alpine" },
@@ -45,20 +96,12 @@
           }
         },
         {
-          "comment": "Event shorthand: @click, @keydown.enter.prevent, @submit.prevent.window",
+          "comment": "Valueless event shorthand.",
           "match": "(?<=[\\s\"'])(@)([a-zA-Z][\\w-]*)((\\.)[\\w.-]+)?",
           "captures": {
             "1": { "name": "punctuation.definition.keyword.alpine" },
             "2": { "name": "keyword.control.event.alpine" },
             "3": { "name": "support.function.modifier.alpine" }
-          }
-        },
-        {
-          "comment": "Bind shorthand before the =: :class / :href / :aria-label",
-          "match": "(?<=[\\s\"'])(:)([a-zA-Z][\\w:.-]*)(?==)",
-          "captures": {
-            "1": { "name": "punctuation.definition.keyword.alpine" },
-            "2": { "name": "keyword.control.bind.alpine" }
           }
         },
         {
