@@ -1,8 +1,29 @@
-# Apex JS
+<div align="center">
+  <img src="assets/apex-mark.png" alt="Apex JS" width="96" height="96" />
+</div>
+
+```text
+ █████╗ ██████╗ ███████╗██╗  ██╗
+██╔══██╗██╔══██╗██╔════╝╚██╗██╔╝
+███████║██████╔╝█████╗   ╚███╔╝
+██╔══██║██╔═══╝ ██╔══╝   ██╔██╗
+██║  ██║██║     ███████╗██╔╝ ██╗
+╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝
+```
+
+<div align="center">
+
+**The full-stack, AI-native meta-framework for Alpine.js**
+
+[![npm](https://img.shields.io/npm/v/@apex-stack/core?color=6366f1&label=%40apex-stack%2Fcore)](https://www.npmjs.com/package/@apex-stack/core)
+[![license](https://img.shields.io/npm/l/@apex-stack/core?color=22d3ee)](LICENSE)
+[![node](https://img.shields.io/node/v/@apex-stack/core?color=6366f1)](https://nodejs.org)
+
+**📖 Docs & live demo — [apexjs.site](https://apexjs.site)**
+
+</div>
 
 > The full-stack meta-framework for Alpine.js. File-based routing, server-side rendering, API routes, and one CLI — powered by Vite and Node.
-
-**📖 Docs & demo: [apexjs.site](https://apexjs.site)**
 
 **Apex is to Alpine what Next.js is to React.** You already know the syntax: if you can write `x-data`, you can build a full-stack, server-rendered app — shipping a fraction of the JavaScript of a React framework.
 
