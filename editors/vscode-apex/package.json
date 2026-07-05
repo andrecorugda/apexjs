@@ -2,7 +2,7 @@
   "name": "apex-alpine",
   "displayName": "Apex JS — .alpine",
   "description": "Language support for Apex JS .alpine single-file components: HTML, TypeScript (<script server|client>), scoped CSS, and Alpine directive highlighting.",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "publisher": "apex-stack",
   "license": "MIT",
   "engines": {
@@ -69,36 +69,16 @@
             }
           },
           {
-            "scope": [
-              "keyword.control.flow.alpine",
-              "keyword.control.slot.alpine"
-            ],
+            "scope": "keyword.control.flow.alpine",
             "settings": {
-              "foreground": "#c084fc"
+              "foreground": "#c084fc",
+              "fontStyle": "bold"
             }
           },
           {
-            "scope": [
-              "keyword.control.directive.alpine",
-              "keyword.control.bind.alpine"
-            ],
+            "scope": "keyword.control.directive.alpine",
             "settings": {
               "foreground": "#818cf8"
-            }
-          },
-          {
-            "scope": "keyword.control.event.alpine",
-            "settings": {
-              "foreground": "#f472b6"
-            }
-          },
-          {
-            "scope": [
-              "keyword.control.island.alpine",
-              "support.variable.magic.alpine"
-            ],
-            "settings": {
-              "foreground": "#22d3ee"
             }
           },
           {

@@ -15,99 +15,26 @@
           }
         },
         {
-          "comment": "Control-flow <template x-for> / <template x-if> — Alpine's loops & conditionals.",
-          "match": "(<)(template)(?=[^>\\n]*\\bx-(?:for|if)\\b)",
+          "comment": "Any <template> tag — Alpine's structural element (x-for / x-if / slots).",
+          "match": "(</?)(template)(?=[\\s/>])",
           "captures": {
             "1": { "name": "punctuation.definition.tag.begin.html" },
             "2": { "name": "keyword.control.flow.alpine" }
           }
         },
         {
-          "comment": "Slot outlet: <slot> / </slot> — where a component's children render.",
-          "match": "(</?)(slot)(?=[\\s/>])",
-          "captures": {
-            "1": { "name": "punctuation.definition.tag.begin.html" },
-            "2": { "name": "keyword.control.slot.alpine" }
-          }
-        },
-        {
-          "comment": "Islands hydration directive: client:load | idle | visible | none",
-          "match": "(?<=[\\s\"'])(client:(?:load|idle|visible|none))",
-          "name": "keyword.control.island.alpine"
-        },
-        {
-          "comment": "Alpine directive WITH an expression value: x-text=\"…\" / x-for=\"…\" / x-on:evt=\"…\". Consumes name + = + quoted value so the base HTML grammar never sees a dangling '=' (which it would flag invalid). Value is embedded as JS.",
-          "begin": "(?<=[\\s\"'])(x-[a-zA-Z][\\w-]*)(?:(:)([\\w.-]+))?((?:\\.[\\w.-]+)*)\\s*(=)\\s*([\"'])",
-          "beginCaptures": {
-            "1": { "name": "keyword.control.directive.alpine" },
-            "2": { "name": "punctuation.separator.alpine" },
-            "3": { "name": "entity.other.attribute-name.alpine" },
-            "4": { "name": "support.function.modifier.alpine" },
-            "5": { "name": "punctuation.separator.key-value.html" },
-            "6": { "name": "string.quoted.alpine punctuation.definition.string.begin.html" }
-          },
-          "end": "\\6",
-          "endCaptures": {
-            "0": { "name": "string.quoted.alpine punctuation.definition.string.end.html" }
-          },
-          "contentName": "meta.embedded.expression.alpine source.ts",
-          "patterns": [{ "include": "source.ts" }]
-        },
-        {
-          "comment": "Event shorthand WITH a handler: @click=\"…\" / @keydown.enter.prevent=\"…\". Value embedded as JS.",
-          "begin": "(?<=[\\s\"'])(@)([a-zA-Z][\\w-]*)((?:\\.[\\w.-]+)*)\\s*(=)\\s*([\"'])",
-          "beginCaptures": {
-            "1": { "name": "punctuation.definition.keyword.alpine" },
-            "2": { "name": "keyword.control.event.alpine" },
-            "3": { "name": "support.function.modifier.alpine" },
-            "4": { "name": "punctuation.separator.key-value.html" },
-            "5": { "name": "string.quoted.alpine punctuation.definition.string.begin.html" }
-          },
-          "end": "\\5",
-          "endCaptures": {
-            "0": { "name": "string.quoted.alpine punctuation.definition.string.end.html" }
-          },
-          "contentName": "meta.embedded.expression.alpine source.ts",
-          "patterns": [{ "include": "source.ts" }]
-        },
-        {
-          "comment": "Bind shorthand WITH a value: :class=\"…\" / :href=\"…\" / :aria-label=\"…\". Value embedded as JS.",
-          "begin": "(?<=[\\s\"'])(:)([a-zA-Z][\\w:.-]*)\\s*(=)\\s*([\"'])",
-          "beginCaptures": {
-            "1": { "name": "punctuation.definition.keyword.alpine" },
-            "2": { "name": "keyword.control.bind.alpine" },
-            "3": { "name": "punctuation.separator.key-value.html" },
-            "4": { "name": "string.quoted.alpine punctuation.definition.string.begin.html" }
-          },
-          "end": "\\4",
-          "endCaptures": {
-            "0": { "name": "string.quoted.alpine punctuation.definition.string.end.html" }
-          },
-          "contentName": "meta.embedded.expression.alpine source.ts",
-          "patterns": [{ "include": "source.ts" }]
-        },
-        {
-          "comment": "Valueless / boolean directives & shorthands: x-cloak, @click.away with no handler, :key edge cases.",
-          "match": "(?<=[\\s\"'])(x-[a-zA-Z][\\w-]*)((:)([\\w.-]+))?",
+          "comment": "Alpine x- directive WITH a value — swallows name + = + quoted value so the base HTML grammar never sees a dangling '=' (which it flags invalid).",
+          "match": "(?<=[\\s\"'])(x-[a-zA-Z][\\w:.-]*)(=)(\"[^\"]*\"|'[^']*')",
           "captures": {
             "1": { "name": "keyword.control.directive.alpine" },
-            "3": { "name": "punctuation.separator.alpine" },
-            "4": { "name": "entity.other.attribute-name.alpine" }
+            "2": { "name": "punctuation.separator.key-value.html" },
+            "3": { "name": "string.quoted.double.html" }
           }
         },
         {
-          "comment": "Valueless event shorthand.",
-          "match": "(?<=[\\s\"'])(@)([a-zA-Z][\\w-]*)((\\.)[\\w.-]+)?",
-          "captures": {
-            "1": { "name": "punctuation.definition.keyword.alpine" },
-            "2": { "name": "keyword.control.event.alpine" },
-            "3": { "name": "support.function.modifier.alpine" }
-          }
-        },
-        {
-          "comment": "Alpine magics inside expressions: $el, $refs, $store, $dispatch, $watch, $nextTick…",
-          "match": "\\$(el|refs|store|dispatch|watch|nextTick|root|data|id|focus|persist)\\b",
-          "name": "support.variable.magic.alpine"
+          "comment": "Valueless x- directive: x-cloak, x-transition.",
+          "match": "(?<=[\\s\"'])(x-[a-zA-Z][\\w:.-]*)",
+          "name": "keyword.control.directive.alpine"
         }
       ]
     }
@@ -117,7 +44,7 @@
       "begin": "(<)(script)\\b([^>]*)(>)",
       "beginCaptures": {
         "1": { "name": "punctuation.definition.tag.begin.html" },
-        "2": { "name": "entity.name.tag.script.html" },
+        "2": { "name": "keyword.control.flow.alpine" },
         "3": {
           "name": "meta.tag.attributes.alpine",
           "patterns": [
@@ -136,7 +63,7 @@
       "end": "(</)(script)\\s*(>)",
       "endCaptures": {
         "1": { "name": "punctuation.definition.tag.begin.html" },
-        "2": { "name": "entity.name.tag.script.html" },
+        "2": { "name": "keyword.control.flow.alpine" },
         "3": { "name": "punctuation.definition.tag.end.html" }
       },
       "contentName": "source.ts",
@@ -146,7 +73,7 @@
       "begin": "(<)(style)\\b([^>]*)(>)",
       "beginCaptures": {
         "1": { "name": "punctuation.definition.tag.begin.html" },
-        "2": { "name": "entity.name.tag.style.html" },
+        "2": { "name": "keyword.control.flow.alpine" },
         "3": {
           "name": "meta.tag.attributes.alpine",
           "patterns": [{ "match": "\\b(scoped)\\b", "name": "storage.modifier.apex" }]
@@ -156,7 +83,7 @@
       "end": "(</)(style)\\s*(>)",
       "endCaptures": {
         "1": { "name": "punctuation.definition.tag.begin.html" },
-        "2": { "name": "entity.name.tag.style.html" },
+        "2": { "name": "keyword.control.flow.alpine" },
         "3": { "name": "punctuation.definition.tag.end.html" }
       },
       "contentName": "source.css",
