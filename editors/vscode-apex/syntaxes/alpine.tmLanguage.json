@@ -15,6 +15,22 @@
           }
         },
         {
+          "comment": "Control-flow <template x-for> / <template x-if> — Alpine's loops & conditionals.",
+          "match": "(<)(template)(?=[^>\\n]*\\bx-(?:for|if)\\b)",
+          "captures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "keyword.control.flow.alpine" }
+          }
+        },
+        {
+          "comment": "Slot outlet: <slot> / </slot> — where a component's children render.",
+          "match": "(</?)(slot)(?=[\\s/>])",
+          "captures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "keyword.control.slot.alpine" }
+          }
+        },
+        {
           "comment": "Islands hydration directive: client:load | idle | visible | none",
           "match": "(?<=[\\s\"'])(client:(?:load|idle|visible|none))",
           "name": "keyword.control.island.alpine"

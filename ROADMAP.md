@@ -74,6 +74,11 @@ Jobs/queues, events/observers, auth — all MCP-aware.
   a `with()` runtime shim — works, but a factory-based (`Alpine.data`) approach would be cleaner.
 - Nitro production build + deploy presets (dev server is h3 + Vite middleware today).
 - `outputSchema` → MCP structured content; route-level auth scoping for tools.
+- **Apex Language Server (LSP).** The VS Code extension is grammar-only (TextMate
+  syntax highlighting): it colors any PascalCase tag as a component by convention,
+  but has no project awareness. An LSP would add: does-this-component-exist checks
+  (red squiggle on `<Typo/>`), go-to-definition, prop/`x-data` autocomplete, and
+  `.alpine` template type-checking (Volar-style). Bigger build than the grammar.
 
 ## Gap analysis vs Next.js / Nuxt
 
