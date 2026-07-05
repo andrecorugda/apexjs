@@ -34,7 +34,7 @@ function bundledVersion(): string | null {
 }
 
 /** First available VS Code-family editor CLI on PATH, or null. */
-function detectEditorCli(): string | null {
+export function detectEditorCli(): string | null {
   for (const cli of EDITOR_CLIS) {
     try {
       if (spawnSync(cli, ['--version'], { stdio: 'ignore', shell: WIN }).status === 0) return cli
@@ -73,6 +73,24 @@ function cmpVersion(a: string, b: string): number {
 /** Backwards-compatible: is any VS Code-family CLI available? */
 export function hasCodeCli(): boolean {
   return detectEditorCli() !== null
+}
+
+/**
+ * Open a file at a line/column in the user's editor (dev-time only). Honors
+ * $APEX_EDITOR / $EDITOR, else the first detected VS Code-family CLI, via the
+ * `-g file:line:col` goto flag. Returns true if an editor was launched.
+ */
+export function openInEditor(file: string, line = 1, col = 1): boolean {
+  const cli =
+    process.env.APEX_EDITOR || process.env.VISUAL || process.env.EDITOR || detectEditorCli()
+  if (!cli) return false
+  try {
+    return (
+      spawnSync(cli, ['-g', `${file}:${line}:${col}`], { stdio: 'ignore', shell: WIN }).status === 0
+    )
+  } catch {
+    return false
+  }
 }
 
 /** Install/upgrade the bundled extension via `<cli> --install-extension`. */
