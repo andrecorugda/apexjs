@@ -28,6 +28,14 @@ export async function buildServer(
       ids.push(`/components/${f}`)
     }
   }
+  // Layouts must be SSR-built too so the prod server can wrap pages in them
+  // (renderPage loads `/layouts/<name>.alpine` at request time).
+  const layoutsDir = join(root, 'layouts')
+  if (existsSync(layoutsDir)) {
+    for (const f of readdirSync(layoutsDir).filter((f) => f.endsWith('.alpine'))) {
+      ids.push(`/layouts/${f}`)
+    }
+  }
   const apiDir = join(root, 'server', 'api')
   if (existsSync(apiDir)) {
     for (const f of readdirSync(apiDir).filter((f) => /\.(ts|js|mjs)$/.test(f))) {
