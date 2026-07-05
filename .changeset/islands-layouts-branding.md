@@ -16,3 +16,8 @@ Islands mode now applies layouts + `head()`, and the demo scaffold is branded.
   islands, so it works in BOTH default and islands mode (dark toggle, counter,
   and the reveal all hydrate). Theme also respects `prefers-color-scheme` on first
   visit.
+- **Smarter editor extension prompt:** `apex new` / `apex upgrade` now detect VS
+  Code **and its forks** (Cursor, Windsurf, VSCodium) and check the installed
+  extension version — they only prompt to *install* (not present) or *update*
+  (older), and stay quiet with an "up to date" note when it's already current.
+  Extension icon is the Apex mark.
