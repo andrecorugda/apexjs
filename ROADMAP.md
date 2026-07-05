@@ -23,9 +23,9 @@ that *every model, route, and job is AI-callable by construction* — nothing el
 
 ## Status
 
-**Latest release (npm):** `@apex-stack/core@0.6.0` · `@apex-stack/kit@0.3.0` · `create-apexjs@0.4.0`
-· `@apex-stack/theme@0.3.0` · `@apex-stack/data@0.1.13` · `@apex-stack/vite@0.1.7`. Docs + UI Kit +
-Theme Builder live at **apexjs.site**.
+**Latest release (npm):** `@apex-stack/core@0.8.0` · `@apex-stack/kit@0.4.0` · `create-apexjs@0.5.0`
+· `@apex-stack/theme@0.3.0` · `@apex-stack/data@0.1.23` · `@apex-stack/vite@0.1.8`. Docs + UI Kit +
+Theme Builder live at **apexjs.site**. Client-side navigation (SPA) shipped in core 0.8.0.
 
 ### ✅ Phase 0 — Spike
 `.alpine` SFC → SSR (hydration-safe, no flash) + Vite HMR. Proven.
