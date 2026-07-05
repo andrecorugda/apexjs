@@ -65,16 +65,19 @@ export async function buildServer(
   })) as Rollup.RollupOutput
 
   // Map each source id → its built .mjs via the chunk's facadeModuleId.
+  // Rollup always reports facadeModuleId with forward slashes; `join()` yields
+  // backslashes on Windows — normalize both sides or the lookup misses on Windows
+  // (leaving every route's serverFile undefined → the prod server crashes).
   const byFacade = new Map<string, string>()
   for (const chunk of result.output) {
     if (chunk.type === 'chunk' && chunk.isEntry && chunk.facadeModuleId) {
-      byFacade.set(chunk.facadeModuleId, chunk.fileName)
+      byFacade.set(chunk.facadeModuleId.replace(/\\/g, '/'), chunk.fileName)
     }
   }
 
   const modules: Record<string, string> = {}
   for (const id of ids) {
-    const abs = join(root, id.slice(1))
+    const abs = join(root, id.slice(1)).replace(/\\/g, '/')
     const file = byFacade.get(abs)
     if (file) modules[id] = file
   }
