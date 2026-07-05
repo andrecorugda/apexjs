@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { basename, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
+import { maybeSelfUpdate } from '../selfUpdate.js'
 import { banner, color, VERSION } from '../ui.js'
 import { offerExtension } from '../vscode.js'
 
@@ -83,6 +84,10 @@ export const upgradeCommand = defineCommand({
       type: 'boolean',
       description: 'Install the Apex VS Code extension (skip the prompt)',
     },
+    self: {
+      type: 'boolean',
+      description: 'Update the global Apex CLI first if a newer one is published (default: ask)',
+    },
   },
   async run({ args }) {
     const root = resolve(process.cwd(), String(args.root))
@@ -93,6 +98,19 @@ export const upgradeCommand = defineCommand({
       console.error(`\n  ${color.red('✗')} No package.json in ${root} — is this an Apex project?\n`)
       process.exit(1)
     }
+
+    // Refresh the global CLI first if it's behind — the extension + templates are
+    // bundled inside a given build, so upgrading on a stale CLI applies stale
+    // assets. Re-execs on the new engine (with --no-self) if it updates.
+    const reexecArgv = [
+      'upgrade',
+      String(args.root),
+      ...(args.force ? ['--force'] : []),
+      ...(args.install === false ? ['--no-install'] : []),
+      ...(args.vscode === true ? ['--vscode'] : args.vscode === false ? ['--no-vscode'] : []),
+      '--no-self',
+    ]
+    if (await maybeSelfUpdate(reexecArgv, args.self as boolean | undefined)) return
 
     const name = projectName(root)
     process.stdout.write(banner())
