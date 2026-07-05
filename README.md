@@ -65,6 +65,13 @@ components, AI-native APIs (REST + MCP from one typed route), a multi-database d
 routes + API/MCP. All covered by tests. Jobs/queues and Nitro deploy presets are next.
 See [ROADMAP.md](./ROADMAP.md).
 
+## Support
+
+Apex JS is free and MIT-licensed. If it's useful to you, you can support its
+development:
+
+<a href="https://ko-fi.com/G7S722N0L8" target="_blank"><img height="36" style="border:0px;height:36px;" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" border="0" alt="Buy Me a Coffee at ko-fi.com" /></a>
+
 ## License
 
 MIT © Andre Corugda
