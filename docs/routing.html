@@ -69,6 +69,7 @@
           <li><a href="#dynamic">Dynamic [param] segments</a></li>
           <li><a href="#precedence">Precedence</a></li>
           <li><a href="#notfound">404s</a></li>
+          <li><a href="#clientnav">Client-side navigation</a></li>
         </ul>
       </nav>
 
@@ -146,6 +147,41 @@
         own links (Apex is happy under a sub-path), and let unmatched paths fall through to the
         framework's not-found response.
       </p>
+
+      <h2 id="clientnav">Client-side navigation <a class="anchor" href="#clientnav">#</a></h2>
+      <p>
+        Links between your pages are upgraded to <strong>in-place navigation</strong>: Apex fetches
+        the target page, swaps the content, merges its <code>&lt;head&gt;</code> (title + meta), and
+        re-runs Alpine — with <strong>no full reload</strong>, so Alpine, stores, and the runtime stay
+        alive between pages. It's on by default; there's nothing to wire up.
+      </p>
+      <ul>
+        <li><strong>Prefetch</strong> — pages are fetched on link hover / viewport entry, so the click is instant.</li>
+        <li><strong>Progress bar</strong> — a thin bar animates across the top during a navigation.</li>
+        <li><strong>History &amp; scroll</strong> — back/forward work, and scroll position is restored.</li>
+      </ul>
+      <p>
+        Add a <code>pages/loading.alpine</code> and Apex shows it in the page region during a slow
+        navigation (a slow <code>loader()</code>) — a loading boundary.
+      </p>
+      <p>Opt out where you want a real browser navigation:</p>
+      <pre><code>&lt;!-- full page load, no swap --&gt;
+&lt;a href="/download" data-apex-no-nav&gt;Download&lt;/a&gt;
+
+&lt;!-- navigated normally, but never prefetched --&gt;
+&lt;a href="/report" data-apex-no-prefetch&gt;Heavy report&lt;/a&gt;</code></pre>
+      <p>
+        Cross-origin links, downloads, and modified clicks (⌘/Ctrl-click, new tab) always fall back to
+        a normal load. To disable the whole feature, set <code>clientNav: <span class="k">false</span></code>
+        in <code>apex.config.ts</code>.
+      </p>
+      <div class="callout">
+        <span class="h">Islands mode still uses full loads</span>
+        <p>
+          Client-side navigation applies to the standard SSR/hydration build. Pages built with
+          <code>apex build --islands</code> navigate with full page loads.
+        </p>
+      </div>
 
       <div class="card-grid cols-2">
         <a class="card" href="./components.html"><span class="k">Author</span><h3>Components</h3><p>What a page file looks like inside.</p></a>

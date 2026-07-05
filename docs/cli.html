@@ -68,6 +68,7 @@
           <li><a href="#dev">apex dev</a></li>
           <li><a href="#build">apex build</a></li>
           <li><a href="#start">apex start</a></li>
+          <li><a href="#upgrade">apex upgrade</a></li>
           <li><a href="#make">apex make</a></li>
           <li><a href="#migrate">apex migrate</a></li>
           <li><a href="#mcp">apex mcp</a></li>
@@ -89,6 +90,7 @@
             <tr><td><a href="#dev"><code>apex dev</code></a></td><td>Start the development server (SSR + hydrate, API + MCP, hot reload).</td></tr>
             <tr><td><a href="#build"><code>apex build</code></a></td><td>Prerender pages to deployable HTML + client bundles.</td></tr>
             <tr><td><a href="#start"><code>apex start</code></a></td><td>Run a production build made with <code>apex build --server</code>.</td></tr>
+            <tr><td><a href="#upgrade"><code>apex upgrade</code></a></td><td>Update the CLI, project deps, scaffold files, and the .alpine extension — one command.</td></tr>
             <tr><td><a href="#make"><code>apex make</code></a></td><td>Generate a page, component, or API route.</td></tr>
             <tr><td><a href="#migrate"><code>apex migrate</code></a></td><td>Apply pending SQL migrations.</td></tr>
             <tr><td><a href="#mcp"><code>apex mcp</code></a></td><td>Inspect the local MCP server — list or call tools.</td></tr>
@@ -163,6 +165,28 @@ apex build --server   <span class="c"># deployable Node server target</span></co
         </table>
       </div>
       <pre><code>apex build --server &amp;&amp; apex start</code></pre>
+
+      <h2 id="upgrade">apex upgrade <a class="anchor" href="#upgrade">#</a></h2>
+      <p>
+        Bring an existing app up to date — non-destructively. One command handles the whole chain: it
+        updates the global CLI if a newer one is published (then re-runs on it), bumps your
+        <code>@apex-stack/*</code> dependencies and installs them, adds any new scaffold files (never
+        overwriting yours), and updates the <code>.alpine</code> editor extension.
+      </p>
+      <pre><code>apex upgrade [root] [--force] [--no-install] [--no-self]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>root</code> (positional)</td><td><code>.</code></td><td>Project root.</td></tr>
+            <tr><td><code>--force</code></td><td><code>false</code></td><td>Re-sync scaffold files that differ from the template (<code>package.json</code> is always preserved).</td></tr>
+            <tr><td><code>--no-install</code></td><td>—</td><td>Skip running the package manager after bumping dependencies.</td></tr>
+            <tr><td><code>--no-self</code></td><td>—</td><td>Don't update the global CLI first (skip the self-update check).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>apex upgrade</code></pre>
+      <p class="muted">Your files are never overwritten; <code>package.json</code> entries are only version-bumped. It's the one command to run after a new release.</p>
 
       <h2 id="make">apex make <a class="anchor" href="#make">#</a></h2>
       <p>Generate a page, component, or API route from a template.</p>
