@@ -89,8 +89,10 @@ export interface RenderPageOptions {
   clientHref?: string
   /** Global stores discovered from `stores/*` — SSR initial state + client registration. */
   stores?: LoadedStore[]
-  /** A global stylesheet module id (e.g. `/app.css`) to import — carries Tailwind + shared styles. */
+  /** A global stylesheet href (e.g. `/app.css`) linked in <head> — Tailwind + shared styles. */
   appCss?: string
+  /** Built CSS hrefs (production) to link in <head>. */
+  clientCss?: string[]
   /** Available layout names (from `layouts/*.alpine`) — enables page-wrapping layouts. */
   layouts?: string[]
   /** Full resolved runtime config passed to the page loader + head (server-side). */
@@ -195,6 +197,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     clientHref: opts.clientHref,
     storeIds: stores.map((s) => s.id),
     appCss: opts.appCss,
+    clientCss: opts.clientCss,
     headTags: renderHead(head),
     configScript: clientConfigScript(opts.publicConfig ?? {}),
   })
@@ -210,6 +213,8 @@ interface ShellParts {
   clientHref?: string
   storeIds?: string[]
   appCss?: string
+  /** Built CSS hrefs (production) to link in <head>. */
+  clientCss?: string[]
   headTags?: string
   configScript?: string
 }
@@ -222,6 +227,7 @@ function shell({
   clientHref,
   storeIds = [],
   appCss,
+  clientCss = [],
   headTags = '<title>Apex JS</title>',
   configScript = '',
 }: ShellParts): string {
@@ -240,11 +246,17 @@ function shell({
   const clientScript = clientHref
     ? `<script type="module" src="${clientHref}"></script>`
     : `<script type="module">
-${appCss ? `  import ${JSON.stringify(appCss)}\n` : ''}  import Alpine from 'alpinejs'
+  import Alpine from 'alpinejs'
 ${storeImports ? `${storeImports}\n` : ''}  import ${JSON.stringify(pageId)}
   window.Alpine = Alpine
 ${storeRegs ? `${storeRegs}\n` : ''}  Alpine.start()
 </script>`
+
+  // Global stylesheet(s) as render-blocking <link>s in <head> — NOT a deferred
+  // JS import — so the page never flashes unstyled before Alpine hydrates.
+  const cssLinks = [...(appCss ? [appCss] : []), ...clientCss]
+    .map((href) => `<link rel="stylesheet" href="${href}" />`)
+    .join('\n  ')
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -252,7 +264,7 @@ ${storeRegs ? `${storeRegs}\n` : ''}  Alpine.start()
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  ${headTags}
+  ${cssLinks ? `${cssLinks}\n  ` : ''}${headTags}
   <style>${css}</style>
 </head>
 <body>
