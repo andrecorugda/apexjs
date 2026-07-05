@@ -1,12 +1,44 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { apex } from '@apex-stack/vite'
 import { build, type Plugin } from 'vite'
 import type { RouteDef } from '../routing/router.js'
 
 const VIRT = 'virtual:apex-client:'
+
+/**
+ * Alias the client *runtime leaf modules* to THIS package's copies so the built
+ * bundle always uses the CLI's own matching runtime — never a stale/mismatched
+ * `@apex-stack/core` in the project's node_modules (which would fail to export
+ * newer APIs like `installNav`).
+ *
+ * Only the browser-runtime leaves are aliased — NOT the bare `@apex-stack/core`
+ * package. Aliasing the bare package would drag the whole server CLI (vite,
+ * rollup, h3, …) into the client bundle graph whenever a store/component imports
+ * `{ defineStore }` from it, which hangs the build.
+ */
+function runtimeAlias(): Record<string, string> {
+  const req = createRequire(import.meta.url)
+  const tryResolve = (spec: string): string | undefined => {
+    try {
+      return req.resolve(spec)
+    } catch {
+      return undefined
+    }
+  }
+  // tsup flattens the build, so client.js is a sibling in dist/.
+  const alias: Record<string, string> = {
+    '@apex-stack/core/client': fileURLToPath(new URL('./client.js', import.meta.url)),
+  }
+  // core/client re-exports @apex-stack/kit/client — pin it to a matching copy too.
+  const kitClient = tryResolve('@apex-stack/kit/client')
+  if (kitClient) alias['@apex-stack/kit/client'] = kitClient
+  const alpine = tryResolve('alpinejs')
+  if (alpine) alias.alpinejs = alpine
+  return alias
+}
 
 /** Load the project's `@tailwindcss/vite` plugin if installed (same as dev). */
 async function tailwindPlugin(root: string): Promise<Plugin | null> {
@@ -100,6 +132,7 @@ export async function buildClient(
     root,
     base,
     logLevel: 'warn',
+    resolve: { alias: runtimeAlias() },
     plugins: [...(tw ? [tw] : []), apex({ clientRuntime: '@apex-stack/core/client' }), entryPlugin],
     build: {
       outDir,
