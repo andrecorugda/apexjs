@@ -1,5 +1,12 @@
 # base-camp-spike
 
+## 0.0.17
+
+### Patch Changes
+
+- Updated dependencies [38b0fc3]
+  - @apex-stack/core@0.7.7
+
 ## 0.0.16
 
 ### Patch Changes
