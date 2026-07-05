@@ -286,6 +286,37 @@ export function renderErrorPage(error: Error, opts: { url: string; root: string 
   return page(`${kind} — Apex JS`, body, OPEN_JS)
 }
 
+/**
+ * Shown when `apex dev` runs in a folder with no `pages/` — usually because the
+ * command was run outside an app (e.g. in a parent folder of several apps).
+ * Suggests subfolders that ARE Apex apps so the fix is obvious.
+ */
+export function renderNoProjectPage(root: string): string {
+  let apps: string[] = []
+  try {
+    apps = readdirSync(root, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && !IGNORE_DIRS.has(e.name) && !e.name.startsWith('.'))
+      .filter((e) => existsSync(join(root, e.name, 'pages', 'index.alpine')))
+      .map((e) => e.name)
+      .slice(0, 16)
+  } catch {
+    // best-effort suggestions only
+  }
+  const suggest = apps.length
+    ? `<p class="sub">Did you mean to run it inside one of these apps?</p><ul class="routes">${apps
+        .map((a) => `<li>cd ${esc(a)} &amp;&amp; apex dev</li>`)
+        .join('')}</ul>`
+    : `<p class="sub">Scaffold a new app:</p><ul class="routes"><li>npm create apexjs@latest my-app</li></ul>`
+  const body = `
+    <div class="brand">${MARK} Apex JS <span class="pill nf">No app here</span></div>
+    <p class="kind nf">No pages found</p>
+    <h1>This folder isn't an Apex app</h1>
+    <p class="sub"><code>apex dev</code> looks for <code>pages/*.alpine</code> in <code>${esc(root)}</code>, but found none — run it from inside your app's folder.</p>
+    ${suggest}
+    <p class="foot">Every Apex app has a <code>pages/</code> directory with at least <code>pages/index.alpine</code>.</p>`
+  return page('No Apex app — Apex JS', body)
+}
+
 /** Beautiful 404 page listing the available routes. */
 export function renderNotFoundPage(url: string, routes: RouteDef[]): string {
   const list = routes.length

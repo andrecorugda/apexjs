@@ -24,7 +24,7 @@ import { loadMiddleware, runMiddleware } from '../middleware/run.js'
 import { matchRoute, scanPages } from '../routing/router.js'
 import { loadStores } from '../stores/loader.js'
 import { openInEditor } from '../vscode.js'
-import { renderErrorPage, renderNotFoundPage } from './errorPage.js'
+import { renderErrorPage, renderNoProjectPage, renderNotFoundPage } from './errorPage.js'
 import { type PageModule, renderPage } from './renderPage.js'
 
 export interface DevServerOptions {
@@ -214,6 +214,14 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           setResponseStatus(event, 404)
           setResponseHeader(event, 'Content-Type', 'text/html')
           return await vite.transformIndexHtml(url, renderNotFoundPage(url, routes))
+        }
+        // No pages/ at all (or the default page is missing) → the command was
+        // likely run outside an app. Show a clear, actionable page rather than a
+        // cryptic "Failed to load url …/pages/index.alpine" from Vite.
+        if (!existsSync(join(options.root, matched.pageId))) {
+          setResponseStatus(event, 404)
+          setResponseHeader(event, 'Content-Type', 'text/html')
+          return await vite.transformIndexHtml(url, renderNoProjectPage(options.root))
         }
 
         const { registry, css: componentCss } = await loadComponents(
