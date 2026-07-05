@@ -44,25 +44,31 @@ export function scanPages(root: string): RouteDef[] {
   const dir = join(root, 'pages')
   if (!existsSync(dir)) return []
 
-  const routes = walkAlpine(dir).map((abs): RouteDef => {
-    const rel = relative(dir, abs).split(sep).join('/')
-    const pageId = `/pages/${rel}`
-    const parts = rel.replace(/\.alpine$/, '').split('/')
-    // Drop a trailing `index` so blog/index → blog and index → "".
-    if (parts[parts.length - 1] === 'index') parts.pop()
+  // Framework-reserved top-level pages, handled specially (error boundary /
+  // slow-nav boundary) rather than as navigable routes.
+  const RESERVED = new Set(['error.alpine', 'loading.alpine'])
 
-    const segments: Segment[] = parts.map((p) => {
-      const catchAll = /^\[\.\.\.(.+)\]$/.exec(p)
-      if (catchAll) return { catchAll: catchAll[1] }
-      const m = /^\[(.+)\]$/.exec(p)
-      return m ? { param: m[1] } : { literal: p }
+  const routes = walkAlpine(dir)
+    .filter((abs) => !RESERVED.has(relative(dir, abs).split(sep).join('/')))
+    .map((abs): RouteDef => {
+      const rel = relative(dir, abs).split(sep).join('/')
+      const pageId = `/pages/${rel}`
+      const parts = rel.replace(/\.alpine$/, '').split('/')
+      // Drop a trailing `index` so blog/index → blog and index → "".
+      if (parts[parts.length - 1] === 'index') parts.pop()
+
+      const segments: Segment[] = parts.map((p) => {
+        const catchAll = /^\[\.\.\.(.+)\]$/.exec(p)
+        if (catchAll) return { catchAll: catchAll[1] }
+        const m = /^\[(.+)\]$/.exec(p)
+        return m ? { param: m[1] } : { literal: p }
+      })
+      const isDynamic = segments.some((s) => s.param !== undefined || s.catchAll !== undefined)
+      const pattern = `/${segments
+        .map((s) => (s.catchAll ? `:${s.catchAll}*` : s.param ? `:${s.param}` : s.literal))
+        .join('/')}`
+      return { pageId, pattern, segments, isDynamic }
     })
-    const isDynamic = segments.some((s) => s.param !== undefined || s.catchAll !== undefined)
-    const pattern = `/${segments
-      .map((s) => (s.catchAll ? `:${s.catchAll}*` : s.param ? `:${s.param}` : s.literal))
-      .join('/')}`
-    return { pageId, pattern, segments, isDynamic }
-  })
 
   // Precedence: static (0) < dynamic param (1) < catch-all (2).
   const rank = (r: RouteDef) => (r.segments.some((s) => s.catchAll) ? 2 : r.isDynamic ? 1 : 0)

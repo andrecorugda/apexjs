@@ -32,6 +32,10 @@ export interface ProdManifest {
   middleware?: Array<{ serverFile: string }>
   /** runtimeConfig defaults baked at build; env is applied at server start. */
   runtimeConfig?: RuntimeConfig
+  /** Client-side navigation enabled (default true). */
+  clientNav?: boolean
+  /** Pre-rendered `loading.alpine` HTML for the slow-nav boundary. */
+  loadingHtml?: string
 }
 
 const MIME: Record<string, string> = {
@@ -163,6 +167,8 @@ export async function startProdServer(
         clientCss: route?.clientCss,
         runtimeConfig,
         publicConfig,
+        clientNav: manifest.clientNav !== false,
+        loadingHtml: manifest.loadingHtml,
         locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
         errorPageId,
       })

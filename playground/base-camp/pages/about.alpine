@@ -2,6 +2,13 @@
   export function loader() {
     return { heading: 'About Apex' }
   }
+
+  export function head() {
+    return {
+      title: 'About · Base Camp',
+      meta: [{ name: 'description', content: 'The about page.' }],
+    }
+  }
 </script>
 
 <template x-data>

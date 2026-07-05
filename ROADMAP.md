@@ -23,9 +23,9 @@ that *every model, route, and job is AI-callable by construction* — nothing el
 
 ## Status
 
-**Latest release (npm):** `@apex-stack/core@0.6.0` · `@apex-stack/kit@0.3.0` · `create-apexjs@0.4.0`
-· `@apex-stack/theme@0.3.0` · `@apex-stack/data@0.1.13` · `@apex-stack/vite@0.1.7`. Docs + UI Kit +
-Theme Builder live at **apexjs.site**.
+**Latest release (npm):** `@apex-stack/core@0.8.0` · `@apex-stack/kit@0.4.0` · `create-apexjs@0.5.0`
+· `@apex-stack/theme@0.3.0` · `@apex-stack/data@0.1.23` · `@apex-stack/vite@0.1.8`. Docs + UI Kit +
+Theme Builder live at **apexjs.site**. Client-side navigation (SPA) shipped in core 0.8.0.
 
 ### ✅ Phase 0 — Spike
 `.alpine` SFC → SSR (hydration-safe, no flash) + Vite HMR. Proven.
@@ -67,6 +67,10 @@ zero JS until an island needs it.
 Jobs/queues, events/observers, auth — all MCP-aware.
 
 ## Known deferrals
+- **Client-side navigation in islands mode** — SPA nav ships for the standard SSR/hydration path;
+  islands pages (lazy-Alpine, `x-ignore`) still full-load. Separate design (re-run the island loader
+  on swapped content). Also deferred within SPA nav: **persistent layout regions** (`data-apex-persist`
+  so a navbar keeps open-dropdown state across navigation) — v1 swaps the whole `[data-apex-root]`.
 - `x-for`/`x-if` inside **islands** (per-island clone removal at `initTree`). *(Note: in the
   standard SSR/hydration path, components in `x-for`/`x-if` now work — this deferral is islands-only.)*
 - Component `<script server>` loaders. *(Slots shipped.)*
@@ -119,8 +123,8 @@ neither of them has. Legend: ✅ have · 🟡 partial · ❌ not yet.
 | Prod build (static / SSR / node) | ✅ | ✅ | ✅ | static · islands · server |
 | Islands / partial hydration | 🟡 | 🟡 | ✅ | `client:load\|idle\|visible` |
 | **AI-native — every route is an MCP tool** | ❌ | ❌ | ✅ | **unique moat** |
-| Client-side navigation (SPA) | ✅ | ✅ | ❌ | full page loads (P2, browser-verify) |
-| Loading boundaries | ✅ | ✅ | ❌ | pairs with client-side nav (P2) |
+| Client-side navigation (SPA) | ✅ | ✅ | ✅ | fetch + swap, history, prefetch, progress bar |
+| Loading boundaries | ✅ | ✅ | ✅ | `pages/loading.alpine` on slow navs |
 | Component-level data loaders | ✅ | ✅ | ❌ | props only (P2) |
 | Fine-grained HMR | ✅ | ✅ | 🟡 | full reload (P2, browser-verify) |
 | Template type-checking | ✅ | ✅ | ❌ | Volar-style (P3) |
@@ -138,9 +142,9 @@ P3 ecosystem (deploy presets, image/font, i18n, auth, test kit, Volar, plugins).
 
 **Delivery waves:**
 - **Wave B — "scales to real apps" (P2):** ✅ runtime config, middleware, `InferInput/Output`, nested
-  layouts, error boundary, form-action sugar, global styles, `apex upgrade` shipped. Remaining:
-  client-side navigation + loading boundaries + fine-grained HMR (all need live-browser verification),
-  component-level loaders.
+  layouts, error boundary, form-action sugar, global styles, `apex upgrade`, **client-side navigation
+  + loading boundary + prefetch** (browser-verified in dev *and* the prod server) shipped. Remaining:
+  fine-grained HMR (needs live-browser verification), component-level loaders.
 - **Wave C — "ecosystem & polish" (P3):** deploy presets, image/font optimization, i18n, auth
   module, test kit, template type-checking (Volar), plugin/module system.
 

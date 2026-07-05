@@ -76,11 +76,20 @@ export async function buildClient(
         return [
           ...(appCssRel ? [`import ${JSON.stringify(`/${appCssRel}`)}`] : []),
           `import Alpine from 'alpinejs'`,
+          `import { installNav } from '@apex-stack/core/client'`,
           ...storeIds.map((sid, i) => `import __s${i} from ${JSON.stringify(sid)}`),
+          // Registers this page's Alpine factory as a side effect. During client-side
+          // navigation this bundle is dynamic-imported again for the target page —
+          // the import runs (registering the new page), the boot guard below skips
+          // the one-time Alpine.start()/installNav so nothing double-initialises.
           `import ${JSON.stringify(pageId)}`,
-          'window.Alpine = Alpine',
-          ...storeIds.map((_, i) => `Alpine.store(__s${i}.name, __s${i}.factory())`),
-          'Alpine.start()',
+          'if (!window.__apexBooted) {',
+          '  window.__apexBooted = true',
+          '  window.Alpine = Alpine',
+          ...storeIds.map((_, i) => `  Alpine.store(__s${i}.name, __s${i}.factory())`),
+          '  Alpine.start()',
+          '  installNav()',
+          '}',
         ].join('\n')
       }
     },
