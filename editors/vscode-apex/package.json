@@ -2,7 +2,7 @@
   "name": "apex-alpine",
   "displayName": "Apex JS — .alpine",
   "description": "Language support for Apex JS .alpine single-file components: HTML, TypeScript (<script server|client>), scoped CSS, and Alpine directive highlighting.",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "publisher": "apex-stack",
   "license": "MIT",
   "engines": {

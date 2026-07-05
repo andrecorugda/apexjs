@@ -4,19 +4,51 @@
   "scopeName": "source.alpine",
   "patterns": [{ "include": "#script" }, { "include": "#style" }, { "include": "text.html.basic" }],
   "injections": {
-    "L:text.html.basic -comment -string.quoted": {
+    "L:text.html.basic -comment -string.quoted -source.ts -source.css": {
       "patterns": [
         {
-          "match": "(?<=[\\s\"'])(x-[a-zA-Z][\\w:.-]*)",
-          "name": "keyword.control.directive.alpine"
+          "comment": "PascalCase component tag: <Button> / </Card> — colored like a type.",
+          "match": "(</?)([A-Z][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "support.class.component.alpine" }
+          }
         },
         {
-          "match": "(?<=[\\s\"'])(@[a-zA-Z][\\w:.-]*)",
-          "name": "keyword.control.event.alpine"
+          "comment": "Islands hydration directive: client:load | idle | visible | none",
+          "match": "(?<=[\\s\"'])(client:(?:load|idle|visible|none))",
+          "name": "keyword.control.island.alpine"
         },
         {
-          "match": "(?<=[\\s\"'])(:[a-zA-Z][\\w:.-]*)(?==)",
-          "name": "keyword.control.bind.alpine"
+          "comment": "Alpine directive: x-data / x-for / x-bind:attr / x-on:evt / x-transition:enter …",
+          "match": "(?<=[\\s\"'])(x-[a-zA-Z][\\w-]*)((:)([\\w.-]+))?",
+          "captures": {
+            "1": { "name": "keyword.control.directive.alpine" },
+            "3": { "name": "punctuation.separator.alpine" },
+            "4": { "name": "entity.other.attribute-name.alpine" }
+          }
+        },
+        {
+          "comment": "Event shorthand: @click, @keydown.enter.prevent, @submit.prevent.window",
+          "match": "(?<=[\\s\"'])(@)([a-zA-Z][\\w-]*)((\\.)[\\w.-]+)?",
+          "captures": {
+            "1": { "name": "punctuation.definition.keyword.alpine" },
+            "2": { "name": "keyword.control.event.alpine" },
+            "3": { "name": "support.function.modifier.alpine" }
+          }
+        },
+        {
+          "comment": "Bind shorthand before the =: :class / :href / :aria-label",
+          "match": "(?<=[\\s\"'])(:)([a-zA-Z][\\w:.-]*)(?==)",
+          "captures": {
+            "1": { "name": "punctuation.definition.keyword.alpine" },
+            "2": { "name": "keyword.control.bind.alpine" }
+          }
+        },
+        {
+          "comment": "Alpine magics inside expressions: $el, $refs, $store, $dispatch, $watch, $nextTick…",
+          "match": "\\$(el|refs|store|dispatch|watch|nextTick|root|data|id|focus|persist)\\b",
+          "name": "support.variable.magic.alpine"
         }
       ]
     }
@@ -27,7 +59,19 @@
       "beginCaptures": {
         "1": { "name": "punctuation.definition.tag.begin.html" },
         "2": { "name": "entity.name.tag.script.html" },
-        "3": { "name": "meta.tag.attributes.alpine" },
+        "3": {
+          "name": "meta.tag.attributes.alpine",
+          "patterns": [
+            { "match": "\\b(server|client)\\b", "name": "storage.modifier.apex" },
+            {
+              "match": "\\b(lang)\\b(=)(\"[^\"]*\")",
+              "captures": {
+                "1": { "name": "entity.other.attribute-name.html" },
+                "3": { "name": "string.quoted.double.html" }
+              }
+            }
+          ]
+        },
         "4": { "name": "punctuation.definition.tag.end.html" }
       },
       "end": "(</)(script)\\s*(>)",
@@ -44,7 +88,10 @@
       "beginCaptures": {
         "1": { "name": "punctuation.definition.tag.begin.html" },
         "2": { "name": "entity.name.tag.style.html" },
-        "3": { "name": "meta.tag.attributes.alpine" },
+        "3": {
+          "name": "meta.tag.attributes.alpine",
+          "patterns": [{ "match": "\\b(scoped)\\b", "name": "storage.modifier.apex" }]
+        },
         "4": { "name": "punctuation.definition.tag.end.html" }
       },
       "end": "(</)(style)\\s*(>)",
