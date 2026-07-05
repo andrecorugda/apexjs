@@ -187,6 +187,16 @@ async function buildServerTarget(
     }
   }
 
+  // Layouts, so the prod server can wrap pages in them (like dev + static build).
+  const layouts: Array<{ name: string; serverFile: string }> = []
+  const layoutsDir = join(root, 'layouts')
+  if (existsSync(layoutsDir)) {
+    for (const f of readdirSync(layoutsDir).filter((f) => f.endsWith('.alpine'))) {
+      const sf = server.modules[`/layouts/${f}`]
+      if (sf) layouts.push({ name: f.replace(/\.alpine$/, ''), serverFile: sf })
+    }
+  }
+
   const api: Array<{ name: string; serverFile: string }> = []
   const apiDir = join(root, 'server', 'api')
   if (existsSync(apiDir)) {
@@ -217,6 +227,7 @@ async function buildServerTarget(
       clientCss: clientHrefs.get(r.pageId)?.css,
     })),
     components,
+    layouts,
     api,
     middleware,
     runtimeConfig,

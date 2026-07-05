@@ -27,6 +27,8 @@ export interface ProdManifest {
   islands: boolean
   routes: Array<RouteDef & { serverFile: string; clientHref?: string; clientCss?: string[] }>
   components: Record<string, string>
+  /** Layout modules (name → built server file) for page-wrapping layouts. */
+  layouts?: Array<{ name: string; serverFile: string }>
   api: Array<{ name: string; serverFile: string }>
   /** Middleware modules in run order. */
   middleware?: Array<{ serverFile: string }>
@@ -99,6 +101,12 @@ export async function startProdServer(
   }
 
   const serverFileFor = new Map(manifest.routes.map((r) => [r.pageId, r.serverFile]))
+  // Layout modules are loaded by renderPage via `/layouts/<name>.alpine` ids.
+  const layoutNames: string[] = []
+  for (const l of manifest.layouts ?? []) {
+    serverFileFor.set(`/layouts/${l.name}.alpine`, l.serverFile)
+    layoutNames.push(l.name)
+  }
   const errorPageId = serverFileFor.has('/pages/error.alpine') ? '/pages/error.alpine' : undefined
   const loadModule = (id: string) =>
     importServer(serverFileFor.get(id) as string) as Promise<PageModule>
@@ -165,6 +173,7 @@ export async function startProdServer(
         componentCss,
         clientHref: route?.clientHref,
         clientCss: route?.clientCss,
+        layouts: layoutNames,
         runtimeConfig,
         publicConfig,
         clientNav: manifest.clientNav !== false,
