@@ -13,3 +13,7 @@ packages/apexjs/templates/
 packages/apexjs/vscode/
 packages/apexjs/components/
 editors/vscode-apex/node_modules/
+
+# Playground build output (any dist dir name)
+playground/**/dist/
+playground/**/dist-*/
