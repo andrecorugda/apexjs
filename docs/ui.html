@@ -1,7 +1,7 @@
 <title>UI Kit — Apex JS components</title>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="description" content="Browse Apex JS themeable components, tick the ones you want, and copy a single apex add command to scaffold them all." />
+<meta name="description" content="Browse Apex JS themeable components in a list, preview each one live, tick the ones you want, and copy a single apex add command to scaffold them all." />
 <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
 <link rel="stylesheet" href="./style.css" />
 <link rel="stylesheet" href="./uikit.css" />
@@ -9,43 +9,52 @@
 <style>
   .uikit-hero { padding-block: clamp(2rem,6vh,3.5rem) 1rem; }
   .uikit-hero h1 { font-size: clamp(1.8rem,4vw,2.6rem); letter-spacing:-.02em; font-weight:800; margin:0; }
-  .uikit-hero p { color: var(--muted); margin:.7rem 0 0; max-width:60ch; }
+  .uikit-hero p { color: var(--muted); margin:.7rem 0 0; max-width:62ch; }
   .uikit-credit { font-size:.82rem; }
   .uikit-credit a { color:var(--glacier); text-decoration:none; border-bottom:1px solid color-mix(in srgb,var(--glacier) 40%,transparent); }
   .uikit-credit a:hover { border-bottom-color:var(--glacier); }
-  .uikit-toolbar { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin:1.4rem 0 .5rem; }
+
+  .uikit-toolbar { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin:1.2rem 0 1rem; }
   .uikit-toolbar button { font:inherit; font-size:.85rem; padding:.4rem .8rem; border:1px solid var(--line); border-radius:var(--radius-btn); background:var(--surface); color:var(--text); cursor:pointer; }
   .uikit-toolbar button:hover { border-color:var(--glacier); }
   .uikit-count { color:var(--muted); font-size:.85rem; margin-left:auto; }
-  .uikit-cat { margin-top:2rem; }
-  .uikit-cat-head { display:flex; align-items:baseline; gap:1rem; border-bottom:1px solid var(--line); padding-bottom:.4rem; }
-  .uikit-cat-head h2 { font-size:1.05rem; margin:0; letter-spacing:-.01em; }
-  .uikit-selcat { margin-left:auto; font:inherit; font-size:.78rem; color:var(--muted); background:none; border:0; cursor:pointer; }
-  .uikit-selcat:hover { color:var(--glacier); }
-  .uikit-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; margin-top:.9rem; }
-  @media (max-width: 540px) { .uikit-grid { grid-template-columns:1fr; } }
-  .uikit-card { display:flex; flex-direction:column; border:1px solid var(--line); border-radius:var(--radius-card); background:var(--surface); overflow:hidden; transition:border-color .15s; }
-  .uikit-card:hover { border-color:var(--glacier); }
-  .uikit-card:has(.uikit-cb:checked) { border-color:var(--glacier); }
-  .uikit-card:has(.uikit-cb:checked) .uikit-pick { background:var(--glacier-soft); }
-  /* Live preview stage — renders the real component on its own themed canvas. */
-  .uikit-preview { display:flex; align-items:center; justify-content:center; min-height:11rem; max-height:11rem; padding:1.25rem; overflow:hidden; border-bottom:1px solid var(--line); background:var(--color-surface,#fff); color:var(--color-on-surface,#525252); font-size:.85rem; }
-  html.dark .uikit-preview { background:var(--color-surface-dark,#0a0a0a); color:var(--color-on-surface-dark,#d4d4d4); }
-  .uikit-preview > * { max-width:100%; }
-  /* Viewport-scale components (sidebar/carousel) tamed to fit the card. */
-  .uikit-preview[data-pv="sidebar"] { padding:0; }
-  .uikit-preview[data-pv="sidebar"] .fixed { position:relative !important; }
-  .uikit-preview[data-pv="sidebar"] [class*="h-svh"] { height:11rem !important; }
-  .uikit-preview[data-pv="sidebar"] [aria-label="sidebar navigation"] { transform:none !important; }
-  .uikit-preview[data-pv="carousel"] { padding:0; align-items:stretch; }
-  .uikit-preview[data-pv="carousel"] > * { width:100%; }
-  .uikit-preview[data-pv="carousel"] [class*="min-h-"] { min-height:11rem !important; }
-  .uikit-pick { position:relative; display:flex; flex-direction:column; gap:.25rem; padding:.7rem .85rem .8rem 2.05rem; cursor:pointer; }
-  .uikit-cb { position:absolute; left:.7rem; top:.85rem; width:1rem; height:1rem; accent-color:var(--glacier); }
-  .uikit-name { font-weight:650; font-size:.92rem; }
-  .uikit-name code { font-family:var(--mono); font-size:.78em; color:var(--muted); font-weight:400; }
-  .uikit-desc { color:var(--muted); font-size:.82rem; }
-  .uikit-bar { position:sticky; bottom:0; z-index:30; margin-top:2.5rem; background:color-mix(in srgb,var(--ground) 88%,transparent); backdrop-filter:blur(10px); border-top:1px solid var(--line); }
+
+  /* Master-detail: component list on the left, live preview + info on the right. */
+  .uikit-split { display:grid; grid-template-columns:15.5rem 1fr; gap:1.5rem; align-items:start; margin-bottom:6rem; }
+  @media (max-width:820px) { .uikit-split { grid-template-columns:1fr; } }
+
+  .uikit-list { border:1px solid var(--line); border-radius:var(--radius-card); overflow:hidden; background:var(--surface); padding-block:.35rem; }
+  @media (min-width:821px) { .uikit-list { position:sticky; top:5rem; max-height:calc(100svh - 7rem); overflow-y:auto; } }
+  .uikit-catlabel { padding:.6rem .9rem .3rem; font-size:.7rem; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); font-weight:700; }
+  .uikit-row { display:flex; align-items:center; gap:.6rem; padding:.35rem .9rem; cursor:pointer; border-left:2px solid transparent; }
+  .uikit-row:hover { background:var(--ground); }
+  .uikit-row.active { background:var(--glacier-soft); border-left-color:var(--glacier); }
+  .uikit-row input { width:1rem; height:1rem; accent-color:var(--glacier); flex-shrink:0; cursor:pointer; }
+  .uikit-rowname { flex:1; text-align:left; font:inherit; font-size:.88rem; font-weight:550; color:var(--text); background:none; border:0; padding:0; cursor:pointer; }
+
+  .uikit-detail { border:1px solid var(--line); border-radius:var(--radius-card); overflow:hidden; }
+  .uikit-item[hidden] { display:none; }
+  /* Live preview stage — the real component on its own themed canvas. */
+  .uikit-stage { display:flex; align-items:center; justify-content:center; min-height:18rem; padding:2rem; overflow:auto; background:var(--color-surface,#fff); color:var(--color-on-surface,#525252); font-size:.9rem; }
+  html.dark .uikit-stage { background:var(--color-surface-dark,#0a0a0a); color:var(--color-on-surface-dark,#d4d4d4); }
+  .uikit-stage > * { max-width:100%; }
+  /* Viewport-scale components tamed to fit the stage. */
+  .uikit-stage[data-pv="sidebar"] { padding:0; align-items:stretch; }
+  .uikit-stage[data-pv="sidebar"] .fixed { position:relative !important; }
+  .uikit-stage[data-pv="sidebar"] [class*="h-svh"] { height:18rem !important; }
+  .uikit-stage[data-pv="sidebar"] [aria-label="sidebar navigation"] { transform:none !important; }
+  .uikit-stage[data-pv="carousel"] { padding:0; align-items:stretch; }
+  .uikit-stage[data-pv="carousel"] > * { width:100%; }
+  .uikit-stage[data-pv="carousel"] [class*="min-h-"] { min-height:18rem !important; }
+
+  .uikit-info { padding:1.1rem 1.3rem; border-top:1px solid var(--line); background:var(--surface); }
+  .uikit-info h2 { margin:0; font-size:1.1rem; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+  .uikit-info h2 code { font-family:var(--mono); font-size:.72em; color:var(--muted); font-weight:400; }
+  .uikit-info p { color:var(--muted); font-size:.9rem; margin:.55rem 0 0; }
+  .uikit-info .uikit-add { margin-top:.9rem; }
+  .uikit-info .uikit-add code { font-family:var(--mono); font-size:.82rem; color:var(--text); background:var(--ground); padding:.2rem .5rem; border-radius:.4rem; border:1px solid var(--line); }
+
+  .uikit-bar { position:sticky; bottom:0; z-index:30; background:color-mix(in srgb,var(--ground) 88%,transparent); backdrop-filter:blur(10px); border-top:1px solid var(--line); }
   .uikit-bar-in { display:flex; flex-wrap:wrap; align-items:center; gap:.7rem; max-width:var(--maxw); margin:0 auto; padding:.9rem var(--pad); }
   .uikit-cmd { flex:1; min-width:14rem; font-family:var(--mono); font-size:.85rem; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-btn); padding:.6rem .8rem; overflow-x:auto; white-space:nowrap; color:var(--text); }
   .uikit-copy { font:inherit; font-weight:650; font-size:.85rem; padding:.6rem 1.1rem; border:none; border-radius:var(--radius-btn); background:linear-gradient(96deg,var(--glacier-deep),var(--alpenglow)); color:#05070f; cursor:pointer; }
@@ -61,7 +70,7 @@
       Apex&nbsp;JS
     </a>
     <nav class="site-nav" aria-label="Documentation">
-      <a href="./index.html" >Home</a>
+      <a href="./index.html">Home</a>
       <a href="./getting-started.html">Start</a>
       <a href="./ui.html" aria-current="page">UI Kit</a>
       <a href="./theme.html">Theme</a>
@@ -80,7 +89,7 @@
 <main id="main" class="wrap">
   <div class="uikit-hero">
     <h1>UI Kit</h1>
-    <p>Tick the components you want, then copy one <code>apex add</code> command to drop them all into your project. They're themeable — restyle everything with <code>apex theme</code>. 36 components, each previewed live below.</p>
+    <p>Pick a component from the list to preview it live. Tick the ones you want, then copy one <code>apex add</code> command to drop them all into your project — they're themeable, restyle everything with <code>apex theme</code>. 36 components.</p>
     <p class="uikit-credit">Components are adapted from <a href="https://penguinui.com" target="_blank" rel="noopener">Penguin UI</a> (MIT) and re-tokenised for the Apex theme system. Thanks to the Penguin UI authors.</p>
   </div>
 
@@ -90,12 +99,58 @@
     <span class="uikit-count" id="count">0 selected</span>
   </div>
 
-  
-      <section class="uikit-cat">
-        <div class="uikit-cat-head"><h2>Actions</h2><button type="button" class="uikit-selcat" data-cat="Actions">Select all</button></div>
-        <div class="uikit-grid">
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="button"><div x-data>
+  <div class="uikit-split">
+    <nav class="uikit-list" aria-label="Components">
+      <!-- uikit:list:start -->
+      <div class="uikit-catlabel">Actions</div>
+      <div class="uikit-row active" data-key="button"><input type="checkbox" class="uikit-cb" value="button" aria-label="Select Button" /><button type="button" class="uikit-rowname" data-key="button">Button</button></div>
+      <div class="uikit-catlabel">Forms</div>
+      <div class="uikit-row" data-key="text-input"><input type="checkbox" class="uikit-cb" value="text-input" aria-label="Select TextInput" /><button type="button" class="uikit-rowname" data-key="text-input">TextInput</button></div>
+      <div class="uikit-row" data-key="textarea"><input type="checkbox" class="uikit-cb" value="textarea" aria-label="Select Textarea" /><button type="button" class="uikit-rowname" data-key="textarea">Textarea</button></div>
+      <div class="uikit-row" data-key="select"><input type="checkbox" class="uikit-cb" value="select" aria-label="Select Select" /><button type="button" class="uikit-rowname" data-key="select">Select</button></div>
+      <div class="uikit-row" data-key="checkbox"><input type="checkbox" class="uikit-cb" value="checkbox" aria-label="Select Checkbox" /><button type="button" class="uikit-rowname" data-key="checkbox">Checkbox</button></div>
+      <div class="uikit-row" data-key="radio"><input type="checkbox" class="uikit-cb" value="radio" aria-label="Select Radio" /><button type="button" class="uikit-rowname" data-key="radio">Radio</button></div>
+      <div class="uikit-row" data-key="toggle"><input type="checkbox" class="uikit-cb" value="toggle" aria-label="Select Toggle" /><button type="button" class="uikit-rowname" data-key="toggle">Toggle</button></div>
+      <div class="uikit-row" data-key="range"><input type="checkbox" class="uikit-cb" value="range" aria-label="Select Range" /><button type="button" class="uikit-rowname" data-key="range">Range</button></div>
+      <div class="uikit-row" data-key="file-input"><input type="checkbox" class="uikit-cb" value="file-input" aria-label="Select FileInput" /><button type="button" class="uikit-rowname" data-key="file-input">FileInput</button></div>
+      <div class="uikit-row" data-key="rating"><input type="checkbox" class="uikit-cb" value="rating" aria-label="Select Rating" /><button type="button" class="uikit-rowname" data-key="rating">Rating</button></div>
+      <div class="uikit-row" data-key="combobox"><input type="checkbox" class="uikit-cb" value="combobox" aria-label="Select Combobox" /><button type="button" class="uikit-rowname" data-key="combobox">Combobox</button></div>
+      <div class="uikit-row" data-key="counter"><input type="checkbox" class="uikit-cb" value="counter" aria-label="Select Counter" /><button type="button" class="uikit-rowname" data-key="counter">Counter</button></div>
+      <div class="uikit-catlabel">Overlays</div>
+      <div class="uikit-row" data-key="modal"><input type="checkbox" class="uikit-cb" value="modal" aria-label="Select Modal" /><button type="button" class="uikit-rowname" data-key="modal">Modal</button></div>
+      <div class="uikit-row" data-key="dropdown"><input type="checkbox" class="uikit-cb" value="dropdown" aria-label="Select Dropdown" /><button type="button" class="uikit-rowname" data-key="dropdown">Dropdown</button></div>
+      <div class="uikit-row" data-key="accordion"><input type="checkbox" class="uikit-cb" value="accordion" aria-label="Select Accordion" /><button type="button" class="uikit-rowname" data-key="accordion">Accordion</button></div>
+      <div class="uikit-row" data-key="tooltip"><input type="checkbox" class="uikit-cb" value="tooltip" aria-label="Select Tooltip" /><button type="button" class="uikit-rowname" data-key="tooltip">Tooltip</button></div>
+      <div class="uikit-catlabel">Navigation</div>
+      <div class="uikit-row" data-key="navbar"><input type="checkbox" class="uikit-cb" value="navbar" aria-label="Select Navbar" /><button type="button" class="uikit-rowname" data-key="navbar">Navbar</button></div>
+      <div class="uikit-row" data-key="sidebar"><input type="checkbox" class="uikit-cb" value="sidebar" aria-label="Select Sidebar" /><button type="button" class="uikit-rowname" data-key="sidebar">Sidebar</button></div>
+      <div class="uikit-row" data-key="breadcrumbs"><input type="checkbox" class="uikit-cb" value="breadcrumbs" aria-label="Select Breadcrumbs" /><button type="button" class="uikit-rowname" data-key="breadcrumbs">Breadcrumbs</button></div>
+      <div class="uikit-row" data-key="pagination"><input type="checkbox" class="uikit-cb" value="pagination" aria-label="Select Pagination" /><button type="button" class="uikit-rowname" data-key="pagination">Pagination</button></div>
+      <div class="uikit-row" data-key="steps"><input type="checkbox" class="uikit-cb" value="steps" aria-label="Select Steps" /><button type="button" class="uikit-rowname" data-key="steps">Steps</button></div>
+      <div class="uikit-row" data-key="tabs"><input type="checkbox" class="uikit-cb" value="tabs" aria-label="Select Tabs" /><button type="button" class="uikit-rowname" data-key="tabs">Tabs</button></div>
+      <div class="uikit-row" data-key="link"><input type="checkbox" class="uikit-cb" value="link" aria-label="Select Link" /><button type="button" class="uikit-rowname" data-key="link">Link</button></div>
+      <div class="uikit-catlabel">Feedback</div>
+      <div class="uikit-row" data-key="alert"><input type="checkbox" class="uikit-cb" value="alert" aria-label="Select Alert" /><button type="button" class="uikit-rowname" data-key="alert">Alert</button></div>
+      <div class="uikit-row" data-key="banner"><input type="checkbox" class="uikit-cb" value="banner" aria-label="Select Banner" /><button type="button" class="uikit-rowname" data-key="banner">Banner</button></div>
+      <div class="uikit-row" data-key="toast"><input type="checkbox" class="uikit-cb" value="toast" aria-label="Select Toast" /><button type="button" class="uikit-rowname" data-key="toast">Toast</button></div>
+      <div class="uikit-row" data-key="badge"><input type="checkbox" class="uikit-cb" value="badge" aria-label="Select Badge" /><button type="button" class="uikit-rowname" data-key="badge">Badge</button></div>
+      <div class="uikit-catlabel">Loading</div>
+      <div class="uikit-row" data-key="spinner"><input type="checkbox" class="uikit-cb" value="spinner" aria-label="Select Spinner" /><button type="button" class="uikit-rowname" data-key="spinner">Spinner</button></div>
+      <div class="uikit-row" data-key="progress"><input type="checkbox" class="uikit-cb" value="progress" aria-label="Select Progress" /><button type="button" class="uikit-rowname" data-key="progress">Progress</button></div>
+      <div class="uikit-row" data-key="skeleton"><input type="checkbox" class="uikit-cb" value="skeleton" aria-label="Select Skeleton" /><button type="button" class="uikit-rowname" data-key="skeleton">Skeleton</button></div>
+      <div class="uikit-catlabel">Data &amp; media</div>
+      <div class="uikit-row" data-key="table"><input type="checkbox" class="uikit-cb" value="table" aria-label="Select Table" /><button type="button" class="uikit-rowname" data-key="table">Table</button></div>
+      <div class="uikit-row" data-key="card"><input type="checkbox" class="uikit-cb" value="card" aria-label="Select Card" /><button type="button" class="uikit-rowname" data-key="card">Card</button></div>
+      <div class="uikit-row" data-key="avatar"><input type="checkbox" class="uikit-cb" value="avatar" aria-label="Select Avatar" /><button type="button" class="uikit-rowname" data-key="avatar">Avatar</button></div>
+      <div class="uikit-row" data-key="kbd"><input type="checkbox" class="uikit-cb" value="kbd" aria-label="Select Kbd" /><button type="button" class="uikit-rowname" data-key="kbd">Kbd</button></div>
+      <div class="uikit-row" data-key="chat-bubble"><input type="checkbox" class="uikit-cb" value="chat-bubble" aria-label="Select ChatBubble" /><button type="button" class="uikit-rowname" data-key="chat-bubble">ChatBubble</button></div>
+      <div class="uikit-row" data-key="carousel"><input type="checkbox" class="uikit-cb" value="carousel" aria-label="Select Carousel" /><button type="button" class="uikit-rowname" data-key="carousel">Carousel</button></div>
+      <!-- uikit:list:end -->
+    </nav>
+    <div class="uikit-detail">
+      <!-- uikit:detail:start -->
+      <div class="uikit-item" data-key="button">
+        <div class="uikit-stage" data-pv="button"><div x-data>
   <button
     type="button"
     class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark"
@@ -103,47 +158,46 @@
     Button
   </button>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="button" data-name="Button" />
-          <span class="uikit-name">Button <code>&lt;Button/&gt;</code></span>
-          <span class="uikit-desc">Primary button; edit classes for secondary/outline/ghost.</span>
-        </label>
-        </div></div>
-      </section>
-      <section class="uikit-cat">
-        <div class="uikit-cat-head"><h2>Forms</h2><button type="button" class="uikit-selcat" data-cat="Forms">Select all</button></div>
-        <div class="uikit-grid">
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="text-input"><div>
+        <div class="uikit-info">
+          <h2>Button <code>&lt;Button/&gt;</code></h2>
+          <p>Primary button; edit classes for secondary/outline/ghost.</p>
+          <p class="uikit-add"><code>apex add button</code></p>
+        </div>
+      </div>
+      <div class="uikit-item" data-key="text-input" hidden>
+        <div class="uikit-stage" data-pv="text-input"><div>
   <div class="flex w-full max-w-xs flex-col gap-1 text-on-surface dark:text-on-surface-dark">
-    <label for="pv-text-input-textInputDefault" class="w-fit pl-0.5 text-sm">Name</label>
-    <input id="pv-text-input-textInputDefault" type="text" class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" name="name" placeholder="Enter your name" autocomplete="name" />
+    <label for="textInputDefault" class="w-fit pl-0.5 text-sm">Name</label>
+    <input id="textInputDefault" type="text" class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" name="name" placeholder="Enter your name" autocomplete="name" />
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="text-input" data-name="TextInput" />
-          <span class="uikit-name">TextInput <code>&lt;TextInput/&gt;</code></span>
-          <span class="uikit-desc">Labeled text input with focus/disabled states.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>TextInput <code>&lt;TextInput/&gt;</code></h2>
+          <p>Labeled text input with focus/disabled states.</p>
+          <p class="uikit-add"><code>apex add text-input</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="textarea"><div>
+      </div>
+      <div class="uikit-item" data-key="textarea" hidden>
+        <div class="uikit-stage" data-pv="textarea"><div>
   <div class="flex w-full max-w-md flex-col gap-1 text-on-surface dark:text-on-surface-dark">
-    <label for="pv-textarea-textArea" class="w-fit pl-0.5 text-sm">Comment</label>
-    <textarea id="pv-textarea-textArea" class="w-full rounded-radius border border-outline bg-surface-alt px-2.5 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" rows="3" placeholder="We'd love to hear from you..."></textarea>
+    <label for="textArea" class="w-fit pl-0.5 text-sm">Comment</label>
+    <textarea id="textArea" class="w-full rounded-radius border border-outline bg-surface-alt px-2.5 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" rows="3" placeholder="We'd love to hear from you..."></textarea>
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="textarea" data-name="Textarea" />
-          <span class="uikit-name">Textarea <code>&lt;Textarea/&gt;</code></span>
-          <span class="uikit-desc">Labeled textarea with focus/disabled states.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Textarea <code>&lt;Textarea/&gt;</code></h2>
+          <p>Labeled textarea with focus/disabled states.</p>
+          <p class="uikit-add"><code>apex add textarea</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="select"><div>
+      </div>
+      <div class="uikit-item" data-key="select" hidden>
+        <div class="uikit-stage" data-pv="select"><div>
   <div class="relative flex w-full max-w-xs flex-col gap-1 text-on-surface dark:text-on-surface-dark">
-    <label for="pv-select-os" class="w-fit pl-0.5 text-sm">Operating System</label>
+    <label for="os" class="w-fit pl-0.5 text-sm">Operating System</label>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="absolute pointer-events-none right-4 top-8 size-5">
       <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
     </svg>
-    <select id="pv-select-os" name="os" class="w-full appearance-none rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark">
+    <select id="os" name="os" class="w-full appearance-none rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark">
       <option selected>Please Select</option>
       <option value="mac">Mac</option>
       <option value="windows">Windows</option>
@@ -151,16 +205,17 @@
     </select>
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="select" data-name="Select" />
-          <span class="uikit-name">Select <code>&lt;Select/&gt;</code></span>
-          <span class="uikit-desc">Native select with floating label + chevron.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Select <code>&lt;Select/&gt;</code></h2>
+          <p>Native select with floating label + chevron.</p>
+          <p class="uikit-add"><code>apex add select</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="checkbox"><div>
-  <label for="pv-checkbox-checkboxDefault" class="flex items-center gap-2 text-sm font-medium text-on-surface dark:text-on-surface-dark has-checked:text-on-surface-strong dark:has-checked:text-on-surface-dark-strong has-disabled:cursor-not-allowed has-disabled:opacity-75">
+      </div>
+      <div class="uikit-item" data-key="checkbox" hidden>
+        <div class="uikit-stage" data-pv="checkbox"><div>
+  <label for="checkboxDefault" class="flex items-center gap-2 text-sm font-medium text-on-surface dark:text-on-surface-dark has-checked:text-on-surface-strong dark:has-checked:text-on-surface-dark-strong has-disabled:cursor-not-allowed has-disabled:opacity-75">
     <span class="relative flex items-center">
-      <input id="pv-checkbox-checkboxDefault" type="checkbox" class="before:content[''] peer relative size-4 appearance-none overflow-hidden rounded-sm border border-outline bg-surface-alt before:absolute before:inset-0 checked:border-primary checked:before:bg-primary focus:outline-2 focus:outline-offset-2 focus:outline-outline-strong checked:focus:outline-primary active:outline-offset-0 disabled:cursor-not-allowed dark:border-outline-dark dark:bg-surface-dark-alt dark:checked:border-primary-dark dark:checked:before:bg-primary-dark dark:focus:outline-outline-dark-strong dark:checked:focus:outline-primary-dark" />
+      <input id="checkboxDefault" type="checkbox" class="before:content[''] peer relative size-4 appearance-none overflow-hidden rounded-sm border border-outline bg-surface-alt before:absolute before:inset-0 checked:border-primary checked:before:bg-primary focus:outline-2 focus:outline-offset-2 focus:outline-outline-strong checked:focus:outline-primary active:outline-offset-0 disabled:cursor-not-allowed dark:border-outline-dark dark:bg-surface-dark-alt dark:checked:border-primary-dark dark:checked:before:bg-primary-dark dark:focus:outline-outline-dark-strong dark:checked:focus:outline-primary-dark" />
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" stroke="currentColor" fill="none" stroke-width="4" class="pointer-events-none invisible absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 text-on-primary peer-checked:visible dark:text-on-primary-dark">
         <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
       </svg>
@@ -168,107 +223,113 @@
     <span>Notifications</span>
   </label>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="checkbox" data-name="Checkbox" />
-          <span class="uikit-name">Checkbox <code>&lt;Checkbox/&gt;</code></span>
-          <span class="uikit-desc">Checkbox with label and animated check.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Checkbox <code>&lt;Checkbox/&gt;</code></h2>
+          <p>Checkbox with label and animated check.</p>
+          <p class="uikit-add"><code>apex add checkbox</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="radio"><div>
+      </div>
+      <div class="uikit-item" data-key="radio" hidden>
+        <div class="uikit-stage" data-pv="radio"><div>
   <div class="flex items-center justify-start gap-2 font-medium text-on-surface has-disabled:opacity-75 dark:text-on-surface-dark">
-    <input id="pv-radio-radioDefault" type="radio" class="before:content[''] relative h-4 w-4 appearance-none rounded-full border border-outline bg-surface-alt before:invisible before:absolute before:left-1/2 before:top-1/2 before:h-1.5 before:w-1.5 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:bg-on-primary checked:border-primary checked:bg-primary checked:before:visible focus:outline-2 focus:outline-offset-2 focus:outline-outline-strong checked:focus:outline-primary disabled:cursor-not-allowed dark:border-outline-dark dark:bg-surface-dark-alt dark:before:bg-on-primary-dark dark:checked:border-primary-dark dark:checked:bg-primary-dark dark:focus:outline-outline-dark-strong dark:checked:focus:outline-primary-dark" name="radioDefault" value="" />
-    <label for="pv-radio-radioDefault" class="text-sm">Option</label>
+    <input id="radioDefault" type="radio" class="before:content[''] relative h-4 w-4 appearance-none rounded-full border border-outline bg-surface-alt before:invisible before:absolute before:left-1/2 before:top-1/2 before:h-1.5 before:w-1.5 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:bg-on-primary checked:border-primary checked:bg-primary checked:before:visible focus:outline-2 focus:outline-offset-2 focus:outline-outline-strong checked:focus:outline-primary disabled:cursor-not-allowed dark:border-outline-dark dark:bg-surface-dark-alt dark:before:bg-on-primary-dark dark:checked:border-primary-dark dark:checked:bg-primary-dark dark:focus:outline-outline-dark-strong dark:checked:focus:outline-primary-dark" name="radioDefault" value="" />
+    <label for="radioDefault" class="text-sm">Option</label>
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="radio" data-name="Radio" />
-          <span class="uikit-name">Radio <code>&lt;Radio/&gt;</code></span>
-          <span class="uikit-desc">Radio button with slotted label.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Radio <code>&lt;Radio/&gt;</code></h2>
+          <p>Radio button with slotted label.</p>
+          <p class="uikit-add"><code>apex add radio</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="toggle"><div x-data="{ on: true }">
-    <label for="pv-toggle-apexToggle" class="inline-flex items-center gap-3">
-        <input id="pv-toggle-apexToggle" type="checkbox" class="peer sr-only" role="switch" x-model="on" />
+      </div>
+      <div class="uikit-item" data-key="toggle" hidden>
+        <div class="uikit-stage" data-pv="toggle"><div x-data="{ on: true }">
+    <label for="apexToggle" class="inline-flex items-center gap-3">
+        <input id="apexToggle" type="checkbox" class="peer sr-only" role="switch" x-model="on" />
         <span class="trancking-wide text-sm font-medium text-on-surface peer-checked:text-on-surface-strong peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-on-surface-dark dark:peer-checked:text-on-surface-dark-strong">Toggle</span>
         <div class="relative h-6 w-11 after:h-5 after:w-5 peer-checked:after:translate-x-5 rounded-full border border-outline bg-surface-alt after:absolute after:bottom-0 after:left-[0.0625rem] after:top-0 after:my-auto after:rounded-full after:bg-on-surface after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:bg-on-primary peer-focus:outline-2 peer-focus:outline-offset-2 peer-focus:outline-outline-strong peer-focus:peer-checked:outline-primary peer-active:outline-offset-0 peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:border-outline-dark dark:bg-surface-dark-alt dark:after:bg-on-surface-dark dark:peer-checked:bg-primary-dark dark:peer-checked:after:bg-on-primary-dark dark:peer-focus:outline-outline-dark-strong dark:peer-focus:peer-checked:outline-primary-dark" aria-hidden="true"></div>
     </label>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="toggle" data-name="Toggle" />
-          <span class="uikit-name">Toggle <code>&lt;Toggle/&gt;</code></span>
-          <span class="uikit-desc">Accessible on/off switch with animated knob.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Toggle <code>&lt;Toggle/&gt;</code></h2>
+          <p>Accessible on/off switch with animated knob.</p>
+          <p class="uikit-add"><code>apex add toggle</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="range"><div>
+      </div>
+      <div class="uikit-item" data-key="range" hidden>
+        <div class="uikit-stage" data-pv="range"><div>
     <div class="flex w-full flex-col gap-4 text-on-surface dark:text-on-surface-dark">
-        <label for="pv-range-rangeSlider" class="w-fit pl-0.5 text-sm">Mood Meter</label>
-        <input id="pv-range-rangeSlider" type="range" class="h-2 w-full appearance-none bg-on-surface/15 focus:outline-primary dark:bg-on-surface-dark/15 dark:focus:outline-primary-dark [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:bg-primary dark:[&::-moz-range-thumb]:bg-primary-dark active:[&::-moz-range-thumb]:scale-110 [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:border-none [&::-webkit-slider-thumb]:bg-primary active:[&::-webkit-slider-thumb]:scale-110 dark:[&::-webkit-slider-thumb]:bg-primary-dark [&::-moz-range-thumb]:rounded-full [&::-webkit-slider-thumb]:rounded-full rounded-full" value="20" min="0" max="100" step="1" />
+        <label for="rangeSlider" class="w-fit pl-0.5 text-sm">Mood Meter</label>
+        <input id="rangeSlider" type="range" class="h-2 w-full appearance-none bg-on-surface/15 focus:outline-primary dark:bg-on-surface-dark/15 dark:focus:outline-primary-dark [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:bg-primary dark:[&::-moz-range-thumb]:bg-primary-dark active:[&::-moz-range-thumb]:scale-110 [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:border-none [&::-webkit-slider-thumb]:bg-primary active:[&::-webkit-slider-thumb]:scale-110 dark:[&::-webkit-slider-thumb]:bg-primary-dark [&::-moz-range-thumb]:rounded-full [&::-webkit-slider-thumb]:rounded-full rounded-full" value="20" min="0" max="100" step="1" />
     </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="range" data-name="Range" />
-          <span class="uikit-name">Range <code>&lt;Range/&gt;</code></span>
-          <span class="uikit-desc">Styled range slider with themed thumb.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Range <code>&lt;Range/&gt;</code></h2>
+          <p>Styled range slider with themed thumb.</p>
+          <p class="uikit-add"><code>apex add range</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="file-input"><div>
+      </div>
+      <div class="uikit-item" data-key="file-input" hidden>
+        <div class="uikit-stage" data-pv="file-input"><div>
   <div class="relative flex w-full max-w-sm flex-col gap-1">
-    <label class="w-fit pl-0.5 text-sm text-on-surface dark:text-on-surface-dark" for="pv-file-input-fileInput">Upload File</label>
-    <input id="pv-file-input-fileInput" type="file" class="w-full overflow-clip rounded-radius border border-outline bg-surface-alt/50 text-sm text-on-surface file:mr-4 file:border-none file:bg-surface-alt file:px-4 file:py-2 file:font-medium file:text-on-surface-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark dark:file:bg-surface-dark-alt dark:file:text-on-surface-dark-strong dark:focus-visible:outline-primary-dark" />
+    <label class="w-fit pl-0.5 text-sm text-on-surface dark:text-on-surface-dark" for="fileInput">Upload File</label>
+    <input id="fileInput" type="file" class="w-full overflow-clip rounded-radius border border-outline bg-surface-alt/50 text-sm text-on-surface file:mr-4 file:border-none file:bg-surface-alt file:px-4 file:py-2 file:font-medium file:text-on-surface-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark dark:file:bg-surface-dark-alt dark:file:text-on-surface-dark-strong dark:focus-visible:outline-primary-dark" />
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="file-input" data-name="FileInput" />
-          <span class="uikit-name">FileInput <code>&lt;FileInput/&gt;</code></span>
-          <span class="uikit-desc">Native file upload with styled button + label.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>FileInput <code>&lt;FileInput/&gt;</code></h2>
+          <p>Native file upload with styled button + label.</p>
+          <p class="uikit-add"><code>apex add file-input</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="rating"><div x-data="{ currentVal: 3 }">
+      </div>
+      <div class="uikit-item" data-key="rating" hidden>
+        <div class="uikit-stage" data-pv="rating"><div x-data="{ currentVal: 3 }">
   <div class="flex items-center gap-1">
-    <label for="pv-rating-oneStar" class="transition hover:scale-125 has-focus:scale-125">
+    <label for="oneStar" class="transition hover:scale-125 has-focus:scale-125">
       <span class="sr-only">one star</span>
-      <input x-model="currentVal" id="pv-rating-oneStar" type="radio" class="sr-only" name="rating" value="1">
+      <input x-model="currentVal" id="oneStar" type="radio" class="sr-only" name="rating" value="1">
       <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="size-5" x-bind:class="currentVal > 0 ? 'text-amber-500' : 'text-on-surface dark:text-on-surface-dark'">
         <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd">
       </svg>
     </label>
-    <label for="pv-rating-twoStars" class="transition hover:scale-125 has-focus:scale-125">
+    <label for="twoStars" class="transition hover:scale-125 has-focus:scale-125">
       <span class="sr-only">two stars</span>
-      <input x-model="currentVal" id="pv-rating-twoStars" type="radio" class="sr-only" name="rating" value="2">
+      <input x-model="currentVal" id="twoStars" type="radio" class="sr-only" name="rating" value="2">
       <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="size-5" x-bind:class="currentVal > 1 ? 'text-amber-500' : 'text-on-surface dark:text-on-surface-dark'">
         <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd">
       </svg>
     </label>
-    <label for="pv-rating-threeStars" class="transition hover:scale-125 has-focus:scale-125">
+    <label for="threeStars" class="transition hover:scale-125 has-focus:scale-125">
       <span class="sr-only">three stars</span>
-      <input x-model="currentVal" id="pv-rating-threeStars" type="radio" class="sr-only" name="rating" value="3">
+      <input x-model="currentVal" id="threeStars" type="radio" class="sr-only" name="rating" value="3">
       <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="size-5" x-bind:class="currentVal > 2 ? 'text-amber-500' : 'text-on-surface dark:text-on-surface-dark'">
         <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd">
       </svg>
     </label>
-    <label for="pv-rating-fourStars" class="transition hover:scale-125 has-focus:scale-125">
+    <label for="fourStars" class="transition hover:scale-125 has-focus:scale-125">
       <span class="sr-only">four stars</span>
-      <input x-model="currentVal" id="pv-rating-fourStars" type="radio" class="sr-only" name="rating" value="4">
+      <input x-model="currentVal" id="fourStars" type="radio" class="sr-only" name="rating" value="4">
       <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="size-5" x-bind:class="currentVal > 3 ? 'text-amber-500' : 'text-on-surface dark:text-on-surface-dark'">
         <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd">
       </svg>
     </label>
-    <label for="pv-rating-fiveStars" class="transition hover:scale-125 has-focus:scale-125">
+    <label for="fiveStars" class="transition hover:scale-125 has-focus:scale-125">
       <span class="sr-only">five stars</span>
-      <input x-model="currentVal" id="pv-rating-fiveStars" type="radio" class="sr-only" name="rating" value="5">
+      <input x-model="currentVal" id="fiveStars" type="radio" class="sr-only" name="rating" value="5">
       <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="size-5" x-bind:class="currentVal > 4 ? 'text-amber-500' : 'text-on-surface dark:text-on-surface-dark'">
         <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd">
       </svg>
     </label>
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="rating" data-name="Rating" />
-          <span class="uikit-name">Rating <code>&lt;Rating/&gt;</code></span>
-          <span class="uikit-desc">Interactive 5-star radio rating.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Rating <code>&lt;Rating/&gt;</code></h2>
+          <p>Interactive 5-star radio rating.</p>
+          <p class="uikit-add"><code>apex add rating</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="combobox"><div x-data="{
+      </div>
+      <div class="uikit-item" data-key="combobox" hidden>
+        <div class="uikit-stage" data-pv="combobox"><div x-data="{
     allOptions: [
         { label: 'Acura', value: 'Acura' },
         { label: 'Audi', value: 'Audi' },
@@ -306,11 +367,11 @@
     },
 }">
   <div class="flex w-full max-w-xs flex-col gap-1" x-on:keydown="handleKeydownOnOptions($event)" x-on:keydown.esc.window="isOpen = false, openedWithKeyboard = false" x-init="options = allOptions">
-    <label for="pv-combobox-make" class="w-fit pl-0.5 text-sm text-on-surface dark:text-on-surface-dark">Make</label>
+    <label for="make" class="w-fit pl-0.5 text-sm text-on-surface dark:text-on-surface-dark">Make</label>
     <div class="relative">
 
       
-      <button type="button" class="inline-flex w-full items-center justify-between gap-2 border border-outline rounded-radius bg-surface-alt px-4 py-2 text-sm font-medium tracking-wide text-on-surface transition hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark dark:focus-visible:outline-primary-dark" role="combobox" aria-controls="pv-combobox-makesList" aria-haspopup="listbox" x-on:click="isOpen = ! isOpen" x-on:keydown.down.prevent="openedWithKeyboard = true" x-on:keydown.enter.prevent="openedWithKeyboard = true" x-on:keydown.space.prevent="openedWithKeyboard = true" x-bind:aria-expanded="isOpen || openedWithKeyboard" x-bind:aria-label="selectedOption ? selectedOption.value : 'Please Select'" >
+      <button type="button" class="inline-flex w-full items-center justify-between gap-2 border border-outline rounded-radius bg-surface-alt px-4 py-2 text-sm font-medium tracking-wide text-on-surface transition hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark dark:focus-visible:outline-primary-dark" role="combobox" aria-controls="makesList" aria-haspopup="listbox" x-on:click="isOpen = ! isOpen" x-on:keydown.down.prevent="openedWithKeyboard = true" x-on:keydown.enter.prevent="openedWithKeyboard = true" x-on:keydown.space.prevent="openedWithKeyboard = true" x-bind:aria-expanded="isOpen || openedWithKeyboard" x-bind:aria-label="selectedOption ? selectedOption.value : 'Please Select'" >
         <span class="text-sm font-normal" x-text="selectedOption ? selectedOption.value : 'Please Select'"></span>
         
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5" aria-hidden="true">
@@ -319,8 +380,8 @@
       </button>
 
       
-      <input id="pv-combobox-make" name="make" x-ref="hiddenTextField" hidden=""/>
-      <div x-show="isOpen || openedWithKeyboard" id="pv-combobox-makesList" class="absolute left-0 top-11 z-10 w-full overflow-hidden rounded-radius border border-outline bg-surface-alt dark:border-outline-dark dark:bg-surface-dark-alt" role="listbox" aria-label="industries list" x-on:click.outside="isOpen = false, openedWithKeyboard = false" x-on:keydown.down.prevent="$focus.wrap().next()" x-on:keydown.up.prevent="$focus.wrap().previous()" x-transition x-trap="openedWithKeyboard">
+      <input id="make" name="make" x-ref="hiddenTextField" hidden=""/>
+      <div x-show="isOpen || openedWithKeyboard" id="makesList" class="absolute left-0 top-11 z-10 w-full overflow-hidden rounded-radius border border-outline bg-surface-alt dark:border-outline-dark dark:bg-surface-dark-alt" role="listbox" aria-label="industries list" x-on:click.outside="isOpen = false, openedWithKeyboard = false" x-on:keydown.down.prevent="$focus.wrap().next()" x-on:keydown.up.prevent="$focus.wrap().previous()" x-transition x-trap="openedWithKeyboard">
 
         
         <div class="relative">
@@ -352,22 +413,23 @@
     </div>
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="combobox" data-name="Combobox" />
-          <span class="uikit-name">Combobox <code>&lt;Combobox/&gt;</code></span>
-          <span class="uikit-desc">Searchable single-select with keyboard nav.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Combobox <code>&lt;Combobox/&gt;</code></h2>
+          <p>Searchable single-select with keyboard nav.</p>
+          <p class="uikit-add"><code>apex add combobox</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="counter"><div x-data="{ currentVal: 1, minVal: 0, maxVal: 10, decimalPoints: 0, incrementAmount: 1 }">
+      </div>
+      <div class="uikit-item" data-key="counter" hidden>
+        <div class="uikit-stage" data-pv="counter"><div x-data="{ currentVal: 1, minVal: 0, maxVal: 10, decimalPoints: 0, incrementAmount: 1 }">
     <div class="flex flex-col gap-1">
-        <label for="pv-counter-counterInput" class="pl-1 text-sm text-on-surface dark:text-on-surface-dark">Items(s)</label>
+        <label for="counterInput" class="pl-1 text-sm text-on-surface dark:text-on-surface-dark">Items(s)</label>
         <div x-on:dblclick.prevent class="flex items-center">
             <button x-on:click="currentVal = Math.max(minVal, currentVal - incrementAmount)" class="flex h-10 items-center justify-center rounded-l-radius border border-outline bg-surface-alt px-4 py-2 text-on-surface hover:opacity-75 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark dark:focus-visible:outline-primary-dark" aria-label="subtract">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" stroke="currentColor" fill="none" stroke-width="2" class="size-4">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15"/>
                 </svg>
             </button>
-            <input x-model="currentVal.toFixed(decimalPoints)" id="pv-counter-counterInput" type="text" class="border-x-none h-10 w-20 rounded-none border-y border-outline bg-surface-alt/50 text-center text-on-surface-strong focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark-strong dark:focus-visible:outline-primary-dark" readonly />
+            <input x-model="currentVal.toFixed(decimalPoints)" id="counterInput" type="text" class="border-x-none h-10 w-20 rounded-none border-y border-outline bg-surface-alt/50 text-center text-on-surface-strong focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark-strong dark:focus-visible:outline-primary-dark" readonly />
             <button x-on:click="currentVal = Math.min(maxVal, currentVal + incrementAmount)" class="flex h-10 items-center justify-center rounded-r-radius border border-outline bg-surface-alt px-4 py-2 text-on-surface hover:opacity-75 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark dark:focus-visible:outline-primary-dark" aria-label="add">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" stroke="currentColor" fill="none" stroke-width="2" class="size-4">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
@@ -376,23 +438,20 @@
         </div>
     </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="counter" data-name="Counter" />
-          <span class="uikit-name">Counter <code>&lt;Counter/&gt;</code></span>
-          <span class="uikit-desc">Numeric stepper with min/max clamping.</span>
-        </label>
-        </div></div>
-      </section>
-      <section class="uikit-cat">
-        <div class="uikit-cat-head"><h2>Overlays</h2><button type="button" class="uikit-selcat" data-cat="Overlays">Select all</button></div>
-        <div class="uikit-grid">
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="modal"><div x-data="{ modalIsOpen: false }">
+        <div class="uikit-info">
+          <h2>Counter <code>&lt;Counter/&gt;</code></h2>
+          <p>Numeric stepper with min/max clamping.</p>
+          <p class="uikit-add"><code>apex add counter</code></p>
+        </div>
+      </div>
+      <div class="uikit-item" data-key="modal" hidden>
+        <div class="uikit-stage" data-pv="modal"><div x-data="{ modalIsOpen: false }">
   <div>
     <button x-on:click="modalIsOpen = true" type="button" class="whitespace-nowrap rounded-radius border border-primary dark:border-primary-dark bg-primary px-4 py-2 text-center text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 dark:bg-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark">Open Modal</button>
-    <div x-cloak x-show="modalIsOpen" x-transition.opacity.duration.200ms x-trap.inert.noscroll="modalIsOpen" x-on:keydown.esc.window="modalIsOpen = false" x-on:click.self="modalIsOpen = false" class="fixed inset-0 z-30 flex items-end justify-center bg-black/20 p-4 pb-8 backdrop-blur-md sm:items-center lg:p-8" role="dialog" aria-modal="true" aria-labelledby="pv-modal-modalTitle">
+    <div x-cloak x-show="modalIsOpen" x-transition.opacity.duration.200ms x-trap.inert.noscroll="modalIsOpen" x-on:keydown.esc.window="modalIsOpen = false" x-on:click.self="modalIsOpen = false" class="fixed inset-0 z-30 flex items-end justify-center bg-black/20 p-4 pb-8 backdrop-blur-md sm:items-center lg:p-8" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div x-show="modalIsOpen" x-transition:enter="transition ease-out duration-200 delay-100 motion-reduce:transition-opacity" x-transition:enter-start="opacity-0 scale-50" x-transition:enter-end="opacity-100 scale-100" class="flex max-w-lg flex-col gap-4 overflow-hidden rounded-radius border border-outline bg-surface text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">
         <div class="flex items-center justify-between border-b border-outline bg-surface-alt/60 p-4 dark:border-outline-dark dark:bg-surface-dark/20">
-          <h3 id="pv-modal-modalTitle" class="font-semibold tracking-wide text-on-surface-strong dark:text-on-surface-dark-strong"><slot name="title">Modal Title</slot></h3>
+          <h3 id="modalTitle" class="font-semibold tracking-wide text-on-surface-strong dark:text-on-surface-dark-strong"><slot name="title">Modal Title</slot></h3>
           <button x-on:click="modalIsOpen = false" aria-label="close modal">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" stroke="currentColor" fill="none" stroke-width="1.4" class="w-5 h-5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -410,13 +469,14 @@
     </div>
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="modal" data-name="Modal" />
-          <span class="uikit-name">Modal <code>&lt;Modal/&gt;</code></span>
-          <span class="uikit-desc">Dialog with focus-trap, esc/click-outside close.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Modal <code>&lt;Modal/&gt;</code></h2>
+          <p>Dialog with focus-trap, esc/click-outside close.</p>
+          <p class="uikit-add"><code>apex add modal</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="dropdown"><div x-data="{ isOpen: false, openedWithKeyboard: false }">
+      </div>
+      <div class="uikit-item" data-key="dropdown" hidden>
+        <div class="uikit-stage" data-pv="dropdown"><div x-data="{ isOpen: false, openedWithKeyboard: false }">
   <div class="relative w-fit" x-on:keydown.esc.window="isOpen = false, openedWithKeyboard = false">
     <button type="button" x-on:click="isOpen = ! isOpen" class="inline-flex items-center gap-2 whitespace-nowrap rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm font-medium tracking-wide transition hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline-strong dark:border-outline-dark dark:bg-surface-dark-alt dark:focus-visible:outline-outline-dark-strong" aria-haspopup="true" x-on:keydown.space.prevent="openedWithKeyboard = true" x-on:keydown.enter.prevent="openedWithKeyboard = true" x-on:keydown.down.prevent="openedWithKeyboard = true" x-bind:class="isOpen || openedWithKeyboard ? 'text-on-surface-strong dark:text-on-surface-dark-strong' : 'text-on-surface dark:text-on-surface-dark'" x-bind:aria-expanded="isOpen || openedWithKeyboard">
       Actions Menu
@@ -431,17 +491,18 @@
     </div>
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="dropdown" data-name="Dropdown" />
-          <span class="uikit-name">Dropdown <code>&lt;Dropdown/&gt;</code></span>
-          <span class="uikit-desc">Menu with keyboard nav + click-outside close.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Dropdown <code>&lt;Dropdown/&gt;</code></h2>
+          <p>Menu with keyboard nav + click-outside close.</p>
+          <p class="uikit-add"><code>apex add dropdown</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="accordion"><div x-data="{ isExpanded: false }">
+      </div>
+      <div class="uikit-item" data-key="accordion" hidden>
+        <div class="uikit-stage" data-pv="accordion"><div x-data="{ isExpanded: false }">
   <div class="w-full overflow-hidden rounded-radius border border-outline bg-surface-alt/40 text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark">
-    <button id="pv-accordion-accordionControl" type="button"
+    <button id="accordionControl" type="button"
       class="flex w-full items-center justify-between gap-4 bg-surface-alt p-4 text-left underline-offset-2 hover:bg-surface-alt/75 focus-visible:bg-surface-alt/75 focus-visible:underline focus-visible:outline-hidden dark:bg-surface-dark-alt dark:hover:bg-surface-dark-alt/75 dark:focus-visible:bg-surface-dark-alt/75"
-      aria-controls="pv-accordion-accordionPanel" x-on:click="isExpanded = ! isExpanded"
+      aria-controls="accordionPanel" x-on:click="isExpanded = ! isExpanded"
       x-bind:class="isExpanded ? 'text-on-surface-strong dark:text-on-surface-dark-strong font-bold' : 'text-on-surface dark:text-on-surface-dark font-medium'"
       x-bind:aria-expanded="isExpanded ? 'true' : 'false'">
       <slot name="title">Accordion title</slot>
@@ -451,36 +512,34 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
       </svg>
     </button>
-    <div x-cloak x-show="isExpanded" id="pv-accordion-accordionPanel" role="region" aria-labelledby="pv-accordion-accordionControl" x-collapse>
+    <div x-cloak x-show="isExpanded" id="accordionPanel" role="region" aria-labelledby="accordionControl" x-collapse>
       <div class="p-4 text-sm sm:text-base text-pretty">
         Accordion panel content
       </div>
     </div>
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="accordion" data-name="Accordion" />
-          <span class="uikit-name">Accordion <code>&lt;Accordion/&gt;</code></span>
-          <span class="uikit-desc">Collapsible item with title + body slots.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Accordion <code>&lt;Accordion/&gt;</code></h2>
+          <p>Collapsible item with title + body slots.</p>
+          <p class="uikit-add"><code>apex add accordion</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="tooltip"><div x-data>
+      </div>
+      <div class="uikit-item" data-key="tooltip" hidden>
+        <div class="uikit-stage" data-pv="tooltip"><div x-data>
   <div class="relative w-fit">
-    <button type="button" class="peer rounded-radius bg-surface-alt border border-surface-alt px-4 py-2 font-medium tracking-wide text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:bg-surface-dark-alt dark:border-surface-dark-alt dark:text-on-surface-dark dark:focus-visible:outline-primary-dark" aria-describedby="pv-tooltip-tooltipContent">Hover Me</button>
-    <div id="pv-tooltip-tooltipContent" class="absolute -top-9 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-sm bg-surface-dark px-2 py-1 text-center text-sm text-on-surface-dark-strong opacity-0 transition-all ease-out peer-hover:opacity-100 peer-focus:opacity-100 dark:bg-surface dark:text-on-surface-strong" role="tooltip">Tooltip top</div>
+    <button type="button" class="peer rounded-radius bg-surface-alt border border-surface-alt px-4 py-2 font-medium tracking-wide text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:bg-surface-dark-alt dark:border-surface-dark-alt dark:text-on-surface-dark dark:focus-visible:outline-primary-dark" aria-describedby="tooltipContent">Hover Me</button>
+    <div id="tooltipContent" class="absolute -top-9 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-sm bg-surface-dark px-2 py-1 text-center text-sm text-on-surface-dark-strong opacity-0 transition-all ease-out peer-hover:opacity-100 peer-focus:opacity-100 dark:bg-surface dark:text-on-surface-strong" role="tooltip">Tooltip top</div>
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="tooltip" data-name="Tooltip" />
-          <span class="uikit-name">Tooltip <code>&lt;Tooltip/&gt;</code></span>
-          <span class="uikit-desc">Hover/focus tooltip; content via slot.</span>
-        </label>
-        </div></div>
-      </section>
-      <section class="uikit-cat">
-        <div class="uikit-cat-head"><h2>Navigation</h2><button type="button" class="uikit-selcat" data-cat="Navigation">Select all</button></div>
-        <div class="uikit-grid">
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="navbar"><div x-data="{ mobileMenuIsOpen: false }">
+        <div class="uikit-info">
+          <h2>Tooltip <code>&lt;Tooltip/&gt;</code></h2>
+          <p>Hover/focus tooltip; content via slot.</p>
+          <p class="uikit-add"><code>apex add tooltip</code></p>
+        </div>
+      </div>
+      <div class="uikit-item" data-key="navbar" hidden>
+        <div class="uikit-stage" data-pv="navbar"><div x-data="{ mobileMenuIsOpen: false }">
 	<nav x-on:click.away="mobileMenuIsOpen = false" class="flex items-center justify-between border-b border-outline px-6 py-4 dark:border-outline-dark" aria-label="apex ui menu">
 		
 		<a href="#" class="text-2xl font-bold text-on-surface-strong dark:text-on-surface-dark-strong">
@@ -494,7 +553,7 @@
 			<li><a href="#" class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark">Login</a></li>
 		</ul>
 		
-		<button x-on:click="mobileMenuIsOpen = !mobileMenuIsOpen" x-bind:aria-expanded="mobileMenuIsOpen" x-bind:class="mobileMenuIsOpen ? 'fixed top-6 right-6 z-20' : null" type="button" class="flex text-on-surface dark:text-on-surface-dark md:hidden" aria-label="mobile menu" aria-controls="pv-navbar-mobileMenu">
+		<button x-on:click="mobileMenuIsOpen = !mobileMenuIsOpen" x-bind:aria-expanded="mobileMenuIsOpen" x-bind:class="mobileMenuIsOpen ? 'fixed top-6 right-6 z-20' : null" type="button" class="flex text-on-surface dark:text-on-surface-dark md:hidden" aria-label="mobile menu" aria-controls="mobileMenu">
 			<svg x-cloak x-show="!mobileMenuIsOpen" xmlns="http://www.w3.org/2000/svg" fill="none" aria-hidden="true" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-6">
 				<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
 			</svg>
@@ -503,7 +562,7 @@
 			</svg>
 		</button>
 		
-		<ul x-cloak x-show="mobileMenuIsOpen" x-transition:enter="transition motion-reduce:transition-none ease-out duration-300" x-transition:enter-start="-translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transition motion-reduce:transition-none ease-out duration-300" x-transition:leave-start="translate-y-0" x-transition:leave-end="-translate-y-full" id="pv-navbar-mobileMenu" class="fixed max-h-svh overflow-y-auto inset-x-0 top-0 z-10 flex flex-col divide-y divide-outline rounded-b-radius border-b border-outline bg-surface-alt px-6 pb-6 pt-20 dark:divide-outline-dark dark:border-outline-dark dark:bg-surface-dark-alt md:hidden">
+		<ul x-cloak x-show="mobileMenuIsOpen" x-transition:enter="transition motion-reduce:transition-none ease-out duration-300" x-transition:enter-start="-translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transition motion-reduce:transition-none ease-out duration-300" x-transition:leave-start="translate-y-0" x-transition:leave-end="-translate-y-full" id="mobileMenu" class="fixed max-h-svh overflow-y-auto inset-x-0 top-0 z-10 flex flex-col divide-y divide-outline rounded-b-radius border-b border-outline bg-surface-alt px-6 pb-6 pt-20 dark:divide-outline-dark dark:border-outline-dark dark:bg-surface-dark-alt md:hidden">
 			<li class="py-4"><a href="#" class="w-full text-lg font-bold text-primary focus:underline dark:text-primary-dark" aria-current="page">Products</a></li>
 			<li class="py-4"><a href="#" class="w-full text-lg font-medium text-on-surface focus:underline dark:text-on-surface-dark">Pricing</a></li>
 			<li class="py-4"><a href="#" class="w-full text-lg font-medium text-on-surface focus:underline dark:text-on-surface-dark">Blog</a></li>
@@ -511,16 +570,17 @@
 		</ul>
 	</nav>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="navbar" data-name="Navbar" />
-          <span class="uikit-name">Navbar <code>&lt;Navbar/&gt;</code></span>
-          <span class="uikit-desc">Responsive top nav with mobile hamburger menu.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Navbar <code>&lt;Navbar/&gt;</code></h2>
+          <p>Responsive top nav with mobile hamburger menu.</p>
+          <p class="uikit-add"><code>apex add navbar</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="sidebar"><div x-data="{ showSidebar: false }">
+      </div>
+      <div class="uikit-item" data-key="sidebar" hidden>
+        <div class="uikit-stage" data-pv="sidebar"><div x-data="{ showSidebar: false }">
     <div class="relative flex w-full flex-col md:flex-row">
         
-        <a class="sr-only" href="#pv-sidebar-main-content">skip to the main content</a>
+        <a class="sr-only" href="#main-content">skip to the main content</a>
 
         
         <div x-cloak x-show="showSidebar" class="fixed inset-0 z-10 bg-surface-dark/10 backdrop-blur-xs md:hidden" aria-hidden="true" x-on:click="showSidebar = false" x-transition.opacity ></div>
@@ -582,7 +642,7 @@
         </nav>
 
         
-        <div id="pv-sidebar-main-content" class="h-svh w-full overflow-y-auto p-4 bg-surface dark:bg-surface-dark">
+        <div id="main-content" class="h-svh w-full overflow-y-auto p-4 bg-surface dark:bg-surface-dark">
             
         </div>
 
@@ -598,13 +658,14 @@
         </button>
     </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="sidebar" data-name="Sidebar" />
-          <span class="uikit-name">Sidebar <code>&lt;Sidebar/&gt;</code></span>
-          <span class="uikit-desc">Responsive off-canvas sidebar with nav links.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Sidebar <code>&lt;Sidebar/&gt;</code></h2>
+          <p>Responsive off-canvas sidebar with nav links.</p>
+          <p class="uikit-add"><code>apex add sidebar</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="breadcrumbs"><div>
+      </div>
+      <div class="uikit-item" data-key="breadcrumbs" hidden>
+        <div class="uikit-stage" data-pv="breadcrumbs"><div>
     <nav class="text-sm font-medium text-on-surface dark:text-on-surface-dark" aria-label="breadcrumb">
         <ol class="flex flex-wrap items-center gap-1">
             <li class="flex items-center gap-1">
@@ -623,13 +684,14 @@
         </ol>
     </nav>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="breadcrumbs" data-name="Breadcrumbs" />
-          <span class="uikit-name">Breadcrumbs <code>&lt;Breadcrumbs/&gt;</code></span>
-          <span class="uikit-desc">Chevron-separated breadcrumb navigation.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Breadcrumbs <code>&lt;Breadcrumbs/&gt;</code></h2>
+          <p>Chevron-separated breadcrumb navigation.</p>
+          <p class="uikit-add"><code>apex add breadcrumbs</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="pagination"><div>
+      </div>
+      <div class="uikit-item" data-key="pagination" hidden>
+        <div class="uikit-stage" data-pv="pagination"><div>
   <nav aria-label="pagination">
     <ul class="flex shrink-0 items-center gap-2 text-sm font-medium">
       <li>
@@ -655,13 +717,14 @@
     </ul>
   </nav>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="pagination" data-name="Pagination" />
-          <span class="uikit-name">Pagination <code>&lt;Pagination/&gt;</code></span>
-          <span class="uikit-desc">Numbered pagination with prev/next.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Pagination <code>&lt;Pagination/&gt;</code></h2>
+          <p>Numbered pagination with prev/next.</p>
+          <p class="uikit-add"><code>apex add pagination</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="steps"><div>
+      </div>
+      <div class="uikit-item" data-key="steps" hidden>
+        <div class="uikit-stage" data-pv="steps"><div>
   <ol class="flex w-full items-center gap-2" aria-label="registration progress">
     
     <li class="text-sm">
@@ -695,48 +758,47 @@
     </li>
   </ol>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="steps" data-name="Steps" />
-          <span class="uikit-name">Steps <code>&lt;Steps/&gt;</code></span>
-          <span class="uikit-desc">Horizontal step progress indicator.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Steps <code>&lt;Steps/&gt;</code></h2>
+          <p>Horizontal step progress indicator.</p>
+          <p class="uikit-add"><code>apex add steps</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="tabs"><div x-data="{ selectedTab: 'groups' }">
+      </div>
+      <div class="uikit-item" data-key="tabs" hidden>
+        <div class="uikit-stage" data-pv="tabs"><div x-data="{ selectedTab: 'groups' }">
   <div class="w-full">
     <div x-on:keydown.right.prevent="$focus.wrap().next()" x-on:keydown.left.prevent="$focus.wrap().previous()" class="flex gap-2 overflow-x-auto border-b border-outline dark:border-outline-dark" role="tablist" aria-label="tab options">
-      <button x-on:click="selectedTab = 'groups'" x-bind:aria-selected="selectedTab === 'groups'" x-bind:tabindex="selectedTab === 'groups' ? '0' : '-1'" x-bind:class="selectedTab === 'groups' ? 'font-bold text-primary border-b-2 border-primary dark:border-primary-dark dark:text-primary-dark' : 'text-on-surface font-medium dark:text-on-surface-dark dark:hover:border-b-outline-dark-strong dark:hover:text-on-surface-dark-strong hover:border-b-2 hover:border-b-outline-strong hover:text-on-surface-strong'" class="h-min px-4 py-2 text-sm" type="button" role="tab" aria-controls="pv-tabs-tabpanelGroups">Groups</button>
-      <button x-on:click="selectedTab = 'likes'" x-bind:aria-selected="selectedTab === 'likes'" x-bind:tabindex="selectedTab === 'likes' ? '0' : '-1'" x-bind:class="selectedTab === 'likes' ? 'font-bold text-primary border-b-2 border-primary dark:border-primary-dark dark:text-primary-dark' : 'text-on-surface font-medium dark:text-on-surface-dark dark:hover:border-b-outline-dark-strong dark:hover:text-on-surface-dark-strong hover:border-b-2 hover:border-b-outline-strong hover:text-on-surface-strong'" class="h-min px-4 py-2 text-sm" type="button" role="tab" aria-controls="pv-tabs-tabpanelLikes">Likes</button>
-      <button x-on:click="selectedTab = 'comments'" x-bind:aria-selected="selectedTab === 'comments'" x-bind:tabindex="selectedTab === 'comments' ? '0' : '-1'" x-bind:class="selectedTab === 'comments' ? 'font-bold text-primary border-b-2 border-primary dark:border-primary-dark dark:text-primary-dark' : 'text-on-surface font-medium dark:text-on-surface-dark dark:hover:border-b-outline-dark-strong dark:hover:text-on-surface-dark-strong hover:border-b-2 hover:border-b-outline-strong hover:text-on-surface-strong'" class="h-min px-4 py-2 text-sm" type="button" role="tab" aria-controls="pv-tabs-tabpanelComments">Comments</button>
-      <button x-on:click="selectedTab = 'saved'" x-bind:aria-selected="selectedTab === 'saved'" x-bind:tabindex="selectedTab === 'saved' ? '0' : '-1'" x-bind:class="selectedTab === 'saved' ? 'font-bold text-primary border-b-2 border-primary dark:border-primary-dark dark:text-primary-dark' : 'text-on-surface font-medium dark:text-on-surface-dark dark:hover:border-b-outline-dark-strong dark:hover:text-on-surface-dark-strong hover:border-b-2 hover:border-b-outline-strong hover:text-on-surface-strong'" class="h-min px-4 py-2 text-sm" type="button" role="tab" aria-controls="pv-tabs-tabpanelSaved">Saved</button>
+      <button x-on:click="selectedTab = 'groups'" x-bind:aria-selected="selectedTab === 'groups'" x-bind:tabindex="selectedTab === 'groups' ? '0' : '-1'" x-bind:class="selectedTab === 'groups' ? 'font-bold text-primary border-b-2 border-primary dark:border-primary-dark dark:text-primary-dark' : 'text-on-surface font-medium dark:text-on-surface-dark dark:hover:border-b-outline-dark-strong dark:hover:text-on-surface-dark-strong hover:border-b-2 hover:border-b-outline-strong hover:text-on-surface-strong'" class="h-min px-4 py-2 text-sm" type="button" role="tab" aria-controls="tabpanelGroups">Groups</button>
+      <button x-on:click="selectedTab = 'likes'" x-bind:aria-selected="selectedTab === 'likes'" x-bind:tabindex="selectedTab === 'likes' ? '0' : '-1'" x-bind:class="selectedTab === 'likes' ? 'font-bold text-primary border-b-2 border-primary dark:border-primary-dark dark:text-primary-dark' : 'text-on-surface font-medium dark:text-on-surface-dark dark:hover:border-b-outline-dark-strong dark:hover:text-on-surface-dark-strong hover:border-b-2 hover:border-b-outline-strong hover:text-on-surface-strong'" class="h-min px-4 py-2 text-sm" type="button" role="tab" aria-controls="tabpanelLikes">Likes</button>
+      <button x-on:click="selectedTab = 'comments'" x-bind:aria-selected="selectedTab === 'comments'" x-bind:tabindex="selectedTab === 'comments' ? '0' : '-1'" x-bind:class="selectedTab === 'comments' ? 'font-bold text-primary border-b-2 border-primary dark:border-primary-dark dark:text-primary-dark' : 'text-on-surface font-medium dark:text-on-surface-dark dark:hover:border-b-outline-dark-strong dark:hover:text-on-surface-dark-strong hover:border-b-2 hover:border-b-outline-strong hover:text-on-surface-strong'" class="h-min px-4 py-2 text-sm" type="button" role="tab" aria-controls="tabpanelComments">Comments</button>
+      <button x-on:click="selectedTab = 'saved'" x-bind:aria-selected="selectedTab === 'saved'" x-bind:tabindex="selectedTab === 'saved' ? '0' : '-1'" x-bind:class="selectedTab === 'saved' ? 'font-bold text-primary border-b-2 border-primary dark:border-primary-dark dark:text-primary-dark' : 'text-on-surface font-medium dark:text-on-surface-dark dark:hover:border-b-outline-dark-strong dark:hover:text-on-surface-dark-strong hover:border-b-2 hover:border-b-outline-strong hover:text-on-surface-strong'" class="h-min px-4 py-2 text-sm" type="button" role="tab" aria-controls="tabpanelSaved">Saved</button>
     </div>
     <div class="px-2 py-4 text-on-surface dark:text-on-surface-dark">
-      <div x-cloak x-show="selectedTab === 'groups'" id="pv-tabs-tabpanelGroups" role="tabpanel" aria-label="groups"><slot name="groups">Groups tab content</slot></div>
-      <div x-cloak x-show="selectedTab === 'likes'" id="pv-tabs-tabpanelLikes" role="tabpanel" aria-label="likes"><slot name="likes">Likes tab content</slot></div>
-      <div x-cloak x-show="selectedTab === 'comments'" id="pv-tabs-tabpanelComments" role="tabpanel" aria-label="comments"><slot name="comments">Comments tab content</slot></div>
-      <div x-cloak x-show="selectedTab === 'saved'" id="pv-tabs-tabpanelSaved" role="tabpanel" aria-label="saved"><slot name="saved">Saved tab content</slot></div>
+      <div x-cloak x-show="selectedTab === 'groups'" id="tabpanelGroups" role="tabpanel" aria-label="groups"><slot name="groups">Groups tab content</slot></div>
+      <div x-cloak x-show="selectedTab === 'likes'" id="tabpanelLikes" role="tabpanel" aria-label="likes"><slot name="likes">Likes tab content</slot></div>
+      <div x-cloak x-show="selectedTab === 'comments'" id="tabpanelComments" role="tabpanel" aria-label="comments"><slot name="comments">Comments tab content</slot></div>
+      <div x-cloak x-show="selectedTab === 'saved'" id="tabpanelSaved" role="tabpanel" aria-label="saved"><slot name="saved">Saved tab content</slot></div>
     </div>
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="tabs" data-name="Tabs" />
-          <span class="uikit-name">Tabs <code>&lt;Tabs/&gt;</code></span>
-          <span class="uikit-desc">Tablist with arrow-key focus + panel slots.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Tabs <code>&lt;Tabs/&gt;</code></h2>
+          <p>Tablist with arrow-key focus + panel slots.</p>
+          <p class="uikit-add"><code>apex add tabs</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="link"><div>
+      </div>
+      <div class="uikit-item" data-key="link" hidden>
+        <div class="uikit-stage" data-pv="link"><div>
     <a href="#" class="font-medium text-primary underline-offset-2 hover:underline focus:underline focus:outline-hidden dark:text-primary-dark">Read if bored</a>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="link" data-name="Link" />
-          <span class="uikit-name">Link <code>&lt;Link/&gt;</code></span>
-          <span class="uikit-desc">Styled inline anchor with slotted label.</span>
-        </label>
-        </div></div>
-      </section>
-      <section class="uikit-cat">
-        <div class="uikit-cat-head"><h2>Feedback</h2><button type="button" class="uikit-selcat" data-cat="Feedback">Select all</button></div>
-        <div class="uikit-grid">
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="alert"><div x-data="{ alertIsVisible: true }">
+        <div class="uikit-info">
+          <h2>Link <code>&lt;Link/&gt;</code></h2>
+          <p>Styled inline anchor with slotted label.</p>
+          <p class="uikit-add"><code>apex add link</code></p>
+        </div>
+      </div>
+      <div class="uikit-item" data-key="alert" hidden>
+        <div class="uikit-stage" data-pv="alert"><div x-data="{ alertIsVisible: true }">
     <div x-show="alertIsVisible"
         class="relative w-full overflow-hidden rounded-radius border border-info bg-surface text-on-surface dark:bg-surface-dark dark:text-on-surface-dark"
         role="alert" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100 scale-100"
@@ -762,13 +824,14 @@
         </div>
     </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="alert" data-name="Alert" />
-          <span class="uikit-name">Alert <code>&lt;Alert/&gt;</code></span>
-          <span class="uikit-desc">Dismissible info alert with icon, message slot, and close button.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Alert <code>&lt;Alert/&gt;</code></h2>
+          <p>Dismissible info alert with icon, message slot, and close button.</p>
+          <p class="uikit-add"><code>apex add alert</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="banner"><div x-data="{ bannerIsVisible: true }">
+      </div>
+      <div class="uikit-item" data-key="banner" hidden>
+        <div class="uikit-stage" data-pv="banner"><div x-data="{ bannerIsVisible: true }">
     <div x-show="bannerIsVisible" class="relative flex border-outline bg-surface-alt p-4 text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark border-b">
         <p class="px-6 text-xs sm:text-sm text-pretty mx-auto">Banner</p>
         <button type="button" @click="bannerIsVisible = false" class="absolute top-1/2 -translate-y-1/2 right-4" aria-label="dismiss banner">
@@ -778,13 +841,14 @@
         </button>
     </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="banner" data-name="Banner" />
-          <span class="uikit-name">Banner <code>&lt;Banner/&gt;</code></span>
-          <span class="uikit-desc">Full-width dismissible top banner with a text slot.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Banner <code>&lt;Banner/&gt;</code></h2>
+          <p>Full-width dismissible top banner with a text slot.</p>
+          <p class="uikit-add"><code>apex add banner</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="toast"><div x-data="{
+      </div>
+      <div class="uikit-item" data-key="toast" hidden>
+        <div class="uikit-stage" data-pv="toast"><div x-data="{
         notifications: [],
         displayDuration: 8000,
 
@@ -854,51 +918,51 @@
     </div>
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="toast" data-name="Toast" />
-          <span class="uikit-name">Toast <code>&lt;Toast/&gt;</code></span>
-          <span class="uikit-desc">Stacking toast notifications with auto-dismiss.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Toast <code>&lt;Toast/&gt;</code></h2>
+          <p>Stacking toast notifications with auto-dismiss.</p>
+          <p class="uikit-add"><code>apex add toast</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="badge"><div x-data>
+      </div>
+      <div class="uikit-item" data-key="badge" hidden>
+        <div class="uikit-stage" data-pv="badge"><div x-data>
   <span class="inline-flex items-center gap-1 rounded-radius border border-outline bg-surface-alt px-2 py-0.5 text-xs font-medium text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">
     Badge
   </span>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="badge" data-name="Badge" />
-          <span class="uikit-name">Badge <code>&lt;Badge/&gt;</code></span>
-          <span class="uikit-desc">A small status/label pill.</span>
-        </label>
-        </div></div>
-      </section>
-      <section class="uikit-cat">
-        <div class="uikit-cat-head"><h2>Loading</h2><button type="button" class="uikit-selcat" data-cat="Loading">Select all</button></div>
-        <div class="uikit-grid">
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="spinner"><div>
+        <div class="uikit-info">
+          <h2>Badge <code>&lt;Badge/&gt;</code></h2>
+          <p>A small status/label pill.</p>
+          <p class="uikit-add"><code>apex add badge</code></p>
+        </div>
+      </div>
+      <div class="uikit-item" data-key="spinner" hidden>
+        <div class="uikit-stage" data-pv="spinner"><div>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="size-5 fill-on-surface motion-safe:animate-spin dark:fill-on-surface-dark">
         <path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25" />
         <path d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z" />
     </svg>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="spinner" data-name="Spinner" />
-          <span class="uikit-name">Spinner <code>&lt;Spinner/&gt;</code></span>
-          <span class="uikit-desc">SVG loading spinner (motion-safe).</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Spinner <code>&lt;Spinner/&gt;</code></h2>
+          <p>SVG loading spinner (motion-safe).</p>
+          <p class="uikit-add"><code>apex add spinner</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="progress"><div x-data="{ currentVal: 20 ,minVal: 0 ,maxVal: 100, calcPercentage(min, max, val){return ((val-min)/(max-min))*100} }">
+      </div>
+      <div class="uikit-item" data-key="progress" hidden>
+        <div class="uikit-stage" data-pv="progress"><div x-data="{ currentVal: 20 ,minVal: 0 ,maxVal: 100, calcPercentage(min, max, val){return ((val-min)/(max-min))*100} }">
     <div class="flex h-2.5 w-full overflow-hidden rounded-radius bg-surface-alt dark:bg-surface-dark-alt" role="progressbar" aria-label="default progress bar" x-bind:aria-valuenow="currentVal" x-bind:aria-valuemin="minVal" x-bind:aria-valuemax="maxVal">
         <div class="h-full rounded-radius bg-primary dark:bg-primary-dark" x-bind:style="`width: ${calcPercentage(minVal, maxVal, currentVal)}%`"></div>
     </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="progress" data-name="Progress" />
-          <span class="uikit-name">Progress <code>&lt;Progress/&gt;</code></span>
-          <span class="uikit-desc">Progress bar with ARIA value bindings.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Progress <code>&lt;Progress/&gt;</code></h2>
+          <p>Progress bar with ARIA value bindings.</p>
+          <p class="uikit-add"><code>apex add progress</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="skeleton"><div>
+      </div>
+      <div class="uikit-item" data-key="skeleton" hidden>
+        <div class="uikit-stage" data-pv="skeleton"><div>
     <div class="flex w-full flex-col gap-2">
         <div class="h-3.5 w-full animate-pulse rounded-radius bg-on-surface/30 dark:bg-on-surface-dark/30" aria-hidden="true"></div>
         <div class="h-3.5 w-full animate-pulse rounded-radius bg-on-surface/30 dark:bg-on-surface-dark/30" aria-hidden="true"></div>
@@ -907,17 +971,14 @@
         <span class="sr-only">loading</span>
     </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="skeleton" data-name="Skeleton" />
-          <span class="uikit-name">Skeleton <code>&lt;Skeleton/&gt;</code></span>
-          <span class="uikit-desc">Pulsing placeholder skeleton loader.</span>
-        </label>
-        </div></div>
-      </section>
-      <section class="uikit-cat">
-        <div class="uikit-cat-head"><h2>Data &amp; media</h2><button type="button" class="uikit-selcat" data-cat="Data &amp; media">Select all</button></div>
-        <div class="uikit-grid">
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="table"><div>
+        <div class="uikit-info">
+          <h2>Skeleton <code>&lt;Skeleton/&gt;</code></h2>
+          <p>Pulsing placeholder skeleton loader.</p>
+          <p class="uikit-add"><code>apex add skeleton</code></p>
+        </div>
+      </div>
+      <div class="uikit-item" data-key="table" hidden>
+        <div class="uikit-stage" data-pv="table"><div>
   <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
     <table class="w-full text-left text-sm text-on-surface dark:text-on-surface-dark">
       <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark-strong">
@@ -951,42 +1012,46 @@
     </table>
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="table" data-name="Table" />
-          <span class="uikit-name">Table <code>&lt;Table/&gt;</code></span>
-          <span class="uikit-desc">Bordered data table with header + rows.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Table <code>&lt;Table/&gt;</code></h2>
+          <p>Bordered data table with header + rows.</p>
+          <p class="uikit-add"><code>apex add table</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="card"><div>
+      </div>
+      <div class="uikit-item" data-key="card" hidden>
+        <div class="uikit-stage" data-pv="card"><div>
   <div class="flex flex-col gap-4 rounded-radius border border-outline bg-surface-alt p-6 text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">
     Card
   </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="card" data-name="Card" />
-          <span class="uikit-name">Card <code>&lt;Card/&gt;</code></span>
-          <span class="uikit-desc">A surface container that inherits the theme.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Card <code>&lt;Card/&gt;</code></h2>
+          <p>A surface container that inherits the theme.</p>
+          <p class="uikit-add"><code>apex add card</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="avatar"><div>
+      </div>
+      <div class="uikit-item" data-key="avatar" hidden>
+        <div class="uikit-stage" data-pv="avatar"><div>
     <span class="flex size-14 items-center justify-center overflow-hidden rounded-full border border-outline bg-surface-alt text-2xl font-bold tracking-wider text-on-surface/80 dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark/80">JS</span>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="avatar" data-name="Avatar" />
-          <span class="uikit-name">Avatar <code>&lt;Avatar/&gt;</code></span>
-          <span class="uikit-desc">Circular initials avatar; content via slot.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Avatar <code>&lt;Avatar/&gt;</code></h2>
+          <p>Circular initials avatar; content via slot.</p>
+          <p class="uikit-add"><code>apex add avatar</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="kbd"><div>
+      </div>
+      <div class="uikit-item" data-key="kbd" hidden>
+        <div class="uikit-stage" data-pv="kbd"><div>
     <kbd class="inline-block size-min whitespace-nowrap rounded-md border border-outline bg-surface-alt px-2 py-1 font-mono text-xs font-semibold text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">Ctrl</kbd>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="kbd" data-name="Kbd" />
-          <span class="uikit-name">Kbd <code>&lt;Kbd/&gt;</code></span>
-          <span class="uikit-desc">Keyboard key indicator; key label via slot.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>Kbd <code>&lt;Kbd/&gt;</code></h2>
+          <p>Keyboard key indicator; key label via slot.</p>
+          <p class="uikit-add"><code>apex add kbd</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="chat-bubble"><div>
+      </div>
+      <div class="uikit-item" data-key="chat-bubble" hidden>
+        <div class="uikit-stage" data-pv="chat-bubble"><div>
     <div class="flex w-full flex-col gap-4">
         
         <div class="mr-auto flex max-w-[80%] flex-col gap-2 rounded-r-radius rounded-tl-radius bg-surface-alt p-4 md:max-w-[60%] dark:bg-surface-dark-alt">
@@ -1002,13 +1067,14 @@
         </div>
     </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="chat-bubble" data-name="ChatBubble" />
-          <span class="uikit-name">ChatBubble <code>&lt;ChatBubble/&gt;</code></span>
-          <span class="uikit-desc">Received/sent chat message bubbles; text via slot.</span>
-        </label>
+        <div class="uikit-info">
+          <h2>ChatBubble <code>&lt;ChatBubble/&gt;</code></h2>
+          <p>Received/sent chat message bubbles; text via slot.</p>
+          <p class="uikit-add"><code>apex add chat-bubble</code></p>
         </div>
-        <div class="uikit-card">
-          <div class="uikit-preview" data-pv="carousel"><div x-data="{
+      </div>
+      <div class="uikit-item" data-key="carousel" hidden>
+        <div class="uikit-stage" data-pv="carousel"><div x-data="{
     slides: [
         { label: 'Slide 1' },
         { label: 'Slide 2' },
@@ -1066,12 +1132,15 @@
         </div>
     </div>
 </div></div>
-          <label class="uikit-pick"><input type="checkbox" class="uikit-cb" value="carousel" data-name="Carousel" />
-          <span class="uikit-name">Carousel <code>&lt;Carousel/&gt;</code></span>
-          <span class="uikit-desc">Slide carousel with prev/next + dot indicators.</span>
-        </label>
-        </div></div>
-      </section>
+        <div class="uikit-info">
+          <h2>Carousel <code>&lt;Carousel/&gt;</code></h2>
+          <p>Slide carousel with prev/next + dot indicators.</p>
+          <p class="uikit-add"><code>apex add carousel</code></p>
+        </div>
+      </div>
+      <!-- uikit:detail:end -->
+    </div>
+  </div>
 </main>
 
 <div class="uikit-bar">
@@ -1085,6 +1154,7 @@
   document.documentElement.classList.add("js");
   (() => {
     var root = document.documentElement;
+    // Mirror the docs light/dark theme onto the previews.
     function syncPreviewTheme() {
       var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
       root.classList.toggle("dark", dark);
@@ -1095,612 +1165,41 @@
       root.setAttribute("data-theme", dark ? "light" : "dark");
       syncPreviewTheme();
     });
-  })();
 
-  // Apex IDE showcase — interactive file tree + editor + live blog demo.
-  (() => {
-    var FILES = {
-      "pages/index.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
-"<script server lang=\"ts\">\n" +
-"  import { PostService } from '../services/PostService'\n" +
-"  const posts = new PostService()\n" +
-"\n" +
-"  // Runs on the server. The page arrives as real, indexable HTML —\n" +
-"  // then Alpine hydrates it in the browser.\n" +
-"  export function loader() {\n" +
-"    return { featured: posts.recent(3) }\n" +
-"  }\n" +
-"<\/script>\n" +
-"\n" +
-"<script client lang=\"ts\">\n" +
-"  import { useToggle } from '../composables/useToggle'\n" +
-"<\/script>\n" +
-"\n" +
-"<template x-data=\"useToggle(false)\">\n" +
-"  <h1>Welcome to my-app</h1>\n" +
-"  <p class=\"tagline\">Server-rendered with Alpine, then hydrated.</p>\n" +
-"\n" +
-"  <button @click=\"toggle()\" x-text=\"on ? 'Hide' : 'Show recent posts'\"></button>\n" +
-"\n" +
-"  <ul x-show=\"on\" x-transition>\n" +
-"    <template x-for=\"p in featured\" :key=\"p.id\">\n" +
-"      <li><a :href=\"'/blog/' + p.slug\" x-text=\"p.title\"></a></li>\n" +
-"    </template>\n" +
-"  </ul>\n" +
-"\n" +
-"  <Counter start=\"0\" label=\"Clicks\" />\n" +
-"</template>\n" +
-"\n" +
-"<style scoped>\n" +
-"  h1 { color: #6366f1; font-size: 2rem; }\n" +
-"  .tagline { color: #64748b; }\n" +
-"</style>\n" },
-
-      "pages/about.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
-"<script server lang=\"ts\">\n" +
-"  export function loader() {\n" +
-"    return { title: 'About my-app' }\n" +
-"  }\n" +
-"  // Exported head() drives <title> and meta — SEO, server-side.\n" +
-"  export function head({ data }) {\n" +
-"    return { title: data.title }\n" +
-"  }\n" +
-"<\/script>\n" +
-"\n" +
-"<template x-data>\n" +
-"  <article>\n" +
-"    <h1 x-text=\"title\"></h1>\n" +
-"    <p>A tiny app that shows off Apex: routing, SSR, islands and MCP.</p>\n" +
-"  </article>\n" +
-"</template>\n" },
-
-      "pages/blog/index.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
-"<script server lang=\"ts\">\n" +
-"  import { PostService } from '../../services/PostService'\n" +
-"  const posts = new PostService()\n" +
-"\n" +
-"  // No database — PostService holds sample data. Swap it for a real\n" +
-"  // repository later and this loader never changes.\n" +
-"  export function loader() {\n" +
-"    return { posts: posts.all() }\n" +
-"  }\n" +
-"<\/script>\n" +
-"\n" +
-"<template x-data=\"{ q: '' }\">\n" +
-"  <main>\n" +
-"    <h1>The Apex Blog</h1>\n" +
-"    <input x-model=\"q\" placeholder=\"Filter posts…\" />\n" +
-"\n" +
-"    <template x-for=\"p in posts\" :key=\"p.id\">\n" +
-"      <a class=\"post\" :href=\"'/blog/' + p.slug\"\n" +
-"         x-show=\"p.title.toLowerCase().includes(q.toLowerCase())\">\n" +
-"        <strong x-text=\"p.title\"></strong>\n" +
-"        <span x-text=\"p.excerpt\"></span>\n" +
-"      </a>\n" +
-"    </template>\n" +
-"  </main>\n" +
-"</template>\n" },
-
-      "pages/blog/[slug].alpine": { lang: "ALPINE SFC", dot: "alpine", code:
-"<script server lang=\"ts\">\n" +
-"  import { PostService } from '../../services/PostService'\n" +
-"  const posts = new PostService()\n" +
-"\n" +
-"  // `params.slug` comes straight from the file name: [slug].alpine\n" +
-"  export function loader({ params }: { params: { slug: string } }) {\n" +
-"    const post = posts.bySlug(params.slug)\n" +
-"    if (!post) throw new Response('Not found', { status: 404 })\n" +
-"    return { post }\n" +
-"  }\n" +
-"<\/script>\n" +
-"\n" +
-"<template x-data>\n" +
-"  <article>\n" +
-"    <a href=\"/blog\">← All posts</a>\n" +
-"    <h1 x-text=\"post.title\"></h1>\n" +
-"    <p class=\"meta\" x-text=\"post.author + ' · ' + post.date\"></p>\n" +
-"    <p x-text=\"post.body\"></p>\n" +
-"  </article>\n" +
-"</template>\n" },
-
-      "components/Counter.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
-"<template x-data=\"{ count: Number(start) }\">\n" +
-"  <button class=\"counter\" @click=\"count++\" x-text=\"label + ': ' + count\"></button>\n" +
-"</template>\n" +
-"\n" +
-"<style scoped>\n" +
-"  .counter {\n" +
-"    padding: 0.45rem 0.9rem;\n" +
-"    border: 1px solid #6366f1;\n" +
-"    border-radius: 0.5rem;\n" +
-"    background: #eef2ff;\n" +
-"    color: #3730a3;\n" +
-"    cursor: pointer;\n" +
-"  }\n" +
-"</style>\n" },
-
-      "layouts/default.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
-"<template>\n" +
-"  <header class=\"site-header\">\n" +
-"    <a class=\"brand\" href=\"/\">my-app</a>\n" +
-"    <nav>\n" +
-"      <a href=\"/\">Home</a>\n" +
-"      <a href=\"/blog\">Blog</a>\n" +
-"    </nav>\n" +
-"  </header>\n" +
-"\n" +
-"  <main>\n" +
-"    <slot></slot>\n" +
-"  </main>\n" +
-"\n" +
-"  <footer>Built with Apex JS</footer>\n" +
-"</template>\n" +
-"\n" +
-"<style scoped>\n" +
-"  .site-header { display: flex; justify-content: space-between; padding: 1rem 1.5rem; }\n" +
-"  .brand { font-weight: 700; color: #6366f1; text-decoration: none; }\n" +
-"  main { max-width: 44rem; margin: 0 auto; padding: 2.5rem 1.5rem; }\n" +
-"</style>\n" },
-
-      "server/api/posts.ts": { lang: "TYPESCRIPT", dot: "ts", code:
-"import { defineApexRoute } from '@apex-stack/core'\n" +
-"import { z } from 'zod'\n" +
-"import { PostService } from '../../services/PostService'\n" +
-"\n" +
-"const posts = new PostService()\n" +
-"\n" +
-"// GET /api/posts  ·  MCP tool \"posts_list\"\n" +
-"// Because mcp: true, this handler is a REST endpoint AND a tool your\n" +
-"// AI can call at /mcp. One definition, two consumers.\n" +
-"export default defineApexRoute({\n" +
-"  method: 'GET',\n" +
-"  description: 'List blog posts, optionally filtered by tag',\n" +
-"  input: { tag: z.string().optional() },\n" +
-"  mcp: true,\n" +
-"  handler: ({ input }) => posts.all(input.tag),\n" +
-"})\n" },
-
-      "services/PostService.ts": { lang: "TYPESCRIPT", dot: "ts", code:
-"import type { Post } from '../shared/types'\n" +
-"\n" +
-"// Sample data stands in for a database. Every route, loader and job talks\n" +
-"// to this service — swap the array for a real query and nothing else changes.\n" +
-"const SEED: Post[] = [\n" +
-"  { id: 1, slug: 'hello-apex', title: 'Hello, Apex',\n" +
-"    excerpt: 'Why Alpine deserved a meta-framework.',\n" +
-"    author: 'Ada Lovelace', date: '2026-02-01', body: '…' },\n" +
-"  { id: 2, slug: 'ssr-then-hydrate', title: 'SSR, then hydrate',\n" +
-"    excerpt: 'Real HTML first. Interactivity second.',\n" +
-"    author: 'Grace Hopper', date: '2026-02-08', body: '…' },\n" +
-"  { id: 3, slug: 'routes-are-tools', title: 'Every route is an MCP tool',\n" +
-"    excerpt: 'Ship an API your AI can call.',\n" +
-"    author: 'Alan Turing', date: '2026-02-15', body: '…' },\n" +
-"]\n" +
-"\n" +
-"export class PostService {\n" +
-"  private posts = [...SEED]\n" +
-"\n" +
-"  all(tag?: string): Post[] {\n" +
-"    return tag ? this.posts.filter((p) => p.tags?.includes(tag)) : this.posts\n" +
-"  }\n" +
-"\n" +
-"  recent(n: number): Post[] {\n" +
-"    return this.posts.slice(0, n)\n" +
-"  }\n" +
-"\n" +
-"  bySlug(slug: string): Post | undefined {\n" +
-"    return this.posts.find((p) => p.slug === slug)\n" +
-"  }\n" +
-"}\n" },
-
-      "stores/ui.ts": { lang: "TYPESCRIPT", dot: "ts", code:
-"import { defineStore } from '@apex-stack/core'\n" +
-"\n" +
-"// Global, SSR-safe state shared across pages, components and islands: $store.ui\n" +
-"export default defineStore('ui', () => ({\n" +
-"  menuOpen: false,\n" +
-"  toggleMenu() {\n" +
-"    this.menuOpen = !this.menuOpen\n" +
-"  },\n" +
-"}))\n" },
-
-      "composables/useToggle.ts": { lang: "TYPESCRIPT", dot: "ts", code:
-"// Reusable client logic. Import it in a <script client> block, then use it\n" +
-"// in x-data. Expose methods (not getters) so object-spread keeps them reactive.\n" +
-"export function useToggle(initial = false) {\n" +
-"  return {\n" +
-"    on: initial,\n" +
-"    toggle() {\n" +
-"      this.on = !this.on\n" +
-"    },\n" +
-"  }\n" +
-"}\n" },
-
-      "shared/types.ts": { lang: "TYPESCRIPT", dot: "ts", code:
-"// One source of truth for shapes shared by the backend and the frontend.\n" +
-"// Change a shape here and the compiler enforces it everywhere it's used.\n" +
-"export interface Post {\n" +
-"  id: number\n" +
-"  slug: string\n" +
-"  title: string\n" +
-"  excerpt: string\n" +
-"  author: string\n" +
-"  date: string\n" +
-"  body: string\n" +
-"  tags?: string[]\n" +
-"}\n" },
-
-      "apex.config.ts": { lang: "TYPESCRIPT", dot: "cfg", code:
-"import { defineConfig } from 'apexjs'\n" +
-"\n" +
-"export default defineConfig({\n" +
-"  // File routing from ./pages, API + MCP from ./server/api.\n" +
-"  server: { mcp: true },\n" +
-"  // Islands: ship zero JS by default, hydrate only what's interactive.\n" +
-"  islands: true,\n" +
-"})\n" },
-
-      "package.json": { lang: "JSON", dot: "cfg", code:
-"{\n" +
-"  \"name\": \"my-app\",\n" +
-"  \"type\": \"module\",\n" +
-"  \"scripts\": {\n" +
-"    \"dev\": \"apex dev\",\n" +
-"    \"build\": \"apex build --server\",\n" +
-"    \"start\": \"apex start\",\n" +
-"    \"test\": \"vitest run\"\n" +
-"  },\n" +
-"  \"dependencies\": {\n" +
-"    \"@apex-stack/core\": \"^0.1.20\",\n" +
-"    \"alpinejs\": \"^3.14.0\",\n" +
-"    \"zod\": \"^3.23.0\"\n" +
-"  }\n" +
-"}\n" }
-    };
-
-    function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-    function highlight(code){
-      var s = esc(code);
-      var re = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")|\b(import|from|export|default|async|await|function|const|let|var|return|class|interface|type|extends|implements|new|if|else|for|of|in|throw|true|false|null|undefined|private|public|readonly)\b|(&lt;\/?)([a-zA-Z][\w-]*)|\b(\d+(?:\.\d+)?)\b/g;
-      return s.replace(re, (m, cmt, str, kw, lt, tag, num)=> {
-        if (cmt) return '<span class="c">'+cmt+'</span>';
-        if (str) return '<span class="s">'+str+'</span>';
-        if (kw)  return '<span class="k">'+kw+'</span>';
-        if (tag) return lt+'<span class="t">'+tag+'</span>';
-        if (num) return '<span class="n">'+num+'</span>';
-        return m;
+    // Master-detail: click a row to preview that component.
+    var rows = Array.prototype.slice.call(document.querySelectorAll(".uikit-row"));
+    var items = Array.prototype.slice.call(document.querySelectorAll(".uikit-item"));
+    function select(key) {
+      rows.forEach((r) => r.classList.toggle("active", r.dataset.key === key));
+      items.forEach((it) => { it.hidden = it.dataset.key !== key; });
+    }
+    rows.forEach((r) => {
+      r.addEventListener("click", (e) => {
+        if (e.target.classList.contains("uikit-cb")) return; // let the checkbox toggle
+        select(r.dataset.key);
       });
-    }
-
-    var codeEl = document.getElementById("axCode");
-    if (!codeEl) return;
-    var gutterEl = document.getElementById("axGutter");
-    var tabName = document.getElementById("axTabName");
-    var tabPath = document.getElementById("axTabPath");
-    var tabDot = document.getElementById("axTabDot");
-    var langPill = document.getElementById("axLang");
-    var scroll = codeEl.closest(".ax-scroll");
-
-    function openFile(path){
-      var f = FILES[path]; if (!f) return;
-      codeEl.innerHTML = highlight(f.code);
-      var n = f.code.replace(/\n$/,"").split("\n").length;
-      var g = ""; for (var i=1;i<=n;i++) g += i + (i<n?"\n":"");
-      gutterEl.textContent = g;
-      var parts = path.split("/");
-      tabName.textContent = parts.pop();
-      tabPath.textContent = parts.length ? "— " + parts.join("/") + "/" : "";
-      tabDot.className = "ax-dot " + f.dot;
-      langPill.textContent = f.lang;
-      Array.prototype.forEach.call(document.querySelectorAll(".ax-row.file"), (b)=> {
-        b.classList.toggle("active", b.getAttribute("data-file") === path);
-      });
-      if (scroll) scroll.scrollTop = 0;
-    }
-
-    Array.prototype.forEach.call(document.querySelectorAll(".ax-row.file"), (b)=> {
-      b.addEventListener("click", ()=> { openFile(b.getAttribute("data-file")); });
-    });
-    Array.prototype.forEach.call(document.querySelectorAll("#axTree [data-fldr]"), (b)=> {
-      b.addEventListener("click", ()=> { b.parentElement.classList.toggle("collapsed"); });
-    });
-    openFile("pages/index.alpine");
-
-    // Live blog demo — sample data, filter + publish (no DB).
-    var POSTS = [
-      { id: 3, slug: "routes-are-tools", title: "Every route is an MCP tool", excerpt: "Ship an API your AI can call.", author: "Alan Turing", date: "2026-02-15" },
-      { id: 2, slug: "ssr-then-hydrate", title: "SSR, then hydrate", excerpt: "Real HTML first. Interactivity second.", author: "Grace Hopper", date: "2026-02-08" },
-      { id: 1, slug: "hello-apex", title: "Hello, Apex", excerpt: "Why Alpine deserved a meta-framework.", author: "Ada Lovelace", date: "2026-02-01" }
-    ];
-    var nextId = 4, q = "";
-    var postsEl = document.getElementById("axPosts");
-    var reqlog = document.getElementById("axReqlog");
-    var filterEl = document.getElementById("axFilter");
-
-    var toastEl = document.createElement("div");
-    toastEl.className = "ax-toast";
-    document.body.appendChild(toastEl);
-    var toastT;
-    function toast(html){
-      toastEl.innerHTML = html; toastEl.classList.add("show");
-      clearTimeout(toastT); toastT = setTimeout(()=> { toastEl.classList.remove("show"); }, 2600);
-    }
-
-    function render(){
-      if (!postsEl) return;
-      var list = POSTS.filter((p)=> p.title.toLowerCase().indexOf(q.toLowerCase()) > -1);
-      if (!list.length){ postsEl.innerHTML = '<div class="ax-empty">No posts match “'+esc(q)+'”.</div>'; return; }
-      postsEl.innerHTML = list.map((p)=> '<a class="ax-post" href="#showcase" onclick="return false"><strong>'+esc(p.title)+'</strong>'+
-               '<span>'+esc(p.excerpt)+'</span>'+
-               '<span class="by">'+esc(p.author)+' · '+p.date+' · /blog/'+esc(p.slug)+'</span></a>').join("");
-    }
-    if (filterEl) filterEl.addEventListener("input", (e)=> {
-      q = e.target.value;
-      reqlog.textContent = q ? 'filtering client-side · ' + POSTS.filter((p)=> p.title.toLowerCase().indexOf(q.toLowerCase())>-1).length + ' shown' : 'GET /api/posts → 200';
-      render();
     });
 
-    function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32) || "post"; }
-    var addForm = document.getElementById("axAddForm");
-    if (addForm) addForm.addEventListener("submit", (e)=> {
-      e.preventDefault();
-      var title = document.getElementById("axTitle").value.trim();
-      var author = document.getElementById("axAuthor").value.trim();
-      if (!title || !author) return;
-      var post = { id: nextId++, slug: slugify(title), title: title, excerpt: "Just published from the demo form.", author: author, date: "2026-02-20" };
-      POSTS.unshift(post);
-      q = ""; if (filterEl) filterEl.value = "";
-      render();
-      reqlog.textContent = 'POST /api/posts → 201';
-      toast('POST /api/posts → <span class="ax-code2">201 Created</span>  ·  id ' + post.id);
-      e.target.reset();
-    });
-    render();
-  })();
-
-
-  // Apex summit network — a live triangulated mesh drifting beneath the hero
-  // and the panorama. Runs on every `.apex-net` canvas.
-  (() => {
-    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    document.querySelectorAll(".apex-net").forEach((canvas) => {
-    var ctx = canvas.getContext("2d");
-    var W = 0, H = 0, DPR = 1, nodes = [], raf = null;
-
-    function css(v, fb) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim() || fb; }
-    function toRgb(h) {
-      h = h.replace("#", "");
-      if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
-      var n = parseInt(h, 16);
-      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-    }
-    var lineC, accC;
-    function palette() { lineC = toRgb(css("--glacier", "#818cf8")); accC = toRgb(css("--alpenglow", "#22d3ee")); }
-    palette();
-
-    function size() {
-      DPR = Math.min(window.devicePixelRatio || 1, 2);
-      W = canvas.clientWidth; H = canvas.clientHeight;
-      canvas.width = W * DPR; canvas.height = H * DPR;
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      var count = Math.max(24, Math.min(70, Math.floor(W / 22)));
-      nodes = [];
-      for (var i = 0; i < count; i++) {
-        nodes.push({
-          x: Math.random() * W, y: Math.random() * H,
-          vx: (Math.random() - 0.5) * 0.16, vy: (Math.random() - 0.5) * 0.16,
-          ph: Math.random() * Math.PI * 2, accent: Math.random() < 0.22,
-        });
-      }
-    }
-
-    function frame(move) {
-      ctx.clearRect(0, 0, W, H);
-      var maxD = 150, facetLim = (maxD * 1.15) * (maxD * 1.15);
-      if (move) {
-        for (var i = 0; i < nodes.length; i++) {
-          var n = nodes[i];
-          n.x += n.vx; n.y += n.vy; n.ph += 0.018;
-          if (n.x < 0 || n.x > W) n.vx *= -1;
-          if (n.y < 0 || n.y > H) n.vy *= -1;
-        }
-      }
-      // Faceted fills — each node to its two nearest neighbours, echoing the
-      // faceted "A" logo (lit + shadow triangular faces).
-      for (var i = 0; i < nodes.length; i++) {
-        var n = nodes[i], a1 = null, a2 = null, d1 = 1e12, d2 = 1e12;
-        for (var j = 0; j < nodes.length; j++) {
-          if (j === i) continue;
-          var m = nodes[j], dx = n.x - m.x, dy = n.y - m.y, d = dx * dx + dy * dy;
-          if (d < d1) { d2 = d1; a2 = a1; d1 = d; a1 = m; }
-          else if (d < d2) { d2 = d; a2 = m; }
-        }
-        if (a1 && a2 && d2 < facetLim) {
-          var frgb = n.accent ? accC : lineC;
-          ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(a1.x, a1.y); ctx.lineTo(a2.x, a2.y); ctx.closePath();
-          ctx.fillStyle = "rgba(" + frgb[0] + "," + frgb[1] + "," + frgb[2] + ",0.035)";
-          ctx.fill();
-        }
-      }
-      // Connection lines.
-      for (var i = 0; i < nodes.length; i++) {
-        var n = nodes[i];
-        for (var j = i + 1; j < nodes.length; j++) {
-          var m = nodes[j], dx = n.x - m.x, dy = n.y - m.y, d = Math.sqrt(dx * dx + dy * dy);
-          if (d < maxD) {
-            var a = (1 - d / maxD) * 0.30;
-            ctx.strokeStyle = "rgba(" + lineC[0] + "," + lineC[1] + "," + lineC[2] + "," + a.toFixed(3) + ")";
-            ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(m.x, m.y); ctx.stroke();
-          }
-        }
-      }
-      // Vertices.
-      for (var k = 0; k < nodes.length; k++) {
-        var p = nodes[k], rgb = p.accent ? accC : lineC;
-        var rad = p.accent ? 1.7 + Math.sin(p.ph) * 0.8 : 1.4;
-        ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0.5, rad), 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + "," + (p.accent ? 0.9 : 0.5) + ")";
-        ctx.fill();
-      }
-    }
-
-    function loop() { frame(true); raf = requestAnimationFrame(loop); }
-    function start() {
-      size();
-      if (raf) cancelAnimationFrame(raf);
-      if (reduce) frame(false); else loop();
-      requestAnimationFrame(() => { canvas.classList.add("drawn"); });
-    }
-
-    var rt;
-    window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(start, 160); });
-    new MutationObserver(() => { palette(); if (reduce) frame(false); })
-      .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    start();
-    });
-  })();
-
-  // Feature carousel — scroll-snap track with prev/next + dot indicators.
-  (() => {
-    var root = document.querySelector("[data-carousel]");
-    if (!root) return;
-    var track = root.querySelector("[data-carousel-track]");
-    var slides = Array.prototype.slice.call(track.children);
-    var dotsWrap = document.querySelector("[data-carousel-dots]");
-    var prev = root.querySelector("[data-carousel-prev]");
-    var next = root.querySelector("[data-carousel-next]");
-    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    var dots = slides.map((_, i) => {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.setAttribute("aria-label", "Go to feature " + (i + 1));
-      b.addEventListener("click", () => { scrollToIndex(i); });
-      dotsWrap.appendChild(b);
-      return b;
-    });
-
-    function current() {
-      var c = track.scrollLeft + track.clientWidth / 2, best = 0, bd = 1e12;
-      slides.forEach((s, i) => {
-        var d = Math.abs(s.offsetLeft + s.offsetWidth / 2 - c);
-        if (d < bd) { bd = d; best = i; }
-      });
-      return best;
-    }
-    function scrollToIndex(i) {
-      i = Math.max(0, Math.min(slides.length - 1, i));
-      var s = slides[i];
-      track.scrollTo({ left: s.offsetLeft - (track.clientWidth - s.offsetWidth) / 2, behavior: reduce ? "auto" : "smooth" });
-    }
-    function sync() {
-      var i = current();
-      dots.forEach((d, di) => { d.setAttribute("aria-current", di === i ? "true" : "false"); });
-      if (prev) prev.disabled = i === 0;
-      if (next) next.disabled = i === slides.length - 1;
-    }
-    if (prev) prev.addEventListener("click", () => { scrollToIndex(current() - 1); });
-    if (next) next.addEventListener("click", () => { scrollToIndex(current() + 1); });
-    var st;
-    track.addEventListener("scroll", () => { clearTimeout(st); st = setTimeout(sync, 80); });
-    window.addEventListener("resize", sync);
-    sync();
-  })();
-
-  // Panorama — vertical auto-advancing carousel.
-  (() => {
-    var root = document.querySelector("[data-pano]");
-    if (!root) return;
-    var track = root.querySelector("[data-pano-track]");
-    var slides = Array.prototype.slice.call(track.children);
-    var dotsWrap = root.querySelector("[data-pano-dots]");
-    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var i = 0;
-    var timer = null;
-
-    var dots = slides.map((_, k) => {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.setAttribute("aria-label", "Panel " + (k + 1));
-      b.addEventListener("click", () => { go(k); restart(); });
-      dotsWrap.appendChild(b);
-      return b;
-    });
-
-    function go(k) {
-      i = (k + slides.length) % slides.length;
-      track.style.transform = "translateY(-" + i * 100 + "%)";
-      dots.forEach((d, di) => { d.setAttribute("aria-current", di === i ? "true" : "false"); });
-    }
-    function restart() {
-      if (reduce) return;
-      clearInterval(timer);
-      timer = setInterval(() => { go(i + 1); }, 4200);
-    }
-
-    go(0);
-    restart();
-    root.addEventListener("mouseenter", () => { clearInterval(timer); });
-    root.addEventListener("mouseleave", restart);
-
-    // Scroll to advance: a wheel gesture over the panorama moves one panel.
-    // At the ends we DON'T preventDefault, so the page scrolls on past it
-    // (no scroll-trapping). One advance per gesture (throttled).
-    var lastWheel = 0;
-    root.addEventListener("wheel", (e) => {
-      var down = e.deltaY > 0;
-      var atEnd = down ? i >= slides.length - 1 : i <= 0;
-      if (atEnd) return; // release to normal page scroll
-      e.preventDefault();
-      var now = e.timeStamp || 0;
-      if (now - lastWheel < 700) return;
-      lastWheel = now;
-      go(i + (down ? 1 : -1));
-      restart();
-    }, { passive: false });
-
-    // Touch swipe (mobile): a clear vertical swipe moves one panel.
-    var ty = null;
-    root.addEventListener("touchstart", (e) => { ty = e.touches[0].clientY; }, { passive: true });
-    root.addEventListener("touchend", (e) => {
-      if (ty == null) return;
-      var dy = ty - e.changedTouches[0].clientY;
-      ty = null;
-      if (Math.abs(dy) < 45) return;
-      var down = dy > 0;
-      var atEnd = down ? i >= slides.length - 1 : i <= 0;
-      if (atEnd) return;
-      go(i + (down ? 1 : -1));
-      restart();
-    }, { passive: true });
-  })();
-</script>
-<script>
-  (()=> {
-    var cbs = Array.prototype.slice.call(document.querySelectorAll('.uikit-cb'));
-    var cmd = document.getElementById('cmd'), copy = document.getElementById('copy'), count = document.getElementById('count');
-    function selected(){ return cbs.filter((c)=> c.checked).map((c)=> c.value); }
-    function render(){
-      var s = selected();
-      count.textContent = s.length + ' selected';
-      if (!s.length){ cmd.textContent = 'apex add …'; copy.disabled = true; return; }
-      cmd.textContent = s.length === cbs.length ? 'apex add --all' : 'apex add ' + s.join(' ');
+    // Selection → apex add command.
+    var cbs = Array.prototype.slice.call(document.querySelectorAll(".uikit-cb"));
+    var cmd = document.getElementById("cmd");
+    var copy = document.getElementById("copy");
+    var count = document.getElementById("count");
+    function render() {
+      var s = cbs.filter((c) => c.checked).map((c) => c.value);
+      count.textContent = s.length + " selected";
+      if (!s.length) { cmd.textContent = "apex add …"; copy.disabled = true; return; }
+      cmd.textContent = s.length === cbs.length ? "apex add --all" : "apex add " + s.join(" ");
       copy.disabled = false;
     }
-    cbs.forEach((c)=> { c.addEventListener('change', render); });
-    document.getElementById('selAll').addEventListener('click', ()=> { cbs.forEach((c)=> {c.checked=true}); render(); });
-    document.getElementById('clearAll').addEventListener('click', ()=> { cbs.forEach((c)=> {c.checked=false}); render(); });
-    document.querySelectorAll('.uikit-selcat').forEach((b)=> { b.addEventListener('click', (e)=> {
-      e.preventDefault();
-      var cat = b.getAttribute('data-cat');
-      b.closest('.uikit-cat').querySelectorAll('.uikit-cb').forEach((c)=> { c.checked = true; });
-      render();
-    }); });
-    copy.addEventListener('click', ()=> {
+    cbs.forEach((c) => c.addEventListener("change", render));
+    document.getElementById("selAll").addEventListener("click", () => { cbs.forEach((c) => { c.checked = true; }); render(); });
+    document.getElementById("clearAll").addEventListener("click", () => { cbs.forEach((c) => { c.checked = false; }); render(); });
+    copy.addEventListener("click", () => {
       var t = cmd.textContent;
       if (navigator.clipboard) navigator.clipboard.writeText(t);
-      var o = copy.textContent; copy.textContent = 'Copied ✓'; setTimeout(()=> { copy.textContent = o; }, 1500);
+      var old = copy.textContent; copy.textContent = "Copied!";
+      setTimeout(() => { copy.textContent = old; }, 1400);
     });
     render();
   })();
