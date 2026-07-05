@@ -1,0 +1,52 @@
+{
+  "islands": false,
+  "routes": [
+    {
+      "pageId": "/pages/about.alpine",
+      "pattern": "/about",
+      "segments": [
+        {
+          "literal": "about"
+        }
+      ],
+      "isDynamic": false,
+      "serverFile": "pages_about.mjs",
+      "clientHref": "/assets/about-knab_Fix.js",
+      "clientCss": []
+    },
+    {
+      "pageId": "/pages/index.alpine",
+      "pattern": "/",
+      "segments": [],
+      "isDynamic": false,
+      "serverFile": "pages_index.mjs",
+      "clientHref": "/assets/index-CtnVlqe4.js",
+      "clientCss": []
+    },
+    {
+      "pageId": "/pages/blog/[slug].alpine",
+      "pattern": "/blog/:slug",
+      "segments": [
+        {
+          "literal": "blog"
+        },
+        {
+          "param": "slug"
+        }
+      ],
+      "isDynamic": true,
+      "serverFile": "pages_blog_slug_.mjs",
+      "clientHref": "/assets/blog_slug_-Cb4hPrwg.js",
+      "clientCss": []
+    }
+  ],
+  "components": {
+    "Counter": "components_Counter.mjs"
+  },
+  "api": [],
+  "middleware": [],
+  "runtimeConfig": {
+    "public": {}
+  },
+  "clientNav": true
+}

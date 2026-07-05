@@ -1,0 +1,33 @@
+{
+  "_runtime-BGZNu6fb.js": {
+    "file": "assets/runtime-BGZNu6fb.js",
+    "name": "runtime"
+  },
+  "virtual:apex-client:/pages/about.alpine": {
+    "file": "assets/about-knab_Fix.js",
+    "name": "about",
+    "src": "virtual:apex-client:/pages/about.alpine",
+    "isEntry": true,
+    "imports": [
+      "_runtime-BGZNu6fb.js"
+    ]
+  },
+  "virtual:apex-client:/pages/blog/[slug].alpine": {
+    "file": "assets/blog_slug_-Cb4hPrwg.js",
+    "name": "blog_slug_",
+    "src": "virtual:apex-client:/pages/blog/[slug].alpine",
+    "isEntry": true,
+    "imports": [
+      "_runtime-BGZNu6fb.js"
+    ]
+  },
+  "virtual:apex-client:/pages/index.alpine": {
+    "file": "assets/index-CtnVlqe4.js",
+    "name": "index",
+    "src": "virtual:apex-client:/pages/index.alpine",
+    "isEntry": true,
+    "imports": [
+      "_runtime-BGZNu6fb.js"
+    ]
+  }
+}
