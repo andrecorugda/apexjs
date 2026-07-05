@@ -25,7 +25,7 @@ import { matchRoute, type RouteDef } from '../routing/router.js'
 /** The build manifest written by `apex build --server` to `<dist>/apex-manifest.json`. */
 export interface ProdManifest {
   islands: boolean
-  routes: Array<RouteDef & { serverFile: string; clientHref?: string }>
+  routes: Array<RouteDef & { serverFile: string; clientHref?: string; clientCss?: string[] }>
   components: Record<string, string>
   api: Array<{ name: string; serverFile: string }>
   /** Middleware modules in run order. */
@@ -160,6 +160,7 @@ export async function startProdServer(
         registry,
         componentCss,
         clientHref: route?.clientHref,
+        clientCss: route?.clientCss,
         runtimeConfig,
         publicConfig,
         locals: (event.context.apexLocals as Record<string, unknown>) ?? {},

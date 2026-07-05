@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path'
 import { apex } from '@apex-stack/vite'
 import { defineCommand } from 'citty'
 import { createServer as createViteServer } from 'vite'
-import { buildClient } from '../build/buildClient.js'
+import { buildClient, type ClientAssets } from '../build/buildClient.js'
 import { buildServer } from '../build/buildServer.js'
 import { loadComponents } from '../components/registry.js'
 import { resolveApexConfig } from '../config/resolve.js'
@@ -55,7 +55,7 @@ export const buildCommand = defineCommand({
 
     // Component mode: build a client bundle per page so the prerendered HTML hydrates.
     const hrefs = args.islands
-      ? new Map<string, string>()
+      ? new Map<string, ClientAssets>()
       : await buildClient(root, staticRoutes, outDir, args.base)
 
     const vite = await createViteServer({
@@ -94,9 +94,10 @@ export const buildCommand = defineCommand({
           runtimeConfig,
           publicConfig,
         }
+        const assets = hrefs.get(route.pageId)
         const html = args.islands
           ? await renderIslandsPage(common)
-          : await renderPage({ ...common, clientHref: hrefs.get(route.pageId) })
+          : await renderPage({ ...common, clientHref: assets?.js, clientCss: assets?.css })
 
         const dest = join(outDir, outFile(route.pattern))
         mkdirSync(dirname(dest), { recursive: true })
@@ -188,7 +189,8 @@ async function buildServerTarget(
     routes: routes.map((r) => ({
       ...r,
       serverFile: server.modules[r.pageId],
-      clientHref: clientHrefs.get(r.pageId),
+      clientHref: clientHrefs.get(r.pageId)?.js,
+      clientCss: clientHrefs.get(r.pageId)?.css,
     })),
     components,
     api,

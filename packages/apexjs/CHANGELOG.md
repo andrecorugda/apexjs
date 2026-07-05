@@ -1,5 +1,25 @@
 # @apex-stack/core
 
+## 0.7.2
+
+### Patch Changes
+
+- 18800ea: Dev error page fixes: the project file tree no longer disappears when toggling
+  Frames/Raw (the tabs wrongly hid it), the tree is fully expanded by default, and
+  the error's origin file is marked red even for compile/transform errors (e.g. a
+  malformed `.alpine`) — the offending file is taken from Vite's error `loc`/`id`
+  and surfaced as a top "compile error" frame with code context.
+- 1e48f34: No more style flash — and production builds are actually styled.
+
+  The global `app.css` (Tailwind + shared styles) was loaded via a deferred JS
+  import at the end of `<body>`, so pages painted unstyled (white) for a moment
+  before styling applied — a flash on every navigation. It's now a render-blocking
+  `<link>` in `<head>`. Critically, the **production** client build never ran the
+  Tailwind plugin nor linked the extracted CSS, so built sites shipped with **no
+  Tailwind at all**; `apex build`/`--server` now process `app.css` through Tailwind,
+  extract it to a hashed asset, and link it in every page's `<head>`. VS Code
+  extension icon updated (0.1.4).
+
 ## 0.7.1
 
 ### Patch Changes

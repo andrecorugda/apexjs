@@ -140,9 +140,9 @@ function fileTree(root: string, errorFile: string | undefined): string {
       if (++count > 600) break
       const childRel = rel ? `${rel}/${e.name}` : e.name
       if (e.isDirectory()) {
-        const onPath = errRel === childRel || errRel.startsWith(`${childRel}/`)
+        // Expanded by default so the whole structure is visible at a glance.
         items.push(
-          `<details class="tdir"${onPath ? ' open' : ''}><summary>${FOLDER_ICON}<span>${esc(e.name)}</span></summary>${walk(join(dir, e.name), childRel, depth + 1)}</details>`,
+          `<details class="tdir" open><summary>${FOLDER_ICON}<span>${esc(e.name)}</span></summary>${walk(join(dir, e.name), childRel, depth + 1)}</details>`,
         )
       } else {
         const isErr = childRel === errRel
@@ -238,7 +238,7 @@ var tabs = document.querySelectorAll('.tabs button');
 tabs.forEach(function (b) {
   b.addEventListener('click', function () {
     tabs.forEach(function (x) { x.classList.toggle('active', x === b); });
-    ['frames','raw','tree'].forEach(function (v) {
+    ['frames','raw'].forEach(function (v) {
       var el = document.getElementById('view-' + v);
       if (el) el.hidden = v !== b.dataset.view;
     });
@@ -258,10 +258,39 @@ export function renderErrorPage(error: Error, opts: { url: string; root: string 
   const message = error.message || String(error)
   const stack = error.stack || ''
   const frames = parseFrames(stack, opts.root)
-  const origin = frames.find((f) => f.app) ?? frames[0]
 
-  const framesHtml = frames.length
-    ? frames.map((f) => frameCard(f, opts.root)).join('')
+  // Compile / transform errors (e.g. a malformed .alpine) carry the offending
+  // file in Vite's `loc`/`id`/`file` even when the stack only points at compiler
+  // internals. Surface it as a synthetic top frame so it shows code context and
+  // gets marked in the tree.
+  const v = error as unknown as {
+    loc?: { file?: string; line?: number; column?: number }
+    id?: string
+    file?: string
+  }
+  const rawFile = v.loc?.file ?? v.id ?? v.file
+  const locFile =
+    typeof rawFile === 'string' ? rawFile.replace(/\?.*$/, '').replace(/[\\/]/g, sep) : ''
+  let synthetic: Frame | undefined
+  if (
+    locFile &&
+    existsSync(locFile) &&
+    locFile.startsWith(opts.root) &&
+    !frames.some((f) => f.file === locFile)
+  ) {
+    synthetic = {
+      func: 'compile error',
+      file: locFile,
+      line: v.loc?.line ?? 1,
+      col: v.loc?.column ?? 1,
+      app: true,
+    }
+  }
+  const allFrames = synthetic ? [synthetic, ...frames] : frames
+  const origin = synthetic ?? frames.find((f) => f.app) ?? frames[0]
+
+  const framesHtml = allFrames.length
+    ? allFrames.map((f) => frameCard(f, opts.root)).join('')
     : '<p class="sub">No stack frames available.</p>'
 
   const body = `
