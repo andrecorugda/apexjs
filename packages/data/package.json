@@ -1,6 +1,6 @@
 {
   "name": "@apex-stack/data",
-  "version": "0.1.23",
+  "version": "0.1.24",
   "description": "Data layer for Apex JS — Drizzle-backed resources that are REST + MCP by default",
   "type": "module",
   "license": "MIT",
