@@ -181,17 +181,20 @@
     };
     // name -> full CSS font stack (what the command emits + preview applies)
     var SANS = 'ui-sans-serif, system-ui, sans-serif';
+    // Family names are left UNQUOTED — valid CSS (a multi-word family name may be
+    // an unquoted identifier sequence), and it keeps the copyable command free of
+    // nested double quotes so it pastes cleanly into any shell.
     var FONTS = {
-      "Instrument Sans": '"Instrument Sans", ' + SANS,
-      "Montserrat": '"Montserrat", ' + SANS,
-      "Inter": '"Inter", ' + SANS,
-      "Figtree": '"Figtree", ' + SANS,
-      "Plus Jakarta Sans": '"Plus Jakarta Sans", ' + SANS,
-      "Sora": '"Sora", ' + SANS,
-      "Space Grotesk": '"Space Grotesk", ' + SANS,
+      "Instrument Sans": "Instrument Sans, " + SANS,
+      "Montserrat": "Montserrat, " + SANS,
+      "Inter": "Inter, " + SANS,
+      "Figtree": "Figtree, " + SANS,
+      "Plus Jakarta Sans": "Plus Jakarta Sans, " + SANS,
+      "Sora": "Sora, " + SANS,
+      "Space Grotesk": "Space Grotesk, " + SANS,
       "System UI": SANS,
-      "Lora": '"Lora", Georgia, serif',
-      "Merriweather": '"Merriweather", Georgia, serif',
+      "Lora": "Lora, Georgia, serif",
+      "Merriweather": "Merriweather, Georgia, serif",
     };
     var stage = document.getElementById("tbStage");
     var $ = function (id) { return document.getElementById(id); };
@@ -248,7 +251,7 @@
       function add(flag, cur, def, isFont) {
         if (cur === def) return;
         var v = isFont ? FONTS[cur] : cur;
-        flags.push('  <span class="flag">--' + flag + '</span>=<span class="val">"' + v + '"</span>');
+        flags.push('<span class="flag">--' + flag + '</span>=<span class="val">"' + v + '"</span>');
       }
       add("primary", s.primary, DEFAULTS.primary);
       add("primary-dark", s["primary-dark"], DEFAULTS["primary-dark"]);
@@ -258,7 +261,9 @@
       add("font-body", s["font-body"], DEFAULTS["font-body"], true);
       var el = $("tbCmdText");
       if (!flags.length) { el.textContent = "apex theme"; return; }
-      el.innerHTML = "apex theme \\\n" + flags.join(" \\\n");
+      // Single line — no backslash-newline continuation (that's bash-only; breaks
+      // in PowerShell / cmd). Pastes cleanly everywhere.
+      el.innerHTML = "apex theme " + flags.join(" ");
     }
 
     // Wire color pickers <-> hex fields.

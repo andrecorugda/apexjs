@@ -14,12 +14,16 @@
   }
 </script>
 
-<template x-data="{ show: false }">
+<template x-data>
   <!-- Hero -->
-  <section class="py-8 text-center">
-    <h1 class="font-title text-4xl font-extrabold tracking-tight text-on-surface-strong sm:text-5xl dark:text-on-surface-dark-strong" x-text="title"></h1>
+  <section class="flex flex-col items-center py-10 text-center sm:py-16">
+    <img src="/favicon.svg" alt="Apex JS" width="72" height="72" class="size-16 sm:size-20 drop-shadow" />
+    <p class="mt-5 inline-flex items-center gap-2 rounded-full border border-outline px-3 py-1 text-xs font-medium text-on-surface/80 dark:border-outline-dark dark:text-on-surface-dark/80">
+      Built with <span class="font-title font-bold text-on-surface-strong dark:text-on-surface-dark-strong">Apex&nbsp;JS</span>
+    </p>
+    <h1 class="mt-5 font-title text-4xl font-extrabold tracking-tight text-on-surface-strong sm:text-6xl dark:text-on-surface-dark-strong" x-text="title"></h1>
     <p class="mx-auto mt-4 max-w-2xl text-lg" x-text="tagline"></p>
-    <div class="mt-6 flex flex-wrap justify-center gap-3">
+    <div class="mt-7 flex flex-wrap justify-center gap-3">
       <a href="/blog"><Button>Read the blog</Button></a>
       <a href="https://apexjs.site" class="inline-flex items-center justify-center rounded-radius border border-outline px-4 py-2 text-sm font-medium text-on-surface transition hover:opacity-75 dark:border-outline-dark dark:text-on-surface-dark">Docs</a>
     </div>
@@ -54,8 +58,9 @@
     </ul>
   </section>
 
-  <!-- A hydrated, interactive component -->
-  <section class="mt-10 flex flex-col items-start gap-3">
+  <!-- A hydrated, interactive island. `client:load` hydrates it immediately in
+       islands mode; in default mode the whole page hydrates anyway. -->
+  <section class="mt-10 flex flex-col items-start gap-3" x-data="{ show: false }" client:load>
     <p class="text-sm text-on-surface/80 dark:text-on-surface-dark/80">Hydrated in the browser — click it:</p>
     <Counter start="0" label="Clicks" />
     <button type="button" class="text-sm text-primary hover:opacity-75 dark:text-primary-dark" @click="show = !show" x-text="show ? 'Hide details' : 'How does this work?'"></button>

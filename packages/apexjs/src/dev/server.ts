@@ -1,13 +1,14 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { createServer as createHttpServer, type Server } from 'node:http'
 import { createRequire } from 'node:module'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { apex } from '@apex-stack/vite'
 import {
   createApp,
   defineEventHandler,
   fromNodeMiddleware,
+  getQuery,
   getRequestHeaders,
   setResponseHeader,
   setResponseStatus,
@@ -22,6 +23,7 @@ import { createMcpHandler } from '../mcp/server.js'
 import { loadMiddleware, runMiddleware } from '../middleware/run.js'
 import { matchRoute, scanPages } from '../routing/router.js'
 import { loadStores } from '../stores/loader.js'
+import { openInEditor } from '../vscode.js'
 import { renderErrorPage, renderNotFoundPage } from './errorPage.js'
 import { type PageModule, renderPage } from './renderPage.js'
 
@@ -181,6 +183,24 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
     defineEventHandler((event) =>
       loadEntries().then((e) => createMcpHandler(e, runtimeConfig)(event)),
     ),
+  )
+
+  // Dev-only: open a source file in the user's editor (from the error page's
+  // "open in editor" links). Only files inside the project root are allowed.
+  app.use(
+    '/__apex_open',
+    defineEventHandler((event) => {
+      const q = getQuery(event)
+      const file = String(q.file ?? '')
+      const resolved = resolve(file)
+      if (!file || !resolved.startsWith(options.root)) {
+        setResponseStatus(event, 400)
+        return { ok: false }
+      }
+      const ok = openInEditor(resolved, Number(q.line) || 1, Number(q.col) || 1)
+      setResponseStatus(event, ok ? 200 : 500)
+      return { ok }
+    }),
   )
 
   app.use(

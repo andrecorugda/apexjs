@@ -1,6 +1,8 @@
 import { type ComponentRegistry, renderIslands } from '@apex-stack/kit'
 import { clientConfigScript, type RuntimeConfig } from '../config/runtime.js'
-import type { PageModule } from '../dev/renderPage.js'
+import { type PageModule, renderHead } from '../dev/renderPage.js'
+
+const SLOT_RE = /<slot\b[^>]*>[\s\S]*?<\/slot>/
 
 /**
  * The lazy islands client loader, inlined into the page shell.
@@ -59,38 +61,84 @@ export interface RenderIslandsPageOptions {
   runtimeConfig?: RuntimeConfig
   publicConfig?: Record<string, unknown>
   locals?: Record<string, unknown>
+  /** Available layout names (from `layouts/*.alpine`) — enables page-wrapping layouts. */
+  layouts?: string[]
+  appCss?: string
 }
 
 /**
  * Render a page in islands mode: static-first HTML with independently-hydrating
  * interactive regions. A page with no hydrating islands ships **zero** JavaScript.
+ *
+ * The page is wrapped in its layout chain (same as the default renderer) and the
+ * WHOLE tree — layout + page — goes through the islands walker, so `client:*`
+ * directives anywhere (page or layout) become hydrating islands.
  */
 export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise<string> {
   const mod = await opts.loadModule(opts.pageId)
+  const cfg = opts.runtimeConfig ?? { public: {} }
+  const locals = opts.locals ?? {}
   const loaderData = ((await mod.loader({
     params: opts.params ?? {},
     url: opts.url,
-    config: opts.runtimeConfig ?? { public: {} },
-    locals: opts.locals ?? {},
+    config: cfg,
+    locals,
   })) ?? {}) as Record<string, unknown>
 
-  const { html, hydratingCount } = renderIslands(
-    mod.template,
-    loaderData,
-    mod.scopeId,
-    opts.registry,
-  )
+  const head = mod.head
+    ? await mod.head({
+        data: loaderData,
+        params: opts.params ?? {},
+        url: opts.url,
+        config: cfg,
+        locals,
+      })
+    : undefined
+
+  // Root x-data defaults are available as SSR scope too (so a page that keeps
+  // page-level x-data still renders its static values in islands mode).
+  const authoredDefaults = mod.rootData ? mod.rootData() : {}
+  const data = { ...authoredDefaults, ...loaderData }
+
+  // Wrap the page template in its layout chain (slot → inner) at the TEMPLATE
+  // level, so islands in the layout (e.g. a nav toggle) hydrate too.
+  const available = opts.layouts ?? []
+  const layoutName =
+    mod.layout === false
+      ? null
+      : typeof mod.layout === 'string'
+        ? mod.layout
+        : available.includes('default')
+          ? 'default'
+          : null
+  let template = mod.template
+  let layoutCss = ''
+  const seen = new Set<string>()
+  let next: string | false | null | undefined = layoutName
+  while (typeof next === 'string' && available.includes(next) && !seen.has(next)) {
+    seen.add(next)
+    const layoutMod = await opts.loadModule(`/layouts/${next}.alpine`)
+    template = SLOT_RE.test(layoutMod.template)
+      ? layoutMod.template.replace(SLOT_RE, () => template)
+      : layoutMod.template + template
+    layoutCss += layoutMod.css
+    next = layoutMod.layout
+  }
+
+  const { html, hydratingCount } = renderIslands(template, data, mod.scopeId, opts.registry)
 
   const loaderScript = hydratingCount > 0 ? `\n<script type="module">${ISLAND_LOADER}</script>` : ''
   const configScript = hydratingCount > 0 ? `\n${clientConfigScript(opts.publicConfig ?? {})}` : ''
+  const appCssLink = opts.appCss ? `\n  <link rel="stylesheet" href="${opts.appCss}" />` : ''
 
   const doc = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Apex JS — Islands</title>
-  <style>${mod.css}${opts.componentCss ?? ''}</style>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  ${renderHead(head)}${appCssLink}
+  <style>${mod.css}${layoutCss}${opts.componentCss ?? ''}</style>
 </head>
 <body>
 ${html}${configScript}${loaderScript}

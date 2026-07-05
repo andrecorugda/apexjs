@@ -2,7 +2,7 @@
 // self-contained: (1) the scaffold templates from create-apexjs (single source
 // of truth), and (2) the packaged .alpine VS Code extension (.vsix), so
 // `apex new` / `apex upgrade` can offer to install it.
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 // (1) templates
@@ -33,6 +33,10 @@ if (existsSync(extDir)) {
     if (existsSync(vsxDest)) rmSync(vsxDest, { recursive: true, force: true })
     mkdirSync(vsxDest, { recursive: true })
     cpSync(`${extDir}/${vsix}`, `${vsxDest}/apex-alpine.vsix`)
+    // Record the bundled version (from `apex-alpine-<version>.vsix`) so the CLI can
+    // compare against the installed extension and only prompt when action is useful.
+    const version = vsix.match(/-(\d+\.\d+\.\d+)\.vsix$/)?.[1] ?? ''
+    writeFileSync(`${vsxDest}/version.txt`, version)
     console.log(`apex: bundled VS Code extension (${vsix})`)
   }
 }
