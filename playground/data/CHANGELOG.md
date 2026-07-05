@@ -1,5 +1,13 @@
 # data-spike
 
+## 0.0.14
+
+### Patch Changes
+
+- Updated dependencies [0451068]
+  - @apex-stack/core@0.7.4
+  - @apex-stack/data@0.1.18
+
 ## 0.0.13
 
 ### Patch Changes
