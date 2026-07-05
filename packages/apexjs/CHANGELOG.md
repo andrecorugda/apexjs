@@ -1,5 +1,39 @@
 # @apex-stack/core
 
+## 0.7.0
+
+### Minor Changes
+
+- 7d5caca: Sentry-style dev error page.
+
+  When a page loader throws in dev (and there's no `pages/error.alpine`), the
+  overlay is now a proper debugger: expandable stack-frame cards with inline code
+  context (failing line highlighted), a Frames/Raw toggle, a project file tree
+  with folder/file icons where the error's origin file is marked red, and
+  "open in editor" links. A dev-only `/__apex_open` endpoint launches the file at
+  its line/column in your editor (honors `$APEX_EDITOR`/`$EDITOR`, else the
+  detected VS Code / Cursor / Windsurf / VSCodium CLI); it only opens files inside
+  the project root.
+
+- 9600a30: Islands mode now applies layouts + `head()`, and the demo scaffold is branded.
+
+  - **Islands fix:** `apex dev --islands` (and the islands build) previously rendered
+    the bare page — no layout, no `head()`/SEO — so nav/branding/footer vanished and
+    pages looked broken. The page is now wrapped in its layout chain and the whole
+    tree (layout + page) runs through the islands walker, so `client:*` directives in
+    the layout or page hydrate. Root x-data defaults are available as SSR scope too.
+  - **Branded scaffold:** the starter ships the Apex mark (`public/favicon.svg`),
+    shows it in the nav + a hero ("Built with Apex JS"), and the shell emits a
+    `<link rel="icon">` by default. The demo's interactivity now uses `client:*`
+    islands, so it works in BOTH default and islands mode (dark toggle, counter,
+    and the reveal all hydrate). Theme also respects `prefers-color-scheme` on first
+    visit.
+  - **Smarter editor extension prompt:** `apex new` / `apex upgrade` now detect VS
+    Code **and its forks** (Cursor, Windsurf, VSCodium) and check the installed
+    extension version — they only prompt to _install_ (not present) or _update_
+    (older), and stay quiet with an "up to date" note when it's already current.
+    Extension icon is the Apex mark.
+
 ## 0.6.0
 
 ### Minor Changes
