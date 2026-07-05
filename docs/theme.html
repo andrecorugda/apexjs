@@ -10,8 +10,9 @@
   .tb-hero { padding-block: clamp(2rem,6vh,3.5rem) 1rem; }
   .tb-hero h1 { font-size: clamp(1.8rem,4vw,2.6rem); letter-spacing:-.02em; font-weight:800; margin:0; }
   .tb-hero p { color: var(--muted); margin:.7rem 0 0; max-width:62ch; }
-  .tb-layout { display:grid; grid-template-columns: 20rem 1fr; gap:1.5rem; align-items:start; margin-top:1.5rem; }
-  @media (max-width: 900px) { .tb-layout { grid-template-columns:1fr; } }
+  .tb-layout { display:grid; grid-template-columns: 20rem minmax(0,1fr); gap:1.5rem; align-items:start; margin-top:1.5rem; }
+  .tb-layout > * { min-width:0; }
+  @media (max-width: 900px) { .tb-layout { grid-template-columns:minmax(0,1fr); } }
   .tb-panel { border:1px solid var(--line); border-radius:var(--radius-card); background:var(--surface); padding:1.1rem 1.2rem 1.3rem; }
   .tb-panel h2 { font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0 0 .9rem; font-weight:700; }
   .tb-panel h2:not(:first-of-type) { margin-top:1.4rem; }
@@ -40,10 +41,11 @@
   .tb-row { display:flex; flex-wrap:wrap; gap:.8rem; align-items:center; }
 
   .tb-cmd-wrap { margin-top:1.2rem; }
-  .tb-cmd { position:relative; font-family:var(--mono); font-size:.85rem; line-height:1.6; background:var(--ground-deep); border:1px solid var(--line); border-radius:var(--radius-card); padding:1rem 1.1rem; overflow-x:auto; white-space:pre; color:var(--text); }
+  .tb-cmd { display:flex; align-items:stretch; background:var(--ground-deep); border:1px solid var(--line); border-radius:var(--radius-card); overflow:hidden; }
+  .tb-cmd-code { flex:1 1 auto; min-width:0; overflow-x:auto; white-space:pre; padding:1rem 1.1rem; font-family:var(--mono); font-size:.85rem; line-height:1.6; color:var(--text); }
   .tb-cmd .flag { color:var(--glacier); }
   .tb-cmd .val { color:var(--alpenglow); }
-  .tb-copy { position:absolute; top:.7rem; right:.7rem; font:inherit; font-weight:650; font-size:.78rem; padding:.4rem .9rem; border:none; border-radius:.5rem; background:linear-gradient(96deg,var(--glacier-deep),var(--alpenglow)); color:#05070f; cursor:pointer; }
+  .tb-copy { flex:0 0 auto; align-self:stretch; font:inherit; font-weight:650; font-size:.78rem; padding:.4rem 1rem; border:none; border-left:1px solid var(--line); border-radius:0; background:linear-gradient(96deg,var(--glacier-deep),var(--alpenglow)); color:#05070f; cursor:pointer; }
   .tb-note { color:var(--muted); font-size:.78rem; margin:.6rem 0 0; }
 </style>
 
@@ -158,7 +160,7 @@
       </div>
 
       <div class="tb-cmd-wrap">
-        <div class="tb-cmd" id="tbCmd"><button class="tb-copy" id="tbCopy">Copy</button><code id="tbCmdText">apex theme</code></div>
+        <div class="tb-cmd" id="tbCmd"><code class="tb-cmd-code" id="tbCmdText">apex theme</code><button class="tb-copy" id="tbCopy">Copy</button></div>
         <p class="tb-note">Only the values you changed are emitted. Run it in your project root — it rewrites the managed theme block in your <code>app.css</code>. Text-on-color is auto-contrasted in this preview.</p>
       </div>
     </div>
