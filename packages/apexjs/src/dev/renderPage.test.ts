@@ -35,9 +35,13 @@ describe('renderPage — head/SEO', () => {
     })
 
     expect(html).toContain('<title>My Post — Blog</title>')
-    expect(html).toContain('<meta name="description" content="An intro to Apex head tags." />')
-    expect(html).toContain('<meta property="og:title" content="My Post" />')
-    expect(html).toContain('<link rel="canonical" href="https://example.com/first" />')
+    expect(html).toContain(
+      '<meta name="description" content="An intro to Apex head tags." data-apex-head />',
+    )
+    expect(html).toContain('<meta property="og:title" content="My Post" data-apex-head />')
+    expect(html).toContain(
+      '<link rel="canonical" href="https://example.com/first" data-apex-head />',
+    )
   })
 
   it('falls back to the default title when no head() is exported', async () => {
@@ -97,6 +101,63 @@ describe('renderPage — error boundary', () => {
     await expect(
       renderPage({ loadModule: async () => boom, pageId: '/pages/index.alpine', url: '/' }),
     ).rejects.toThrow('unhandled')
+  })
+})
+
+describe('renderPage — client-side navigation', () => {
+  it('wraps the body in the stable swap region and emits the page-module hint', async () => {
+    const html = await renderPage({
+      loadModule: async () => makeModule(),
+      pageId: '/pages/index.alpine',
+      url: '/',
+    })
+    expect(html).toContain('<div id="__apex" data-apex-root>')
+    // dev: the module hint points at the page path Vite serves.
+    expect(html).toContain('<meta name="apex:page-module" content="/pages/index.alpine" />')
+  })
+
+  it('installs the nav runtime in the dev boot script by default', async () => {
+    const html = await renderPage({
+      loadModule: async () => makeModule(),
+      pageId: '/pages/index.alpine',
+      url: '/',
+    })
+    expect(html).toContain("import { installNav } from '@apex-stack/core/client'")
+    expect(html).toContain('installNav()')
+  })
+
+  it('omits the nav runtime when clientNav is false', async () => {
+    const html = await renderPage({
+      loadModule: async () => makeModule(),
+      pageId: '/pages/index.alpine',
+      url: '/',
+      clientNav: false,
+    })
+    expect(html).not.toContain('installNav')
+  })
+
+  it('embeds the loading boundary when loadingHtml is provided', async () => {
+    const html = await renderPage({
+      loadModule: async () => makeModule(),
+      pageId: '/pages/index.alpine',
+      url: '/',
+      loadingHtml: '<div class="spinner">Loading…</div>',
+    })
+    expect(html).toContain(
+      '<template data-apex-loading><div class="spinner">Loading…</div></template>',
+    )
+  })
+
+  it('points the module hint at the hashed bundle in a production build', async () => {
+    const html = await renderPage({
+      loadModule: async () => makeModule(),
+      pageId: '/pages/index.alpine',
+      url: '/',
+      clientHref: '/assets/index-abc123.js',
+    })
+    expect(html).toContain('<meta name="apex:page-module" content="/assets/index-abc123.js" />')
+    // Built bundle installs nav itself, so the shell doesn't inline it.
+    expect(html).toContain('<script type="module" src="/assets/index-abc123.js"></script>')
   })
 })
 

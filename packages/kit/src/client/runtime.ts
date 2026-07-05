@@ -19,19 +19,48 @@ type Factory = () => Record<string, unknown>
 
 const registry = new Map<string, Factory>()
 let armed = false
+// True once Alpine has started (after `alpine:init`). Registrations that arrive
+// after this — i.e. during a client-side navigation — must register live rather
+// than wait for an `alpine:init` that will never fire again.
+let alpineReady = false
+
+/** The subset of Alpine's global API the Apex runtime + nav layer use. */
+export interface AlpineLike {
+  data(name: string, factory: () => Record<string, unknown>): void
+  initTree(el: Element): void
+  destroyTree(el: Element): void
+  mutateDom(cb: () => void): void
+}
 
 declare global {
   interface Window {
-    Alpine?: {
-      data(name: string, factory: () => Record<string, unknown>): void
-    }
+    Alpine?: AlpineLike
+    /** Set once installNav() has wired up client-side navigation. */
+    __apexNav?: boolean
+  }
+}
+
+/** The `Alpine.data` factory for a component: authored defaults + loader state (loader wins). */
+function componentFactory(id: string, factory: Factory): () => Record<string, unknown> {
+  return () => {
+    // Object.assign (not spread) so getters/methods from the factory —
+    // e.g. a composable's `get double()` — survive; loader state overlays
+    // plain data values on top (loader wins), same order the server used.
+    const base = factory()
+    const state = readState(id)
+    return Object.keys(state).length ? Object.assign(base, state) : base
   }
 }
 
 /** Register a component factory. Called by generated per-component client modules. */
 export function registerApexComponent(id: string, factory: Factory): void {
   registry.set(id, factory)
-  arm()
+  if (alpineReady && window.Alpine) {
+    // Client-side navigation: Alpine is already running, register immediately.
+    window.Alpine.data(`apex_${id}`, componentFactory(id, factory))
+  } else {
+    arm()
+  }
 }
 
 function readState(id: string): Record<string, unknown> {
@@ -54,24 +83,25 @@ function onAlpineInit(): void {
   const Alpine = window.Alpine
   if (Alpine) {
     for (const [id, factory] of registry) {
-      Alpine.data(`apex_${id}`, () => {
-        // Object.assign (not spread) so getters/methods from the factory —
-        // e.g. a composable's `get double()` — survive; loader state overlays
-        // plain data values on top (loader wins), same order the server used.
-        const base = factory()
-        const state = readState(id)
-        return Object.keys(state).length ? Object.assign(base, state) : base
-      })
+      Alpine.data(`apex_${id}`, componentFactory(id, factory))
     }
   }
   removeSsrClones()
+  alpineReady = true
 }
 
-function removeSsrClones(): void {
-  const clones = document.querySelectorAll('[data-apex-ssr]')
+/**
+ * Remove server-rendered `[data-apex-ssr]` clones (x-for / x-if output) so Alpine
+ * recreates them cleanly. Scope to `root` during a client-side navigation; on the
+ * initial load it clears the whole document.
+ */
+export function removeSsrClones(root: ParentNode = document): void {
+  const clones = root.querySelectorAll('[data-apex-ssr]')
   for (let i = 0; i < clones.length; i++) clones[i]?.remove()
 }
 
 export type { ActionOptions, ActionState } from './action.js'
 // Form-action sugar (see ./action.ts).
 export { createAction } from './action.js'
+// Client-side navigation (see ./nav.ts).
+export { installNav, type NavOptions } from './nav.js'

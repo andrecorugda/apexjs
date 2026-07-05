@@ -49,21 +49,25 @@ function escAttr(s: unknown): string {
   )
 }
 
-/** Build `<head>` inner tags from a page's head data. Always emits a <title>. */
+/**
+ * Build `<head>` inner tags from a page's head data. Always emits a <title>.
+ * The page-specific `<meta>`/`<link>` carry `data-apex-head` so client-side
+ * navigation can swap exactly this set of tags without touching stylesheets etc.
+ */
 export function renderHead(head: HeadInput | undefined): string {
   const parts = [`<title>${head?.title ? escAttr(head.title) : 'Apex JS'}</title>`]
   for (const m of head?.meta ?? []) {
     parts.push(
       `<meta ${Object.entries(m)
         .map(([k, v]) => `${k}="${escAttr(v)}"`)
-        .join(' ')} />`,
+        .join(' ')} data-apex-head />`,
     )
   }
   for (const l of head?.link ?? []) {
     parts.push(
       `<link ${Object.entries(l)
         .map(([k, v]) => `${k}="${escAttr(v)}"`)
-        .join(' ')} />`,
+        .join(' ')} data-apex-head />`,
     )
   }
   return parts.join('\n  ')
@@ -103,6 +107,10 @@ export interface RenderPageOptions {
   locals?: Record<string, unknown>
   /** Error boundary: page id (e.g. `/pages/error.alpine`) rendered with `{ error }` if the loader throws. */
   errorPageId?: string
+  /** Enable client-side navigation (SPA link nav + prefetch). Default true. */
+  clientNav?: boolean
+  /** Pre-rendered `loading.alpine` HTML, embedded as the slow-nav boundary. */
+  loadingHtml?: string
 }
 
 /**
@@ -200,6 +208,10 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     clientCss: opts.clientCss,
     headTags: renderHead(head),
     configScript: clientConfigScript(opts.publicConfig ?? {}),
+    // dev imports the page module by path; prod imports its hashed bundle.
+    moduleUrl: opts.clientHref ?? opts.pageId,
+    clientNav: opts.clientNav !== false,
+    loadingHtml: opts.loadingHtml,
   })
 
   return opts.transformHtml ? opts.transformHtml(opts.url, doc) : doc
@@ -217,6 +229,12 @@ interface ShellParts {
   clientCss?: string[]
   headTags?: string
   configScript?: string
+  /** URL the client imports to register this page's factory (dev: path, prod: bundle). */
+  moduleUrl?: string
+  /** Wire up client-side navigation in the boot script. */
+  clientNav?: boolean
+  /** Pre-rendered `loading.alpine` HTML for the slow-nav boundary. */
+  loadingHtml?: string
 }
 
 function shell({
@@ -230,6 +248,9 @@ function shell({
   clientCss = [],
   headTags = '<title>Apex JS</title>',
   configScript = '',
+  moduleUrl,
+  clientNav = true,
+  loadingHtml,
 }: ShellParts): string {
   // Register global stores on the client before Alpine.start(): import each store
   // module and call Alpine.store(name, factory()) — same factory the server used,
@@ -241,16 +262,22 @@ function shell({
     .map((_, i) => `  Alpine.store(__s${i}.name, __s${i}.factory())`)
     .join('\n')
 
+  // Client-side navigation is installed from the runtime, once, in the boot. The
+  // built bundle installs it itself (see buildClient); the dev inline script does
+  // it here. Guarded by `window.__apexNav` so it never double-installs.
+  const navImport = clientNav ? `  import { installNav } from '@apex-stack/core/client'\n` : ''
+  const navInstall = clientNav ? `  installNav()\n` : ''
+
   // Production build → reference the built, hashed client bundle. Dev → inline
   // the module so Vite serves + HMRs it.
   const clientScript = clientHref
     ? `<script type="module" src="${clientHref}"></script>`
     : `<script type="module">
   import Alpine from 'alpinejs'
-${storeImports ? `${storeImports}\n` : ''}  import ${JSON.stringify(pageId)}
+${navImport}${storeImports ? `${storeImports}\n` : ''}  import ${JSON.stringify(pageId)}
   window.Alpine = Alpine
 ${storeRegs ? `${storeRegs}\n` : ''}  Alpine.start()
-</script>`
+${navInstall}</script>`
 
   // Global stylesheet(s) as render-blocking <link>s in <head> — NOT a deferred
   // JS import — so the page never flashes unstyled before Alpine hydrates.
@@ -258,17 +285,26 @@ ${storeRegs ? `${storeRegs}\n` : ''}  Alpine.start()
     .map((href) => `<link rel="stylesheet" href="${href}" />`)
     .join('\n  ')
 
+  // The stable region client-side navigation swaps. The page module hint tells
+  // nav which module to import to register the next page's Alpine factory.
+  const moduleMeta = moduleUrl
+    ? `\n  <meta name="apex:page-module" content="${escAttr(moduleUrl)}" />`
+    : ''
+  const loadingTpl = loadingHtml ? `\n<template data-apex-loading>${loadingHtml}</template>` : ''
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />${moduleMeta}
   ${cssLinks ? `${cssLinks}\n  ` : ''}${headTags}
   <style>${css}</style>
 </head>
 <body>
+<div id="__apex" data-apex-root>
 ${body}
+</div>${loadingTpl}
 ${island}
 ${configScript}
 ${clientScript}

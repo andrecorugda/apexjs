@@ -3,6 +3,7 @@ import { createServer as createHttpServer, type Server } from 'node:http'
 import { createRequire } from 'node:module'
 import { join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { renderFragment } from '@apex-stack/kit'
 import { apex } from '@apex-stack/vite'
 import {
   createApp,
@@ -133,10 +134,11 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
 
   // Resolve apex.config.ts + .env once at boot. Editing config or .env needs a
   // dev-server restart (like Nuxt) — routes/pages still hot-reload per request.
-  const { runtimeConfig, publicConfig } = await resolveApexConfig(
+  const { config, runtimeConfig, publicConfig } = await resolveApexConfig(
     options.root,
     (id) => ssrLoad(id) as never,
   )
+  const clientNav = config.clientNav !== false
 
   const app = createApp()
 
@@ -235,6 +237,18 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
               .filter((f) => f.endsWith('.alpine'))
               .map((f) => f.replace(/\.alpine$/, ''))
           : []
+        // Optional slow-navigation boundary: pages/loading.alpine rendered to
+        // static HTML, embedded once for the client-nav runtime to show.
+        let loadingHtml: string | undefined
+        if (
+          !options.islands &&
+          clientNav &&
+          existsSync(join(options.root, 'pages', 'loading.alpine'))
+        ) {
+          const l = (await ssrLoad('/pages/loading.alpine')) as unknown as PageModule
+          loadingHtml = renderFragment(l.template, {}, l.scopeId, registry)
+        }
+
         const render = options.islands ? renderIslandsPage : renderPage
         const html = await render({
           loadModule: (id) => ssrLoad(id) as unknown as Promise<PageModule>,
@@ -248,6 +262,8 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           layouts,
           runtimeConfig,
           publicConfig,
+          clientNav,
+          loadingHtml,
           locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
           errorPageId: existsSync(join(options.root, 'pages', 'error.alpine'))
             ? '/pages/error.alpine'

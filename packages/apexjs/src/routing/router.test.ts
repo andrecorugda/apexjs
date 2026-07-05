@@ -76,6 +76,19 @@ describe('scanPages', () => {
     expect(scanPages(empty)).toEqual([])
     rmSync(empty, { recursive: true, force: true })
   })
+
+  it('excludes framework-reserved pages (error, loading) from routes', () => {
+    const r = mkdtempSync(join(tmpdir(), 'apex-reserved-'))
+    mkdirSync(join(r, 'pages'), { recursive: true })
+    for (const f of ['index.alpine', 'error.alpine', 'loading.alpine']) {
+      writeFileSync(join(r, 'pages', f), '<template></template>')
+    }
+    const patterns = scanPages(r).map((x) => x.pattern)
+    expect(patterns).toEqual(['/'])
+    expect(patterns).not.toContain('/error')
+    expect(patterns).not.toContain('/loading')
+    rmSync(r, { recursive: true, force: true })
+  })
 })
 
 describe('catch-all routes ([...name])', () => {

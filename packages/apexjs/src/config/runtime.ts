@@ -19,6 +19,11 @@ export interface ApexConfig {
    * `APEX_PUBLIC_<KEY>` for `public` keys (camelCase ↔ SCREAMING_SNAKE).
    */
   runtimeConfig?: RuntimeConfig
+  /**
+   * Client-side navigation (SPA link nav + prefetch + progress bar). On by
+   * default; set `false` to fall back to full-page loads.
+   */
+  clientNav?: boolean
   [key: string]: unknown
 }
 

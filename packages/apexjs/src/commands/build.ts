@@ -1,5 +1,6 @@
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
+import { renderFragment } from '@apex-stack/kit'
 import { apex } from '@apex-stack/vite'
 import { defineCommand } from 'citty'
 import { createServer as createViteServer } from 'vite'
@@ -71,16 +72,24 @@ export const buildCommand = defineCommand({
         (id) => vite.ssrLoadModule(id) as never,
       )
       const stores = await loadStores(root, (id) => vite.ssrLoadModule(id) as never)
-      const { runtimeConfig, publicConfig } = await resolveApexConfig(
+      const { config, runtimeConfig, publicConfig } = await resolveApexConfig(
         root,
         (id) => vite.ssrLoadModule(id) as never,
       )
+      const clientNav = config.clientNav !== false
       const layoutsDir = join(root, 'layouts')
       const layouts = existsSync(layoutsDir)
         ? readdirSync(layoutsDir)
             .filter((f) => f.endsWith('.alpine'))
             .map((f) => f.replace(/\.alpine$/, ''))
         : []
+
+      // Prerender the slow-nav boundary (pages/loading.alpine) once, if present.
+      let loadingHtml: string | undefined
+      if (!args.islands && clientNav && existsSync(join(root, 'pages', 'loading.alpine'))) {
+        const l = (await vite.ssrLoadModule('/pages/loading.alpine')) as unknown as PageModule
+        loadingHtml = renderFragment(l.template, {}, l.scopeId, registry)
+      }
 
       for (const route of staticRoutes) {
         const common = {
@@ -97,7 +106,13 @@ export const buildCommand = defineCommand({
         const assets = hrefs.get(route.pageId)
         const html = args.islands
           ? await renderIslandsPage(common)
-          : await renderPage({ ...common, clientHref: assets?.js, clientCss: assets?.css })
+          : await renderPage({
+              ...common,
+              clientHref: assets?.js,
+              clientCss: assets?.css,
+              clientNav,
+              loadingHtml,
+            })
 
         const dest = join(outDir, outFile(route.pattern))
         mkdirSync(dirname(dest), { recursive: true })
@@ -140,6 +155,8 @@ async function buildServerTarget(
   // deploy-time .env / process.env over these defaults at start. A short-lived Vite
   // loads the TS config.
   let runtimeConfig: RuntimeConfig = { public: {} }
+  let clientNav = true
+  let loadingHtml: string | undefined
   const cfgVite = await createViteServer({
     root,
     appType: 'custom',
@@ -150,6 +167,13 @@ async function buildServerTarget(
     const resolved = await resolveApexConfig(root, (id) => cfgVite.ssrLoadModule(id) as never)
     runtimeConfig = { public: {}, ...(resolved.config.runtimeConfig ?? {}) }
     if (!runtimeConfig.public) runtimeConfig.public = {}
+    clientNav = resolved.config.clientNav !== false
+    // Prerender the slow-nav boundary once for the client-nav runtime to embed.
+    if (clientNav && existsSync(join(root, 'pages', 'loading.alpine'))) {
+      const { registry } = await loadComponents(root, (id) => cfgVite.ssrLoadModule(id) as never)
+      const l = (await cfgVite.ssrLoadModule('/pages/loading.alpine')) as unknown as PageModule
+      loadingHtml = renderFragment(l.template, {}, l.scopeId, registry)
+    }
   } finally {
     await cfgVite.close()
   }
@@ -196,6 +220,8 @@ async function buildServerTarget(
     api,
     middleware,
     runtimeConfig,
+    clientNav,
+    loadingHtml,
   }
   writeFileSync(join(outDir, 'apex-manifest.json'), JSON.stringify(manifest, null, 2))
 
