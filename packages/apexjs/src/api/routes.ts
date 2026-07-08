@@ -10,6 +10,9 @@ import {
   setResponseStatus,
 } from 'h3'
 import { z } from 'zod'
+import { checkRouteAccess } from '../auth/check.js'
+import type { AuthConfig } from '../auth/define.js'
+import { getRequestUser } from '../auth/run.js'
 import type { RuntimeConfig } from '../config/runtime.js'
 import type { ApexRoute, HttpMethod } from './defineRoute.js'
 import { type ApexResource, isApexResource } from './resource.js'
@@ -115,7 +118,11 @@ export function matchApi(entries: ApiEntry[], path: string, method: string): Mat
 }
 
 /** A single h3 handler that routes, validates, and dispatches all `/api/*` requests. */
-export function createApiHandler(entries: ApiEntry[], config?: RuntimeConfig): EventHandler {
+export function createApiHandler(
+  entries: ApiEntry[],
+  config?: RuntimeConfig,
+  auth?: AuthConfig,
+): EventHandler {
   return defineEventHandler(async (event) => {
     const url = getRequestURL(event)
     const matched = matchApi(entries, url.pathname, event.method)
@@ -140,6 +147,14 @@ export function createApiHandler(entries: ApiEntry[], config?: RuntimeConfig): E
       input = parsed.data
     }
 
+    // Authorization gate (§4.2) — resolve the user once, then apply auth/can.
+    const user = await getRequestUser(event, auth, config)
+    const decision = await checkRouteAccess(entry.route, user, input)
+    if (!decision.ok) {
+      setResponseStatus(event, decision.status)
+      return { error: decision.message }
+    }
+
     let result: unknown
     try {
       result = await entry.route.handler({
@@ -147,6 +162,7 @@ export function createApiHandler(entries: ApiEntry[], config?: RuntimeConfig): E
         url: url.toString(),
         config: config ?? { public: {} },
         locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
+        user,
       })
     } catch (err) {
       // Surface the underlying error (esp. the common "table doesn't exist yet")

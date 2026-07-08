@@ -17,6 +17,7 @@ import {
 } from 'h3'
 import { createServer as createViteServer, type PluginOption, type ViteDevServer } from 'vite'
 import { createApiHandler, loadApiRoutes } from '../api/routes.js'
+import { getRequestUser, loadAuth } from '../auth/run.js'
 import { loadComponents } from '../components/registry.js'
 import { resolveApexConfig } from '../config/resolve.js'
 import { renderIslandsPage } from '../islands/render.js'
@@ -149,18 +150,28 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   // API / MCP / SSR handlers below.
   app.use(fromNodeMiddleware(vite.middlewares))
 
-  // Run middleware/*.ts before API + page handlers. Loaded per request so edits
-  // apply without a restart. Sets `event.context.apexLocals` for downstream
-  // loaders/handlers; a returned redirect short-circuits the request.
+  // Auth + middleware, before API + page handlers. Both are loaded per request so
+  // edits apply without a restart. First resolve the request's user (defineAuth),
+  // seed it into `locals.user`, then run middleware/*.ts. Sets
+  // `event.context.apexLocals` for downstream loaders/handlers; a redirect
+  // short-circuits. Auth is *also* enforced inside the API/MCP handlers (the real
+  // gate) — this step just resolves identity + feeds pages.
+  const loadAuthCfg = () => loadAuth(options.root, (id) => ssrLoad(id) as never)
   app.use(
     defineEventHandler(async (event) => {
+      const user = await getRequestUser(event, await loadAuthCfg(), runtimeConfig)
+      const seed: Record<string, unknown> = user ? { user } : {}
       const mws = await loadMiddleware(options.root, (id) => ssrLoad(id) as never)
-      if (!mws.length) return
+      if (!mws.length) {
+        event.context.apexLocals = seed
+        return
+      }
       const { redirect, locals } = await runMiddleware(mws, {
         url: event.path || '/',
         method: event.method,
         config: runtimeConfig,
         headers: getRequestHeaders(event) as Record<string, string>,
+        locals: seed,
       })
       event.context.apexLocals = locals
       if (redirect) {
@@ -178,14 +189,14 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   const loadEntries = () => loadApiRoutes(options.root, (id) => ssrLoad(id) as never)
   app.use(
     '/api',
-    defineEventHandler((event) =>
-      loadEntries().then((e) => createApiHandler(e, runtimeConfig)(event)),
+    defineEventHandler(async (event) =>
+      createApiHandler(await loadEntries(), runtimeConfig, await loadAuthCfg())(event),
     ),
   )
   app.use(
     '/mcp',
-    defineEventHandler((event) =>
-      loadEntries().then((e) => createMcpHandler(e, runtimeConfig)(event)),
+    defineEventHandler(async (event) =>
+      createMcpHandler(await loadEntries(), runtimeConfig, await loadAuthCfg())(event),
     ),
   )
 

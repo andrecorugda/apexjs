@@ -30,6 +30,8 @@ export interface RunMiddlewareInput {
   method: string
   config: RuntimeConfig
   headers: Record<string, string>
+  /** Seed values for `locals` (e.g. the auth-resolved `user`) before the chain runs. */
+  locals?: Record<string, unknown>
 }
 
 export interface RunMiddlewareResult {
@@ -47,7 +49,7 @@ export async function runMiddleware(
   middleware: Middleware[],
   input: RunMiddlewareInput,
 ): Promise<RunMiddlewareResult> {
-  const locals: Record<string, unknown> = {}
+  const locals: Record<string, unknown> = { ...(input.locals ?? {}) }
   for (const mw of middleware) {
     const result = await mw({
       url: input.url,

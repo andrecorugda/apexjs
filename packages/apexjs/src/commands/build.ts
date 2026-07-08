@@ -229,6 +229,13 @@ async function buildServerTarget(
     }
   }
 
+  // The auth resolver (server/auth.ts), if the app defined one.
+  const authSrc = ['server/auth.ts', 'server/auth.js', 'server/auth.mjs'].find((f) =>
+    existsSync(join(root, f)),
+  )
+  const authServerFile = authSrc ? server.modules[`/${authSrc}`] : undefined
+  const auth = authServerFile ? { serverFile: authServerFile } : undefined
+
   const manifest = {
     islands: false,
     routes: routes.map((r) => ({
@@ -241,6 +248,7 @@ async function buildServerTarget(
     layouts,
     api,
     middleware,
+    auth,
     runtimeConfig,
     clientNav,
     loadingHtml,
