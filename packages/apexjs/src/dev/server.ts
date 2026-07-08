@@ -20,6 +20,8 @@ import { createApiHandler, loadApiRoutes } from '../api/routes.js'
 import { getRequestUser, loadAuth } from '../auth/run.js'
 import { loadComponents } from '../components/registry.js'
 import { resolveApexConfig } from '../config/resolve.js'
+import { createI18n, resolveLocale } from '../i18n/index.js'
+import { loadMessages } from '../i18n/run.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { createMcpHandler } from '../mcp/server.js'
 import { loadMiddleware, runMiddleware } from '../middleware/run.js'
@@ -143,6 +145,10 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   )
   const clientNav = config.clientNav !== false
 
+  // i18n: load message catalogs once at boot (edits need a restart, like config).
+  const i18nCfg = config.i18n
+  const messages = i18nCfg ? loadMessages(options.root, i18nCfg.locales) : {}
+
   const app = createApp()
 
   // Vite handles assets, HMR client, and .alpine module requests. When it has
@@ -161,6 +167,21 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
     defineEventHandler(async (event) => {
       const user = await getRequestUser(event, await loadAuthCfg(), runtimeConfig)
       const seed: Record<string, unknown> = user ? { user } : {}
+      // i18n: resolve the request locale (/<locale> prefix or Accept-Language) and
+      // hand `locale` + `t` to loaders/middleware; stash the prefix-stripped path.
+      if (i18nCfg) {
+        const headers = getRequestHeaders(event) as Record<string, string>
+        const { locale, path } = resolveLocale({
+          path: event.path || '/',
+          acceptLanguage: headers['accept-language'],
+          locales: i18nCfg.locales,
+          defaultLocale: i18nCfg.defaultLocale,
+        })
+        event.context.apexLocale = locale
+        event.context.apexPath = path
+        seed.locale = locale
+        seed.t = createI18n({ messages, locale, defaultLocale: i18nCfg.defaultLocale }).t
+      }
       const mws = await loadMiddleware(options.root, (id) => ssrLoad(id) as never)
       if (!mws.length) {
         event.context.apexLocals = seed
@@ -220,7 +241,9 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
 
   app.use(
     defineEventHandler(async (event) => {
-      const url = event.path || '/'
+      // Route on the locale-stripped path when i18n is on (so /fr/about matches /about).
+      const url = (event.context.apexPath as string) || event.path || '/'
+      const locale = event.context.apexLocale as string | undefined
       try {
         // Re-scan per request so newly added pages are picked up without a restart.
         const routes = scanPages(options.root)
@@ -279,6 +302,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           publicConfig,
           clientNav,
           loadingHtml,
+          locale,
           locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
           errorPageId: existsSync(join(options.root, 'pages', 'error.alpine'))
             ? '/pages/error.alpine'

@@ -168,6 +168,7 @@ async function buildServerTarget(
   let runtimeConfig: RuntimeConfig = { public: {} }
   let clientNav = true
   let loadingHtml: string | undefined
+  let i18n: { defaultLocale: string; locales: string[] } | undefined
   const cfgVite = await createViteServer({
     root,
     appType: 'custom',
@@ -179,6 +180,7 @@ async function buildServerTarget(
     runtimeConfig = { public: {}, ...(resolved.config.runtimeConfig ?? {}) }
     if (!runtimeConfig.public) runtimeConfig.public = {}
     clientNav = resolved.config.clientNav !== false
+    i18n = resolved.config.i18n as typeof i18n
     // Prerender the slow-nav boundary once for the client-nav runtime to embed.
     if (clientNav && existsSync(join(root, 'pages', 'loading.alpine'))) {
       const { registry } = await loadComponents(root, (id) => cfgVite.ssrLoadModule(id) as never)
@@ -252,8 +254,13 @@ async function buildServerTarget(
     runtimeConfig,
     clientNav,
     loadingHtml,
+    i18n,
   }
   writeFileSync(join(outDir, 'apex-manifest.json'), JSON.stringify(manifest, null, 2))
+  // Copy message catalogs so the prod server can load them.
+  if (i18n && existsSync(join(root, 'locales'))) {
+    cpSync(join(root, 'locales'), join(outDir, 'locales'), { recursive: true })
+  }
 
   const pub = join(root, 'public')
   if (existsSync(pub)) cpSync(pub, outDir, { recursive: true })

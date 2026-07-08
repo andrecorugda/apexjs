@@ -19,6 +19,8 @@ import { toComponentEntry } from '../components/registry.js'
 import { applyEnvToRuntimeConfig } from '../config/resolve.js'
 import type { RuntimeConfig } from '../config/runtime.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
+import { createI18n, resolveLocale } from '../i18n/index.js'
+import { loadMessages } from '../i18n/run.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { createMcpHandler, hasMcpRoutes } from '../mcp/server.js'
 import type { Middleware } from '../middleware/define.js'
@@ -37,6 +39,8 @@ export interface ProdManifest {
   middleware?: Array<{ serverFile: string }>
   /** The auth resolver (server/auth.ts), if the app defined one. */
   auth?: { serverFile: string }
+  /** i18n config (locales + default), if the app declared it. */
+  i18n?: { defaultLocale: string; locales: string[] }
   /** runtimeConfig defaults baked at build; env is applied at server start. */
   runtimeConfig?: RuntimeConfig
   /** Client-side navigation enabled (default true). */
@@ -113,6 +117,10 @@ export async function startProdServer(
     if (mod.default && typeof mod.default.resolve === 'function') auth = mod.default
   }
 
+  // i18n: message catalogs were copied to <dir>/locales by the build.
+  const i18nCfg = manifest.i18n
+  const messages = i18nCfg ? loadMessages(dir, i18nCfg.locales) : {}
+
   const serverFileFor = new Map(manifest.routes.map((r) => [r.pageId, r.serverFile]))
   // Layout modules are loaded by renderPage via `/layouts/<name>.alpine` ids.
   const layoutNames: string[] = []
@@ -150,6 +158,19 @@ export async function startProdServer(
     defineEventHandler(async (event) => {
       const user = await getRequestUser(event, auth, runtimeConfig)
       const seed: Record<string, unknown> = user ? { user } : {}
+      if (i18nCfg) {
+        const headers = getRequestHeaders(event) as Record<string, string>
+        const { locale, path } = resolveLocale({
+          path: getRequestURL(event).pathname,
+          acceptLanguage: headers['accept-language'],
+          locales: i18nCfg.locales,
+          defaultLocale: i18nCfg.defaultLocale,
+        })
+        event.context.apexLocale = locale
+        event.context.apexPath = path
+        seed.locale = locale
+        seed.t = createI18n({ messages, locale, defaultLocale: i18nCfg.defaultLocale }).t
+      }
       if (!middleware.length) {
         event.context.apexLocals = seed
         return
@@ -175,7 +196,9 @@ export async function startProdServer(
 
   app.use(
     defineEventHandler(async (event) => {
-      const url = getRequestURL(event).pathname
+      // Route on the locale-stripped path when i18n is on (/fr/about → /about).
+      const url = (event.context.apexPath as string) || getRequestURL(event).pathname
+      const locale = event.context.apexLocale as string | undefined
       const matched = matchRoute(manifest.routes, url)
       if (!matched) {
         setResponseStatus(event, 404)
@@ -198,6 +221,7 @@ export async function startProdServer(
         publicConfig,
         clientNav: manifest.clientNav !== false,
         loadingHtml: manifest.loadingHtml,
+        locale,
         locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
         errorPageId,
       })

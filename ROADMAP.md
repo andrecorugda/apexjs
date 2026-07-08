@@ -156,13 +156,13 @@ neither of them has. Legend: ✅ have · 🟡 partial · ❌ not yet.
 | **Auth governs the AI/MCP surface** | ❌ | ❌ | ✅ | per-user `tools/list` + `tools/call` re-check — **unique** |
 | Deploy presets (Vercel/CF/…) | ✅ | ✅ | ❌ | node only (P3) |
 | Testing kit for users | ✅ | ✅ | ✅ | `@apex-stack/core/testing` (`createTestApp`) + `factory()` + `apex test` + test-aware `make` |
-| i18n | 🟡 | ✅ | ❌ | (P3) |
+| i18n | 🟡 | ✅ | ✅ | `i18n` config + `locales/*.json`; `t`/`locale` in loaders; `/<locale>` + Accept-Language; SSR `<html lang>` |
 | Plugin / module ecosystem | ✅ | ✅ | ❌ | (P3) |
 
 **Scorecard:** ~24 of the core dimensions at parity (✅), plus the AI-native moat that's ✅ for Apex
 and ❌ for both Next and Nuxt (now including auth that governs the MCP surface). Remaining are
-fine-grained (DOM-morphing) HMR and the P3 ecosystem (deploy presets, image/font, i18n, test kit,
-Volar, plugins). *(Auth + component-level loaders shipped.)*
+fine-grained (DOM-morphing) HMR and the P3 ecosystem (deploy presets, image/font,
+Volar, plugins). *(Auth + component-level loaders + test kit + i18n shipped.)* *(Auth + component-level loaders shipped.)*
 
 **Delivery waves:**
 - **Wave B — "scales to real apps" (P2):** ✅ runtime config, middleware, `InferInput/Output`, nested
@@ -171,8 +171,8 @@ Volar, plugins). *(Auth + component-level loaders shipped.)*
   **component-level loaders** shipped. Remaining: fine-grained HMR is now partial (style-only edits
   hot-swap without a reload, template edits reload with scroll restored — DOM-morphing template HMR
   is the remaining piece).
-- **Wave C — "ecosystem & polish" (P3):** deploy presets, image/font optimization, i18n, test kit,
-  template type-checking (Volar), plugin/module system. *(Auth module shipped — see Security model.)*
+- **Wave C — "ecosystem & polish" (P3):** deploy presets, image/font optimization,
+  template type-checking (Volar), plugin/module system. *(Auth, test kit, and i18n shipped.)*
 
 ## ✅ Big epic — Apex Stack Components + Theme Builder (SHIPPED)
 

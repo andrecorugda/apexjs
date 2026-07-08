@@ -24,6 +24,12 @@ export interface ApexConfig {
    * default; set `false` to fall back to full-page loads.
    */
   clientNav?: boolean
+  /**
+   * Internationalization. Declare your locales + default; put catalogs in
+   * `locales/<locale>.json`. A `/<locale>` path prefix or `Accept-Language` selects
+   * the active locale, and `t` is available in loaders, templates, and the client.
+   */
+  i18n?: { defaultLocale: string; locales: string[] }
   [key: string]: unknown
 }
 

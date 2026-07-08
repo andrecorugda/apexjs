@@ -21,6 +21,15 @@ export type { ApexUser, AuthConfig, AuthResolveContext, RouteGate } from './auth
 export { defineAuth } from './auth/define.js'
 export type { ApexConfig, RuntimeConfig } from './config/runtime.js'
 export { defineConfig, env, useRuntimeConfig } from './config/runtime.js'
+export type {
+  I18n,
+  I18nConfig,
+  I18nOptions,
+  Messages,
+  ResolvedLocale,
+  ResolveLocaleInput,
+} from './i18n/index.js'
+export { createI18n, resolveLocale } from './i18n/index.js'
 export type { Middleware, MiddlewareContext, MiddlewareResult } from './middleware/define.js'
 export { defineMiddleware } from './middleware/define.js'
 export type { ApexStore, StoreState } from './store.js'

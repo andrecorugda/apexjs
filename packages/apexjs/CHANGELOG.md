@@ -1,5 +1,18 @@
 # @apex-stack/core
 
+## 0.17.0
+
+### Minor Changes
+
+- 666d30f: i18n. Declare `i18n: { defaultLocale, locales }` in `apex.config.ts` and put catalogs
+  in `locales/<locale>.json`. Each request's locale is resolved from a `/<locale>` path
+  prefix (else `Accept-Language`, else the default) and injected as `locale` + `t` into
+  loaders, `head()`, and middleware (`locals.locale` / `locals.t`); routing matches the
+  locale-stripped path, and the SSR shell sets `<html lang>` + seeds `window.__APEX_LOCALE__`.
+  `createI18n({ messages, locale, defaultLocale })` gives a `t(key, params?)` that resolves
+  dotted keys, interpolates `{param}`, and falls back (default locale → key). `resolveLocale`
+  is exported too. Wired through dev + prod (the build copies `locales/` into the bundle).
+
 ## 0.16.2
 
 ### Patch Changes
