@@ -4,6 +4,17 @@ import { type ApexResource, defineApexRoute } from '@apex-stack/core'
 import { eq } from 'drizzle-orm'
 import { type ZodRawShape, z } from 'zod'
 
+export type {
+  ApexModel,
+  DefineModelOptions,
+  Field,
+  FieldDef,
+  Fields,
+  FieldType,
+} from './model.js'
+// defineModel — single source of truth: fields → table + zod + migration + resource.
+export { defineModel } from './model.js'
+
 export type Dialect = 'sqlite' | 'postgres'
 
 /** A driver-agnostic database handle. `db` is a Drizzle instance (async API). */
