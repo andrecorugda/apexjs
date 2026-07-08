@@ -13,6 +13,7 @@ import {
   toNodeListener,
 } from 'h3'
 import { createApiHandler, expandApiModule } from '../api/routes.js'
+import { toComponentEntry } from '../components/registry.js'
 import { applyEnvToRuntimeConfig } from '../config/resolve.js'
 import type { RuntimeConfig } from '../config/runtime.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
@@ -82,7 +83,8 @@ export async function startProdServer(
   let componentCss = ''
   for (const [name, file] of Object.entries(manifest.components)) {
     const mod = await importServer(file)
-    registry[name] = { template: mod.template, rootXData: mod.rootXData, scopeId: mod.scopeId }
+    // Shared with the dev loader — keeps the server `loader` from being dropped.
+    registry[name] = toComponentEntry(mod)
     if (mod.css) componentCss += `${mod.css}\n`
   }
 
