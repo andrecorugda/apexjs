@@ -174,6 +174,32 @@ Next core without reinventing an identity provider:
   wired through `defineAuth.resolve` with guides for Lucia / Better-Auth / Auth.js.
   (`resolve` can verify a bearer JWT or read the sealed session — both supported.)
 
+### 4.6 MCP tool annotations + confirmation (advisory — NOT the gate)
+The MCP spec (2025-06-18) lets a tool carry `annotations` — `readOnlyHint` (default
+`false`), `destructiveHint` (default `true`), `idempotentHint` (default `false`),
+`openWorldHint` (default `true`), plus `title`. Clients use them to decide whether to
+auto-run a tool or ask the user first. **The spec requires clients to treat annotations
+as untrusted** — so they are UX hints only, never our authorization control (principle
+§3.1 stands: `access`/`can`/`scope` enforce server-side regardless).
+
+Apex emits them automatically from each generated resource op, so a client treats a
+`delete` tool more carefully than a `list`:
+
+| Op | `readOnlyHint` | `destructiveHint` | `idempotentHint` |
+|---|---|---|---|
+| `list`, `get` | `true` | — | — |
+| `create` | `false` | `false` | `false` |
+| `update` | `false` | `true` | `true` |
+| `delete` | `false` | `true` | `true` |
+
+**Confirmation for destructive ops (elicitation).** The spec also mandates a
+human-in-the-loop for sensitive operations. We reserve a route/behavior flag
+`confirm: true` (implicit for `destructiveHint` ops) that surfaces via MCP
+**elicitation** — the tool call pauses and asks the user to confirm before the AI
+executes it. This is a *safety* prompt, layered on top of (never instead of) the
+server-side authorization gate, and it pairs with the `observable`/`auditable`
+behaviors (§8) so a confirmed destructive action is also logged with its actor.
+
 ## 5. Enforcement architecture (single source of truth)
 
 Identity resolves once (auth step in the request pipeline) → `ctx.user`. Then:
