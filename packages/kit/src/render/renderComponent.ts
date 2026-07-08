@@ -36,10 +36,6 @@ export interface RenderComponentResult {
 
 const ELEMENT_NODE = 1
 
-// Warn once per component when a server loader is used inside a loop/conditional
-// (not yet supported — see buildStructuralComponent).
-const warnedLoopLoader = new Set<string>()
-
 // Directive attributes we consume during SSR (removed handling is per-directive;
 // most stay in the output so browser Alpine re-binds).
 const SSR_IGNORED_PREFIXES = ['@', 'x-on:']
@@ -405,18 +401,6 @@ function buildStructuralComponent(el: AnyEl, document: AnyEl, registry: Componen
   const entry = registry[name]
   if (!entry) return document.createComment(` apex: unknown component "${name}" `)
 
-  // A component's server `loader` doesn't yet run inside x-for/x-if (per-item
-  // keyed-payload hydration is the next increment). Warn once so it's not a
-  // silent no-op; for now, hoist the fetch to the parent loader + pass via props.
-  if (entry.loader && !warnedLoopLoader.has(name)) {
-    warnedLoopLoader.add(name)
-    // biome-ignore lint/suspicious/noConsole: dev warning
-    console.warn(
-      `[apex] Component <${name}> has a server loader but is used inside x-for/x-if — ` +
-        `its loader does not run there yet. Hoist the data to the parent loader and pass via props.`,
-    )
-  }
-
   const staticEntries: string[] = []
   const dynEntries: string[] = []
   for (const attr of Array.from(el.attributes) as AnyEl[]) {
@@ -430,12 +414,20 @@ function buildStructuralComponent(el: AnyEl, document: AnyEl, registry: Componen
   const propObj = `{ ${[...staticEntries, ...dynEntries].join(', ')} }`
   const hasProps = staticEntries.length + dynEntries.length > 0
   const rootXData = entry.rootXData?.trim()
-  let xData: string | null = null
-  if (rootXData) {
-    // Props are in scope (as bare names) for the component's x-data, then merged.
-    xData = `(function(p){with(p){return Object.assign({},p,(${rootXData}))}})(${propObj})`
-  } else if (hasProps) {
-    xData = propObj
+  const base = rootXData
+    ? // Props are in scope (as bare names) for the component's x-data, then merged.
+      `(function(p){with(p){return Object.assign({},p,(${rootXData}))}})(${propObj})`
+    : hasProps
+      ? propObj
+      : null
+  let xData: string | null = base
+  if (entry.loader) {
+    // Loop/conditional server loader: merge this instance's loader result, baked
+    // as an inline object literal keyed by the loop `:key` and looked up in the
+    // clone's own scope. renderFor/renderIf fill the two placeholders after running
+    // the loader once per item — so the client re-evaluates x-data per clone and
+    // gets its item's data with NO island and NO extra client runtime.
+    xData = `Object.assign({}, ${base ?? '{}'}, (__APEX_LMAP__[String(__APEX_LKEY__)]||{}))`
   }
 
   const slotSource = String(el.innerHTML ?? '').trim()
@@ -448,6 +440,11 @@ function buildStructuralComponent(el: AnyEl, document: AnyEl, registry: Componen
   root.setAttribute('data-apex-component', name)
   root.setAttribute(entry.scopeId, '')
   if (xData) root.setAttribute('x-data', xData)
+  if (entry.loader) {
+    // Markers so renderFor/renderIf can resolve props + run the loader per item.
+    root.setAttribute('data-apex-lname', name)
+    root.setAttribute('data-apex-lprops', propObj)
+  }
   root.innerHTML = inner
   // Stamp the component's scope on ITS OWN elements so `<style scoped>` matches
   // them. The resolved (non-loop) path does this via renderFragmentInternal; the
@@ -472,6 +469,60 @@ function stampSubtreeScope(el: AnyEl, scopeId: string): void {
   }
 }
 
+/**
+ * For each loader-carrying component (`[data-apex-lname]`) directly inside an
+ * expanded x-for/x-if template, run its loader once per instance and bake the
+ * results as an inline object literal keyed by `keyExpr`, filling the placeholders
+ * buildStructuralComponent emitted. Server-only: the client re-evaluates the
+ * resulting x-data per clone and reads its item's slice from the inline map — no
+ * payload island, no extra client runtime. Identical props are deduped per bake
+ * (mitigates N+1). Nested-template loader components are handled by the nested
+ * renderFor/renderIf when that template is walked.
+ */
+async function bakeComponentLoaders(
+  template: AnyEl,
+  instanceScopes: ScopeLayer[][],
+  keyExpr: string,
+  registry: ComponentRegistry,
+  document: AnyEl,
+): Promise<void> {
+  // Work on a re-parsed holder: mutating `template.content` reaches cloneNode
+  // (the SSR clones) but NOT the serialized <template> the client re-clones from
+  // (linkedom serializes from an internal child list). Writing `innerHTML` back
+  // syncs both — same trick as expandTemplateComponents.
+  const holder = document.createElement('div')
+  holder.innerHTML = template.innerHTML
+  const divs = Array.from(holder.querySelectorAll('[data-apex-lname]')) as AnyEl[]
+  if (!divs.length) return
+  for (const div of divs) {
+    const name = div.getAttribute('data-apex-lname') as string
+    const propsExpr = div.getAttribute('data-apex-lprops') || '{}'
+    div.removeAttribute('data-apex-lname')
+    div.removeAttribute('data-apex-lprops')
+    const loader = registry[name]?.loader
+    if (!loader) continue
+    const map: Record<string, unknown> = {}
+    const memo = new Map<string, unknown>()
+    for (const scope of instanceScopes) {
+      const props = (evaluate(`(${propsExpr})`, scope) as Record<string, unknown>) ?? {}
+      const keyVal = String(evaluate(keyExpr, scope))
+      const memoKey = JSON.stringify(props)
+      let data: unknown
+      if (memo.has(memoKey)) data = memo.get(memoKey)
+      else {
+        data = (await loader({ props })) ?? {}
+        memo.set(memoKey, data)
+      }
+      map[keyVal] = data
+    }
+    const xd = (div.getAttribute('x-data') ?? '')
+      .replace('__APEX_LMAP__', JSON.stringify(map))
+      .replace('__APEX_LKEY__', `(${keyExpr})`)
+    div.setAttribute('x-data', xd)
+  }
+  template.innerHTML = holder.innerHTML
+}
+
 async function renderFor(
   template: AnyEl,
   expr: string,
@@ -485,14 +536,29 @@ async function renderFor(
   expandTemplateComponents(template, document, registry)
   const parsed = parseForExpression(expr)
   if (!parsed) return
-  const pairs = toIterablePairs(evaluate(parsed.items, layers))
+  const pairs = Array.from(toIterablePairs(evaluate(parsed.items, layers)))
+
+  const itemScopeFor = (value: unknown, index: unknown): ScopeLayer => {
+    const s: ScopeLayer = { [parsed.item]: value }
+    if (parsed.index) s[parsed.index] = index
+    return s
+  }
+
+  // Run per-item component loaders + bake their results into the loop's x-data
+  // (keyed by the loop :key, or the item itself when no :key is given).
+  const keyExpr = template.getAttribute(':key') || parsed.item
+  await bakeComponentLoaders(
+    template,
+    pairs.map(([value, index]) => [...layers, itemScopeFor(value, index)]),
+    keyExpr,
+    registry,
+    document,
+  )
 
   // Insert clones sequentially right after the <template>, matching Alpine.
   let anchor: AnyEl = template
   for (const [value, index] of pairs) {
-    const itemScope: ScopeLayer = { [parsed.item]: value }
-    if (parsed.index) itemScope[parsed.index] = index
-    const scoped = [...layers, itemScope]
+    const scoped = [...layers, itemScopeFor(value, index)]
 
     const frag = template.content.cloneNode(true)
     const clones = Array.from(frag.childNodes) as AnyEl[]
@@ -516,6 +582,8 @@ async function renderIf(
 ): Promise<void> {
   expandTemplateComponents(template, document, registry)
   if (!evaluate(expr, layers)) return
+  // Single instance: run any component loaders once, keyed by a constant.
+  await bakeComponentLoaders(template, [layers], "'_'", registry, document)
   const frag = template.content.cloneNode(true)
   const clones = Array.from(frag.childNodes) as AnyEl[]
   template.after(frag)
