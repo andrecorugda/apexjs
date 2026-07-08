@@ -1004,9 +1004,9 @@ figcaption {
 /* Third level: the current page's sections, indented under the page (à la Synapse). */
 .docs-sidebar .subnav {
   list-style: none;
-  margin: 0.2rem 0 0.6rem 0.85rem; /* indent the whole sublist under its page */
-  padding-left: 0.8rem;
-  border-left: 1px solid var(--line);
+  margin: 0.2rem 0 0.7rem 1.1rem; /* clearly indent the sublist under its page */
+  padding-left: 0.85rem;
+  border-left: 2px solid var(--line);
 }
 .docs-sidebar .subnav li {
   margin: 0;
