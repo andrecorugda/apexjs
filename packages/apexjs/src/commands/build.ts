@@ -95,7 +95,7 @@ export const buildCommand = defineCommand({
       let loadingHtml: string | undefined
       if (!args.islands && clientNav && existsSync(join(root, 'pages', 'loading.alpine'))) {
         const l = (await vite.ssrLoadModule('/pages/loading.alpine')) as unknown as PageModule
-        loadingHtml = renderFragment(l.template, {}, l.scopeId, registry)
+        loadingHtml = await renderFragment(l.template, {}, l.scopeId, registry)
       }
 
       for (const route of staticRoutes) {
@@ -183,7 +183,7 @@ async function buildServerTarget(
     if (clientNav && existsSync(join(root, 'pages', 'loading.alpine'))) {
       const { registry } = await loadComponents(root, (id) => cfgVite.ssrLoadModule(id) as never)
       const l = (await cfgVite.ssrLoadModule('/pages/loading.alpine')) as unknown as PageModule
-      loadingHtml = renderFragment(l.template, {}, l.scopeId, registry)
+      loadingHtml = await renderFragment(l.template, {}, l.scopeId, registry)
     }
   } finally {
     await cfgVite.close()

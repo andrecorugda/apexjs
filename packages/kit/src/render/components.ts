@@ -1,3 +1,11 @@
+/** Context passed to a component's server `loader`. */
+export interface ComponentLoaderContext {
+  /** Resolved props from the usage site (static + `:bound`). */
+  props: Record<string, unknown>
+  /** Request-scoped state (from middleware / page), passed through unchanged. */
+  locals?: Record<string, unknown>
+}
+
 export interface ComponentEntry {
   /** Inner content of the component's top-level <template>. */
   template: string
@@ -5,6 +13,14 @@ export interface ComponentEntry {
   rootXData?: string | null
   /** The component's scoped-CSS attribute. */
   scopeId: string
+  /** Stable component id (e.g. `c3`) — used to key per-instance loop hydration. */
+  componentId?: string
+  /**
+   * Optional server `loader` (from the component's `<script server>`). Runs at
+   * SSR when the component is embedded; its result merges into the component's
+   * scope and is baked for hydration. May be async.
+   */
+  loader?: (ctx: ComponentLoaderContext) => unknown | Promise<unknown>
 }
 
 export type ComponentRegistry = Record<string, ComponentEntry>

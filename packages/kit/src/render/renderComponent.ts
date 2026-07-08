@@ -36,6 +36,10 @@ export interface RenderComponentResult {
 
 const ELEMENT_NODE = 1
 
+// Warn once per component when a server loader is used inside a loop/conditional
+// (not yet supported — see buildStructuralComponent).
+const warnedLoopLoader = new Set<string>()
+
 // Directive attributes we consume during SSR (removed handling is per-directive;
 // most stay in the output so browser Alpine re-binds).
 const SSR_IGNORED_PREFIXES = ['@', 'x-on:']
@@ -49,7 +53,7 @@ const SSR_IGNORED_PREFIXES = ['@', 'x-on:']
  * host a live x-data), render its subtree server-side, and leave every behavioral
  * directive attribute in place for Alpine to pick up on boot.
  */
-export function renderComponent(input: RenderComponentInput): RenderComponentResult {
+export async function renderComponent(input: RenderComponentInput): Promise<RenderComponentResult> {
   const { template, rootXData, componentId, scopeId, loaderData } = input
   const registry = input.registry ?? {}
 
@@ -80,7 +84,7 @@ export function renderComponent(input: RenderComponentInput): RenderComponentRes
   const layers: ScopeLayer[] = [magics, rootData]
 
   stampScope(root, scopeId)
-  walkChildren(root, layers, scopeId, document, registry)
+  await walkChildren(root, layers, scopeId, document, registry)
 
   return { html: root.outerHTML, rootData }
 }
@@ -91,12 +95,12 @@ export function renderComponent(input: RenderComponentInput): RenderComponentRes
  * (so `x-text` etc. inside them resolve). Used by the islands renderer, where the
  * page has many independent interactive regions rather than one component root.
  */
-export function renderFragment(
+export async function renderFragment(
   templateHtml: string,
   data: Record<string, unknown>,
   scopeId: string,
   registry: ComponentRegistry = {},
-): string {
+): Promise<string> {
   const idCounter = { n: 0 }
   return renderFragmentInternal(templateHtml, [createMagicsFor(idCounter), data], scopeId, registry)
 }
@@ -122,18 +126,18 @@ export interface RenderIslandsResult {
  * hydration mode for the lazy client loader to act on. Static content ships no
  * JS; islands hydrate individually on their trigger.
  */
-export function renderIslands(
+export async function renderIslands(
   templateHtml: string,
   data: Record<string, unknown>,
   scopeId: string,
   registry: ComponentRegistry = {},
-): RenderIslandsResult {
+): Promise<RenderIslandsResult> {
   const prepared = rewriteComponentTags(templateHtml, Object.keys(registry))
   const { document } = parseHTML(`<!DOCTYPE html><html><body>${prepared}</body></html>`)
   const body = document.body
   const idCounter = { n: 0 }
   const layers: ScopeLayer[] = [createMagics(body, idCounter), data]
-  walkChildren(body, layers, scopeId, document, registry)
+  await walkChildren(body, layers, scopeId, document, registry)
 
   let hydratingCount = 0
   let nextId = 0
@@ -156,16 +160,16 @@ export function renderIslands(
 type AnyEl = any
 
 /** Parse + walk a template fragment with the given scope, returning its innerHTML. */
-function renderFragmentInternal(
+async function renderFragmentInternal(
   templateHtml: string,
   layers: ScopeLayer[],
   scopeId: string,
   registry: ComponentRegistry,
-): string {
+): Promise<string> {
   const prepared = rewriteComponentTags(templateHtml, Object.keys(registry))
   const { document } = parseHTML(`<!DOCTYPE html><html><body>${prepared}</body></html>`)
   const body = document.body
-  walkChildren(body, layers, scopeId, document, registry)
+  await walkChildren(body, layers, scopeId, document, registry)
   return body.innerHTML
 }
 
@@ -173,34 +177,34 @@ function createMagicsFor(idCounter: { n: number }): ScopeLayer {
   return createMagics(null, idCounter)
 }
 
-function walkChildren(
+async function walkChildren(
   parent: AnyEl,
   layers: ScopeLayer[],
   scopeId: string,
   document: AnyEl,
   registry: ComponentRegistry,
-): void {
+): Promise<void> {
   // Snapshot children first — the walk mutates the tree (x-for/x-if insert clones,
   // components get replaced by their rendered output).
   const children = Array.from(parent.childNodes) as AnyEl[]
   for (const node of children) {
     if (node.nodeType !== ELEMENT_NODE) continue
-    walkElement(node, layers, scopeId, document, registry)
+    await walkElement(node, layers, scopeId, document, registry)
   }
 }
 
-function walkElement(
+async function walkElement(
   el: AnyEl,
   layers: ScopeLayer[],
   scopeId: string,
   document: AnyEl,
   registry: ComponentRegistry,
-): void {
+): Promise<void> {
   const tag = String(el.tagName).toLowerCase()
 
   // Component usage (`<Counter/>` was rewritten to <apex-component data-apex-name>).
   if (tag === 'apex-component') {
-    renderComponentInstance(el, layers, scopeId, document, registry)
+    await renderComponentInstance(el, layers, scopeId, document, registry)
     return
   }
 
@@ -208,12 +212,12 @@ function walkElement(
   if (tag === 'template') {
     const xFor = el.getAttribute('x-for')
     if (xFor != null) {
-      renderFor(el, xFor, layers, scopeId, document, registry)
+      await renderFor(el, xFor, layers, scopeId, document, registry)
       return
     }
     const xIf = el.getAttribute('x-if')
     if (xIf != null) {
-      renderIf(el, xIf, layers, scopeId, document, registry)
+      await renderIf(el, xIf, layers, scopeId, document, registry)
       return
     }
     // A plain <template> (no structural directive) is left untouched.
@@ -257,7 +261,7 @@ function walkElement(
   } else if (xText != null) {
     el.textContent = String(evaluate(xText, scoped) ?? '')
   } else {
-    walkChildren(el, scoped, scopeId, document, registry)
+    await walkChildren(el, scoped, scopeId, document, registry)
   }
 }
 
@@ -269,13 +273,13 @@ function walkElement(
  * to the parent scope or props. A `client:*` directive is forwarded to the wrapper
  * so islands mode can hydrate the component lazily.
  */
-function renderComponentInstance(
+async function renderComponentInstance(
   el: AnyEl,
   layers: ScopeLayer[],
   scopeId: string,
   document: AnyEl,
   registry: ComponentRegistry,
-): void {
+): Promise<void> {
   const name = el.getAttribute('data-apex-name') as string
   const entry = registry[name]
   if (!entry) {
@@ -287,7 +291,7 @@ function renderComponentInstance(
   // (authored where the component is used, styled by the parent's scope).
   const slotSource = String(el.innerHTML ?? '')
   const slotHtml = slotSource.trim()
-    ? renderFragmentInternal(slotSource, layers, scopeId, registry)
+    ? await renderFragmentInternal(slotSource, layers, scopeId, registry)
     : ''
 
   const props: Record<string, unknown> = {}
@@ -305,16 +309,28 @@ function renderComponentInstance(
     else props[n] = attr.value
   }
 
-  const dataObj = entry.rootXData?.trim()
-    ? ((evaluate(entry.rootXData, [props]) as Record<string, unknown>) ?? {})
+  // Run the component's OWN server loader (if declared), with its resolved props.
+  // Its result is available to the component's x-data + template and is baked
+  // into the hydration literal below — so the client never re-runs it.
+  const loaderData = entry.loader
+    ? (((await entry.loader({ props })) as Record<string, unknown>) ?? {})
     : {}
-  // Props first so component x-data can override; both are available in the
-  // component's scope and baked into the hydration literal.
-  const merged = { ...props, ...dataObj }
+
+  const dataObj = entry.rootXData?.trim()
+    ? ((evaluate(entry.rootXData, [{ ...props, ...loaderData }]) as Record<string, unknown>) ?? {})
+    : {}
+  // Precedence props < loader < x-data; all available in the component's scope
+  // and baked into the hydration literal (so hydration needs no parent scope).
+  const merged = { ...props, ...loaderData, ...dataObj }
 
   const idCounter = { n: 0 }
   const innerLayers: ScopeLayer[] = [createMagics(el, idCounter), merged]
-  const innerHtml = renderFragmentInternal(entry.template, innerLayers, entry.scopeId, registry)
+  const innerHtml = await renderFragmentInternal(
+    entry.template,
+    innerLayers,
+    entry.scopeId,
+    registry,
+  )
 
   const root = document.createElement('div')
   root.setAttribute('x-data', JSON.stringify(merged))
@@ -389,6 +405,18 @@ function buildStructuralComponent(el: AnyEl, document: AnyEl, registry: Componen
   const entry = registry[name]
   if (!entry) return document.createComment(` apex: unknown component "${name}" `)
 
+  // A component's server `loader` doesn't yet run inside x-for/x-if (per-item
+  // keyed-payload hydration is the next increment). Warn once so it's not a
+  // silent no-op; for now, hoist the fetch to the parent loader + pass via props.
+  if (entry.loader && !warnedLoopLoader.has(name)) {
+    warnedLoopLoader.add(name)
+    // biome-ignore lint/suspicious/noConsole: dev warning
+    console.warn(
+      `[apex] Component <${name}> has a server loader but is used inside x-for/x-if — ` +
+        `its loader does not run there yet. Hoist the data to the parent loader and pass via props.`,
+    )
+  }
+
   const staticEntries: string[] = []
   const dynEntries: string[] = []
   for (const attr of Array.from(el.attributes) as AnyEl[]) {
@@ -444,14 +472,14 @@ function stampSubtreeScope(el: AnyEl, scopeId: string): void {
   }
 }
 
-function renderFor(
+async function renderFor(
   template: AnyEl,
   expr: string,
   layers: ScopeLayer[],
   scopeId: string,
   document: AnyEl,
   registry: ComponentRegistry,
-): void {
+): Promise<void> {
   // Expand components in the template ONCE so both the SSR clones (walked below)
   // and the kept <template> (cloned by Alpine on the client) get real markup.
   expandTemplateComponents(template, document, registry)
@@ -472,20 +500,20 @@ function renderFor(
     for (const clone of clones) {
       if (clone.nodeType !== ELEMENT_NODE) continue
       clone.setAttribute('data-apex-ssr', '')
-      walkElement(clone, scoped, scopeId, document, registry)
+      await walkElement(clone, scoped, scopeId, document, registry)
       anchor = clone
     }
   }
 }
 
-function renderIf(
+async function renderIf(
   template: AnyEl,
   expr: string,
   layers: ScopeLayer[],
   scopeId: string,
   document: AnyEl,
   registry: ComponentRegistry,
-): void {
+): Promise<void> {
   expandTemplateComponents(template, document, registry)
   if (!evaluate(expr, layers)) return
   const frag = template.content.cloneNode(true)
@@ -494,7 +522,7 @@ function renderIf(
   for (const clone of clones) {
     if (clone.nodeType !== ELEMENT_NODE) continue
     clone.setAttribute('data-apex-ssr', '')
-    walkElement(clone, layers, scopeId, document, registry)
+    await walkElement(clone, layers, scopeId, document, registry)
   }
 }
 
