@@ -73,8 +73,8 @@ zero JS until an island needs it.
   [AUTH_DESIGN.md](AUTH_DESIGN.md).
 - **Next:** jobs/queues, events/observers (→ model behaviors, [AUTH_DESIGN.md](AUTH_DESIGN.md) §8).
 
-### ▢ Phase F — Apex Context (AI agent enablement)
-*Planned. Working name: **Apex Context** (alt: Compass / Boost).* The Laravel-Boost
+### ▢ Phase F — Apex Compass (AI agent enablement)
+*Planned. Name: **Apex Compass** — it orients a coding agent in your app.* The Laravel-Boost
 equivalent, but native — Apex already speaks MCP, so a coding agent can be made an
 expert in both Apex and *your* app. Distinct from the runtime per-route MCP (which
 exposes app **data**); this is **dev-time** codebase + framework awareness. Includes:
@@ -85,9 +85,9 @@ exposes app **data**); this is **dev-time** codebase + framework awareness. Incl
   format, `defineApexRoute`/`defineModel`/behaviors/auth/testing patterns, do's & don'ts)
   fed to the agent so it writes idiomatic Apex.
 - **Docs access** — search the version-matched Apex docs as a tool.
-- **Rules-file generation** — `apex context init` writes/updates `CLAUDE.md` / `AGENTS.md`
+- **Rules-file generation** — `apex compass init` writes/updates `CLAUDE.md` / `AGENTS.md`
   / `.cursor/rules` with Apex conventions + a live map of the project.
-Package `@apex-stack/context`, CLI `apex context`.
+Package `@apex-stack/compass`, CLI `apex compass`.
 
 ### ▢ Phase E — Reach: PWA + app packaging
 *Planned.* Turn Apex apps into installable, offline-capable, and app-store-shippable
@@ -187,7 +187,7 @@ neither of them has. Legend: ✅ have · 🟡 partial · ❌ not yet.
 | i18n | 🟡 | ✅ | ✅ | `i18n` config + `locales/*.json`; `t`/`locale` in loaders; `/<locale>` + Accept-Language; SSR `<html lang>` |
 | PWA — offline / installable | 🟡 | ✅ | ❌ | planned — integrate `vite-plugin-pwa` + a `pwa` config (manifest + service worker) |
 | Mobile / desktop packaging | ❌ | ❌ | ❌ | planned — wrap the static build with Capacitor/Tauri (WebView shell + device APIs); not native UI |
-| **AI agent enablement (Boost-style)** | ❌ | ❌ | ▢ | planned — **Apex Context**: project MCP + guidelines + docs + rules-file gen (Laravel Boost equivalent) |
+| **AI agent enablement (Boost-style)** | ❌ | ❌ | ▢ | planned — **Apex Compass**: project MCP + guidelines + docs + rules-file gen (Laravel Boost equivalent) |
 | Plugin / module ecosystem | ✅ | ✅ | ❌ | (P3) |
 
 **Scorecard:** ~24 of the core dimensions at parity (✅), plus the AI-native moat that's ✅ for Apex
