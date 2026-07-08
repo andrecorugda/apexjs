@@ -10,6 +10,7 @@ Apex JS is the full-stack meta-framework for Alpine.js: file-based routing, serv
 - [CLI reference — Apex JS](https://apexjs.site/cli.html): Complete reference for the apex CLI: dev, build, start, make, migrate, and mcp with every flag.
 - [Components — Apex JS](https://apexjs.site/components.html): The .alpine single-file component format: server loader, template x-data, scoped styles, and component embedding with props.
 - [Data — Apex JS](https://apexjs.site/data.html): defineResource turns one table into REST + MCP CRUD. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations.
+- [Auth — Apex JS](https://apexjs.site/auth.html): One fail-closed policy across pages, REST, and MCP — defineAuth, route auth/can, resource access + row-level scope, sealed sessions, and CSRF. An AI can never exceed the logged-in user.
 - [Build & deploy — Apex JS](https://apexjs.site/deploy.html): The three apex build modes, apex start, databases in production, and hosting targets.
 - [Getting started — Apex JS](https://apexjs.site/getting-started.html): Install Apex JS, understand the project structure, run the dev server, and follow the dev → build → deploy lifecycle.
 - [Islands — Apex JS](https://apexjs.site/islands.html): The four client:* island modes in Apex JS and the zero-JS-until-needed story.

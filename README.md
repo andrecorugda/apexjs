@@ -59,7 +59,8 @@ Every major reactive library has a meta-framework — React has Next, Vue has Nu
 
 ## Status
 
-**v0.1.5 on npm.** SSR + hydration, islands (`client:load|idle|visible|none`), file routing,
+**On npm — start with `npm create apexjs@latest`** (packages are versioned independently via
+Changesets; use `@latest`). SSR + hydration, islands (`client:load|idle|visible|none`), file routing,
 components, AI-native APIs (REST + MCP from one typed route), a multi-database data layer
 (SQLite/Turso/Supabase/Neon), a **security model** (`defineAuth` + route `auth`/`can` + resource
 `access`/`scope` + sealed sessions/CSRF — one fail-closed policy across pages/REST/MCP, verified by
