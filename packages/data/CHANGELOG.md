@@ -1,5 +1,19 @@
 # @apex-stack/data
 
+## 0.6.1
+
+### Patch Changes
+
+- Fix behavior hook safety (from independent Phase D verification):
+
+  - Hook `ctx` no longer leaks Drizzle internals as enumerable props — `db`/`table`/
+    `handle` are non-enumerable, so `JSON.stringify(ctx)` / `console.log(ctx)` in a user
+    hook no longer throw on circular references (they remain reachable as `ctx.db` etc.).
+  - `after*` hooks (`afterCreate`/`afterUpdate`/`afterDelete`/`afterList`/`afterGet`) are
+    now best-effort side-effects: a throw is logged and swallowed rather than 500-ing an
+    already-committed write. `before*` hooks keep their veto (a throw aborts the op before
+    it runs). `observable` JSDoc documents the single-`ctx` hook shape.
+
 ## 0.6.0
 
 ### Minor Changes

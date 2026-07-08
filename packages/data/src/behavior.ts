@@ -197,7 +197,21 @@ export function owned(column = 'ownerId'): Behavior {
   }
 }
 
-/** Attach lifecycle hooks (fire identically over REST and MCP). */
+/**
+ * Attach lifecycle hooks (fire identically over REST and MCP). Each hook receives a
+ * single {@link HookCtx} — destructure what you need:
+ *
+ * ```ts
+ * observable({
+ *   beforeCreate: ({ data, user }) => { data.slug = slugify(data.title) },
+ *   afterCreate:  ({ row }) => notify(row),
+ *   afterList:    ({ rows }) => metric('list', rows?.length),
+ * })
+ * ```
+ *
+ * `before*` hooks may mutate `ctx.data` or throw to veto the op; `after*` hooks are
+ * best-effort side-effects (a throw is logged, never failing the committed write).
+ */
 export function observable(hooks: BehaviorHooks): Behavior {
   return { name: 'observable', hooks }
 }

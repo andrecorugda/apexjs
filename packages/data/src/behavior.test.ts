@@ -184,6 +184,62 @@ describe('built-in behaviors (over PGlite)', () => {
     await h.close()
   })
 
+  it('hook ctx is JSON-safe and a throwing after* hook does not fail the committed write', async () => {
+    let snapshot = ''
+    const warnings: string[] = []
+    const origWarn = console.warn
+    console.warn = (m?: unknown) => {
+      warnings.push(String(m))
+    }
+    try {
+      const m = defineModel('safe', {
+        fields: { x: 'string' },
+        use: [
+          observable({
+            afterCreate: (ctx) => {
+              snapshot = JSON.stringify(ctx) // must NOT throw on Drizzle circular refs
+              throw new Error('boom') // must NOT fail the already-committed write
+            },
+          }),
+        ],
+      })
+      const h = await createDb({ driver: 'pglite' })
+      await h.exec(m.migrationSql('postgres'))
+      const { create } = ops(m.resource(h))
+      const row = (await create({ input: { x: 'a' }, user: null })) as { id: number }
+      expect(row.id).toBeTruthy() // create succeeded despite the throwing hook
+      expect(snapshot).toContain('"op":"create"') // ctx serialized without circular error
+      expect(snapshot).not.toContain('"db"') // internals are non-enumerable
+      expect(snapshot).not.toContain('"handle"')
+      expect(warnings.some((w) => w.includes('afterCreate'))).toBe(true) // failure surfaced
+      const n = await h.query('SELECT count(*)::int AS n FROM safe')
+      expect(n[0]?.n).toBe(1) // row is physically committed
+      await h.close()
+    } finally {
+      console.warn = origWarn
+    }
+  })
+
+  it('a throwing before* hook vetoes the op (no write)', async () => {
+    const m = defineModel('veto', {
+      fields: { x: 'string' },
+      use: [
+        observable({
+          beforeCreate: () => {
+            throw new Error('nope')
+          },
+        }),
+      ],
+    })
+    const h = await createDb({ driver: 'pglite' })
+    await h.exec(m.migrationSql('postgres'))
+    const { create } = ops(m.resource(h))
+    await expect(create({ input: { x: 'a' }, user: null })).rejects.toThrow(/nope/)
+    const n = await h.query('SELECT count(*)::int AS n FROM veto')
+    expect(n[0]?.n).toBe(0) // vetoed before the write
+    await h.close()
+  })
+
   it('read hooks: afterList and afterGet fire with rows/row', async () => {
     const seen: string[] = []
     const m = defineModel('reads', {
