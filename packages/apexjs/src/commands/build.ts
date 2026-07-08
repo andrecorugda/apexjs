@@ -5,6 +5,7 @@ import { apex } from '@apex-stack/vite'
 import { defineCommand } from 'citty'
 import { createServer as createViteServer } from 'vite'
 import { buildClient, type ClientAssets } from '../build/buildClient.js'
+import { buildIslandsRuntime } from '../build/buildIslands.js'
 import { buildServer } from '../build/buildServer.js'
 import { loadComponents } from '../components/registry.js'
 import { resolveApexConfig } from '../config/resolve.js'
@@ -55,9 +56,15 @@ export const buildCommand = defineCommand({
     }
 
     // Component mode: build a client bundle per page so the prerendered HTML hydrates.
+    // Islands mode: build the islands runtime instead (loader asset + lazy Alpine
+    // chunk + compiled global stylesheet) — the inline dev loader's bare
+    // `import('alpinejs')` cannot resolve in a static build.
     const hrefs = args.islands
       ? new Map<string, ClientAssets>()
       : await buildClient(root, staticRoutes, outDir, args.base)
+    const islandsRuntime = args.islands
+      ? await buildIslandsRuntime(root, outDir, args.base)
+      : undefined
 
     const vite = await createViteServer({
       root,
@@ -105,7 +112,11 @@ export const buildCommand = defineCommand({
         }
         const assets = hrefs.get(route.pageId)
         const html = args.islands
-          ? await renderIslandsPage(common)
+          ? await renderIslandsPage({
+              ...common,
+              loaderHref: islandsRuntime?.js,
+              cssHrefs: islandsRuntime?.css,
+            })
           : await renderPage({
               ...common,
               clientHref: assets?.js,

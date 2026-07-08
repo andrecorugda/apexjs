@@ -79,7 +79,36 @@ export function compileAlpine(
     `import { registerApexComponent } from ${JSON.stringify(runtime)}`,
     clientCode,
     `registerApexComponent(${JSON.stringify(componentId)}, () => (${authoredExpr}))`,
-    'if (import.meta.hot) import.meta.hot.accept()',
+    // Dev-only HMR wiring (Vite strips the whole block from production builds):
+    //  - apex:css — a style-only edit hot-swaps the component's scoped CSS in
+    //    place (see the plugin's handleHotUpdate); no reload, state preserved.
+    //  - full reloads (template/script edits) save + restore the scroll
+    //    position, so an edit doesn't dump you back at the top of the page.
+    // Window-guarded: every .alpine client module emits this, one instance runs.
+    `if (import.meta.hot) {
+  import.meta.hot.accept()
+  const w = window
+  if (!w.__apexHmr) {
+    w.__apexHmr = true
+    import.meta.hot.on('apex:css', (d) => {
+      let el = document.querySelector('style[data-apex-css="' + d.scopeId + '"]')
+      if (!el) {
+        el = document.createElement('style')
+        el.setAttribute('data-apex-css', d.scopeId)
+        document.head.appendChild(el)
+      }
+      el.textContent = d.css
+    })
+    import.meta.hot.on('vite:beforeFullReload', () => {
+      sessionStorage.setItem('__apex_scroll', String(w.scrollY))
+    })
+    const s = sessionStorage.getItem('__apex_scroll')
+    if (s !== null) {
+      sessionStorage.removeItem('__apex_scroll')
+      requestAnimationFrame(() => w.scrollTo(0, Number(s)))
+    }
+  }
+}`,
   ]
     .filter(Boolean)
     .join('\n')

@@ -23,9 +23,10 @@ that *every model, route, and job is AI-callable by construction* — nothing el
 
 ## Status
 
-**Latest release (npm):** `@apex-stack/core@0.8.0` · `@apex-stack/kit@0.4.0` · `create-apexjs@0.5.0`
-· `@apex-stack/theme@0.3.0` · `@apex-stack/data@0.1.23` · `@apex-stack/vite@0.1.8`. Docs + UI Kit +
-Theme Builder live at **apexjs.site**. Client-side navigation (SPA) shipped in core 0.8.0.
+**Latest release (npm):** `@apex-stack/core@0.9.0` · `@apex-stack/kit@0.4.0` · `create-apexjs@0.5.0`
+· `@apex-stack/theme@0.3.0` · `@apex-stack/data@0.1.27` · `@apex-stack/vite@0.2.0`. Docs + UI Kit +
+Theme Builder live at **apexjs.site**. Client-side nav (0.8.0), style-only HMR + islands static
+build (0.9.0).
 
 ### ✅ Phase 0 — Spike
 `.alpine` SFC → SSR (hydration-safe, no flash) + Vite HMR. Proven.
@@ -60,8 +61,8 @@ zero JS until an island needs it.
 - `apex build` — prerender + per-page client bundle; interactive apps from a **static** `dist/`.
 - `apex build --server` + `apex start` — a production **Node server** for dynamic routes (`[slug]`),
   API + MCP, static assets, and any database. Verified end-to-end.
-- **Next:** Nitro deploy presets (Vercel/Netlify/Cloudflare adapters); island-mode client bundling
-  in the built output; streaming SSR.
+- **Next:** Nitro deploy presets (Vercel/Netlify/Cloudflare adapters); streaming SSR. *(Island-mode
+  client bundling in the built output shipped in core 0.9.0 — islands hydrate from static hosting.)*
 
 ### ▢ Phase 3 — Backend
 Jobs/queues, events/observers, auth — all MCP-aware.
@@ -126,7 +127,7 @@ neither of them has. Legend: ✅ have · 🟡 partial · ❌ not yet.
 | Client-side navigation (SPA) | ✅ | ✅ | ✅ | fetch + swap, history, prefetch, progress bar |
 | Loading boundaries | ✅ | ✅ | ✅ | `pages/loading.alpine` on slow navs |
 | Component-level data loaders | ✅ | ✅ | ❌ | props only (P2) |
-| Fine-grained HMR | ✅ | ✅ | 🟡 | full reload (P2, browser-verify) |
+| Fine-grained HMR | ✅ | ✅ | 🟡 | style edits hot-swap in place; template edits reload w/ scroll restored |
 | Template type-checking | ✅ | ✅ | ❌ | Volar-style (P3) |
 | Image / font optimization | ✅ | ✅ | ❌ | (P3) |
 | Auth module | 🟡 | 🟡 | ❌ | Security model below (P3) |
@@ -144,7 +145,8 @@ P3 ecosystem (deploy presets, image/font, i18n, auth, test kit, Volar, plugins).
 - **Wave B — "scales to real apps" (P2):** ✅ runtime config, middleware, `InferInput/Output`, nested
   layouts, error boundary, form-action sugar, global styles, `apex upgrade`, **client-side navigation
   + loading boundary + prefetch** (browser-verified in dev *and* the prod server) shipped. Remaining:
-  fine-grained HMR (needs live-browser verification), component-level loaders.
+  component-level loaders; fine-grained HMR is now partial (style-only edits hot-swap without a reload,
+  template edits reload with scroll restored — DOM-morphing template HMR is the remaining piece).
 - **Wave C — "ecosystem & polish" (P3):** deploy presets, image/font optimization, i18n, auth
   module, test kit, template type-checking (Volar), plugin/module system.
 

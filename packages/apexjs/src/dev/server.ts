@@ -78,7 +78,9 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   if (kit) alias['@apex-stack/kit'] = kit
 
   // Optional Tailwind — auto-load @tailwindcss/vite if the project installed it.
-  const plugins: PluginOption[] = [apex({ clientRuntime: '@apex-stack/core/client' })]
+  const plugins: PluginOption[] = [
+    apex({ clientRuntime: '@apex-stack/core/client', fullReloadOnly: options.islands }),
+  ]
   let hasTailwind = false
   try {
     const reqProj = createRequire(join(options.root, 'package.json'))
@@ -226,10 +228,11 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           return await vite.transformIndexHtml(url, renderNoProjectPage(options.root))
         }
 
-        const { registry, css: componentCss } = await loadComponents(
-          options.root,
-          (id) => ssrLoad(id) as never,
-        )
+        const {
+          registry,
+          css: componentCss,
+          cssBlocks: componentCssBlocks,
+        } = await loadComponents(options.root, (id) => ssrLoad(id) as never)
         const stores = await loadStores(options.root, (id) => ssrLoad(id) as never)
         const layoutsDir = join(options.root, 'layouts')
         const layouts = existsSync(layoutsDir)
@@ -257,6 +260,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           url,
           registry,
           componentCss,
+          componentCssBlocks,
           stores,
           appCss,
           layouts,

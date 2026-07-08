@@ -14,7 +14,7 @@ const SLOT_RE = /<slot\b[^>]*>[\s\S]*?<\/slot>/
  *   - visible → IntersectionObserver
  *   - none    → never (stays static; Alpine may never load at all)
  */
-const ISLAND_LOADER = /* js */ `
+export const ISLAND_LOADER = /* js */ `
 let __alpine
 function __ensureAlpine() {
   return __alpine ??= import('alpinejs').then(function (m) {
@@ -64,6 +64,14 @@ export interface RenderIslandsPageOptions {
   /** Available layout names (from `layouts/*.alpine`) — enables page-wrapping layouts. */
   layouts?: string[]
   appCss?: string
+  /** Built stylesheet hrefs (production) to link in <head>. */
+  cssHrefs?: string[]
+  /**
+   * Production: href of the built islands runtime bundle. When set, pages with
+   * hydrating islands reference it instead of inlining the dev loader — whose
+   * bare `import('alpinejs')` only Vite's dev server can resolve.
+   */
+  loaderHref?: string
 }
 
 /**
@@ -127,9 +135,16 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
 
   const { html, hydratingCount } = renderIslands(template, data, mod.scopeId, opts.registry)
 
-  const loaderScript = hydratingCount > 0 ? `\n<script type="module">${ISLAND_LOADER}</script>` : ''
+  const loaderScript =
+    hydratingCount > 0
+      ? opts.loaderHref
+        ? `\n<script type="module" src="${opts.loaderHref}"></script>`
+        : `\n<script type="module">${ISLAND_LOADER}</script>`
+      : ''
   const configScript = hydratingCount > 0 ? `\n${clientConfigScript(opts.publicConfig ?? {})}` : ''
-  const appCssLink = opts.appCss ? `\n  <link rel="stylesheet" href="${opts.appCss}" />` : ''
+  const appCssLink = [...(opts.appCss ? [opts.appCss] : []), ...(opts.cssHrefs ?? [])]
+    .map((href) => `\n  <link rel="stylesheet" href="${href}" />`)
+    .join('')
 
   const doc = `<!DOCTYPE html>
 <html lang="en">

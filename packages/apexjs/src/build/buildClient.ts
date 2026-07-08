@@ -19,7 +19,7 @@ const VIRT = 'virtual:apex-client:'
  * rollup, h3, …) into the client bundle graph whenever a store/component imports
  * `{ defineStore }` from it, which hangs the build.
  */
-function runtimeAlias(): Record<string, string> {
+export function runtimeAlias(): Record<string, string> {
   const req = createRequire(import.meta.url)
   const tryResolve = (spec: string): string | undefined => {
     try {
