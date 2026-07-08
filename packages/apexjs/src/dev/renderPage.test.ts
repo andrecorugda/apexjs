@@ -104,6 +104,31 @@ describe('renderPage — error boundary', () => {
   })
 })
 
+describe('renderPage — per-scope style tags (style HMR)', () => {
+  it('emits one <style data-apex-css> per source so dev can hot-swap exactly one', async () => {
+    const page = makeModule({ template: '<p>x</p>', css: '.a{color:red}' })
+    const layout: PageModule = {
+      loader: () => ({}),
+      template: '<div><slot></slot></div>',
+      rootXData: null,
+      componentId: 'l0',
+      scopeId: 'data-apex-lay',
+      css: '.site{margin:0}',
+    }
+    const load = async (id: string) => (id.startsWith('/layouts/') ? layout : page)
+    const html = await renderPage({
+      loadModule: load,
+      pageId: '/pages/index.alpine',
+      url: '/',
+      layouts: ['default'],
+      componentCssBlocks: [{ scopeId: 'data-apex-cmp', css: '.counter{cursor:pointer}' }],
+    })
+    expect(html).toContain('<style data-apex-css="data-apex-abc">.a{color:red}</style>')
+    expect(html).toContain('<style data-apex-css="data-apex-lay">.site{margin:0}</style>')
+    expect(html).toContain('<style data-apex-css="data-apex-cmp">.counter{cursor:pointer}</style>')
+  })
+})
+
 describe('renderPage — client-side navigation', () => {
   it('wraps the body in the stable swap region and emits the page-module hint', async () => {
     const html = await renderPage({

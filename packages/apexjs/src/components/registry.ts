@@ -17,17 +17,26 @@ interface ComponentModule {
 export async function loadComponents(
   root: string,
   loadModule: (id: string) => Promise<ComponentModule>,
-): Promise<{ registry: ComponentRegistry; css: string }> {
+): Promise<{
+  registry: ComponentRegistry
+  css: string
+  /** Per-component CSS keyed by scopeId — enables per-component style HMR. */
+  cssBlocks: Array<{ scopeId: string; css: string }>
+}> {
   const dir = join(root, 'components')
-  if (!existsSync(dir)) return { registry: {}, css: '' }
+  if (!existsSync(dir)) return { registry: {}, css: '', cssBlocks: [] }
 
   const registry: ComponentRegistry = {}
   let css = ''
+  const cssBlocks: Array<{ scopeId: string; css: string }> = []
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.alpine'))) {
     const name = file.replace(/\.alpine$/, '')
     const mod = await loadModule(`/components/${file}`)
     registry[name] = { template: mod.template, rootXData: mod.rootXData, scopeId: mod.scopeId }
-    if (mod.css) css += `${mod.css}\n`
+    if (mod.css) {
+      css += `${mod.css}\n`
+      cssBlocks.push({ scopeId: mod.scopeId, css: mod.css })
+    }
   }
-  return { registry, css }
+  return { registry, css, cssBlocks }
 }

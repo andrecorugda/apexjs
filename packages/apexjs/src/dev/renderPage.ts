@@ -86,6 +86,8 @@ export interface RenderPageOptions {
   registry?: ComponentRegistry
   /** Aggregated component CSS to include in the shell. */
   componentCss?: string
+  /** Per-component CSS blocks (scopeId → css) — enables per-component style HMR in dev. */
+  componentCssBlocks?: Array<{ scopeId: string; css: string }>
   /** Post-process the shell HTML (dev: vite.transformIndexHtml). */
   transformHtml?: (url: string, html: string) => string | Promise<string>
   /** In a production build, the href of the built client bundle for this page.
@@ -182,7 +184,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
   // declares `export const layout = '<parent>'`, wrap again — outermost last.
   // `seen` guards against cycles; each layout is applied at most once.
   let body = html
-  let layoutCss = ''
+  const layoutCssBlocks: Array<{ scopeId: string; css: string }> = []
   const seen = new Set<string>()
   let next: string | false | null | undefined = layoutName
   while (typeof next === 'string' && available.includes(next) && !seen.has(next)) {
@@ -193,14 +195,23 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     body = /<slot\b[^>]*>[\s\S]*?<\/slot>/.test(chrome)
       ? chrome.replace(/<slot\b[^>]*>[\s\S]*?<\/slot>/, () => body)
       : chrome + body
-    layoutCss += layoutMod.css
+    if (layoutMod.css) layoutCssBlocks.push({ scopeId: layoutMod.scopeId, css: layoutMod.css })
     next = layoutMod.layout // a layout may declare a parent layout
   }
+
+  // One <style data-apex-css="<scopeId>"> per source, so a style-only edit in
+  // dev can hot-swap exactly that block (HMR replaces the tag's contents).
+  const cssBlocks: Array<{ scopeId: string; css: string }> = [
+    { scopeId: mod.scopeId, css: mod.css },
+    ...layoutCssBlocks,
+    ...(opts.componentCssBlocks ??
+      (opts.componentCss ? [{ scopeId: 'components', css: opts.componentCss }] : [])),
+  ].filter((b) => b.css)
 
   const doc = shell({
     body,
     island: stateIsland(mod.componentId, loaderData),
-    css: mod.css + layoutCss + (opts.componentCss ?? ''),
+    cssBlocks,
     pageId: opts.pageId,
     clientHref: opts.clientHref,
     storeIds: stores.map((s) => s.id),
@@ -220,7 +231,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
 interface ShellParts {
   body: string
   island: string
-  css: string
+  cssBlocks: Array<{ scopeId: string; css: string }>
   pageId: string
   clientHref?: string
   storeIds?: string[]
@@ -240,7 +251,7 @@ interface ShellParts {
 function shell({
   body,
   island,
-  css,
+  cssBlocks,
   pageId,
   clientHref,
   storeIds = [],
@@ -292,6 +303,12 @@ ${navInstall}</script>`
     : ''
   const loadingTpl = loadingHtml ? `\n<template data-apex-loading>${loadingHtml}</template>` : ''
 
+  // One <style> per source (page / layout / component), keyed by scopeId so a
+  // style-only edit in dev hot-swaps exactly that tag's contents.
+  const styleTags = cssBlocks
+    .map((b) => `<style data-apex-css="${escAttr(b.scopeId)}">${b.css}</style>`)
+    .join('\n  ')
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -299,7 +316,7 @@ ${navInstall}</script>`
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />${moduleMeta}
   ${cssLinks ? `${cssLinks}\n  ` : ''}${headTags}
-  <style>${css}</style>
+  ${styleTags}
 </head>
 <body>
 <div id="__apex" data-apex-root>
