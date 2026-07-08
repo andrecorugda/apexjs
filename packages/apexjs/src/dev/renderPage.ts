@@ -113,6 +113,8 @@ export interface RenderPageOptions {
   clientNav?: boolean
   /** Pre-rendered `loading.alpine` HTML, embedded as the slow-nav boundary. */
   loadingHtml?: string
+  /** Active locale (i18n) — sets `<html lang>` and is seeded to the client. Default `en`. */
+  locale?: string
 }
 
 /**
@@ -223,6 +225,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     moduleUrl: opts.clientHref ?? opts.pageId,
     clientNav: opts.clientNav !== false,
     loadingHtml: opts.loadingHtml,
+    locale: opts.locale ?? 'en',
   })
 
   return opts.transformHtml ? opts.transformHtml(opts.url, doc) : doc
@@ -246,6 +249,8 @@ interface ShellParts {
   clientNav?: boolean
   /** Pre-rendered `loading.alpine` HTML for the slow-nav boundary. */
   loadingHtml?: string
+  /** Active locale for `<html lang>` + client seed. */
+  locale?: string
 }
 
 function shell({
@@ -262,6 +267,7 @@ function shell({
   moduleUrl,
   clientNav = true,
   loadingHtml,
+  locale = 'en',
 }: ShellParts): string {
   // Register global stores on the client before Alpine.start(): import each store
   // module and call Alpine.store(name, factory()) — same factory the server used,
@@ -310,7 +316,7 @@ ${navInstall}</script>`
     .join('\n  ')
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${escAttr(locale)}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -324,6 +330,7 @@ ${body}
 </div>${loadingTpl}
 ${island}
 ${configScript}
+<script>window.__APEX_LOCALE__=${JSON.stringify(locale)}</script>
 ${clientScript}
 </body>
 </html>`
