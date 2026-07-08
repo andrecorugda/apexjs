@@ -18,6 +18,7 @@ import {
 } from 'drizzle-orm/pg-core'
 import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { type ZodRawShape, z } from 'zod'
+import { type Behavior, composeBehaviors } from './behavior.js'
 import {
   type AccessMap,
   type ApexDbHandle,
@@ -51,6 +52,12 @@ export interface DefineModelOptions {
   access?: AccessMap
   /** Row-level scope applied to every op of the derived resource. See `ScopeFn`. */
   scope?: ScopeFn
+  /**
+   * Composable behaviors ("traits") — e.g. `timestamps()`, `owned()`, `observable(...)`.
+   * They fold their fields/access/scope/hooks into this model. See `@apex-stack/data`
+   * behaviors and AUTH_DESIGN.md §8.
+   */
+  use?: Behavior[]
 }
 
 /** A model: its schema derivations + a factory for its REST/MCP resource. */
@@ -170,8 +177,14 @@ function sqlDefault(value: unknown): string {
  */
 export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
   const pk = opts.pk ?? 'id'
+  // Fold behaviors ("traits") + the model's own spec into one effective spec.
+  const composed = composeBehaviors(opts.use ?? [], {
+    fields: opts.fields,
+    access: opts.access,
+    scope: opts.scope,
+  })
   const fields: Record<string, FieldDef> = {}
-  for (const [key, f] of Object.entries(opts.fields)) fields[key] = normalize(f)
+  for (const [key, f] of Object.entries(composed.fields)) fields[key] = normalize(f)
 
   const insert: Record<string, z.ZodTypeAny> = {}
   for (const [key, def] of Object.entries(fields)) {
@@ -179,6 +192,8 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
     // Required only when NOT NULL and no default; otherwise optional.
     insert[key] = def.notNull && def.default === undefined ? base : base.optional()
   }
+  // Drop behavior-managed columns (e.g. timestamps) from the create payload.
+  for (const key of composed.omitFromInsert) delete insert[key]
 
   const table = (dialect: Dialect): unknown => {
     const cols: Record<string, unknown> = {
@@ -210,8 +225,9 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
       table: table(handle.dialect),
       insert,
       pk,
-      access: opts.access,
-      scope: opts.scope,
+      access: composed.access,
+      scope: composed.scope,
+      hooks: composed.hooks,
     })
 
   return { name, pk, fields, insert, table, migrationSql, resource }

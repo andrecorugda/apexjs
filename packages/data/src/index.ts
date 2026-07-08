@@ -3,7 +3,11 @@ import { join } from 'node:path'
 import { type ApexResource, type ApexUser, defineApexRoute } from '@apex-stack/core'
 import { and, eq, type SQL } from 'drizzle-orm'
 import { type ZodRawShape, z } from 'zod'
+import type { BehaviorHooks, HookCtx } from './behavior.js'
 
+export type { Behavior, BehaviorHooks, HookCtx } from './behavior.js'
+// Model behaviors ("traits") — composable fields/access/scope/hooks. AUTH_DESIGN.md §8.
+export { composeBehaviors, observable, owned, timestamps } from './behavior.js'
 export type {
   ApexModel,
   DefineModelOptions,
@@ -234,6 +238,8 @@ export interface DefineResourceOptions {
   access?: AccessMap
   /** Row-level scope applied to every op (see {@link ScopeFn}). Implies gating. */
   scope?: ScopeFn
+  /** Lifecycle hooks (from model behaviors) run around create/update/delete. */
+  hooks?: BehaviorHooks[]
 }
 
 const isRule = (x: unknown): x is AccessRule => typeof x === 'string' || typeof x === 'function'
@@ -248,6 +254,7 @@ const isRule = (x: unknown): x is AccessRule => typeof x === 'string' || typeof 
  */
 export function defineResource(name: string, opts: DefineResourceOptions): ApexResource {
   const { db, table, insert, pk = 'id', scope } = opts
+  const hooks = opts.hooks ?? []
   const pkCol = table[pk]
 
   // Gating posture: declaring `access` or `scope` opts the whole resource in;
@@ -335,16 +342,21 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           ...gate('create'),
           handler: async ({ input, user }) => {
             // Stamp the caller's scope onto the row (owner can't be spoofed via input).
-            const values = {
+            const data = {
               ...(input as Record<string, unknown>),
               ...(scope?.({ user: user ?? null }) ?? {}),
             }
-            return (
+            const ctx: HookCtx = { op: 'create', user: user ?? null, data, db, table }
+            for (const h of hooks) await h.beforeCreate?.(ctx)
+            const row = (
               await db
                 .insert(table)
-                .values(values as never)
+                .values(ctx.data as never)
                 .returning()
             )[0]
+            ctx.row = row
+            for (const h of hooks) await h.afterCreate?.(ctx)
+            return row
           },
         }),
       },
@@ -361,15 +373,21 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
             const { id, ...fields } = input as { id: number } & Record<string, unknown>
             // Never let a caller reassign a scoped column (e.g. change ownerId).
             for (const k of Object.keys(scope?.({ user: user ?? null }) ?? {})) delete fields[k]
-            return (
+            const ctx: HookCtx = { op: 'update', user: user ?? null, data: fields, id, db, table }
+            for (const h of hooks) await h.beforeUpdate?.(ctx)
+            const row =
               (
                 await db
                   .update(table)
-                  .set(fields)
+                  .set(ctx.data)
                   .where(whereId(id, user ?? null))
                   .returning()
               )[0] ?? null
-            )
+            if (row) {
+              ctx.row = row
+              for (const h of hooks) await h.afterUpdate?.(ctx)
+            }
+            return row
           },
         }),
       },
@@ -382,13 +400,23 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           input: { id: z.coerce.number() },
           mcp: true,
           ...gate('delete'),
-          handler: async ({ input, user }) =>
-            (
-              await db
-                .delete(table)
-                .where(whereId((input as { id: number }).id, user ?? null))
-                .returning()
-            )[0] ?? null,
+          handler: async ({ input, user }) => {
+            const id = (input as { id: number }).id
+            const ctx: HookCtx = { op: 'delete', user: user ?? null, data: {}, id, db, table }
+            for (const h of hooks) await h.beforeDelete?.(ctx)
+            const row =
+              (
+                await db
+                  .delete(table)
+                  .where(whereId(id, user ?? null))
+                  .returning()
+              )[0] ?? null
+            if (row) {
+              ctx.row = row
+              for (const h of hooks) await h.afterDelete?.(ctx)
+            }
+            return row
+          },
         }),
       },
     ],
