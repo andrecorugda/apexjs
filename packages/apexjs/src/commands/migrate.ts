@@ -9,16 +9,26 @@ interface DbHandle {
 interface DataModule {
   createDb: (config: unknown) => Promise<DbHandle>
   applyMigrations: (handle: DbHandle, dir: string) => Promise<string[]>
+  rollbackMigrations: (
+    handle: DbHandle,
+    dir: string,
+    steps?: number,
+  ) => Promise<{ reverted: string[]; blocked: string | null }>
 }
 
 export const migrateCommand = defineCommand({
-  meta: { name: 'migrate', description: 'Apply pending SQL migrations (db/migrations/*.sql)' },
+  meta: {
+    name: 'migrate',
+    description: 'Apply pending SQL migrations (or --rollback the last one)',
+  },
   args: {
     db: { type: 'string', description: 'SQLite file path (libSQL)', default: 'data.db' },
     driver: { type: 'string', description: 'sqlite | postgres | pglite', default: 'sqlite' },
     url: { type: 'string', description: 'Connection URL (postgres) — overrides --db' },
     dir: { type: 'string', description: 'Migrations directory', default: 'db/migrations' },
     root: { type: 'string', description: 'Project root', default: '.' },
+    rollback: { type: 'boolean', description: 'Revert the most recent migration(s)' },
+    steps: { type: 'string', description: 'How many migrations to roll back', default: '1' },
   },
   async run({ args }) {
     const root = resolve(process.cwd(), args.root)
@@ -43,10 +53,28 @@ export const migrateCommand = defineCommand({
           ? { driver: 'pglite', dir: args.url }
           : resolve(root, args.db)
     const handle = await data.createDb(config)
-    const applied = await data.applyMigrations(handle, resolve(root, args.dir))
-    await handle.close()
+    const dir = resolve(root, args.dir)
     // biome-ignore lint/suspicious/noConsole: CLI output
-    console.log(
+    const log = console.log
+
+    if (args.rollback) {
+      const steps = Math.max(1, Number.parseInt(String(args.steps), 10) || 1)
+      const { reverted, blocked } = await data.rollbackMigrations(handle, dir, steps)
+      await handle.close()
+      if (reverted.length) log(`\n  ↩ Rolled back ${reverted.length}: ${reverted.join(', ')}`)
+      if (blocked) {
+        log(
+          `  ⚠ Stopped at ${blocked} — it has no \`-- @down\` section (or its file is gone), so it can't be reverted.`,
+        )
+      }
+      if (!reverted.length && !blocked) log('\n  ✓ Nothing to roll back.')
+      log('')
+      return
+    }
+
+    const applied = await data.applyMigrations(handle, dir)
+    await handle.close()
+    log(
       applied.length
         ? `\n  ✓ Applied ${applied.length} migration(s): ${applied.join(', ')}\n`
         : '\n  ✓ Up to date — no pending migrations.\n',

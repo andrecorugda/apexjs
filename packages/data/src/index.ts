@@ -117,17 +117,31 @@ export async function createDb(config: CreateDbConfig): Promise<ApexDbHandle> {
   }
 }
 
+const MIGRATIONS_TABLE =
+  'CREATE TABLE IF NOT EXISTS _apex_migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL)'
+
+/**
+ * Split a migration into its `up` and `down` SQL. Everything before a `-- @down`
+ * marker line is the up (an optional leading `-- @up` line is stripped); everything
+ * after is the down. A file with no `-- @down` marker is up-only (not reversible).
+ */
+export function parseMigration(sql: string): { up: string; down: string } {
+  const parts = sql.split(/^[ \t]*--[ \t]*@down[ \t]*$/im)
+  const up = (parts[0] ?? '').replace(/^[ \t]*--[ \t]*@up[ \t]*$/im, '').trim()
+  const down = parts.slice(1).join('\n').trim()
+  return { up, down }
+}
+
 /**
  * Apply pending `*.sql` migrations from `dir`, tracked in `_apex_migrations`.
- * Idempotent; runs each file once in filename order. Works on any dialect.
+ * Idempotent; runs each file's `up` section once in filename order. Works on any
+ * dialect. Reverse with `rollbackMigrations`.
  */
 export async function applyMigrations(handle: ApexDbHandle, dir: string): Promise<string[]> {
   // No migrations dir (e.g. a bundled server where migrations run via `apex migrate`
   // as a deploy step) → nothing to do, don't crash on boot.
   if (!existsSync(dir)) return []
-  await handle.exec(
-    'CREATE TABLE IF NOT EXISTS _apex_migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL)',
-  )
+  await handle.exec(MIGRATIONS_TABLE)
   const applied = new Set(
     (await handle.query('SELECT name FROM _apex_migrations')).map((r) => r.name as string),
   )
@@ -136,7 +150,8 @@ export async function applyMigrations(handle: ApexDbHandle, dir: string): Promis
     .filter((f) => f.endsWith('.sql'))
     .sort()) {
     if (applied.has(file)) continue
-    await handle.exec(readFileSync(join(dir, file), 'utf8'))
+    const { up } = parseMigration(readFileSync(join(dir, file), 'utf8'))
+    if (up) await handle.exec(up)
     const at = new Date().toISOString()
     await handle.exec(
       `INSERT INTO _apex_migrations (name, applied_at) VALUES ('${file.replace(/'/g, "''")}', '${at}')`,
@@ -144,6 +159,39 @@ export async function applyMigrations(handle: ApexDbHandle, dir: string): Promis
     done.push(file)
   }
   return done
+}
+
+/**
+ * Roll back the last `steps` applied migrations (most recent first), running each
+ * file's `-- @down` section and un-recording it in `_apex_migrations`. Stops at the
+ * first migration that can't be reversed (no `-- @down`, or the file is gone) so
+ * migrations are never undone out of order — that name is returned in `blocked`.
+ */
+export async function rollbackMigrations(
+  handle: ApexDbHandle,
+  dir: string,
+  steps = 1,
+): Promise<{ reverted: string[]; blocked: string | null }> {
+  await handle.exec(MIGRATIONS_TABLE)
+  const rows = await handle.query('SELECT name, applied_at FROM _apex_migrations')
+  // Most recent first: applied_at desc, then filename desc (files carry a sortable
+  // timestamp prefix, so this is a stable tiebreak within the same second).
+  rows.sort(
+    (a, b) =>
+      String(b.applied_at).localeCompare(String(a.applied_at)) ||
+      String(b.name).localeCompare(String(a.name)),
+  )
+  const reverted: string[] = []
+  for (const row of rows.slice(0, steps)) {
+    const name = row.name as string
+    const file = join(dir, name)
+    const down = existsSync(file) ? parseMigration(readFileSync(file, 'utf8')).down : ''
+    if (!down) return { reverted, blocked: name } // not reversible → stop, keep order
+    await handle.exec(down)
+    await handle.exec(`DELETE FROM _apex_migrations WHERE name = '${name.replace(/'/g, "''")}'`)
+    reverted.push(name)
+  }
+  return { reverted, blocked: null }
 }
 
 export interface DefineResourceOptions {
