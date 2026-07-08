@@ -1001,7 +1001,7 @@ figcaption {
   border-left-color: var(--glacier);
   font-weight: 600;
 }
-@media (max-width: 900px) {
+@media (max-width: 720px) {
   .docs-shell {
     grid-template-columns: 1fr;
     gap: 0;
