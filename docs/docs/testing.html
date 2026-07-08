@@ -1,0 +1,325 @@
+<title>Testing — Apex JS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="canonical" href="https://apexjs.site/docs/testing.html" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <meta name="keywords" content="Apex JS, Alpine.js, testing, test kit, createTestApp, factory, Vitest, MCP testing, REST testing, TypeScript, full-stack" />
+  <meta property="og:site_name" content="Apex JS" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://apexjs.site/docs/testing.html" />
+  <meta property="og:title" content="Testing — Apex JS" />
+  <meta property="og:description" content="Boot an app's REST + MCP surface in-process with createTestApp, generate fixtures with schema-inferred factories, and run it all through apex test." />
+  <meta property="og:image" content="https://apexjs.site/assets/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Testing — Apex JS" />
+  <meta name="twitter:description" content="Boot an app's REST + MCP surface in-process with createTestApp, generate fixtures with schema-inferred factories, and run it all through apex test." />
+  <meta name="twitter:image" content="https://apexjs.site/assets/og-image.png" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"Testing — Apex JS","description":"Boot an app's REST + MCP surface in-process with createTestApp, generate fixtures with schema-inferred factories, and run it all through apex test.","url":"https://apexjs.site/docs/testing.html","isPartOf":{"@type":"WebSite","name":"Apex JS","url":"https://apexjs.site"},"inLanguage":"en"}]}</script>
+<meta name="description" content="Boot an app's REST + MCP surface in-process with createTestApp, generate fixtures with schema-inferred factories, and run it all through apex test." />
+<link rel="stylesheet" href="../style.css" />
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="../index.html">
+      <img src="../assets/apex-mark.svg" alt="Apex JS" class="brand-mark" width="22" height="22" />
+      Apex&nbsp;JS
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="./index.html">Docs</a>
+      <a href="../ui.html">UI Kit</a>
+      <a href="../theme.html">Theme</a>
+      <a href="https://github.com/andrecorugda/apexjs" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <a class="kofi-link" href="https://ko-fi.com/G7S722N0L8" target="_blank" rel="noopener" title="Support Apex JS on Ko-fi" style="display:inline-flex;align-items:center;margin-right:.5rem"><img height="28" style="height:28px;border:0;display:block" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" alt="Buy Me a Coffee at ko-fi.com" /></a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle light or dark theme" title="Toggle theme"><svg class="ic-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="ic-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">Testing</p>
+      <h1>Test the whole app <em>in-process</em>.</h1>
+      <p class="lede">
+        <code>@apex-stack/core/testing</code> boots an app's <strong>REST and MCP surface in the same
+        process</strong> — no HTTP server, no ports, no mocks. You assert against the real handlers,
+        the real auth policy, and the real database, so a passing test means the AI surface works too.
+      </p>
+    </div>
+  </section>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" aria-label="Docs sections">
+      <div class="group">
+        <p class="group-title">Introduction</p>
+        <ul>
+          <li><a href="./index.html">Overview</a></li>
+          <li><a href="./getting-started.html">Getting Started</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Core</p>
+        <ul>
+          <li><a href="./routing.html">Routing</a></li>
+          <li><a href="./components.html">Components</a></li>
+          <li><a href="./islands.html">Islands</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Backend &amp; Data</p>
+        <ul>
+          <li><a href="./data.html">Data</a></li>
+          <li><a href="./ai-native.html">AI-Native APIs</a></li>
+          <li><a href="./auth.html">Auth</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Testing</p>
+        <ul>
+          <li><a href="./testing.html" aria-current="page">Test Kit</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Ship</p>
+        <ul>
+          <li><a href="./cli.html">CLI</a></li>
+          <li><a href="./deploy.html">Build &amp; Deploy</a></li>
+        </ul>
+      </div>
+    </aside>
+    <section class="doc">
+
+      <nav class="onpage" aria-label="On this page">
+        <span class="k">On this page</span>
+        <ul>
+          <li><a href="#boot">Boot the app</a></li>
+          <li><a href="#rest">REST helpers</a></li>
+          <li><a href="#auth">Authenticating a call</a></li>
+          <li><a href="#mcp">The MCP surface</a></li>
+          <li><a href="#factories">Factories</a></li>
+          <li><a href="#runner">apex test</a></li>
+          <li><a href="#scaffold">Test-aware scaffolding</a></li>
+        </ul>
+      </nav>
+
+      <h2 id="boot">Boot the app <a class="anchor" href="#boot">#</a></h2>
+      <p>
+        <code>createTestApp</code> loads your routes, resources, and auth resolver and returns a client
+        that talks to them directly — in memory, in the same process as your test. Point it at your
+        project root (it discovers <code>server/</code> for you) or pass explicit entries:
+      </p>
+      <pre><code><span class="k">import</span> { createTestApp } <span class="k">from</span> <span class="s">'@apex-stack/core/testing'</span>
+
+<span class="c">// Discover routes/resources/auth from the project</span>
+<span class="k">const</span> app = <span class="k">await</span> createTestApp({ root: process.cwd() })
+
+<span class="c">// …or wire it explicitly (handy for a focused unit test)</span>
+<span class="k">const</span> app = <span class="k">await</span> createTestApp({
+  entries: [todosResource, searchRoute],
+  auth: myAuthResolver,
+})</code></pre>
+      <p>The returned <code>app</code> exposes REST helpers and an <code>mcp</code> handle:</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Surface</th><th>On the test app</th></tr></thead>
+          <tbody>
+            <tr><td>REST</td><td><code>app.get</code>, <code>app.post</code>, <code>app.patch</code>, <code>app.put</code>, <code>app.delete</code></td></tr>
+            <tr><td>MCP</td><td><code>app.mcp.listTools()</code>, <code>app.mcp.call(name, args, opts?)</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="rest">REST helpers <a class="anchor" href="#rest">#</a></h2>
+      <p>
+        Each verb takes a path and an optional body/options and resolves to a plain
+        <code>{ status, body, headers }</code> — <code>body</code> is already parsed, so you assert on
+        data, not on a <code>Response</code>:
+      </p>
+      <pre><code><span class="k">import</span> { expect, test } <span class="k">from</span> <span class="s">'vitest'</span>
+<span class="k">import</span> { createTestApp } <span class="k">from</span> <span class="s">'@apex-stack/core/testing'</span>
+
+test(<span class="s">'creates and lists a todo'</span>, <span class="k">async</span> () => {
+  <span class="k">const</span> app = <span class="k">await</span> createTestApp({ root: process.cwd() })
+
+  <span class="k">const</span> created = <span class="k">await</span> app.post(<span class="s">'/api/todos'</span>, { text: <span class="s">'ship it'</span> })
+  expect(created.status).toBe(<span class="s">201</span>)
+  expect(created.body.text).toBe(<span class="s">'ship it'</span>)
+
+  <span class="k">const</span> { status, body } = <span class="k">await</span> app.get(<span class="s">'/api/todos'</span>)
+  expect(status).toBe(<span class="s">200</span>)
+  expect(body).toHaveLength(<span class="s">1</span>)
+})</code></pre>
+      <p class="muted">
+        Validation, status codes, and error shapes are the real ones your handlers return — a bad body
+        comes back as the same <code>400</code> a browser would get.
+      </p>
+
+      <h2 id="auth">Authenticating a call <a class="anchor" href="#auth">#</a></h2>
+      <p>
+        Pass <code>{ user }</code> on any request to <strong>inject a session</strong> and skip the login
+        round-trip — the handler sees exactly the identity <a href="./auth.html"><code>defineAuth</code></a>
+        would resolve. Auth, <code>can</code>, resource <code>scope</code>, and CSRF all stay live; you're
+        skipping <em>login</em>, not <em>authorization</em>:
+      </p>
+      <pre><code><span class="c">// Inject a user — no cookie, no login handler</span>
+<span class="k">const</span> res = <span class="k">await</span> app.delete(<span class="s">'/api/todos/1'</span>, { user: { id: <span class="s">'u1'</span>, roles: [<span class="s">'admin'</span>] } })
+expect(res.status).toBe(<span class="s">200</span>)
+
+<span class="c">// Anonymous → the real fail-closed response</span>
+expect((<span class="k">await</span> app.delete(<span class="s">'/api/todos/1'</span>)).status).toBe(<span class="s">401</span>)</code></pre>
+      <p>
+        To exercise the <em>real</em> login flow, use the built-in cookie jar: a call that sets a session
+        cookie is remembered and replayed on later requests, just like a browser.
+      </p>
+      <pre><code><span class="k">await</span> app.post(<span class="s">'/api/login'</span>, { email: <span class="s">'a@b.co'</span>, password: <span class="s">'secret'</span> })
+<span class="c">// subsequent calls carry the sealed session cookie automatically</span>
+<span class="k">const</span> me = <span class="k">await</span> app.get(<span class="s">'/api/me'</span>)
+expect(me.body.email).toBe(<span class="s">'a@b.co'</span>)</code></pre>
+      <div class="callout warm">
+        <span class="h">Why this matters</span>
+        <p>
+          <code>{ user }</code> keeps unit tests fast and readable, while the cookie jar lets you cover
+          login, logout, CSRF, and session expiry end-to-end — both against the same in-process app.
+        </p>
+      </div>
+
+      <h2 id="mcp">The MCP surface <a class="anchor" href="#mcp">#</a></h2>
+      <p>
+        Because every typed route is also an MCP tool, the test app gives you the tool surface too.
+        <code>listTools()</code> returns what the caller may reach (auth-filtered), and
+        <code>call(name, args, opts)</code> invokes a tool with the same <code>{ user }</code> option:
+      </p>
+      <pre><code>test(<span class="s">'todos_create is callable over MCP'</span>, <span class="k">async</span> () => {
+  <span class="k">const</span> app = <span class="k">await</span> createTestApp({ root: process.cwd() })
+
+  <span class="k">const</span> tools = <span class="k">await</span> app.mcp.listTools()
+  expect(tools.map((t) => t.name)).toContain(<span class="s">'todos_create'</span>)
+
+  <span class="k">const</span> out = <span class="k">await</span> app.mcp.call(<span class="s">'todos_create'</span>, { text: <span class="s">'via AI'</span> }, { user: { id: <span class="s">'u1'</span> } })
+  expect(out.text).toBe(<span class="s">'via AI'</span>)
+})</code></pre>
+      <p class="muted">
+        A tool the caller can't reach is omitted from <code>listTools()</code> <em>and</em> refused on
+        <code>call()</code> — so you can assert the AI surface is scoped exactly like REST. See
+        <a href="./ai-native.html">AI-native APIs</a>.
+      </p>
+
+      <h2 id="factories">Factories <a class="anchor" href="#factories">#</a></h2>
+      <p>
+        <code>factory(model)</code> from <a href="./data.html"><code>@apex-stack/data</code></a> reads a
+        table's schema and builds valid fake rows — no fixture files to maintain. It infers a sensible
+        value per column type, and your <code>overrides</code> always win:
+      </p>
+      <pre><code><span class="k">import</span> { factory } <span class="k">from</span> <span class="s">'@apex-stack/data'</span>
+<span class="k">import</span> { schema } <span class="k">from</span> <span class="s">'../db/index.js'</span>
+
+<span class="k">const</span> todos = factory(schema.todos)
+
+todos.make()                       <span class="c">// one plain object, schema-valid</span>
+todos.make({ text: <span class="s">'pinned'</span> })       <span class="c">// overrides win</span>
+todos.makeMany(<span class="s">3</span>)                   <span class="c">// array of 3 (no DB write)</span></code></pre>
+      <p>
+        <code>make</code>/<code>makeMany</code> only build objects; <code>create</code>/<code>createMany</code>
+        insert them and return the persisted rows:
+      </p>
+      <pre><code><span class="k">import</span> { db } <span class="k">from</span> <span class="s">'../db/index.js'</span>
+
+<span class="k">const</span> row = <span class="k">await</span> todos.create(db, { done: <span class="k">true</span> })
+<span class="k">const</span> rows = <span class="k">await</span> todos.createMany(db, <span class="s">10</span>)</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Method</th><th>Returns</th><th>Writes to DB</th></tr></thead>
+          <tbody>
+            <tr><td><code>make(overrides?)</code></td><td>one object</td><td>no</td></tr>
+            <tr><td><code>makeMany(n, overrides?)</code></td><td>array of objects</td><td>no</td></tr>
+            <tr><td><code>create(db, overrides?)</code></td><td>one inserted row</td><td>yes</td></tr>
+            <tr><td><code>createMany(db, n, overrides?)</code></td><td>array of inserted rows</td><td>yes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">
+        Timestamp columns (<code>createdAt</code>/<code>updatedAt</code>) are left unset so the database
+        default fills them. Want richer data? Plug in <code>@faker-js/faker</code> through the
+        <code>fake</code> hook and every generated value flows through it.
+      </p>
+      <pre><code><span class="k">import</span> { faker } <span class="k">from</span> <span class="s">'@faker-js/faker'</span>
+
+<span class="k">const</span> users = factory(schema.users, {
+  fake: (column) => {
+    <span class="k">if</span> (column.name === <span class="s">'email'</span>) <span class="k">return</span> faker.internet.email()
+    <span class="k">if</span> (column.name === <span class="s">'name'</span>)  <span class="k">return</span> faker.person.fullName()
+  },
+})</code></pre>
+
+      <h2 id="runner">apex test <a class="anchor" href="#runner">#</a></h2>
+      <p>
+        <code>apex test</code> is a thin wrapper around <a href="https://vitest.dev" target="_blank" rel="noopener">Vitest</a>
+        wired up for an Apex project — TypeScript, ESM, and path aliases just work. Every argument
+        passes straight through:
+      </p>
+      <pre><code>apex test                 <span class="c"># watch mode (Vitest default)</span>
+apex test run             <span class="c"># single run — CI</span>
+apex test run --coverage  <span class="c"># flags pass through to Vitest</span>
+apex test auth.test.ts    <span class="c"># filter by file</span></code></pre>
+
+      <h2 id="scaffold">Test-aware scaffolding <a class="anchor" href="#scaffold">#</a></h2>
+      <p>
+        The generators write a matching test next to whatever they create, so new code ships with a
+        starting spec instead of a blank file:
+      </p>
+      <pre><code>apex make service billing   <span class="c"># → server/services/billing.ts + billing.test.ts</span>
+apex make api invoices      <span class="c"># → server/api/invoices.ts + invoices.test.ts</span>
+apex make model invoice     <span class="c"># → models/invoice.ts + invoice.test.ts</span></code></pre>
+      <p>
+        The generated test boots the surface with <code>createTestApp</code> (for <code>api</code>/<code>model</code>)
+        and stubs the happy path for you to fill in. Don't want one? Pass <code>--no-test</code>.
+      </p>
+      <pre><code>apex make api invoices --no-test   <span class="c"># skip the generated spec</span></code></pre>
+
+      <div class="card-grid cols-2">
+        <a class="card" href="./data.html"><span class="k">Data</span><h3>Resources &amp; models</h3><p>Where factories read their schema from.</p></a>
+        <a class="card" href="./cli.html"><span class="k">Ship</span><h3>CLI</h3><p>Every <code>apex</code> command, including <code>make</code> and <code>test</code>.</p></a>
+      </div>
+
+    </section>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand-col">
+        <a class="brand" href="../index.html">
+          <img src="../assets/apex-mark.svg" alt="Apex JS" class="brand-mark" width="22" height="22" />
+          Apex&nbsp;JS
+        </a>
+        <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
+        <p class="kofi" style="margin-top:.75rem"><a href="https://ko-fi.com/G7S722N0L8" target="_blank" rel="noopener"><img height="36" style="border:0;height:36px;" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" alt="Buy Me a Coffee at ko-fi.com" /></a></p>
+      </div>
+      <div class="links">
+        <a href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        <a href="./getting-started.html">Get started</a>
+        <a href="./ai-native.html">AI-native</a>
+        <a href="./cli.html">CLI</a>
+      </div>
+    </div>
+    <p class="foot-note">Apex&nbsp;JS · MIT · built by Andre Corugda · npm create apexjs@latest</p>
+  </div>
+</footer>
+
+<script src="../enhance.js" defer></script>
+<script>
+  document.documentElement.classList.add("js");
+  (() => {
+    var root = document.documentElement;
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
+      root.setAttribute("data-theme", dark ? "light" : "dark");
+    });
+  })();
+</script>
