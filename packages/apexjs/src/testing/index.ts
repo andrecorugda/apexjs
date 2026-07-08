@@ -2,7 +2,7 @@
 // MCP surface. Server-only (imports h3 + node:http). See the test-kit spec.
 import { createServer, type Server } from 'node:http'
 import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { apex } from '@apex-stack/vite'
 import {
   createApp,
   defineEventHandler,
@@ -11,6 +11,7 @@ import {
   setResponseStatus,
   toNodeListener,
 } from 'h3'
+import { createServer as createViteServer, type ViteDevServer } from 'vite'
 import { type ApiEntry, createApiHandler, loadApiRoutes } from '../api/routes.js'
 import { type ApexUser, type AuthConfig, defineAuth } from '../auth/define.js'
 import { loadAuth } from '../auth/run.js'
@@ -84,13 +85,30 @@ export async function createTestApp(opts: CreateTestAppOptions): Promise<TestApp
   let entries: ApiEntry[]
   let appAuth: AuthConfig | undefined
   let middleware: Awaited<ReturnType<typeof loadMiddleware>> = []
+  let vite: ViteDevServer | undefined
 
   if ('entries' in opts) {
     entries = opts.entries
     appAuth = opts.auth
   } else {
     const root = opts.root
-    const load = (id: string) => import(pathToFileURL(join(root, id.slice(1))).href)
+    // Load the app's modules through Vite's SSR loader (like `apex dev`) so
+    // extensionless + TypeScript imports across the whole graph resolve correctly —
+    // native `import()` of a file:// URL would only handle the top file, not its deps.
+    // The app's deps (@apex-stack/core, etc.) resolve from its own node_modules.
+    vite = await createViteServer({
+      root,
+      appType: 'custom',
+      configFile: false, // deterministic — don't pick up the app's vite/vitest config
+      logLevel: 'silent',
+      server: { middlewareMode: true, fs: { strict: false } },
+      plugins: [apex({ clientRuntime: '@apex-stack/core/client' })],
+    })
+    const load = (id: string): Promise<Record<string, unknown>> => {
+      const resolved =
+        id[0] === '/' && !id.startsWith(root) ? join(root, id).replace(/\\/g, '/') : id
+      return vite?.ssrLoadModule(resolved) as Promise<Record<string, unknown>>
+    }
     entries = await loadApiRoutes(root, load as never)
     appAuth = await loadAuth(root, load as never)
     middleware = await loadMiddleware(root, load as never)
@@ -207,6 +225,9 @@ export async function createTestApp(opts: CreateTestAppOptions): Promise<TestApp
         }>
       },
     },
-    close: () => new Promise<void>((r) => server.close(() => r())),
+    close: async () => {
+      await new Promise<void>((r) => server.close(() => r()))
+      if (vite) await vite.close()
+    },
   }
 }
