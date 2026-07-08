@@ -12,6 +12,7 @@ type Kind =
   | 'test'
   | 'middleware'
   | 'model'
+  | 'migration'
 
 /** Components are referenced as `<PascalCase/>`, so their file must be PascalCase. */
 function pascalCase(s: string): string {
@@ -237,6 +238,19 @@ DROP TABLE IF EXISTS ${name};
 `
 }
 
+/** An empty, reversible migration for hand-written schema changes (ALTER, index, trigger, …). */
+function migrationFileTemplate(name: string): string {
+  return `-- ${name}
+-- Any SQL runs here (ALTER TABLE, CREATE INDEX, CREATE TRIGGER, backfills, …).
+-- e.g. ALTER TABLE todos ADD COLUMN priority INTEGER DEFAULT 0;
+-- e.g. CREATE INDEX idx_todos_done ON todos (done);
+
+-- @down
+-- Reverse the change above (run by \`apex migrate --rollback\`).
+-- e.g. DROP INDEX idx_todos_done;
+`
+}
+
 function migrationStamp(): string {
   // Sortable YYYYMMDDHHMMSS prefix so applyMigrations runs files in order.
   return new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)
@@ -273,6 +287,13 @@ function plan(kind: Kind, name: string, fieldSpecs: string[], root: string): Art
       return [{ path: join(root, 'tests', `${name}.test.ts`), contents: testTemplate(name) }]
     case 'middleware':
       return [{ path: join(root, 'middleware', `${name}.ts`), contents: middlewareTemplate() }]
+    case 'migration':
+      return [
+        {
+          path: join(root, 'db', 'migrations', `${migrationStamp()}_${name}.sql`),
+          contents: migrationFileTemplate(name),
+        },
+      ]
     case 'model': {
       const fields = parseFields(fieldSpecs)
       return [
@@ -291,13 +312,14 @@ export const makeCommand = defineCommand({
   meta: {
     name: 'make',
     description:
-      'Generate a page, component, API route, store, layout, service, test, middleware, or model',
+      'Generate a page, component, API route, store, layout, service, test, middleware, model, or migration',
   },
   args: {
     kind: {
       type: 'positional',
       required: true,
-      description: 'page | component | api | store | layout | service | test | middleware | model',
+      description:
+        'page | component | api | store | layout | service | test | middleware | model | migration',
     },
     name: { type: 'positional', required: true, description: 'Name (about, Counter, todos, …)' },
     root: { type: 'string', description: 'Project root', default: '.' },
@@ -314,6 +336,7 @@ export const makeCommand = defineCommand({
       'test',
       'middleware',
       'model',
+      'migration',
     ]
     if (!kinds.includes(kind)) {
       console.error(`\n  Unknown type "${args.kind}". Use: ${kinds.join(' | ')}\n`)
