@@ -125,6 +125,28 @@ describe('components inside x-for / x-if (structural expansion)', () => {
     expect(html).toContain('>C: 2</button>')
   })
 
+  it('stamps the component scope on NESTED elements inside x-for (so <style scoped> matches)', () => {
+    const reg: ComponentRegistry = {
+      Sidebar: {
+        template: '<aside class="sb"><button>x</button></aside>',
+        scopeId: 'data-apex-sb',
+      },
+    }
+    const html = renderComponent({
+      template: '<ul><template x-for="p in items" :key="p"><li><Sidebar/></li></template></ul>',
+      componentId: 'c0',
+      scopeId: 'data-apex-page',
+      loaderData: { items: [1, 2] },
+      registry: reg,
+    }).html
+    // Every rendered <button> (kept template + SSR clones) must carry the
+    // component's OWN scope. Regression: in-loop clones only got the enclosing
+    // page scope, so a component's `button[data-apex-sb]` scoped CSS never matched.
+    const buttons = html.match(/<button[^>]*>/g) ?? []
+    expect(buttons.length).toBeGreaterThanOrEqual(2)
+    for (const b of buttons) expect(b).toContain('data-apex-sb')
+  })
+
   it('expands a component inside x-if', () => {
     const shown = render('<template x-if="ok"><Card><b x-text="msg"></b></Card></template>', {
       ok: true,

@@ -1,5 +1,13 @@
 # showcase
 
+## 0.0.24
+
+### Patch Changes
+
+- Updated dependencies [09fbadd]
+  - @apex-stack/core@0.9.1
+  - @apex-stack/data@0.1.28
+
 ## 0.0.23
 
 ### Patch Changes
