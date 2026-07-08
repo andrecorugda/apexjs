@@ -156,7 +156,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     : undefined
 
   const stores = opts.stores ?? []
-  const { html } = renderComponent({
+  const { html } = await renderComponent({
     template: mod.template,
     rootXData: mod.rootXData,
     componentId: mod.componentId,
@@ -190,7 +190,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
   while (typeof next === 'string' && available.includes(next) && !seen.has(next)) {
     seen.add(next)
     const layoutMod = await opts.loadModule(`/layouts/${next}.alpine`)
-    const chrome = renderFragment(layoutMod.template, {}, layoutMod.scopeId, opts.registry)
+    const chrome = await renderFragment(layoutMod.template, {}, layoutMod.scopeId, opts.registry)
     // Function replacement so `$` in the wrapped HTML isn't treated as a special token.
     body = /<slot\b[^>]*>[\s\S]*?<\/slot>/.test(chrome)
       ? chrome.replace(/<slot\b[^>]*>[\s\S]*?<\/slot>/, () => body)

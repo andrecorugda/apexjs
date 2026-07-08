@@ -249,7 +249,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           existsSync(join(options.root, 'pages', 'loading.alpine'))
         ) {
           const l = (await ssrLoad('/pages/loading.alpine')) as unknown as PageModule
-          loadingHtml = renderFragment(l.template, {}, l.scopeId, registry)
+          loadingHtml = await renderFragment(l.template, {}, l.scopeId, registry)
         }
 
         const render = options.islands ? renderIslandsPage : renderPage

@@ -133,7 +133,7 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
     next = layoutMod.layout
   }
 
-  const { html, hydratingCount } = renderIslands(template, data, mod.scopeId, opts.registry)
+  const { html, hydratingCount } = await renderIslands(template, data, mod.scopeId, opts.registry)
 
   const loaderScript =
     hydratingCount > 0

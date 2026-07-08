@@ -65,6 +65,10 @@ export function compileAlpine(
       `export const componentId = ${JSON.stringify(componentId)}`,
       `export const scopeId = ${JSON.stringify(scopeId)}`,
       `export const css = ${JSON.stringify(scopedCssBlocks)}`,
+      // Whether the author declared a real `loader` (vs the injected no-op) — lets
+      // the component registry skip running/serializing loaders for components
+      // that don't have one.
+      `export const hasLoader = ${hasLoader}`,
     ]
       .filter(Boolean)
       .join('\n')

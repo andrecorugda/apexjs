@@ -6,7 +6,10 @@ interface ComponentModule {
   template: string
   rootXData: string | null
   scopeId: string
+  componentId?: string
   css?: string
+  hasLoader?: boolean
+  loader?: (ctx: { props: Record<string, unknown>; locals?: Record<string, unknown> }) => unknown
 }
 
 /**
@@ -32,7 +35,14 @@ export async function loadComponents(
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.alpine'))) {
     const name = file.replace(/\.alpine$/, '')
     const mod = await loadModule(`/components/${file}`)
-    registry[name] = { template: mod.template, rootXData: mod.rootXData, scopeId: mod.scopeId }
+    registry[name] = {
+      template: mod.template,
+      rootXData: mod.rootXData,
+      scopeId: mod.scopeId,
+      componentId: mod.componentId,
+      // Only carry a loader the author actually declared (not the injected no-op).
+      ...(mod.hasLoader && typeof mod.loader === 'function' ? { loader: mod.loader } : {}),
+    }
     if (mod.css) {
       css += `${mod.css}\n`
       cssBlocks.push({ scopeId: mod.scopeId, css: mod.css })

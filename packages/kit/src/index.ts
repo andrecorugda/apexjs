@@ -8,7 +8,11 @@ export type {
   TemplateBlock,
 } from './parse/parseAlpineFile.js'
 export { AlpineParseError, parseAlpineFile } from './parse/parseAlpineFile.js'
-export type { ComponentEntry, ComponentRegistry } from './render/components.js'
+export type {
+  ComponentEntry,
+  ComponentLoaderContext,
+  ComponentRegistry,
+} from './render/components.js'
 export { rewriteComponentTags } from './render/components.js'
 export { AlpineEvalError, clearExprCache, evaluate } from './render/evaluator.js'
 export { serializeState, stateIsland } from './render/island.js'
