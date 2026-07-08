@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { type ApexResource, defineApexRoute } from '@apex-stack/core'
-import { eq } from 'drizzle-orm'
+import { type ApexResource, type ApexUser, defineApexRoute } from '@apex-stack/core'
+import { and, eq, type SQL } from 'drizzle-orm'
 import { type ZodRawShape, z } from 'zod'
 
 export type {
@@ -194,6 +194,29 @@ export async function rollbackMigrations(
   return { reverted, blocked: null }
 }
 
+/** The five CRUD operations a resource exposes. */
+export type ResourceOp = 'list' | 'get' | 'create' | 'update' | 'delete'
+
+/**
+ * How an operation is gated: open to all (`'public'`), any authenticated caller
+ * (`'authed'`), or a predicate on the user + validated input.
+ */
+export type AccessRule =
+  | 'public'
+  | 'authed'
+  | ((ctx: { user: ApexUser | null; input: unknown }) => boolean | Promise<boolean>)
+
+/** A single rule applied to every op, or a per-op map. */
+export type AccessMap = AccessRule | Partial<Record<ResourceOp, AccessRule>>
+
+/**
+ * A row filter derived from the caller, applied to EVERY op — injected as a WHERE
+ * on list/get/update/delete and stamped onto create — so a caller only ever sees
+ * or touches rows matching it (row-level security). E.g. `({ user }) => ({ ownerId:
+ * user.id })`.
+ */
+export type ScopeFn = (ctx: { user: ApexUser | null }) => Record<string, unknown>
+
 export interface DefineResourceOptions {
   db: any
   /** A Drizzle table (from `drizzle-orm/sqlite-core` or `…/pg-core`). */
@@ -202,16 +225,60 @@ export interface DefineResourceOptions {
   insert: ZodRawShape
   /** Primary-key column name. Defaults to `id`. */
   pk?: string
+  /**
+   * Per-operation authorization. Once set (or once `scope` is set), the resource is
+   * gated: any op you don't list defaults to `'authed'` — you can't half-secure a
+   * resource and leave, say, `delete` open. Omit both `access` and `scope` for a
+   * fully public resource.
+   */
+  access?: AccessMap
+  /** Row-level scope applied to every op (see {@link ScopeFn}). Implies gating. */
+  scope?: ScopeFn
 }
+
+const isRule = (x: unknown): x is AccessRule => typeof x === 'string' || typeof x === 'function'
 
 /**
  * Turn one table into a REST + MCP resource (list/get/create/update/delete),
  * each also an MCP tool. Dialect-agnostic — the same definition works whether
  * `db` is backed by SQLite, Turso, Supabase, Neon, or embedded PGlite.
+ *
+ * `access` gates each op (reusing the route auth/can gate) and `scope` filters rows
+ * per caller — both enforced identically over REST and MCP.
  */
 export function defineResource(name: string, opts: DefineResourceOptions): ApexResource {
-  const { db, table, insert, pk = 'id' } = opts
+  const { db, table, insert, pk = 'id', scope } = opts
   const pkCol = table[pk]
+
+  // Gating posture: declaring `access` or `scope` opts the whole resource in;
+  // an unlisted op then defaults to 'authed' (fail-closed), never public.
+  const gated = opts.access !== undefined || opts.scope !== undefined
+  const accessAll = isRule(opts.access) ? opts.access : undefined
+  const accessMap = (opts.access && !isRule(opts.access) ? opts.access : {}) as Partial<
+    Record<ResourceOp, AccessRule>
+  >
+
+  /** Map an op's access rule → a route gate ({ auth?, can? }) understood by core. */
+  function gate(op: ResourceOp): {
+    auth?: boolean
+    can?: (ctx: { user: ApexUser | null; input: unknown }) => boolean | Promise<boolean>
+  } {
+    const rule = accessMap[op] ?? accessAll ?? (gated ? 'authed' : 'public')
+    if (rule === 'public') return {}
+    if (rule === 'authed') return { auth: true }
+    // A predicate implies an authenticated caller (row-level checks assume a user).
+    return { auth: true, can: rule }
+  }
+
+  /** Drizzle WHERE conditions for the caller's scope (empty when no scope). */
+  function scopeConds(user: ApexUser | null): SQL[] {
+    if (!scope) return []
+    return Object.entries(scope({ user })).map(([k, v]) => eq(table[k], v))
+  }
+  /** Combine the pk match with scope conditions (so id-guessing can't cross scopes). */
+  function whereId(id: number, user: ApexUser | null) {
+    return and(eq(pkCol, id), ...scopeConds(user))
+  }
 
   const updateShape: Record<string, unknown> = { id: z.coerce.number() }
   for (const [key, schema] of Object.entries(
@@ -231,7 +298,12 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           method: 'GET',
           description: `List ${name}`,
           mcp: true,
-          handler: async () => await db.select().from(table),
+          ...gate('list'),
+          handler: async ({ user }) => {
+            const conds = scopeConds(user ?? null)
+            const q = db.select().from(table)
+            return conds.length ? await q.where(and(...conds)) : await q
+          },
         }),
       },
       {
@@ -242,12 +314,13 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           description: `Get ${name} by id`,
           input: { id: z.coerce.number() },
           mcp: true,
-          handler: async ({ input }) =>
+          ...gate('get'),
+          handler: async ({ input, user }) =>
             (
               await db
                 .select()
                 .from(table)
-                .where(eq(pkCol, (input as { id: number }).id))
+                .where(whereId((input as { id: number }).id, user ?? null))
             )[0] ?? null,
         }),
       },
@@ -259,13 +332,20 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           description: `Create ${name}`,
           input: insert,
           mcp: true,
-          handler: async ({ input }) =>
-            (
+          ...gate('create'),
+          handler: async ({ input, user }) => {
+            // Stamp the caller's scope onto the row (owner can't be spoofed via input).
+            const values = {
+              ...(input as Record<string, unknown>),
+              ...(scope?.({ user: user ?? null }) ?? {}),
+            }
+            return (
               await db
                 .insert(table)
-                .values(input as never)
+                .values(values as never)
                 .returning()
-            )[0],
+            )[0]
+          },
         }),
       },
       {
@@ -276,9 +356,20 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           description: `Update ${name} by id (partial)`,
           input: updateShape as ZodRawShape,
           mcp: true,
-          handler: async ({ input }) => {
+          ...gate('update'),
+          handler: async ({ input, user }) => {
             const { id, ...fields } = input as { id: number } & Record<string, unknown>
-            return (await db.update(table).set(fields).where(eq(pkCol, id)).returning())[0] ?? null
+            // Never let a caller reassign a scoped column (e.g. change ownerId).
+            for (const k of Object.keys(scope?.({ user: user ?? null }) ?? {})) delete fields[k]
+            return (
+              (
+                await db
+                  .update(table)
+                  .set(fields)
+                  .where(whereId(id, user ?? null))
+                  .returning()
+              )[0] ?? null
+            )
           },
         }),
       },
@@ -290,11 +381,12 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           description: `Delete ${name} by id`,
           input: { id: z.coerce.number() },
           mcp: true,
-          handler: async ({ input }) =>
+          ...gate('delete'),
+          handler: async ({ input, user }) =>
             (
               await db
                 .delete(table)
-                .where(eq(pkCol, (input as { id: number }).id))
+                .where(whereId((input as { id: number }).id, user ?? null))
                 .returning()
             )[0] ?? null,
         }),
