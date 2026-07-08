@@ -227,10 +227,13 @@ function modelMigration(name: string, fields: ParsedField[]): string {
     '  id INTEGER PRIMARY KEY AUTOINCREMENT',
     ...fields.map((f) => `  ${f.name} ${sqliteType(f.type)}${f.notNull ? ' NOT NULL' : ''}`),
   ]
-  return `-- Create the ${name} table. Run \`apex migrate\`.
+  return `-- Create the ${name} table. Run \`apex migrate\` (reverse with \`apex migrate --rollback\`).
 CREATE TABLE IF NOT EXISTS ${name} (
 ${cols.join(',\n')}
 );
+
+-- @down
+DROP TABLE IF EXISTS ${name};
 `
 }
 
