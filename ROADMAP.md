@@ -73,23 +73,23 @@ zero JS until an island needs it.
   [AUTH_DESIGN.md](AUTH_DESIGN.md).
 - **Next:** jobs/queues, events/observers (→ model behaviors, [AUTH_DESIGN.md](AUTH_DESIGN.md) §8).
 
-### ▢ Phase D — Model behaviors ("traits")
-*Status: designed (see `AUTH_DESIGN.md` §8), not yet built.* The model is the center of
-gravity, so cross-cutting concerns attach there once and flow to every surface. A
-**behavior** is a pure, composable descriptor (`(config) => Behavior`) passed via
-`use: [...]` on `defineModel` — the model's OCP extension seam (author your own against
-a public contract). Each may contribute **fields**, an **insert-shape** tweak,
-**migration** up/down fragments (companion tables/indexes/triggers), lifecycle
-**hooks**, a row-level **scope**, and per-op **access**. Composition is deterministic
-and fail-closed: fields merge (collision = define-time error), scopes AND-combine,
-access is most-restrictive-wins. Behaviors fold into an *effective spec* inside
-`defineModel`, and their hooks/scope/access ride into `defineResource` — so they fire on
-the **single dispatch path for both REST and MCP** (an `auditable`/`observable` hook
-logs the AI's tool calls for free; same seam as auth). Built-ins: `timestamps`,
-`softDeletes`, `auditable` (companion audit table), `observable` (lifecycle hooks),
-`owned`/`policy` (reusable row-level auth — which *are* Phase C's `access`/`scope`,
-packaged). Pure-data behaviors can land first; hook + auth behaviors ride on Phase C
-plumbing.
+### ◑ Phase D — Model behaviors ("traits")
+*Status: shipped in `@apex-stack/data@0.5.0` (see `AUTH_DESIGN.md` §8).* The model is the
+center of gravity, so cross-cutting concerns attach there once and flow to every
+surface. A **behavior** is a pure, composable descriptor passed via `use: [...]` on
+`defineModel` — the model's OCP extension seam (author your own against a public
+contract). Each may contribute **fields**, an **insert-shape** tweak, lifecycle
+**hooks**, a row-level **scope**, non-equality **filters**, and per-op **access**.
+Composition is deterministic and fail-closed: fields merge (collision = define-time
+error), scopes AND-combine, access is most-restrictive-wins, hooks run in order.
+Behaviors fold into an *effective spec* inside `defineModel`, and their
+hooks/scope/access ride into `defineResource` — so they fire on the **single dispatch
+path for both REST and MCP** (an `observable` hook logs the AI's tool calls for free;
+same seam as auth). **Built-ins:** `timestamps()`, `owned(col)` (Phase C's
+`access`+`scope` packaged), `observable(hooks)`, `softDeletes(col)`.
+- **Next:** `auditable` (companion audit table) needs a behavior-receives-model-context
+  seam (name + dialect + raw-write handle) to declare + write the table — its own
+  increment. Then `policy(...)` sugar and auto-diff model→ALTER migrations.
 
 ## Known deferrals
 - **Client-side navigation in islands mode** — SPA nav ships for the standard SSR/hydration path;
