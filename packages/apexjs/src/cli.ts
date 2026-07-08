@@ -18,6 +18,7 @@ const COMMANDS: Array<[string, string]> = [
   ['upgrade', 'Adopt new scaffold defaults (non-destructive)'],
   ['migrate', 'Apply pending database migrations'],
   ['mcp', 'Inspect the MCP server — list or call tools'],
+  ['test', 'Run your tests with Vitest'],
 ]
 
 const main = defineCommand({
@@ -37,6 +38,7 @@ const main = defineCommand({
     upgrade: () => import('./commands/upgrade.js').then((m) => m.upgradeCommand),
     migrate: () => import('./commands/migrate.js').then((m) => m.migrateCommand),
     mcp: () => import('./commands/mcp.js').then((m) => m.mcpCommand),
+    test: () => import('./commands/test.js').then((m) => m.testCommand),
   },
   // Shown for a bare `apex` (no subcommand): the brand banner + a command menu.
   run({ rawArgs }) {

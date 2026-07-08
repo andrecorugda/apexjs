@@ -6,6 +6,7 @@ export default defineConfig({
     cli: 'src/cli.ts',
     client: 'src/client.ts',
     server: 'src/server.ts',
+    testing: 'src/testing/index.ts',
   },
   format: ['esm'],
   dts: true,

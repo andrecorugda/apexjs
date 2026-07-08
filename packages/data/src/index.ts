@@ -6,6 +6,9 @@ import { type ZodRawShape, z } from 'zod'
 import type { BehaviorHooks, FilterFn, HookCtx } from './behavior.js'
 
 export type { Behavior, BehaviorHooks, FilterFn, HookCtx } from './behavior.js'
+export type { Factory, FactoryOptions } from './factory.js'
+// Schema-inferred test-data factories.
+export { factory } from './factory.js'
 // Model behaviors ("traits") — composable fields/access/scope/hooks. AUTH_DESIGN.md §8.
 export {
   auditable,

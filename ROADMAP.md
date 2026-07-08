@@ -155,7 +155,7 @@ neither of them has. Legend: ✅ have · 🟡 partial · ❌ not yet.
 | Auth module | 🟡 | 🟡 | ✅ | `defineAuth` + `auth`/`can` + resource `access`/`scope`; **one policy across pages/REST/MCP** |
 | **Auth governs the AI/MCP surface** | ❌ | ❌ | ✅ | per-user `tools/list` + `tools/call` re-check — **unique** |
 | Deploy presets (Vercel/CF/…) | ✅ | ✅ | ❌ | node only (P3) |
-| Testing kit for users | ✅ | ✅ | 🟡 | internal tests only (P3) |
+| Testing kit for users | ✅ | ✅ | ✅ | `@apex-stack/core/testing` (`createTestApp`) + `factory()` + `apex test` + test-aware `make` |
 | i18n | 🟡 | ✅ | ❌ | (P3) |
 | Plugin / module ecosystem | ✅ | ✅ | ❌ | (P3) |
 
