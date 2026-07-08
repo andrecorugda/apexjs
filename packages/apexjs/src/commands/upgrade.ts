@@ -20,26 +20,57 @@ function projectName(root: string): string {
   }
 }
 
-/** Bump every `@apex-stack/*` dependency to this CLI's version. Returns the count. */
-function bumpApexDeps(root: string): number {
+/** Latest published version of a package on npm, or null (offline / missing / timeout). */
+function latestVersion(pkg: string): string | null {
+  try {
+    const r = spawnSync('npm', ['view', pkg, 'version'], {
+      encoding: 'utf8',
+      timeout: 5000,
+      shell: process.platform === 'win32',
+    })
+    if (r.status !== 0 || !r.stdout) return null
+    const v = r.stdout.trim()
+    return /^\d+\.\d+\.\d+/.test(v) ? v : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Bring every `@apex-stack/*` dependency to the latest PUBLISHED version.
+ *
+ * Pinned specs (`^x` / `~x` / `x`) are rewritten to `^<registry-latest>` — queried
+ * per package from npm, NOT this CLI's own VERSION (so a project-local upgrade
+ * isn't capped at the running version). Tag/range specs like `latest` are left
+ * as-is but still counted so the caller reinstalls to pull the newest. Local
+ * `file:` / `link:` / `workspace:` refs are left untouched.
+ */
+function syncApexDeps(root: string): { bumped: number; apexDeps: number } {
   const pkgPath = join(root, 'package.json')
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
   let bumped = 0
+  let apexDeps = 0
   for (const field of ['dependencies', 'devDependencies']) {
     const deps = pkg[field] as Record<string, string> | undefined
     if (!deps) continue
     for (const dep of Object.keys(deps)) {
-      // Leave local `file:`/`link:`/`workspace:` refs (dev setups) alone.
-      if (dep.startsWith('@apex-stack/') && /^[\d^~]/.test(deps[dep] ?? '')) {
-        if (deps[dep] !== `^${VERSION}`) {
-          deps[dep] = `^${VERSION}`
+      if (!dep.startsWith('@apex-stack/')) continue
+      const spec = deps[dep] ?? ''
+      if (/^(file:|link:|workspace:)/.test(spec)) continue
+      apexDeps++
+      // Only rewrite pinned numeric ranges; `latest`/tags refresh via reinstall.
+      if (/^[\d^~]/.test(spec)) {
+        const latest = latestVersion(dep)
+        const target = `^${latest ?? VERSION}`
+        if (deps[dep] !== target) {
+          deps[dep] = target
           bumped++
         }
       }
     }
   }
   if (bumped) writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
-  return bumped
+  return { bumped, apexDeps }
 }
 
 function detectPm(): 'npm' | 'pnpm' | 'yarn' | 'bun' {
@@ -153,19 +184,23 @@ export const upgradeCommand = defineCommand({
       log(`\n  ${color.gray(`${unchanged} existing file(s) left untouched.`)}`)
     }
 
-    // Bump the framework to this CLI's version so the project actually updates.
-    const bumped = bumpApexDeps(root)
-    if (bumped)
-      log(`\n  ${color.cyan('↑')} Bumped ${bumped} @apex-stack/* dependency → ^${VERSION}`)
+    // Bring @apex-stack/* deps to the latest PUBLISHED versions (registry-queried,
+    // not this CLI's version). Pinned specs are rewritten; `latest`/ranges refresh
+    // on the reinstall below.
+    const { bumped, apexDeps } = syncApexDeps(root)
+    if (bumped) log(`\n  ${color.cyan('↑')} Bumped ${bumped} @apex-stack/* dependency to latest`)
 
-    if (!added.length && !updated.length && !bumped) {
+    if (!added.length && !updated.length && apexDeps === 0) {
       log(`\n  ${color.green('✓')} Already up to date.`)
     }
 
-    // Install so the bump takes effect (skippable, and never in CI without a TTY).
-    if (bumped && args.install) {
+    // Reinstall whenever the project has @apex-stack/* deps — this applies pinned
+    // bumps AND re-resolves `latest`/range specs to the newest published (the fix
+    // for a stale node_modules that a bump alone wouldn't refresh). Skippable via
+    // --no-install; never blocks in CI without a TTY.
+    if (apexDeps > 0 && args.install) {
       const pm = detectPm()
-      log(`\n  ${color.gray(`Installing with ${pm}…`)}`)
+      log(`\n  ${color.gray(`Installing latest with ${pm}…`)}`)
       const ok =
         spawnSync(pm, ['install'], {
           cwd: root,
@@ -174,10 +209,10 @@ export const upgradeCommand = defineCommand({
         }).status === 0
       log(
         ok
-          ? `  ${color.green('✓')} Dependencies updated`
+          ? `  ${color.green('✓')} Dependencies updated to latest`
           : `  ${color.red('✗')} Install failed — run ${color.cyan(`${pm} install`)} yourself`,
       )
-    } else if (bumped) {
+    } else if (apexDeps > 0) {
       log(
         `  ${color.gray('Run')} ${color.cyan(`${detectPm()} install`)} ${color.gray('to apply.')}`,
       )
