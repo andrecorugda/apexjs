@@ -2162,6 +2162,9 @@ footer.site-footer {
 .ax-dot.cfg {
   background: var(--amber);
 }
+.ax-dot.sql {
+  background: #34d399;
+}
 .ax-row.active {
   background: color-mix(in srgb, var(--glacier) 22%, transparent);
   color: var(--text);
