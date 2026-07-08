@@ -45,6 +45,7 @@ Every major reactive library has a meta-framework — React has Next, Vue has Nu
 - **Zero new component model.** An `.alpine` single-file component is just HTML, a server `loader()`, and scoped CSS.
 - **Node-native.** No PHP required — bring Alpine's DX to the entire JavaScript ecosystem.
 - **TypeScript by default.** Strict types end to end.
+- **AI-native, safely.** Every typed route is also an MCP tool — and one auth policy (`defineAuth` + `auth`/`can` + resource `access`/`scope`) governs pages, REST, **and** the MCP surface, so an AI can never exceed the logged-in user. See [AUTH_DESIGN.md](./AUTH_DESIGN.md).
 
 ## Packages
 
@@ -60,7 +61,9 @@ Every major reactive library has a meta-framework — React has Next, Vue has Nu
 
 **v0.1.5 on npm.** SSR + hydration, islands (`client:load|idle|visible|none`), file routing,
 components, AI-native APIs (REST + MCP from one typed route), a multi-database data layer
-(SQLite/Turso/Supabase/Neon), and a full production build — static (`apex build`), zero-JS
+(SQLite/Turso/Supabase/Neon), a **security model** (`defineAuth` + route `auth`/`can` + resource
+`access`/`scope` + sealed sessions/CSRF — one fail-closed policy across pages/REST/MCP, verified by
+two independent adversarial passes), and a full production build — static (`apex build`), zero-JS
 (`apex build --islands`), or a Node server (`apex build --server` + `apex start`) for dynamic
 routes + API/MCP. All covered by tests. Jobs/queues and Nitro deploy presets are next.
 See [ROADMAP.md](./ROADMAP.md).
