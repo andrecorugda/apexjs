@@ -1,9 +1,18 @@
 # Phase C — Auth & Access Control: Threat Model + Design
 
-> Status: **design, not built.** No enforcement code ships until this is reviewed.
-> Nothing in the framework is secure today — every route, resource op, and MCP tool
-> is callable by anyone. This document defines what "secure" means for Apex and how
-> we get there in verified increments.
+> Status: **C1–C3 built + self-tested on `develop` (not yet released).** Independent
+> (fresh-session) verification + the docs/site/roadmap security-wording pass are still
+> pending — no security claim ships to the site/README/roadmap until that verification
+> passes. This document is the threat model + design the implementation follows.
+>
+> **Build status (2026-07-08):**
+> - **C1 — identity + route gating** ✅ `defineAuth` + `user` in handlers/MCP + `auth`/
+>   `can` (401/403) + per-user MCP `tools/list` + `tools/call` re-check. 18 tests.
+> - **C2 — resource/model access + scope** ✅ per-op `access` + row-level `scope` on
+>   `defineResource`/`defineModel`, fail-closed. 5 PGlite tests.
+> - **C3 — sessions + hardening** ✅ `@apex-stack/core/server`: `sessionAuth` (h3 sealed
+>   cookies) + `login`/`logout`, CSRF in `createApiHandler`, rate-limiter, security
+>   headers, `apex make auth`. 8 tests.
 
 ## 1. Why this is existential, not polish
 
