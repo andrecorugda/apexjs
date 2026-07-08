@@ -1,5 +1,13 @@
 # showcase
 
+## 0.0.43
+
+### Patch Changes
+
+- Updated dependencies [7108e69]
+  - @apex-stack/core@0.16.2
+  - @apex-stack/data@0.7.2
+
 ## 0.0.42
 
 ### Patch Changes
