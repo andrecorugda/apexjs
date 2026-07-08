@@ -86,10 +86,9 @@ Behaviors fold into an *effective spec* inside `defineModel`, and their
 hooks/scope/access ride into `defineResource` — so they fire on the **single dispatch
 path for both REST and MCP** (an `observable` hook logs the AI's tool calls for free;
 same seam as auth). **Built-ins:** `timestamps()`, `owned(col)` (Phase C's
-`access`+`scope` packaged), `observable(hooks)`, `softDeletes(col)`.
-- **Next:** `auditable` (companion audit table) needs a behavior-receives-model-context
-  seam (name + dialect + raw-write handle) to declare + write the table — its own
-  increment. Then `policy(...)` sugar and auto-diff model→ALTER migrations.
+`access`+`scope` packaged), `observable(hooks)`, `softDeletes(col)`, `auditable()`
+(companion `<name>_audit` table, auto-provisioned; logs an AI's MCP writes for free).
+- **Next:** `policy(...)` sugar and auto-diff model→ALTER migrations.
 
 ## Known deferrals
 - **Client-side navigation in islands mode** — SPA nav ships for the standard SSR/hydration path;

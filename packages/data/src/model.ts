@@ -230,6 +230,7 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
       filters: composed.filters,
       softDelete: composed.softDelete,
       hooks: composed.hooks,
+      handle,
     })
 
   return { name, pk, fields, insert, table, migrationSql, resource }

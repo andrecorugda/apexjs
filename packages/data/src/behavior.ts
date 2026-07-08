@@ -6,7 +6,7 @@
 // See AUTH_DESIGN.md §8.
 import type { ApexUser } from '@apex-stack/core'
 import { isNull, type SQL } from 'drizzle-orm'
-import type { AccessMap, AccessRule, ResourceOp, ScopeFn } from './index.js'
+import type { AccessMap, AccessRule, ApexDbHandle, ResourceOp, ScopeFn } from './index.js'
 import type { Fields } from './model.js'
 
 /** Context handed to lifecycle hooks. `data` is mutable in `before*` hooks. */
@@ -22,9 +22,13 @@ export interface HookCtx {
   rows?: Record<string, unknown>[]
   /** Target id — present for update/delete/get. */
   id?: number
-  /** The Drizzle db handle + table (for companion writes, e.g. an audit table). */
+  /** The Drizzle db instance + table for this model. */
   db: unknown
   table: unknown
+  /** The resource/model name (e.g. for a companion `<name>_audit` table). */
+  name: string
+  /** The full db handle (`exec`/`query`/`dialect`) — for companion-table writes. */
+  handle?: ApexDbHandle
 }
 
 type Hook = (ctx: HookCtx) => void | Promise<void>
@@ -196,6 +200,58 @@ export function owned(column = 'ownerId'): Behavior {
 /** Attach lifecycle hooks (fire identically over REST and MCP). */
 export function observable(hooks: BehaviorHooks): Behavior {
   return { name: 'observable', hooks }
+}
+
+// SQL string literal (doubles single quotes; NULL for nullish). standard_conforming_strings
+// is on by default in Postgres and SQLite doesn't process backslash escapes, so this is safe.
+const lit = (v: unknown): string => (v == null ? 'NULL' : `'${String(v).replace(/'/g, "''")}'`)
+const numLit = (v: unknown): string => (v == null ? 'NULL' : String(Number(v)))
+
+/**
+ * Audit trail: logs every create/update/delete to a companion `<name>_audit` table
+ * (`row_id`, `action`, `actor_id` from `ctx.user`, `changes` JSON, `at`). The table is
+ * auto-provisioned (`CREATE TABLE IF NOT EXISTS`) on first write. Because it rides the
+ * same dispatch path, it logs an AI's MCP tool calls exactly like a browser's writes.
+ */
+export function auditable(opts?: { table?: string }): Behavior {
+  let ensured = false
+  const auditTable = (ctx: HookCtx) => opts?.table ?? `${ctx.name}_audit`
+
+  const ensure = async (ctx: HookCtx): Promise<void> => {
+    if (ensured || !ctx.handle) return
+    const sqlite = ctx.handle.dialect === 'sqlite'
+    const idType = sqlite ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'SERIAL PRIMARY KEY'
+    const jsonType = sqlite ? 'TEXT' : 'JSONB'
+    await ctx.handle.exec(
+      `CREATE TABLE IF NOT EXISTS ${auditTable(ctx)} (` +
+        `id ${idType}, row_id INTEGER, action TEXT NOT NULL, ` +
+        `actor_id TEXT, changes ${jsonType}, at TEXT NOT NULL)`,
+    )
+    ensured = true
+  }
+
+  const write =
+    (action: string) =>
+    async (ctx: HookCtx): Promise<void> => {
+      if (!ctx.handle) return
+      await ensure(ctx)
+      const rowId = (ctx.row as { id?: number } | undefined)?.id ?? ctx.id ?? null
+      const actor = (ctx.user as { id?: unknown } | null)?.id ?? null
+      const changes = action === 'delete' ? '{}' : JSON.stringify(ctx.data ?? {})
+      await ctx.handle.exec(
+        `INSERT INTO ${auditTable(ctx)} (row_id, action, actor_id, changes, at) VALUES (` +
+          `${numLit(rowId)}, ${lit(action)}, ${lit(actor)}, ${lit(changes)}, ${lit(new Date().toISOString())})`,
+      )
+    }
+
+  return {
+    name: 'auditable',
+    hooks: {
+      afterCreate: write('create'),
+      afterUpdate: write('update'),
+      afterDelete: write('delete'),
+    },
+  }
 }
 
 /**

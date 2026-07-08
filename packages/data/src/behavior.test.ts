@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  auditable,
   type Behavior,
   composeBehaviors,
   observable,
@@ -162,6 +163,24 @@ describe('built-in behaviors (over PGlite)', () => {
     expect(await get({ input: { id: a.id }, user: null })).toBeNull()
     const physical = await h.query('SELECT count(*)::int AS n FROM docs')
     expect(physical[0]?.n).toBe(2) // still physically present
+    await h.close()
+  })
+
+  it('auditable: logs create/update/delete to an auto-provisioned companion table', async () => {
+    const posts = defineModel('apost', { fields: { title: 'string' }, use: [auditable()] })
+    const h = await createDb({ driver: 'pglite' })
+    await h.exec(posts.migrationSql('postgres'))
+    const { create, update, del } = ops(posts.resource(h))
+    const actor = { id: 'ada' }
+
+    const row = (await create({ input: { title: 'a' }, user: actor })) as { id: number }
+    await update({ input: { id: row.id, title: 'b' }, user: actor })
+    await del({ input: { id: row.id }, user: actor })
+
+    const log = await h.query('SELECT action, actor_id, row_id FROM apost_audit ORDER BY id')
+    expect(log.map((r) => r.action)).toEqual(['create', 'update', 'delete'])
+    expect(log.every((r) => r.actor_id === 'ada')).toBe(true)
+    expect(log.every((r) => Number(r.row_id) === row.id)).toBe(true)
     await h.close()
   })
 
