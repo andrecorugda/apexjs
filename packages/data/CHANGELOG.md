@@ -1,5 +1,16 @@
 # @apex-stack/data
 
+## 0.6.0
+
+### Minor Changes
+
+- Phase D — `auditable()` behavior. Logs every create/update/delete to a companion
+  `<name>_audit` table (`row_id`, `action`, `actor_id` from `ctx.user`, `changes` JSON,
+  `at`), auto-provisioned on first write (dialect-aware `CREATE TABLE IF NOT EXISTS`). It
+  rides the same dispatch path, so it records an AI's MCP tool calls exactly like a
+  browser's writes. Hooks now receive the model `name` and the full db `handle` for
+  companion-table writes.
+
 ## 0.5.0
 
 ### Minor Changes

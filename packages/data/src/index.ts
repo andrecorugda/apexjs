@@ -7,7 +7,14 @@ import type { BehaviorHooks, FilterFn, HookCtx } from './behavior.js'
 
 export type { Behavior, BehaviorHooks, FilterFn, HookCtx } from './behavior.js'
 // Model behaviors ("traits") — composable fields/access/scope/hooks. AUTH_DESIGN.md §8.
-export { composeBehaviors, observable, owned, softDeletes, timestamps } from './behavior.js'
+export {
+  auditable,
+  composeBehaviors,
+  observable,
+  owned,
+  softDeletes,
+  timestamps,
+} from './behavior.js'
 export type {
   ApexModel,
   DefineModelOptions,
@@ -244,6 +251,8 @@ export interface DefineResourceOptions {
   filters?: FilterFn[]
   /** If set, DELETE soft-deletes by stamping this column instead of removing the row. */
   softDelete?: string
+  /** The full db handle — passed to hooks (e.g. `auditable` writes a companion table). */
+  handle?: ApexDbHandle
 }
 
 const isRule = (x: unknown): x is AccessRule => typeof x === 'string' || typeof x === 'function'
@@ -320,7 +329,16 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
             const q = db.select().from(table)
             const rows = c.length ? await q.where(and(...c)) : await q
             if (hooks.length) {
-              const ctx: HookCtx = { op: 'list', user: user ?? null, data: {}, rows, db, table }
+              const ctx: HookCtx = {
+                op: 'list',
+                user: user ?? null,
+                data: {},
+                rows,
+                db,
+                table,
+                name,
+                handle: opts.handle,
+              }
               for (const h of hooks) await h.afterList?.(ctx)
             }
             return rows
@@ -346,7 +364,17 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
                   .where(whereId(id, user ?? null))
               )[0] ?? null
             if (row && hooks.length) {
-              const ctx: HookCtx = { op: 'get', user: user ?? null, data: {}, row, id, db, table }
+              const ctx: HookCtx = {
+                op: 'get',
+                user: user ?? null,
+                data: {},
+                row,
+                id,
+                db,
+                table,
+                name,
+                handle: opts.handle,
+              }
               for (const h of hooks) await h.afterGet?.(ctx)
             }
             return row
@@ -368,7 +396,15 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
               ...(input as Record<string, unknown>),
               ...(scope?.({ user: user ?? null }) ?? {}),
             }
-            const ctx: HookCtx = { op: 'create', user: user ?? null, data, db, table }
+            const ctx: HookCtx = {
+              op: 'create',
+              user: user ?? null,
+              data,
+              db,
+              table,
+              name,
+              handle: opts.handle,
+            }
             for (const h of hooks) await h.beforeCreate?.(ctx)
             const row = (
               await db
@@ -395,7 +431,16 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
             const { id, ...fields } = input as { id: number } & Record<string, unknown>
             // Never let a caller reassign a scoped column (e.g. change ownerId).
             for (const k of Object.keys(scope?.({ user: user ?? null }) ?? {})) delete fields[k]
-            const ctx: HookCtx = { op: 'update', user: user ?? null, data: fields, id, db, table }
+            const ctx: HookCtx = {
+              op: 'update',
+              user: user ?? null,
+              data: fields,
+              id,
+              db,
+              table,
+              name,
+              handle: opts.handle,
+            }
             for (const h of hooks) await h.beforeUpdate?.(ctx)
             const row =
               (
@@ -424,7 +469,16 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           ...gate('delete'),
           handler: async ({ input, user }) => {
             const id = (input as { id: number }).id
-            const ctx: HookCtx = { op: 'delete', user: user ?? null, data: {}, id, db, table }
+            const ctx: HookCtx = {
+              op: 'delete',
+              user: user ?? null,
+              data: {},
+              id,
+              db,
+              table,
+              name,
+              handle: opts.handle,
+            }
             for (const h of hooks) await h.beforeDelete?.(ctx)
             const where = whereId(id, user ?? null)
             // Soft delete stamps a column; hard delete removes the row.
