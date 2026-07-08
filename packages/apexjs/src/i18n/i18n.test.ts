@@ -24,6 +24,17 @@ describe('createI18n / t', () => {
     expect(t('missing.everywhere')).toBe('missing.everywhere') // fallback to key
   })
 
+  it('calls onMissingKey for a missing key (dev diagnostic)', () => {
+    const missed: string[] = []
+    const { t } = createI18n({
+      messages: { en: {} },
+      locale: 'en',
+      onMissingKey: (k) => missed.push(k),
+    })
+    expect(t('foo.bar')).toBe('foo.bar')
+    expect(missed).toEqual(['foo.bar'])
+  })
+
   it('leaves unknown placeholders intact', () => {
     const { t } = createI18n({ messages: { en: { x: 'Hi {name} {other}' } }, locale: 'en' })
     expect(t('x', { name: 'A' })).toBe('Hi A {other}')

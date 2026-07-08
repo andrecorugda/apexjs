@@ -12,6 +12,9 @@ export interface I18nOptions {
   locale: string
   /** Locale to fall back to for missing keys. */
   defaultLocale?: string
+  /** Called when a key resolves to nothing (before returning the key). Wire a
+   * `console.warn` in dev to surface typos; leave unset in prod for silence. */
+  onMissingKey?: (key: string) => void
 }
 
 export interface I18n {
@@ -52,7 +55,10 @@ export function createI18n(opts: I18nOptions): I18n {
     if (value === undefined && defaultLocale && defaultLocale !== locale) {
       value = lookup(messages[defaultLocale], key)
     }
-    if (typeof value !== 'string') return key // missing → the key itself (visible + debuggable)
+    if (typeof value !== 'string') {
+      opts.onMissingKey?.(key)
+      return key // missing → the key itself (visible + debuggable)
+    }
     return interpolate(value, params)
   }
   return { locale, t }
