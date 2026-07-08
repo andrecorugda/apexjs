@@ -181,7 +181,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
         mcpName: `${name}_list`,
         route: defineApexRoute({
           method: 'GET',
-          description: `List all ${name}`,
+          description: `List ${name}`,
           mcp: true,
           handler: async () => await db.select().from(table),
         }),
@@ -191,7 +191,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
         mcpName: `${name}_get`,
         route: defineApexRoute({
           method: 'GET',
-          description: `Get a single ${name} by id`,
+          description: `Get ${name} by id`,
           input: { id: z.coerce.number() },
           mcp: true,
           handler: async ({ input }) =>
@@ -208,7 +208,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
         mcpName: `${name}_create`,
         route: defineApexRoute({
           method: 'POST',
-          description: `Create a ${name}`,
+          description: `Create ${name}`,
           input: insert,
           mcp: true,
           handler: async ({ input }) =>
@@ -225,7 +225,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
         mcpName: `${name}_update`,
         route: defineApexRoute({
           method: 'PATCH',
-          description: `Update a ${name} by id (partial)`,
+          description: `Update ${name} by id (partial)`,
           input: updateShape as ZodRawShape,
           mcp: true,
           handler: async ({ input }) => {
@@ -239,7 +239,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
         mcpName: `${name}_delete`,
         route: defineApexRoute({
           method: 'DELETE',
-          description: `Delete a ${name} by id`,
+          description: `Delete ${name} by id`,
           input: { id: z.coerce.number() },
           mcp: true,
           handler: async ({ input }) =>

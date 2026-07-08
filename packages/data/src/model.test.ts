@@ -46,6 +46,19 @@ describe('defineModel — migration SQL', () => {
   })
 })
 
+describe('defineModel — timestamp is a JSON-Schema-safe string', () => {
+  // Regression: z.coerce.date() output can't convert to JSON Schema, which crashed
+  // MCP tools/list for the whole app. Timestamps are ISO strings instead.
+  const events = defineModel('events', { fields: { at: 'timestamp' } })
+  it('validates timestamps as ISO strings (not Date)', () => {
+    expect(events.insert.at.parse('2026-01-01T00:00:00Z')).toBe('2026-01-01T00:00:00Z')
+  })
+  it('uses a string column type in migrations', () => {
+    expect(events.migrationSql('sqlite')).toContain('at TEXT')
+    expect(events.migrationSql('postgres')).toContain('at TIMESTAMP')
+  })
+})
+
 describe('defineModel — table', () => {
   it('builds a Drizzle table for each dialect with the pk + fields', () => {
     const t = todos.table('sqlite') as Record<string, unknown>

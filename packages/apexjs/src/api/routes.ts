@@ -140,13 +140,30 @@ export function createApiHandler(entries: ApiEntry[], config?: RuntimeConfig): E
       input = parsed.data
     }
 
-    const result = await entry.route.handler({
-      input,
-      url: url.toString(),
-      config: config ?? { public: {} },
-      locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
-    })
+    let result: unknown
+    try {
+      result = await entry.route.handler({
+        input,
+        url: url.toString(),
+        config: config ?? { public: {} },
+        locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
+      })
+    } catch (err) {
+      // Surface the underlying error (esp. the common "table doesn't exist yet")
+      // instead of an opaque 500 with an empty stack.
+      const message = (err as Error)?.message ?? 'Handler error'
+      setResponseStatus(event, 500)
+      setResponseHeader(event, 'Content-Type', 'application/json')
+      const missingTable = /no such table|does not exist|relation .* does not exist/i.test(message)
+      return {
+        error: message,
+        ...(missingTable ? { hint: 'Table not found — run `apex migrate` to create it.' } : {}),
+      }
+    }
+    // Serialize explicitly so a `null` result (e.g. get-by-id not found) is a
+    // parseable `200 null` JSON body, not h3's default `204 No Content`.
     setResponseHeader(event, 'Content-Type', 'application/json')
-    return result
+    setResponseStatus(event, 200)
+    return JSON.stringify(result ?? null)
   })
 }
