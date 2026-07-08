@@ -421,7 +421,27 @@ function buildStructuralComponent(el: AnyEl, document: AnyEl, registry: Componen
   root.setAttribute(entry.scopeId, '')
   if (xData) root.setAttribute('x-data', xData)
   root.innerHTML = inner
+  // Stamp the component's scope on ITS OWN elements so `<style scoped>` matches
+  // them. The resolved (non-loop) path does this via renderFragmentInternal; the
+  // structural (in-loop) expansion builds raw markup, so without this the loop
+  // clones' inner elements only get the enclosing page scope re-stamped on them
+  // and the component's scoped CSS (`button[data-apex-x]`) never matches.
+  stampSubtreeScope(root, entry.scopeId)
   return root
+}
+
+/**
+ * Stamp `scopeId` on every descendant element of `el`, stopping at nested
+ * component boundaries (each component owns its own scope). Used to scope the
+ * structural (in-loop) component expansion, mirroring the resolved path.
+ */
+function stampSubtreeScope(el: AnyEl, scopeId: string): void {
+  for (const child of Array.from(el.childNodes ?? []) as AnyEl[]) {
+    if (child.nodeType !== ELEMENT_NODE) continue
+    if (child.hasAttribute('data-apex-component')) continue // nested component: its own scope
+    child.setAttribute(scopeId, '')
+    stampSubtreeScope(child, scopeId)
+  }
 }
 
 function renderFor(
