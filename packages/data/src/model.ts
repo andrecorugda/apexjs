@@ -227,6 +227,8 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
       pk,
       access: composed.access,
       scope: composed.scope,
+      filters: composed.filters,
+      softDelete: composed.softDelete,
       hooks: composed.hooks,
     })
 

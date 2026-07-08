@@ -3,11 +3,11 @@ import { join } from 'node:path'
 import { type ApexResource, type ApexUser, defineApexRoute } from '@apex-stack/core'
 import { and, eq, type SQL } from 'drizzle-orm'
 import { type ZodRawShape, z } from 'zod'
-import type { BehaviorHooks, HookCtx } from './behavior.js'
+import type { BehaviorHooks, FilterFn, HookCtx } from './behavior.js'
 
-export type { Behavior, BehaviorHooks, HookCtx } from './behavior.js'
+export type { Behavior, BehaviorHooks, FilterFn, HookCtx } from './behavior.js'
 // Model behaviors ("traits") — composable fields/access/scope/hooks. AUTH_DESIGN.md §8.
-export { composeBehaviors, observable, owned, timestamps } from './behavior.js'
+export { composeBehaviors, observable, owned, softDeletes, timestamps } from './behavior.js'
 export type {
   ApexModel,
   DefineModelOptions,
@@ -240,6 +240,10 @@ export interface DefineResourceOptions {
   scope?: ScopeFn
   /** Lifecycle hooks (from model behaviors) run around create/update/delete. */
   hooks?: BehaviorHooks[]
+  /** Extra WHERE conditions (from behaviors) applied to every read/write. */
+  filters?: FilterFn[]
+  /** If set, DELETE soft-deletes by stamping this column instead of removing the row. */
+  softDelete?: string
 }
 
 const isRule = (x: unknown): x is AccessRule => typeof x === 'string' || typeof x === 'function'
@@ -253,8 +257,9 @@ const isRule = (x: unknown): x is AccessRule => typeof x === 'string' || typeof 
  * per caller — both enforced identically over REST and MCP.
  */
 export function defineResource(name: string, opts: DefineResourceOptions): ApexResource {
-  const { db, table, insert, pk = 'id', scope } = opts
+  const { db, table, insert, pk = 'id', scope, softDelete } = opts
   const hooks = opts.hooks ?? []
+  const filters = opts.filters ?? []
   const pkCol = table[pk]
 
   // Gating posture: declaring `access` or `scope` opts the whole resource in;
@@ -277,14 +282,18 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
     return { auth: true, can: rule }
   }
 
-  /** Drizzle WHERE conditions for the caller's scope (empty when no scope). */
-  function scopeConds(user: ApexUser | null): SQL[] {
-    if (!scope) return []
-    return Object.entries(scope({ user })).map(([k, v]) => eq(table[k], v))
+  /** All row conditions for a caller: equality scope + behavior filters (e.g. IS NULL). */
+  function whereConds(user: ApexUser | null): SQL[] {
+    const c: SQL[] = scope ? Object.entries(scope({ user })).map(([k, v]) => eq(table[k], v)) : []
+    for (const f of filters) {
+      const r = f({ user, table })
+      if (r) c.push(...(Array.isArray(r) ? r : [r]))
+    }
+    return c
   }
-  /** Combine the pk match with scope conditions (so id-guessing can't cross scopes). */
+  /** Combine the pk match with the row conditions (so id-guessing can't cross scopes). */
   function whereId(id: number, user: ApexUser | null) {
-    return and(eq(pkCol, id), ...scopeConds(user))
+    return and(eq(pkCol, id), ...whereConds(user))
   }
 
   const updateShape: Record<string, unknown> = { id: z.coerce.number() }
@@ -307,9 +316,14 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           mcp: true,
           ...gate('list'),
           handler: async ({ user }) => {
-            const conds = scopeConds(user ?? null)
+            const c = whereConds(user ?? null)
             const q = db.select().from(table)
-            return conds.length ? await q.where(and(...conds)) : await q
+            const rows = c.length ? await q.where(and(...c)) : await q
+            if (hooks.length) {
+              const ctx: HookCtx = { op: 'list', user: user ?? null, data: {}, rows, db, table }
+              for (const h of hooks) await h.afterList?.(ctx)
+            }
+            return rows
           },
         }),
       },
@@ -322,13 +336,21 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           input: { id: z.coerce.number() },
           mcp: true,
           ...gate('get'),
-          handler: async ({ input, user }) =>
-            (
-              await db
-                .select()
-                .from(table)
-                .where(whereId((input as { id: number }).id, user ?? null))
-            )[0] ?? null,
+          handler: async ({ input, user }) => {
+            const id = (input as { id: number }).id
+            const row =
+              (
+                await db
+                  .select()
+                  .from(table)
+                  .where(whereId(id, user ?? null))
+              )[0] ?? null
+            if (row && hooks.length) {
+              const ctx: HookCtx = { op: 'get', user: user ?? null, data: {}, row, id, db, table }
+              for (const h of hooks) await h.afterGet?.(ctx)
+            }
+            return row
+          },
         }),
       },
       {
@@ -404,13 +426,17 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
             const id = (input as { id: number }).id
             const ctx: HookCtx = { op: 'delete', user: user ?? null, data: {}, id, db, table }
             for (const h of hooks) await h.beforeDelete?.(ctx)
-            const row =
-              (
-                await db
-                  .delete(table)
-                  .where(whereId(id, user ?? null))
-                  .returning()
-              )[0] ?? null
+            const where = whereId(id, user ?? null)
+            // Soft delete stamps a column; hard delete removes the row.
+            const row = softDelete
+              ? ((
+                  await db
+                    .update(table)
+                    .set({ [softDelete]: new Date().toISOString() })
+                    .where(where)
+                    .returning()
+                )[0] ?? null)
+              : ((await db.delete(table).where(where).returning())[0] ?? null)
             if (row) {
               ctx.row = row
               for (const h of hooks) await h.afterDelete?.(ctx)

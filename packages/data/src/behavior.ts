@@ -5,19 +5,22 @@
 // hooks/scope/access ride into defineResource — enforced identically over REST + MCP.
 // See AUTH_DESIGN.md §8.
 import type { ApexUser } from '@apex-stack/core'
+import { isNull, type SQL } from 'drizzle-orm'
 import type { AccessMap, AccessRule, ResourceOp, ScopeFn } from './index.js'
 import type { Fields } from './model.js'
 
 /** Context handed to lifecycle hooks. `data` is mutable in `before*` hooks. */
 export interface HookCtx {
-  op: 'create' | 'update' | 'delete'
+  op: 'create' | 'update' | 'delete' | 'list' | 'get'
   /** The authenticated user (or null). */
   user: ApexUser | null
   /** Create/update values — mutate in `before*` to add server-managed columns. */
   data: Record<string, unknown>
-  /** The affected row — present in `after*` hooks. */
+  /** The affected row — present in `after*` write hooks and `afterGet`. */
   row?: Record<string, unknown>
-  /** Target id — present for update/delete. */
+  /** The result rows — present in `afterList`. */
+  rows?: Record<string, unknown>[]
+  /** Target id — present for update/delete/get. */
   id?: number
   /** The Drizzle db handle + table (for companion writes, e.g. an audit table). */
   db: unknown
@@ -33,7 +36,13 @@ export interface BehaviorHooks {
   afterUpdate?: Hook
   beforeDelete?: Hook
   afterDelete?: Hook
+  afterList?: Hook
+  afterGet?: Hook
 }
+
+/** Extra Drizzle WHERE conditions a behavior injects into every read/write. */
+// biome-ignore lint/suspicious/noExplicitAny: Drizzle table columns are dynamically keyed
+export type FilterFn = (args: { user: ApexUser | null; table: any }) => SQL | SQL[] | undefined
 
 /** A composable model trait. Author your own or use a built-in below. */
 export interface Behavior {
@@ -46,6 +55,13 @@ export interface Behavior {
   access?: AccessMap
   /** Row-level scope contribution (AND-combined with the model's + other behaviors'). */
   scope?: ScopeFn
+  /** Extra WHERE conditions for non-equality filters (e.g. `IS NULL`). */
+  filter?: FilterFn
+  /**
+   * Turn delete into a soft delete: DELETE becomes an UPDATE stamping this column with
+   * the current time. Only one behavior may set it.
+   */
+  softDelete?: string
   /** Lifecycle hooks (run in behavior order, before the model's own effect). */
   hooks?: BehaviorHooks
 }
@@ -82,6 +98,8 @@ export interface ComposedSpec {
   omitFromInsert: string[]
   access?: AccessMap
   scope?: ScopeFn
+  filters: FilterFn[]
+  softDelete?: string
   hooks: BehaviorHooks[]
 }
 
@@ -125,9 +143,18 @@ export function composeBehaviors(
     ? (ctx) => Object.assign({}, ...scopeFns.map((s) => s(ctx)))
     : undefined
 
+  const filters = behaviors
+    .map((b) => b.filter)
+    .filter((f): f is FilterFn => typeof f === 'function')
+
+  const softDeleters = behaviors.filter((b) => b.softDelete)
+  if (softDeleters.length > 1)
+    throw new Error('Only one behavior may set `softDelete` (found more than one).')
+  const softDelete = softDeleters[0]?.softDelete
+
   const hooks = behaviors.map((b) => b.hooks).filter((h): h is BehaviorHooks => !!h)
 
-  return { fields, omitFromInsert, access, scope, hooks }
+  return { fields, omitFromInsert, access, scope, filters, softDelete, hooks }
 }
 
 // ── Built-in behaviors ───────────────────────────────────────────────────────
@@ -169,4 +196,19 @@ export function owned(column = 'ownerId'): Behavior {
 /** Attach lifecycle hooks (fire identically over REST and MCP). */
 export function observable(hooks: BehaviorHooks): Behavior {
   return { name: 'observable', hooks }
+}
+
+/**
+ * Soft delete: adds a nullable `deleted_at`, turns DELETE into a timestamp stamp, and
+ * hides soft-deleted rows from every read/write (a `deleted_at IS NULL` filter). The
+ * row stays in the table — restore it by clearing the column.
+ */
+export function softDeletes(column = 'deleted_at'): Behavior {
+  return {
+    name: 'softDeletes',
+    fields: { [column]: 'timestamp' },
+    omitFromInsert: [column], // server-managed — a client can't create a pre-deleted row
+    filter: ({ table }) => isNull(table[column]),
+    softDelete: column,
+  }
 }

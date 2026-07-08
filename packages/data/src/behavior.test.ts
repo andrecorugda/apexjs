@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { type Behavior, composeBehaviors, observable, owned, timestamps } from './behavior.js'
+import {
+  type Behavior,
+  composeBehaviors,
+  observable,
+  owned,
+  softDeletes,
+  timestamps,
+} from './behavior.js'
 import { createDb } from './index.js'
 import { defineModel } from './model.js'
 
@@ -50,6 +57,20 @@ describe('composeBehaviors', () => {
   it('collects hooks in behavior order', () => {
     const c = composeBehaviors([timestamps(), observable({ afterCreate() {} })], { fields: {} })
     expect(c.hooks).toHaveLength(2)
+  })
+
+  it('softDeletes contributes a field, a filter, and the soft-delete column', () => {
+    const c = composeBehaviors([softDeletes()], { fields: { title: 'string' } })
+    expect(Object.keys(c.fields).sort()).toEqual(['deleted_at', 'title'])
+    expect(c.omitFromInsert).toEqual(['deleted_at'])
+    expect(c.filters).toHaveLength(1)
+    expect(c.softDelete).toBe('deleted_at')
+  })
+
+  it('throws if two behaviors both set softDelete', () => {
+    expect(() => composeBehaviors([softDeletes(), softDeletes('gone_at')], { fields: {} })).toThrow(
+      /only one behavior/i,
+    )
   })
 })
 
@@ -120,6 +141,52 @@ describe('built-in behaviors (over PGlite)', () => {
     const row = (await create({ input: { x: 'a' }, user: null })) as { id: number }
     await del({ input: { id: row.id }, user: null })
     expect(events).toEqual([`create:${row.id}`, `delete:${row.id}`])
+    await h.close()
+  })
+
+  it('softDeletes: delete stamps deleted_at, hides the row, but keeps it in the table', async () => {
+    const docs = defineModel('docs', { fields: { title: 'string' }, use: [softDeletes()] })
+    expect(Object.keys(docs.insert)).toEqual(['title']) // deleted_at not client-settable
+    const h = await createDb({ driver: 'pglite' })
+    await h.exec(docs.migrationSql('postgres'))
+    const { list, get, create, del } = ops(docs.resource(h))
+
+    const a = (await create({ input: { title: 'a' }, user: null })) as { id: number }
+    await create({ input: { title: 'b' }, user: null })
+    expect((await list({ user: null })) as unknown[]).toHaveLength(2)
+
+    const removed = (await del({ input: { id: a.id }, user: null })) as { deleted_at: string }
+    expect(removed.deleted_at).toBeTruthy() // soft — stamped, not gone
+
+    expect((await list({ user: null })) as unknown[]).toHaveLength(1) // hidden from reads
+    expect(await get({ input: { id: a.id }, user: null })).toBeNull()
+    const physical = await h.query('SELECT count(*)::int AS n FROM docs')
+    expect(physical[0]?.n).toBe(2) // still physically present
+    await h.close()
+  })
+
+  it('read hooks: afterList and afterGet fire with rows/row', async () => {
+    const seen: string[] = []
+    const m = defineModel('reads', {
+      fields: { x: 'string' },
+      use: [
+        observable({
+          afterList: ({ rows }) => {
+            seen.push(`list:${rows?.length}`)
+          },
+          afterGet: ({ row }) => {
+            seen.push(`get:${(row as { id: number }).id}`)
+          },
+        }),
+      ],
+    })
+    const h = await createDb({ driver: 'pglite' })
+    await h.exec(m.migrationSql('postgres'))
+    const { list, get, create } = ops(m.resource(h))
+    const row = (await create({ input: { x: 'a' }, user: null })) as { id: number }
+    await list({ user: null })
+    await get({ input: { id: row.id }, user: null })
+    expect(seen).toEqual(['list:1', `get:${row.id}`])
     await h.close()
   })
 })
