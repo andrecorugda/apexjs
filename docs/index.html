@@ -18,7 +18,7 @@
 <meta name="description" content="Apex JS is the full-stack meta-framework for Alpine.js: file routing, SSR, islands, and every typed API route is also an MCP tool your AI can call." />
 <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
 <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
-<link rel="stylesheet" href="./style.css?v=20260708b" />
+<link rel="stylesheet" href="./style.css?v=20260709a" />
 
 <a class="skip-link" href="#main">Skip to content</a>
 
@@ -98,10 +98,16 @@
                   <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>layouts</button>
                     <ul><li><button class="ax-row file" data-file="layouts/default.alpine"><span class="ax-dot alpine"></span>default.alpine</button></li></ul>
                   </li>
+                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>models</button>
+                    <ul><li><button class="ax-row file" data-file="models/Post.ts"><span class="ax-dot ts"></span>Post.ts</button></li></ul>
+                  </li>
                   <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>server</button>
-                    <ul><li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>api</button>
-                      <ul><li><button class="ax-row file" data-file="server/api/posts.ts"><span class="ax-dot ts"></span>posts.ts</button></li></ul>
-                    </li></ul>
+                    <ul>
+                      <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>api</button>
+                        <ul><li><button class="ax-row file" data-file="server/api/posts.ts"><span class="ax-dot ts"></span>posts.ts</button></li></ul>
+                      </li>
+                      <li><button class="ax-row file" data-file="server/auth.ts"><span class="ax-dot ts"></span>auth.ts</button></li>
+                    </ul>
                   </li>
                   <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>services</button>
                     <ul><li><button class="ax-row file" data-file="services/PostService.ts"><span class="ax-dot ts"></span>PostService.ts</button></li></ul>
@@ -111,6 +117,20 @@
                   </li>
                   <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>composables</button>
                     <ul><li><button class="ax-row file" data-file="composables/useToggle.ts"><span class="ax-dot ts"></span>useToggle.ts</button></li></ul>
+                  </li>
+                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>db</button>
+                    <ul><li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>migrations</button>
+                      <ul><li><button class="ax-row file" data-file="db/migrations/0001_init.sql"><span class="ax-dot sql"></span>0001_init.sql</button></li></ul>
+                    </li></ul>
+                  </li>
+                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>locales</button>
+                    <ul>
+                      <li><button class="ax-row file" data-file="locales/en.json"><span class="ax-dot cfg"></span>en.json</button></li>
+                      <li><button class="ax-row file" data-file="locales/fr.json"><span class="ax-dot cfg"></span>fr.json</button></li>
+                    </ul>
+                  </li>
+                  <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>tests</button>
+                    <ul><li><button class="ax-row file" data-file="tests/Post.test.ts"><span class="ax-dot ts"></span>Post.test.ts</button></li></ul>
                   </li>
                   <li><button class="ax-row ax-fldr" data-fldr><span class="ax-chev">▾</span>shared</button>
                     <ul><li><button class="ax-row file" data-file="shared/types.ts"><span class="ax-dot ts"></span>types.ts</button></li></ul>
@@ -138,13 +158,13 @@
               <div class="ax-termbar">Terminal <span class="ax-live"><i></i> dev server</span></div>
               <pre class="ax-term"><span class="prompt">PS </span><span class="path">C:\dev\my-app</span><span class="prompt">&gt; </span><span class="inp">apex dev</span>
 <span class="banner">
-   █████╗ ██████╗ ███████╗██╗  ██╗
-  ██╔══██╗██╔══██╗██╔════╝╚██╗██╔╝
-  ███████║██████╔╝█████╗   ╚███╔╝
-  ██╔══██║██╔═══╝ ██╔══╝   ██╔██╗
-  ██║  ██║██║     ███████╗██╔╝ ██╗
-  ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝</span>
-  <span class="ver">v0.1.20</span>  <span class="sub">·  The full-stack, AI-native meta-framework for Alpine.js</span>
+   █████╗ ██████╗ ███████╗██╗  ██╗       ██╗███████╗
+  ██╔══██╗██╔══██╗██╔════╝╚██╗██╔╝       ██║██╔════╝
+  ███████║██████╔╝█████╗   ╚███╔╝        ██║███████╗
+  ██╔══██║██╔═══╝ ██╔══╝   ██╔██╗   ██   ██║╚════██║
+  ██║  ██║██║     ███████╗██╔╝ ██╗  ╚█████╔╝███████║
+  ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝   ╚════╝ ╚══════╝</span>
+  <span class="ver">v0.17.0</span>  <span class="sub">·  The full-stack, AI-native meta-framework for Alpine.js</span>
   <span class="ok">✓</span> Dev server ready
 
   <span class="arw">➜</span>  <span class="lbl">Local</span>   <span class="url">http://localhost:3000/</span>
@@ -714,13 +734,15 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
 "}\n" },
 
       "apex.config.ts": { lang: "TYPESCRIPT", dot: "cfg", code:
-"import { defineConfig } from 'apexjs'\n" +
+"import { defineConfig } from '@apex-stack/core'\n" +
 "\n" +
 "export default defineConfig({\n" +
 "  // File routing from ./pages, API + MCP from ./server/api.\n" +
 "  server: { mcp: true },\n" +
 "  // Islands: ship zero JS by default, hydrate only what's interactive.\n" +
 "  islands: true,\n" +
+"  // Locale routing: /fr/* picks up messages from ./locales.\n" +
+"  i18n: { locales: ['en', 'fr'], defaultLocale: 'en' },\n" +
 "})\n" },
 
       "package.json": { lang: "JSON", dot: "cfg", code:
@@ -734,11 +756,92 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
 "    \"test\": \"vitest run\"\n" +
 "  },\n" +
 "  \"dependencies\": {\n" +
-"    \"@apex-stack/core\": \"^0.1.20\",\n" +
+"    \"@apex-stack/core\": \"^0.17.0\",\n" +
+"    \"@apex-stack/data\": \"^0.7.0\",\n" +
 "    \"alpinejs\": \"^3.14.0\",\n" +
 "    \"zod\": \"^3.23.0\"\n" +
 "  }\n" +
-"}\n" }
+"}\n" },
+
+      "models/Post.ts": { lang: "TYPESCRIPT", dot: "ts", code:
+"import { defineModel, timestamps, owned } from '@apex-stack/data'\n" +
+"\n" +
+"// One definition → a typed schema, a SQL migration, and REST + MCP CRUD.\n" +
+"export default defineModel('posts', {\n" +
+"  fields: {\n" +
+"    title: { type: 'string', notNull: true },\n" +
+"    slug: { type: 'string', unique: true },\n" +
+"    body: 'string',\n" +
+"    published: { type: 'boolean', default: false },\n" +
+"  },\n" +
+"  // Composable lifecycle behaviors: created_at/updated_at + owner stamping.\n" +
+"  behaviors: [timestamps(), owned('authorId')],\n" +
+"  // Row-level security — authors only ever see their own posts.\n" +
+"  scope: ({ user }) => ({ authorId: user.id }),\n" +
+"})\n" },
+
+      "server/auth.ts": { lang: "TYPESCRIPT", dot: "ts", code:
+"import { sessionAuth } from '@apex-stack/core/server'\n" +
+"import { useRuntimeConfig } from '@apex-stack/core'\n" +
+"\n" +
+"// Resolve the caller from the sealed session cookie. The result is injected\n" +
+"// as ctx.user into every loader, API route and MCP tool — one source of truth.\n" +
+"export default sessionAuth({\n" +
+"  password: useRuntimeConfig().sessionPassword,\n" +
+"})\n" },
+
+      "db/migrations/0001_init.sql": { lang: "SQL", dot: "sql", code:
+"-- Generated from models/Post.ts. Apply with `apex migrate` (undo: --rollback).\n" +
+"CREATE TABLE IF NOT EXISTS posts (\n" +
+"  id         TEXT PRIMARY KEY,\n" +
+"  title      TEXT NOT NULL,\n" +
+"  slug       TEXT UNIQUE,\n" +
+"  body       TEXT,\n" +
+"  published  BOOLEAN DEFAULT FALSE,\n" +
+"  \"authorId\" TEXT,\n" +
+"  created_at TIMESTAMP DEFAULT now(),\n" +
+"  updated_at TIMESTAMP DEFAULT now()\n" +
+");\n" },
+
+      "locales/en.json": { lang: "JSON", dot: "cfg", code:
+"{\n" +
+"  \"nav\": { \"home\": \"Home\", \"blog\": \"Blog\", \"about\": \"About\" },\n" +
+"  \"blog\": {\n" +
+"    \"title\": \"The Apex Blog\",\n" +
+"    \"readMore\": \"Read more\",\n" +
+"    \"published\": \"Published {date}\"\n" +
+"  }\n" +
+"}\n" },
+
+      "locales/fr.json": { lang: "JSON", dot: "cfg", code:
+"{\n" +
+"  \"nav\": { \"home\": \"Accueil\", \"blog\": \"Blog\", \"about\": \"\\u00c0 propos\" },\n" +
+"  \"blog\": {\n" +
+"    \"title\": \"Le blog Apex\",\n" +
+"    \"readMore\": \"Lire la suite\",\n" +
+"    \"published\": \"Publi\\u00e9 le {date}\"\n" +
+"  }\n" +
+"}\n" },
+
+      "tests/Post.test.ts": { lang: "TYPESCRIPT", dot: "ts", code:
+"import { describe, it, expect } from 'vitest'\n" +
+"import { createTestApp } from '@apex-stack/core/testing'\n" +
+"\n" +
+"// Boots the whole app in-process — real routing, auth and MCP — against an\n" +
+"// ephemeral pglite DB. No running server, no network, no mocks.\n" +
+"describe('posts API', () => {\n" +
+"  it('serves REST and the matching MCP tool', async () => {\n" +
+"    const app = await createTestApp({ root: '.' })\n" +
+"\n" +
+"    const res = await app.get('/api/posts')\n" +
+"    expect(res.status).toBe(200)\n" +
+"\n" +
+"    // The very same route is an MCP tool your AI can call.\n" +
+"    expect(await app.mcp.listTools()).toContain('posts_list')\n" +
+"\n" +
+"    await app.close()\n" +
+"  })\n" +
+"})\n" }
     };
 
     function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
