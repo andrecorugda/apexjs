@@ -372,22 +372,22 @@ describe('${name} route', () => {
 
 function modelTestTemplate(name: string): string {
   return `import { createDb, factory } from '@apex-stack/data'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import model from '../models/${name}'
 
-// factory(model) builds schema-valid rows (override any field). createDb('pglite')
-// gives a fresh in-memory DB per run.
+// factory(model) builds schema-valid rows (override any field). An in-memory SQLite db
+// (via @libsql/client, the driver you already installed) gives a fresh DB per run.
 describe('${name} model', () => {
   it('factory builds a valid row', () => {
     expect(factory(model).make()).toBeDefined()
   })
 
   it('creates rows in a fresh in-memory db', async () => {
-    const db = await createDb({ driver: 'pglite' })
-    await db.exec(model.migrationSql('postgres'))
+    const db = await createDb({ driver: 'sqlite', url: ':memory:' })
+    await db.exec(model.migrationSql('sqlite'))
     await factory(model).createMany(db, 3)
-    const rows = await db.query('SELECT count(*)::int AS n FROM ${name}')
-    expect(rows[0]?.n).toBe(3)
+    const rows = await db.query('SELECT COUNT(*) AS n FROM ${name}')
+    expect(Number(rows[0]?.n)).toBe(3)
     await db.close()
   })
 })
