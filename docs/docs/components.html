@@ -66,7 +66,17 @@
         <p class="group-title">Core</p>
         <ul>
           <li><a href="./routing.html">Routing</a></li>
-          <li><a href="./components.html" aria-current="page">Components</a></li>
+          <li><a href="./components.html" aria-current="page">Components</a>
+            <ul class="subnav">
+              <li><a href="#anatomy">Anatomy of a file</a></li>
+              <li><a href="#script-server">The server block &amp; loader()</a></li>
+              <li><a href="#template">The template &amp; x-data</a></li>
+              <li><a href="#style">Scoped styles</a></li>
+              <li><a href="#embedding">Embedding components</a></li>
+              <li><a href="#props">Props (static &amp; bound)</a></li>
+              <li><a href="#rules">Rules &amp; constraints</a></li>
+            </ul>
+          </li>
           <li><a href="./islands.html">Islands</a></li>
         </ul>
       </div>
@@ -94,20 +104,7 @@
     </aside>
     <section class="doc">
 
-      <nav class="onpage" aria-label="On this page">
-        <span class="k">On this page</span>
-        <ul>
-          <li><a href="#anatomy">Anatomy of a file</a></li>
-          <li><a href="#script-server">The server block &amp; loader()</a></li>
-          <li><a href="#template">The template &amp; x-data</a></li>
-          <li><a href="#style">Scoped styles</a></li>
-          <li><a href="#embedding">Embedding components</a></li>
-          <li><a href="#props">Props (static &amp; bound)</a></li>
-          <li><a href="#rules">Rules &amp; constraints</a></li>
-        </ul>
-      </nav>
-
-      <h2 id="anatomy">Anatomy of a file <a class="anchor" href="#anatomy">#</a></h2>
+<h2 id="anatomy">Anatomy of a file <a class="anchor" href="#anatomy">#</a></h2>
       <p>
         A <code>.alpine</code> file has up to three top-level blocks — a <code>&lt;script server&gt;</code>,
         one <code>&lt;template&gt;</code>, and any number of <code>&lt;style&gt;</code> blocks. The parser

@@ -59,7 +59,18 @@
         <p class="group-title">Introduction</p>
         <ul>
           <li><a href="./index.html">Overview</a></li>
-          <li><a href="./getting-started.html" aria-current="page">Getting Started</a></li>
+          <li><a href="./getting-started.html" aria-current="page">Getting Started</a>
+            <ul class="subnav">
+              <li><a href="#requirements">Requirements</a></li>
+              <li><a href="#scaffold">Scaffold a project</a></li>
+              <li><a href="#structure">Project structure</a></li>
+              <li><a href="#dev">Run the dev server</a></li>
+              <li><a href="#first-edit">Your first edit</a></li>
+              <li><a href="#hot-reload">Hot reload</a></li>
+              <li><a href="#lifecycle">The dev → build → deploy lifecycle</a></li>
+              <li><a href="#next">Next steps</a></li>
+            </ul>
+          </li>
         </ul>
       </div>
       <div class="group">
@@ -94,21 +105,7 @@
     </aside>
     <section class="doc">
 
-      <nav class="onpage" aria-label="On this page">
-        <span class="k">On this page</span>
-        <ul>
-          <li><a href="#requirements">Requirements</a></li>
-          <li><a href="#scaffold">Scaffold a project</a></li>
-          <li><a href="#structure">Project structure</a></li>
-          <li><a href="#dev">Run the dev server</a></li>
-          <li><a href="#first-edit">Your first edit</a></li>
-          <li><a href="#hot-reload">Hot reload</a></li>
-          <li><a href="#lifecycle">The dev → build → deploy lifecycle</a></li>
-          <li><a href="#next">Next steps</a></li>
-        </ul>
-      </nav>
-
-      <h2 id="requirements">Requirements <a class="anchor" href="#requirements">#</a></h2>
+<h2 id="requirements">Requirements <a class="anchor" href="#requirements">#</a></h2>
       <p>
         Apex runs on <strong>Node.js</strong> (20.19+) with any package manager
         (<code>npm</code>, <code>pnpm</code>, <code>yarn</code>). It is Node-native — no PHP,

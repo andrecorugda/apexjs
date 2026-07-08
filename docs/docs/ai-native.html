@@ -74,7 +74,17 @@
         <p class="group-title">Backend &amp; Data</p>
         <ul>
           <li><a href="./data.html">Data</a></li>
-          <li><a href="./ai-native.html" aria-current="page">AI-Native APIs</a></li>
+          <li><a href="./ai-native.html" aria-current="page">AI-Native APIs</a>
+            <ul class="subnav">
+              <li><a href="#one-def">One definition, two surfaces</a></li>
+              <li><a href="#config">defineApexRoute options</a></li>
+              <li><a href="#mcp-endpoint">The /mcp endpoint</a></li>
+              <li><a href="#inspector">The apex mcp inspector</a></li>
+              <li><a href="#claude">Point Claude at your API</a></li>
+              <li><a href="#resources">Resources are AI-native too</a></li>
+              <li><a href="#design">Design notes</a></li>
+            </ul>
+          </li>
           <li><a href="./auth.html">Auth</a></li>
         </ul>
       </div>
@@ -94,20 +104,7 @@
     </aside>
     <section class="doc">
 
-      <nav class="onpage" aria-label="On this page">
-        <span class="k">On this page</span>
-        <ul>
-          <li><a href="#one-def">One definition, two surfaces</a></li>
-          <li><a href="#config">defineApexRoute options</a></li>
-          <li><a href="#mcp-endpoint">The /mcp endpoint</a></li>
-          <li><a href="#inspector">The apex mcp inspector</a></li>
-          <li><a href="#claude">Point Claude at your API</a></li>
-          <li><a href="#resources">Resources are AI-native too</a></li>
-          <li><a href="#design">Design notes</a></li>
-        </ul>
-      </nav>
-
-      <h2 id="one-def">One definition, two surfaces <a class="anchor" href="#one-def">#</a></h2>
+<h2 id="one-def">One definition, two surfaces <a class="anchor" href="#one-def">#</a></h2>
       <p>
         <code>defineApexRoute</code> takes a Zod input shape, a handler, and a description. That single
         definition drives <strong>REST validation</strong> and the <strong>MCP tool's

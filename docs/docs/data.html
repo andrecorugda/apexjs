@@ -73,7 +73,16 @@
       <div class="group">
         <p class="group-title">Backend &amp; Data</p>
         <ul>
-          <li><a href="./data.html" aria-current="page">Data</a></li>
+          <li><a href="./data.html" aria-current="page">Data</a>
+            <ul class="subnav">
+              <li><a href="#install">Install</a></li>
+              <li><a href="#define">Define once</a></li>
+              <li><a href="#surfaces">The surfaces you get</a></li>
+              <li><a href="#drivers">Databases &amp; drivers</a></li>
+              <li><a href="#migrations">Migrations</a></li>
+              <li><a href="#custom">Beyond CRUD</a></li>
+            </ul>
+          </li>
           <li><a href="./ai-native.html">AI-Native APIs</a></li>
           <li><a href="./auth.html">Auth</a></li>
         </ul>
@@ -94,19 +103,7 @@
     </aside>
     <section class="doc">
 
-      <nav class="onpage" aria-label="On this page">
-        <span class="k">On this page</span>
-        <ul>
-          <li><a href="#install">Install</a></li>
-          <li><a href="#define">Define once</a></li>
-          <li><a href="#surfaces">The surfaces you get</a></li>
-          <li><a href="#drivers">Databases &amp; drivers</a></li>
-          <li><a href="#migrations">Migrations</a></li>
-          <li><a href="#custom">Beyond CRUD</a></li>
-        </ul>
-      </nav>
-
-      <h2 id="install">Install <a class="anchor" href="#install">#</a></h2>
+<h2 id="install">Install <a class="anchor" href="#install">#</a></h2>
       <p>Add the data package (and Drizzle) alongside core:</p>
       <pre><code>npm i @apex-stack/data drizzle-orm</code></pre>
       <p class="muted">Postgres/PGlite drivers load on demand — install only the one you use (below).</p>

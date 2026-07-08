@@ -81,7 +81,17 @@
       <div class="group">
         <p class="group-title">Testing</p>
         <ul>
-          <li><a href="./testing.html" aria-current="page">Test Kit</a></li>
+          <li><a href="./testing.html" aria-current="page">Test Kit</a>
+            <ul class="subnav">
+              <li><a href="#boot">Boot the app</a></li>
+              <li><a href="#rest">REST helpers</a></li>
+              <li><a href="#auth">Authenticating a call</a></li>
+              <li><a href="#mcp">The MCP surface</a></li>
+              <li><a href="#factories">Factories</a></li>
+              <li><a href="#runner">apex test</a></li>
+              <li><a href="#scaffold">Test-aware scaffolding</a></li>
+            </ul>
+          </li>
         </ul>
       </div>
       <div class="group">
@@ -94,20 +104,7 @@
     </aside>
     <section class="doc">
 
-      <nav class="onpage" aria-label="On this page">
-        <span class="k">On this page</span>
-        <ul>
-          <li><a href="#boot">Boot the app</a></li>
-          <li><a href="#rest">REST helpers</a></li>
-          <li><a href="#auth">Authenticating a call</a></li>
-          <li><a href="#mcp">The MCP surface</a></li>
-          <li><a href="#factories">Factories</a></li>
-          <li><a href="#runner">apex test</a></li>
-          <li><a href="#scaffold">Test-aware scaffolding</a></li>
-        </ul>
-      </nav>
-
-      <h2 id="boot">Boot the app <a class="anchor" href="#boot">#</a></h2>
+<h2 id="boot">Boot the app <a class="anchor" href="#boot">#</a></h2>
       <p>
         <code>createTestApp</code> loads your routes, resources, and auth resolver and returns a client
         that talks to them directly — in memory, in the same process as your test. Point it at your
