@@ -127,7 +127,10 @@ describe('components inside x-for / x-if (structural expansion)', () => {
 
   it('stamps the component scope on NESTED elements inside x-for (so <style scoped> matches)', () => {
     const reg: ComponentRegistry = {
-      Sidebar: { template: '<aside class="sb"><button>x</button></aside>', scopeId: 'data-apex-sb' },
+      Sidebar: {
+        template: '<aside class="sb"><button>x</button></aside>',
+        scopeId: 'data-apex-sb',
+      },
     }
     const html = renderComponent({
       template: '<ul><template x-for="p in items" :key="p"><li><Sidebar/></li></template></ul>',
