@@ -56,7 +56,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "citty": "^0.1.6",
+    "citty": "^0.2.2",
     "h3": "^1.13.0",
     "vite": "^6.0.7",
     "zod": "^4.4.3",

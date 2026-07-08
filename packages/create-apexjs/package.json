@@ -34,7 +34,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "citty": "^0.1.6"
+    "citty": "^0.2.2"
   },
   "engines": {
     "node": ">=20.19"
