@@ -1,5 +1,12 @@
 # islands-spike
 
+## 0.0.38
+
+### Patch Changes
+
+- Updated dependencies [1018a7e]
+  - @apex-stack/core@0.16.1
+
 ## 0.0.37
 
 ### Patch Changes
