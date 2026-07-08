@@ -24,6 +24,13 @@ export interface ApexRouteHandlerContext<Shape extends ZodRawShape | undefined> 
    * otherwise before the handler runs).
    */
   user: ApexUser | null
+  /**
+   * The raw h3 request event (server-only; typed loosely to keep this module
+   * dependency-free). Pass it to the session/response helpers in
+   * `@apex-stack/core/server` — e.g. `login(event, { user }, …)` or
+   * `setStatus(event, 401)`. `undefined` for MCP tool calls (no HTTP event).
+   */
+  event: unknown
 }
 
 export interface ApexRouteConfig<Shape extends ZodRawShape | undefined, Output> extends RouteGate {
@@ -60,6 +67,7 @@ export interface ApexRoute extends RouteGate {
     config?: RuntimeConfig
     locals?: Record<string, unknown>
     user?: ApexUser | null
+    event?: unknown
   }) => unknown | Promise<unknown>
 }
 

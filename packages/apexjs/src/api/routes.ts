@@ -5,6 +5,7 @@ import {
   type EventHandler,
   getQuery,
   getRequestURL,
+  getResponseStatus,
   readBody,
   setResponseHeader,
   setResponseStatus,
@@ -172,6 +173,7 @@ export function createApiHandler(
         config: config ?? { public: {} },
         locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
         user,
+        event,
       })
     } catch (err) {
       // Surface the underlying error (esp. the common "table doesn't exist yet")
@@ -190,9 +192,11 @@ export function createApiHandler(
       }
     }
     // Serialize explicitly so a `null` result (e.g. get-by-id not found) is a
-    // parseable `200 null` JSON body, not h3's default `204 No Content`.
+    // parseable `200 null` JSON body, not h3's default `204 No Content`. Preserve a
+    // status the handler set itself (e.g. a login route returning 401) — only
+    // default to 200 when the handler left a success status.
     setResponseHeader(event, 'Content-Type', 'application/json')
-    setResponseStatus(event, 200)
+    if (getResponseStatus(event) < 400) setResponseStatus(event, 200)
     return JSON.stringify(result ?? null)
   })
 }

@@ -11,8 +11,16 @@
 > - **C2 — resource/model access + scope** ✅ per-op `access` + row-level `scope` on
 >   `defineResource`/`defineModel`, fail-closed. 5 PGlite tests.
 > - **C3 — sessions + hardening** ✅ `@apex-stack/core/server`: `sessionAuth` (h3 sealed
->   cookies) + `login`/`logout`, CSRF in `createApiHandler`, rate-limiter, security
->   headers, `apex make auth`. 8 tests.
+>   cookies, `SameSite=Lax`, no cookie for anon) + `login`/`logout`/`setStatus`, CSRF in
+>   `createApiHandler`, rate-limiter, security headers, `apex make auth` (scaffolds
+>   auth.ts + login/logout routes). Handlers receive `event`. 11 tests.
+>
+> **Independent verification (2026-07-08):** a fresh downstream session verified all 14
+> security checks fail-closed against the `0.14.0`/`0.4.0` tarballs. It found one DX
+> blocker (handlers had no `event`, so the login flow was unusable) + minor items
+> (SameSite, anon cookie). All fixed in `0.15.0`/`0.4.1` (handler `event`, `setStatus`,
+> preserved handler status, SameSite=Lax, no anon cookie, login/logout scaffold);
+> re-delivered for a second verification pass.
 
 ## 1. Why this is existential, not polish
 

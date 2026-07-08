@@ -3,6 +3,7 @@
 
 export type { ApexUser, AuthConfig, AuthResolveContext, RouteGate } from './auth/define.js'
 export { defineAuth } from './auth/define.js'
+export { setStatus } from './auth/respond.js'
 export {
   getSession,
   login,

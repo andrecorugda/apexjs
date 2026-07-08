@@ -122,8 +122,7 @@ import { sessionAuth } from '@apex-stack/core/server'
 
 // Resolves the request's user, injected as \`user\` into every loader, route handler,
 // and MCP tool call. This default reads a sealed (encrypted + signed) session cookie.
-// Log users in/out from your own /login route with \`login(event, { user }, { password })\`
-// and \`logout(event, { password })\` from '@apex-stack/core/server'.
+// The /api/login and /api/logout routes scaffolded alongside this file write/clear it.
 //
 // Set a 32+ char secret in apex.config.ts \`runtimeConfig.sessionPassword\` (override
 // per-environment via APEX_SESSION_PASSWORD). Prefer an adapter (Lucia / Better-Auth /
@@ -132,6 +131,56 @@ export default sessionAuth({
   password:
     (useRuntimeConfig().sessionPassword as string) ?? process.env.APEX_SESSION_PASSWORD ?? '',
   // toUser: (data) => (data.user as { id: string; roles?: string[] }) ?? null,
+})
+`
+}
+
+function loginRouteTemplate(): string {
+  return `import { defineApexRoute, useRuntimeConfig } from '@apex-stack/core'
+import { login, setStatus } from '@apex-stack/core/server'
+import { z } from 'zod'
+
+// POST /api/login — verify credentials, then write the sealed session cookie.
+// Handlers receive \`event\` — pass it to the session/response helpers.
+export default defineApexRoute({
+  method: 'POST',
+  input: { email: z.string(), password: z.string() },
+  handler: async ({ input, event }) => {
+    const user = await verifyCredentials(input.email, input.password)
+    if (!user) {
+      setStatus(event, 401)
+      return { error: 'Invalid credentials' }
+    }
+    await login(event, { user }, { password: sessionPassword() })
+    return { ok: true, user }
+  },
+})
+
+function sessionPassword(): string {
+  return (useRuntimeConfig().sessionPassword as string) ?? process.env.APEX_SESSION_PASSWORD ?? ''
+}
+
+// TODO: replace this stub with a real lookup (DB + hashed-password compare).
+async function verifyCredentials(email: string, password: string) {
+  return email && password ? { id: email } : null
+}
+`
+}
+
+function logoutRouteTemplate(): string {
+  return `import { defineApexRoute, useRuntimeConfig } from '@apex-stack/core'
+import { logout } from '@apex-stack/core/server'
+
+// POST /api/logout — clear the sealed session cookie.
+export default defineApexRoute({
+  method: 'POST',
+  handler: async ({ event }) => {
+    await logout(event, {
+      password:
+        (useRuntimeConfig().sessionPassword as string) ?? process.env.APEX_SESSION_PASSWORD ?? '',
+    })
+    return { ok: true }
+  },
 })
 `
 }
@@ -316,7 +365,11 @@ function plan(kind: Kind, name: string, fieldSpecs: string[], root: string): Art
         },
       ]
     case 'auth':
-      return [{ path: join(root, 'server', 'auth.ts'), contents: authTemplate() }]
+      return [
+        { path: join(root, 'server', 'auth.ts'), contents: authTemplate() },
+        { path: join(root, 'server', 'api', 'login.ts'), contents: loginRouteTemplate() },
+        { path: join(root, 'server', 'api', 'logout.ts'), contents: logoutRouteTemplate() },
+      ]
     case 'model': {
       const fields = parseFields(fieldSpecs)
       return [

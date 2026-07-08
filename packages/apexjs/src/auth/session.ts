@@ -19,21 +19,25 @@ export interface SessionOptions {
 
 const NAME = 'apex-session'
 
-/** Open (or create) the sealed session for this request. */
+// The `event` params are typed `unknown` (not `H3Event`) so route handlers — whose
+// ctx.event is intentionally loosely typed — can pass it with no cast. It is an
+// h3 event at runtime.
+
+/** Open (or create) the sealed session for this request. Sets a `SameSite=Lax` cookie. */
 export async function getSession<T extends Record<string, unknown> = Record<string, unknown>>(
-  event: H3Event,
+  event: unknown,
   opts: SessionOptions,
 ) {
-  return useSession<T>(event, {
+  return useSession<T>(event as H3Event, {
     password: opts.password,
     name: opts.name ?? NAME,
-    ...(opts.maxAge ? { cookie: { maxAge: opts.maxAge } } : {}),
+    cookie: { sameSite: 'lax', ...(opts.maxAge ? { maxAge: opts.maxAge } : {}) },
   })
 }
 
 /** Log a caller in: merge `data` (e.g. `{ user }`) into the sealed session cookie. */
 export async function login<T extends Record<string, unknown>>(
-  event: H3Event,
+  event: unknown,
   data: T,
   opts: SessionOptions,
 ): Promise<T> {
@@ -43,7 +47,7 @@ export async function login<T extends Record<string, unknown>>(
 }
 
 /** Log a caller out: clear the sealed session cookie. */
-export async function logout(event: H3Event, opts: SessionOptions): Promise<void> {
+export async function logout(event: unknown, opts: SessionOptions): Promise<void> {
   const session = await getSession(event, opts)
   await session.clear()
 }
@@ -62,9 +66,13 @@ export async function logout(event: H3Event, opts: SessionOptions): Promise<void
 export function sessionAuth(
   opts: SessionOptions & { toUser?: (data: Record<string, unknown>) => ApexUser | null },
 ): AuthConfig {
+  const name = opts.name ?? NAME
   return defineAuth({
-    async resolve({ event }) {
-      const session = await getSession(event as H3Event, opts)
+    async resolve({ event, cookies }) {
+      // Don't initialize (and thus set) a session cookie for anonymous callers —
+      // only read one that already exists. Keeps anonymous responses cookie-free.
+      if (!cookies[name]) return null
+      const session = await getSession(event, opts)
       const data = session.data as Record<string, unknown>
       if (opts.toUser) return opts.toUser(data)
       return (data.user as ApexUser | undefined) ?? null

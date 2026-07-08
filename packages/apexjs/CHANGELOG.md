@@ -1,5 +1,25 @@
 # @apex-stack/core
 
+## 0.15.0
+
+### Minor Changes
+
+- Auth DX + hardening fixes from independent Phase C verification:
+
+  - **Route handlers now receive `event`** — the raw h3 request event is passed into
+    every `defineApexRoute` handler ctx (`undefined` for MCP calls). This makes the
+    documented login flow actually work: `login(event, { user }, { password })`.
+  - **Handler-set status is preserved** — `createApiHandler` no longer forces `200` over
+    a status the handler set (e.g. a login route returning `setStatus(event, 401)`).
+  - **`setStatus(event, code)`** added to `@apex-stack/core/server` so login routes need
+    no direct h3 import; session helpers (`login`/`logout`/`getSession`) accept the
+    loosely-typed handler `event` with no cast.
+  - **`SameSite=Lax`** is now set explicitly on the sealed session cookie.
+  - **No cookie for anonymous callers** — `sessionAuth` only reads an existing session
+    cookie; it no longer initializes (and sets) an empty one on unauthenticated requests.
+  - **`apex make auth`** now scaffolds working `server/api/login.ts` + `logout.ts`
+    routes alongside `server/auth.ts`.
+
 ## 0.14.0
 
 ### Minor Changes

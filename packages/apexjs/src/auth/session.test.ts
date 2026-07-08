@@ -1,39 +1,53 @@
-// End-to-end sealed-session flow over real HTTP: an anonymous request is 401, a
-// login writes a sealed cookie, and a follow-up request bearing that cookie is
-// authenticated — proving encrypt/sign round-trips and sessionAuth resolves it.
+// End-to-end sealed-session flow over real HTTP, exercising the PUBLIC handler API
+// (defineApexRoute handlers receive `event`): a login route writes the sealed cookie,
+// a bad-credentials login returns 401, anonymous requests get no cookie, and a
+// tampered cookie is rejected.
 import { createServer, type Server } from 'node:http'
-import { createApp, defineEventHandler, readBody, toNodeListener } from 'h3'
+import { createApp, toNodeListener } from 'h3'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import { defineApexRoute } from '../api/defineRoute.js'
 import { createApiHandler, expandApiModule } from '../api/routes.js'
+import { setStatus } from './respond.js'
 import { login, logout, sessionAuth } from './session.js'
 
 const PASSWORD = 'test-password-at-least-32-characters-long!!'
 const auth = sessionAuth({ password: PASSWORD })
+
+// Login/logout/me as real defineApexRoute handlers — the scaffold's pattern.
+const loginRoute = defineApexRoute({
+  method: 'POST',
+  input: { user: z.string(), ok: z.boolean() },
+  handler: async ({ input, event }) => {
+    const { user, ok } = input as { user: string; ok: boolean }
+    if (!ok) {
+      setStatus(event, 401)
+      return { error: 'Invalid credentials' }
+    }
+    await login(event, { user: { id: user } }, { password: PASSWORD })
+    return { ok: true }
+  },
+})
+const logoutRoute = defineApexRoute({
+  method: 'POST',
+  handler: async ({ event }) => {
+    await logout(event, { password: PASSWORD })
+    return { ok: true }
+  },
+})
+const meRoute = defineApexRoute({ auth: true, handler: ({ user }) => user })
 
 let server: Server
 let base: string
 
 beforeAll(async () => {
   const app = createApp()
-  // Login/logout as plain h3 routes (they set/clear the sealed cookie).
-  app.use(
-    '/login',
-    defineEventHandler(async (event) => {
-      const body = (await readBody(event)) as { id: string }
-      await login(event, { user: { id: body.id } }, { password: PASSWORD })
-      return { ok: true }
-    }),
-  )
-  app.use(
-    '/logout',
-    defineEventHandler(async (event) => {
-      await logout(event, { password: PASSWORD })
-      return { ok: true }
-    }),
-  )
-  const me = defineApexRoute({ auth: true, handler: ({ user }) => user })
-  app.use('/api', createApiHandler(expandApiModule('me', me), { public: {} }, auth))
+  const table = [
+    ...expandApiModule('login', loginRoute),
+    ...expandApiModule('logout', logoutRoute),
+    ...expandApiModule('me', meRoute),
+  ]
+  app.use('/api', createApiHandler(table, { public: {} }, auth))
   server = createServer(toNodeListener(app))
   await new Promise<void>((r) => server.listen(0, r))
   const addr = server.address()
@@ -42,18 +56,37 @@ beforeAll(async () => {
 
 afterAll(() => new Promise<void>((r) => server.close(() => r())))
 
-describe('sealed-cookie session', () => {
-  it('401 anonymous → login sets a sealed cookie → authenticated', async () => {
-    expect((await fetch(`${base}/api/me`)).status).toBe(401)
+const post = (path: string, body: unknown, cookie?: string) =>
+  fetch(`${base}${path}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      origin: base, // same-origin (real browsers always send this on POST)
+      ...(cookie ? { cookie } : {}),
+    },
+    body: JSON.stringify(body),
+  })
 
-    const res = await fetch(`${base}/login`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id: 'ada' }),
-    })
+describe('sealed-cookie session (public handler API)', () => {
+  it('anonymous request is 401 AND gets no session cookie', async () => {
+    const res = await fetch(`${base}/api/me`)
+    expect(res.status).toBe(401)
+    expect(res.headers.get('set-cookie')).toBeNull() // no cookie issued to anon
+  })
+
+  it('bad credentials → 401 (handler-set status is preserved)', async () => {
+    const res = await post('/api/login', { user: 'ada', ok: false })
+    expect(res.status).toBe(401)
+    expect(await res.json()).toEqual({ error: 'Invalid credentials' })
+  })
+
+  it('login writes an HttpOnly, SameSite=Lax sealed cookie → authenticated', async () => {
+    const res = await post('/api/login', { user: 'ada', ok: true })
+    expect(res.status).toBe(200)
     const cookie = res.headers.get('set-cookie') ?? ''
     expect(cookie).toContain('apex-session=')
     expect(cookie.toLowerCase()).toContain('httponly')
+    expect(cookie.toLowerCase()).toContain('samesite=lax')
 
     const authed = await fetch(`${base}/api/me`, {
       headers: { cookie: cookie.split(';')[0] ?? '' },
@@ -63,9 +96,17 @@ describe('sealed-cookie session', () => {
   })
 
   it('does not authenticate with a tampered cookie', async () => {
-    const tampered = await fetch(`${base}/api/me`, {
+    const res = await fetch(`${base}/api/me`, {
       headers: { cookie: 'apex-session=not-a-valid-sealed-value' },
     })
-    expect(tampered.status).toBe(401)
+    expect(res.status).toBe(401)
+  })
+
+  it('logout clears the cookie', async () => {
+    const login = await post('/api/login', { user: 'ada', ok: true })
+    const cookie = (login.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+    const res = await post('/api/logout', {}, cookie)
+    expect(res.status).toBe(200)
+    expect(res.headers.get('set-cookie') ?? '').toContain('apex-session=')
   })
 })
