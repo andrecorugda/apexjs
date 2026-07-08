@@ -2,7 +2,16 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { defineCommand } from 'citty'
 
-type Kind = 'page' | 'component' | 'api' | 'store' | 'layout' | 'service' | 'test' | 'middleware'
+type Kind =
+  | 'page'
+  | 'component'
+  | 'api'
+  | 'store'
+  | 'layout'
+  | 'service'
+  | 'test'
+  | 'middleware'
+  | 'model'
 
 /** Components are referenced as `<PascalCase/>`, so their file must be PascalCase. */
 function pascalCase(s: string): string {
@@ -130,31 +139,146 @@ describe('${name}', () => {
 `
 }
 
-/** Where a generated artifact lands, and its contents. */
-function plan(kind: Kind, name: string, root: string): { path: string; contents: string } {
+// ── Model generation (`apex make model todos title:string done:boolean!`) ──────
+
+type FieldType = 'string' | 'text' | 'int' | 'float' | 'boolean' | 'timestamp' | 'json'
+interface ParsedField {
+  name: string
+  type: FieldType
+  notNull: boolean
+}
+
+const TYPE_ALIASES: Record<string, FieldType> = {
+  string: 'string',
+  str: 'string',
+  text: 'text',
+  int: 'int',
+  integer: 'int',
+  number: 'float',
+  float: 'float',
+  bool: 'boolean',
+  boolean: 'boolean',
+  timestamp: 'timestamp',
+  date: 'timestamp',
+  json: 'json',
+}
+
+/** Parse `title:string`, `views:int`, `email:string!` (trailing `!` = NOT NULL). */
+function parseFields(specs: string[]): ParsedField[] {
+  return specs.map((spec) => {
+    const [rawName, rawType = 'string'] = spec.split(':')
+    const notNull = rawType.endsWith('!')
+    const key = rawType.replace(/!$/, '').toLowerCase()
+    const type = TYPE_ALIASES[key]
+    if (!type)
+      throw new Error(
+        `Unknown field type "${rawType}" (use: ${Object.keys(TYPE_ALIASES).join(', ')})`,
+      )
+    return { name: (rawName ?? '').trim(), type, notNull }
+  })
+}
+
+function modelTemplate(name: string, fields: ParsedField[]): string {
+  const body =
+    fields
+      .map((f) =>
+        f.notNull
+          ? `    ${f.name}: { type: '${f.type}', notNull: true },`
+          : `    ${f.name}: '${f.type}',`,
+      )
+      .join('\n') || "    // title: 'string',"
+  return `import { defineModel } from '@apex-stack/data'
+
+// One definition → zod validation + a Drizzle table + the CREATE TABLE migration
+// + a REST resource (list/get/create/update/delete) that is ALSO an MCP tool set.
+export default defineModel('${name}', {
+  fields: {
+${body}
+  },
+})
+`
+}
+
+function modelApiTemplate(name: string): string {
+  return `import { createDb } from '@apex-stack/data'
+import model from '../../models/${name}'
+
+// Auto-served by Apex's API loader: REST at /api/${name} (+ /:id) and MCP tools
+// ${name}_list / _get / _create / _update / _delete. Override any op by adding your
+// own defineApexRoute here, or swap the connection for Turso/Supabase/Neon/PGlite.
+const db = await createDb('data.db')
+export default model.resource(db)
+`
+}
+
+/** SQLite column type for the starter migration (matches defineModel's mapping). */
+function sqliteType(t: FieldType): string {
+  return t === 'float'
+    ? 'REAL'
+    : t === 'string' || t === 'text' || t === 'json'
+      ? 'TEXT'
+      : 'INTEGER'
+}
+
+function modelMigration(name: string, fields: ParsedField[]): string {
+  const cols = [
+    '  id INTEGER PRIMARY KEY AUTOINCREMENT',
+    ...fields.map((f) => `  ${f.name} ${sqliteType(f.type)}${f.notNull ? ' NOT NULL' : ''}`),
+  ]
+  return `-- Create the ${name} table. Run \`apex migrate\`.
+CREATE TABLE IF NOT EXISTS ${name} (
+${cols.join(',\n')}
+);
+`
+}
+
+function migrationStamp(): string {
+  // Sortable YYYYMMDDHHMMSS prefix so applyMigrations runs files in order.
+  return new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)
+}
+
+type Artifact = { path: string; contents: string }
+
+/** Where a generated artifact lands, and its contents (one or more files). */
+function plan(kind: Kind, name: string, fieldSpecs: string[], root: string): Artifact[] {
   switch (kind) {
     case 'page':
-      return { path: join(root, 'pages', `${name}.alpine`), contents: pageTemplate(name) }
+      return [{ path: join(root, 'pages', `${name}.alpine`), contents: pageTemplate(name) }]
     case 'component':
-      return {
-        path: join(root, 'components', `${pascalCase(name)}.alpine`),
-        contents: componentTemplate(),
-      }
+      return [
+        {
+          path: join(root, 'components', `${pascalCase(name)}.alpine`),
+          contents: componentTemplate(),
+        },
+      ]
     case 'api':
-      return { path: join(root, 'server', 'api', `${name}.ts`), contents: apiTemplate(name) }
+      return [{ path: join(root, 'server', 'api', `${name}.ts`), contents: apiTemplate(name) }]
     case 'store':
-      return { path: join(root, 'stores', `${name}.ts`), contents: storeTemplate(name) }
+      return [{ path: join(root, 'stores', `${name}.ts`), contents: storeTemplate(name) }]
     case 'layout':
-      return { path: join(root, 'layouts', `${name}.alpine`), contents: layoutTemplate() }
+      return [{ path: join(root, 'layouts', `${name}.alpine`), contents: layoutTemplate() }]
     case 'service':
-      return {
-        path: join(root, 'services', `${pascalCase(name)}Service.ts`),
-        contents: serviceTemplate(name),
-      }
+      return [
+        {
+          path: join(root, 'services', `${pascalCase(name)}Service.ts`),
+          contents: serviceTemplate(name),
+        },
+      ]
     case 'test':
-      return { path: join(root, 'tests', `${name}.test.ts`), contents: testTemplate(name) }
+      return [{ path: join(root, 'tests', `${name}.test.ts`), contents: testTemplate(name) }]
     case 'middleware':
-      return { path: join(root, 'middleware', `${name}.ts`), contents: middlewareTemplate() }
+      return [{ path: join(root, 'middleware', `${name}.ts`), contents: middlewareTemplate() }]
+    case 'model': {
+      const fields = parseFields(fieldSpecs)
+      return [
+        { path: join(root, 'models', `${name}.ts`), contents: modelTemplate(name, fields) },
+        { path: join(root, 'server', 'api', `${name}.ts`), contents: modelApiTemplate(name) },
+        {
+          path: join(root, 'db', 'migrations', `${migrationStamp()}_create_${name}.sql`),
+          contents: modelMigration(name, fields),
+        },
+      ]
+    }
   }
 }
 
@@ -162,18 +286,18 @@ export const makeCommand = defineCommand({
   meta: {
     name: 'make',
     description:
-      'Generate a page, component, API route, store, layout, service, test, or middleware',
+      'Generate a page, component, API route, store, layout, service, test, middleware, or model',
   },
   args: {
     kind: {
       type: 'positional',
       required: true,
-      description: 'page | component | api | store | layout | service | test | middleware',
+      description: 'page | component | api | store | layout | service | test | middleware | model',
     },
     name: { type: 'positional', required: true, description: 'Name (about, Counter, todos, …)' },
     root: { type: 'string', description: 'Project root', default: '.' },
   },
-  run({ args }) {
+  run({ args, rawArgs }) {
     const kind = args.kind as Kind
     const kinds: Kind[] = [
       'page',
@@ -184,22 +308,48 @@ export const makeCommand = defineCommand({
       'service',
       'test',
       'middleware',
+      'model',
     ]
     if (!kinds.includes(kind)) {
       console.error(`\n  Unknown type "${args.kind}". Use: ${kinds.join(' | ')}\n`)
       process.exit(1)
     }
 
+    // Extra positionals after `<kind> <name>` are model field specs (title:string …),
+    // ignoring flags (--root …). rawArgs preserves order that citty's args object drops.
+    const positionals = rawArgs.filter((a) => !a.startsWith('-'))
+    const fieldSpecs = kind === 'model' ? positionals.slice(2) : []
+
     const root = resolve(process.cwd(), args.root)
-    const { path, contents } = plan(kind, args.name, root)
-    if (existsSync(path)) {
-      console.error(`\n  ✗ Already exists: ${path}\n`)
+    let artifacts: Artifact[]
+    try {
+      artifacts = plan(kind, args.name, fieldSpecs, root)
+    } catch (err) {
+      console.error(`\n  ✗ ${(err as Error).message}\n`)
       process.exit(1)
     }
 
-    mkdirSync(dirname(path), { recursive: true })
-    writeFileSync(path, contents)
-    // biome-ignore lint/suspicious/noConsole: CLI output
-    console.log(`\n  ✓ Created ${path.replace(`${root}/`, '')}\n`)
+    for (const { path } of artifacts) {
+      if (existsSync(path)) {
+        console.error(`\n  ✗ Already exists: ${path}\n`)
+        process.exit(1)
+      }
+    }
+    for (const { path, contents } of artifacts) {
+      mkdirSync(dirname(path), { recursive: true })
+      writeFileSync(path, contents)
+      // biome-ignore lint/suspicious/noConsole: CLI output
+      console.log(`  ${'\x1b[32m'}✓${'\x1b[0m'} ${path.replace(`${root}/`, '')}`)
+    }
+    if (kind === 'model') {
+      // biome-ignore lint/suspicious/noConsole: CLI output
+      console.log(
+        `\n  Next: install the data layer + a driver (\x1b[36mnpm i @apex-stack/data @libsql/client\x1b[0m), ` +
+          `run \x1b[36mapex migrate\x1b[0m, then \x1b[36mapex dev\x1b[0m — REST at /api/${args.name} and MCP tools are live.\n`,
+      )
+    } else {
+      // biome-ignore lint/suspicious/noConsole: CLI output
+      console.log('')
+    }
   },
 })
