@@ -1,8 +1,8 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import type { ComponentRegistry } from '@apex-stack/kit'
+import type { ComponentEntry, ComponentRegistry } from '@apex-stack/kit'
 
-interface ComponentModule {
+export interface ComponentModule {
   template: string
   rootXData: string | null
   scopeId: string
@@ -10,6 +10,24 @@ interface ComponentModule {
   css?: string
   hasLoader?: boolean
   loader?: (ctx: { props: Record<string, unknown>; locals?: Record<string, unknown> }) => unknown
+}
+
+/**
+ * Build a registry entry from a compiled component module. THE single source of
+ * truth for this mapping — both the dev loader and the prod server use it, so a
+ * component's server `loader` can't be dropped in one path (it was: the prod
+ * server built its registry inline and lost the loader → embedded loaders never
+ * ran in `apex build --server`). Only carries a loader the author declared
+ * (`hasLoader`), not the compiler's injected no-op.
+ */
+export function toComponentEntry(mod: ComponentModule): ComponentEntry {
+  return {
+    template: mod.template,
+    rootXData: mod.rootXData,
+    scopeId: mod.scopeId,
+    componentId: mod.componentId,
+    ...(mod.hasLoader && typeof mod.loader === 'function' ? { loader: mod.loader } : {}),
+  }
 }
 
 /**
@@ -35,14 +53,7 @@ export async function loadComponents(
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.alpine'))) {
     const name = file.replace(/\.alpine$/, '')
     const mod = await loadModule(`/components/${file}`)
-    registry[name] = {
-      template: mod.template,
-      rootXData: mod.rootXData,
-      scopeId: mod.scopeId,
-      componentId: mod.componentId,
-      // Only carry a loader the author actually declared (not the injected no-op).
-      ...(mod.hasLoader && typeof mod.loader === 'function' ? { loader: mod.loader } : {}),
-    }
+    registry[name] = toComponentEntry(mod)
     if (mod.css) {
       css += `${mod.css}\n`
       cssBlocks.push({ scopeId: mod.scopeId, css: mod.css })
