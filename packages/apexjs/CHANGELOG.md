@@ -1,5 +1,11 @@
 # @apex-stack/core
 
+## 0.9.2
+
+### Patch Changes
+
+- 2f9f457: CLI banner now reads **APEX JS** (was APEX) — consistent branding with the README and site.
+
 ## 0.9.1
 
 ### Patch Changes
