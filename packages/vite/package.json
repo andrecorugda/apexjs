@@ -1,6 +1,6 @@
 {
   "name": "@apex-stack/vite",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Vite plugin for Apex JS .alpine single-file components",
   "type": "module",
   "license": "MIT",

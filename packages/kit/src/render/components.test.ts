@@ -179,6 +179,61 @@ describe('components inside x-for / x-if (structural expansion)', async () => {
     for (const b of buttons) expect(b).toContain('data-apex-sb')
   })
 
+  it('runs a component loader per item inside x-for and bakes a keyed map (memoized)', async () => {
+    let calls = 0
+    const reg: ComponentRegistry = {
+      Card: {
+        template: '<article><h3 x-text="title"></h3></article>',
+        scopeId: 'data-apex-cd',
+        loader: async ({ props }) => {
+          calls++
+          return { title: `T-${props.slug}` }
+        },
+      },
+    }
+    const html = (
+      await renderComponent({
+        template:
+          '<ul><template x-for="p in posts" :key="p.slug"><li><Card :slug="p.slug"/></li></template></ul>',
+        componentId: 'c0',
+        scopeId: 'data-apex-page',
+        loaderData: { posts: [{ slug: 'a' }, { slug: 'b' }, { slug: 'a' }] },
+        registry: reg,
+      })
+    ).html
+    // Loader ran once per UNIQUE props (memoized): a, b → 2, not 3.
+    expect(calls).toBe(2)
+    // SSR rendered each item's loader data…
+    expect(html).toContain('>T-a</h3>')
+    expect(html).toContain('>T-b</h3>')
+    // …and the kept template's x-data carries the inline per-key map for the client,
+    // with no leftover placeholders.
+    expect(html).toContain('T-a')
+    expect(html).not.toContain('__APEX_LMAP__')
+    expect(html).not.toContain('__APEX_LKEY__')
+  })
+
+  it('runs a component loader inside x-if (single instance)', async () => {
+    const reg: ComponentRegistry = {
+      Panel: {
+        template: '<div x-text="msg"></div>',
+        scopeId: 'data-apex-pn',
+        loader: async () => ({ msg: 'from-loader' }),
+      },
+    }
+    const html = (
+      await renderComponent({
+        template: '<template x-if="ok"><Panel/></template>',
+        componentId: 'c0',
+        scopeId: 'data-apex-page',
+        loaderData: { ok: true },
+        registry: reg,
+      })
+    ).html
+    expect(html).toContain('>from-loader</div>')
+    expect(html).not.toContain('__APEX_LMAP__')
+  })
+
   it('expands a component inside x-if', async () => {
     const shown = await render('<template x-if="ok"><Card><b x-text="msg"></b></Card></template>', {
       ok: true,
