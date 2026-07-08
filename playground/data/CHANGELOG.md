@@ -1,5 +1,12 @@
 # data-spike
 
+## 0.0.40
+
+### Patch Changes
+
+- Updated dependencies
+  - @apex-stack/data@0.6.1
+
 ## 0.0.39
 
 ### Patch Changes

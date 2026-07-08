@@ -271,6 +271,37 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
   const filters = opts.filters ?? []
   const pkCol = table[pk]
 
+  // Build a hook context. The db/table/handle internals are attached NON-enumerably so
+  // `JSON.stringify(ctx)` / `console.log(ctx)` in a user hook don't choke on Drizzle's
+  // circular refs — they're still reachable as `ctx.db` etc. for behaviors like auditable.
+  type CtxBase = Omit<HookCtx, 'db' | 'table' | 'handle' | 'name'>
+  const mkCtx = (base: CtxBase): HookCtx => {
+    const ctx = { ...base, name } as HookCtx
+    Object.defineProperties(ctx, {
+      db: { value: db, enumerable: false, configurable: true },
+      table: { value: table, enumerable: false, configurable: true },
+      handle: { value: opts.handle, enumerable: false, configurable: true },
+    })
+    return ctx
+  }
+  // after* hooks are best-effort side-effects: the write already committed, so a throw is
+  // logged and swallowed rather than 500-ing a successful op. (before* hooks still veto.)
+  const runAfter = async (
+    key: 'afterCreate' | 'afterUpdate' | 'afterDelete' | 'afterList' | 'afterGet',
+    ctx: HookCtx,
+  ): Promise<void> => {
+    for (const h of hooks) {
+      try {
+        await h[key]?.(ctx)
+      } catch (e) {
+        // biome-ignore lint/suspicious/noConsole: surface a non-fatal after-hook failure
+        console.warn(
+          `[apex] ${key} failed (the ${ctx.op} already succeeded): ${(e as Error)?.message ?? e}`,
+        )
+      }
+    }
+  }
+
   // Gating posture: declaring `access` or `scope` opts the whole resource in;
   // an unlisted op then defaults to 'authed' (fail-closed), never public.
   const gated = opts.access !== undefined || opts.scope !== undefined
@@ -329,17 +360,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
             const q = db.select().from(table)
             const rows = c.length ? await q.where(and(...c)) : await q
             if (hooks.length) {
-              const ctx: HookCtx = {
-                op: 'list',
-                user: user ?? null,
-                data: {},
-                rows,
-                db,
-                table,
-                name,
-                handle: opts.handle,
-              }
-              for (const h of hooks) await h.afterList?.(ctx)
+              await runAfter('afterList', mkCtx({ op: 'list', user: user ?? null, data: {}, rows }))
             }
             return rows
           },
@@ -364,18 +385,10 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
                   .where(whereId(id, user ?? null))
               )[0] ?? null
             if (row && hooks.length) {
-              const ctx: HookCtx = {
-                op: 'get',
-                user: user ?? null,
-                data: {},
-                row,
-                id,
-                db,
-                table,
-                name,
-                handle: opts.handle,
-              }
-              for (const h of hooks) await h.afterGet?.(ctx)
+              await runAfter(
+                'afterGet',
+                mkCtx({ op: 'get', user: user ?? null, data: {}, row, id }),
+              )
             }
             return row
           },
@@ -396,15 +409,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
               ...(input as Record<string, unknown>),
               ...(scope?.({ user: user ?? null }) ?? {}),
             }
-            const ctx: HookCtx = {
-              op: 'create',
-              user: user ?? null,
-              data,
-              db,
-              table,
-              name,
-              handle: opts.handle,
-            }
+            const ctx = mkCtx({ op: 'create', user: user ?? null, data })
             for (const h of hooks) await h.beforeCreate?.(ctx)
             const row = (
               await db
@@ -413,7 +418,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
                 .returning()
             )[0]
             ctx.row = row
-            for (const h of hooks) await h.afterCreate?.(ctx)
+            await runAfter('afterCreate', ctx)
             return row
           },
         }),
@@ -431,16 +436,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
             const { id, ...fields } = input as { id: number } & Record<string, unknown>
             // Never let a caller reassign a scoped column (e.g. change ownerId).
             for (const k of Object.keys(scope?.({ user: user ?? null }) ?? {})) delete fields[k]
-            const ctx: HookCtx = {
-              op: 'update',
-              user: user ?? null,
-              data: fields,
-              id,
-              db,
-              table,
-              name,
-              handle: opts.handle,
-            }
+            const ctx = mkCtx({ op: 'update', user: user ?? null, data: fields, id })
             for (const h of hooks) await h.beforeUpdate?.(ctx)
             const row =
               (
@@ -452,7 +448,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
               )[0] ?? null
             if (row) {
               ctx.row = row
-              for (const h of hooks) await h.afterUpdate?.(ctx)
+              await runAfter('afterUpdate', ctx)
             }
             return row
           },
@@ -469,16 +465,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           ...gate('delete'),
           handler: async ({ input, user }) => {
             const id = (input as { id: number }).id
-            const ctx: HookCtx = {
-              op: 'delete',
-              user: user ?? null,
-              data: {},
-              id,
-              db,
-              table,
-              name,
-              handle: opts.handle,
-            }
+            const ctx = mkCtx({ op: 'delete', user: user ?? null, data: {}, id })
             for (const h of hooks) await h.beforeDelete?.(ctx)
             const where = whereId(id, user ?? null)
             // Soft delete stamps a column; hard delete removes the row.
@@ -493,7 +480,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
               : ((await db.delete(table).where(where).returning())[0] ?? null)
             if (row) {
               ctx.row = row
-              for (const h of hooks) await h.afterDelete?.(ctx)
+              await runAfter('afterDelete', ctx)
             }
             return row
           },
