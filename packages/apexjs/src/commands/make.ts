@@ -213,9 +213,11 @@ export default model.resource(db)
 
 /** SQLite column type for the starter migration (matches defineModel's mapping). */
 function sqliteType(t: FieldType): string {
+  // timestamp is stored as an ISO string (TEXT) — matches defineModel, and stays
+  // portable to Postgres unlike the loose-typed INTEGER SQLite would tolerate.
   return t === 'float'
     ? 'REAL'
-    : t === 'string' || t === 'text' || t === 'json'
+    : t === 'string' || t === 'text' || t === 'json' || t === 'timestamp'
       ? 'TEXT'
       : 'INTEGER'
 }

@@ -150,8 +150,12 @@ export function createApiHandler(entries: ApiEntry[], config?: RuntimeConfig): E
       })
     } catch (err) {
       // Surface the underlying error (esp. the common "table doesn't exist yet")
-      // instead of an opaque 500 with an empty stack.
-      const message = (err as Error)?.message ?? 'Handler error'
+      // instead of an opaque 500 with an empty stack. The driver's real reason
+      // (e.g. "no such table: event") is usually on `.cause`, not the top-level
+      // "Failed query: …" message — include both.
+      const e = err as { message?: string; cause?: { message?: string } }
+      const causeMsg = e?.cause?.message ?? ''
+      const message = [e?.message, causeMsg].filter(Boolean).join(' — ') || 'Handler error'
       setResponseStatus(event, 500)
       setResponseHeader(event, 'Content-Type', 'application/json')
       const missingTable = /no such table|does not exist|relation .* does not exist/i.test(message)
