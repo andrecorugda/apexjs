@@ -6,14 +6,16 @@ Apex JS is the full-stack meta-framework for Alpine.js: file-based routing, serv
 
 ## Pages
 - [Apex JS — HTML-first apps, AI-native APIs](https://apexjs.site/): Apex JS is the full-stack meta-framework for Alpine.js: file routing, SSR, islands, and every typed API route is also an MCP tool your AI can call.
-- [AI-native APIs — Apex JS](https://apexjs.site/ai-native.html): defineApexRoute serves REST and an MCP tool from one definition. The /mcp endpoint, the apex mcp inspector, and pointing Claude at your API.
-- [CLI reference — Apex JS](https://apexjs.site/cli.html): Complete reference for the apex CLI: dev, build, start, make, migrate, and mcp with every flag.
-- [Components — Apex JS](https://apexjs.site/components.html): The .alpine single-file component format: server loader, template x-data, scoped styles, and component embedding with props.
-- [Data — Apex JS](https://apexjs.site/data.html): defineResource turns one table into REST + MCP CRUD. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations.
-- [Auth — Apex JS](https://apexjs.site/auth.html): One fail-closed policy across pages, REST, and MCP — defineAuth, route auth/can, resource access + row-level scope, sealed sessions, and CSRF. An AI can never exceed the logged-in user.
-- [Build & deploy — Apex JS](https://apexjs.site/deploy.html): The three apex build modes, apex start, databases in production, and hosting targets.
-- [Getting started — Apex JS](https://apexjs.site/getting-started.html): Install Apex JS, understand the project structure, run the dev server, and follow the dev → build → deploy lifecycle.
-- [Islands — Apex JS](https://apexjs.site/islands.html): The four client:* island modes in Apex JS and the zero-JS-until-needed story.
-- [Routing — Apex JS](https://apexjs.site/routing.html): File-based routing in Apex JS: pages/**, index routes, dynamic [param] segments, and 404s.
+- [Documentation — Apex JS](https://apexjs.site/docs/): The documentation home — routing, components, islands, data, AI-native APIs, auth, testing, the CLI, and deployment.
+- [AI-native APIs — Apex JS](https://apexjs.site/docs/ai-native.html): defineApexRoute serves REST and an MCP tool from one definition. The /mcp endpoint, the apex mcp inspector, and pointing Claude at your API.
+- [CLI reference — Apex JS](https://apexjs.site/docs/cli.html): Complete reference for the apex CLI: dev, build, start, make, migrate, and mcp with every flag.
+- [Components — Apex JS](https://apexjs.site/docs/components.html): The .alpine single-file component format: server loader, template x-data, scoped styles, and component embedding with props.
+- [Data — Apex JS](https://apexjs.site/docs/data.html): defineResource turns one table into REST + MCP CRUD. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations.
+- [Auth — Apex JS](https://apexjs.site/docs/auth.html): One fail-closed policy across pages, REST, and MCP — defineAuth, route auth/can, resource access + row-level scope, sealed sessions, and CSRF. An AI can never exceed the logged-in user.
+- [Build & deploy — Apex JS](https://apexjs.site/docs/deploy.html): The three apex build modes, apex start, databases in production, and hosting targets.
+- [Getting started — Apex JS](https://apexjs.site/docs/getting-started.html): Install Apex JS, understand the project structure, run the dev server, and follow the dev → build → deploy lifecycle.
+- [Islands — Apex JS](https://apexjs.site/docs/islands.html): The four client:* island modes in Apex JS and the zero-JS-until-needed story.
+- [Routing — Apex JS](https://apexjs.site/docs/routing.html): File-based routing in Apex JS: pages/**, index routes, dynamic [param] segments, and 404s.
+- [Testing — Apex JS](https://apexjs.site/docs/testing.html): Boot an app's REST + MCP surface in-process with createTestApp, generate fixtures with schema-inferred factories, and run it all through apex test.
 - [Theme Builder — Apex JS](https://apexjs.site/theme.html): Design your Apex theme visually — pick colors, radius and fonts, preview real components live, and copy the apex theme command that applies it.
 - [UI Kit — Apex JS components](https://apexjs.site/ui.html): Browse Apex JS themeable components in a list, preview each one live, tick the ones you want, and copy a single apex add command to scaffold them all.
