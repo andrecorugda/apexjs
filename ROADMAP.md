@@ -67,6 +67,24 @@ zero JS until an island needs it.
 ### ▢ Phase 3 — Backend
 Jobs/queues, events/observers, auth — all MCP-aware.
 
+### ▢ Phase D — Model behaviors ("traits")
+*Status: designed (see `AUTH_DESIGN.md` §8), not yet built.* The model is the center of
+gravity, so cross-cutting concerns attach there once and flow to every surface. A
+**behavior** is a pure, composable descriptor (`(config) => Behavior`) passed via
+`use: [...]` on `defineModel` — the model's OCP extension seam (author your own against
+a public contract). Each may contribute **fields**, an **insert-shape** tweak,
+**migration** up/down fragments (companion tables/indexes/triggers), lifecycle
+**hooks**, a row-level **scope**, and per-op **access**. Composition is deterministic
+and fail-closed: fields merge (collision = define-time error), scopes AND-combine,
+access is most-restrictive-wins. Behaviors fold into an *effective spec* inside
+`defineModel`, and their hooks/scope/access ride into `defineResource` — so they fire on
+the **single dispatch path for both REST and MCP** (an `auditable`/`observable` hook
+logs the AI's tool calls for free; same seam as auth). Built-ins: `timestamps`,
+`softDeletes`, `auditable` (companion audit table), `observable` (lifecycle hooks),
+`owned`/`policy` (reusable row-level auth — which *are* Phase C's `access`/`scope`,
+packaged). Pure-data behaviors can land first; hook + auth behaviors ride on Phase C
+plumbing.
+
 ## Known deferrals
 - **Client-side navigation in islands mode** — SPA nav ships for the standard SSR/hydration path;
   islands pages (lazy-Alpine, `x-ignore`) still full-load. Separate design (re-run the island loader
@@ -182,7 +200,9 @@ more than the logged-in user can. Today all three are open.
   Unauthenticated REST → 401, unauthorized → 403. For MCP, an unauthorized route is **omitted from
   `tools/list`** per-user and refused on `tools/call`.
 - **`defineResource`** gets per-operation `access` (`'public' | 'authed' | fn`) plus row-level
-  `scope(...)` applied on every read/write, so an AI sees only the caller's rows.
+  `scope(...)` applied on every read/write, so an AI sees only the caller's rows. These are
+  **behavior-settable** (see Phase D) — `owned('ownerId')` / `policy(...)` package reusable auth as
+  composable model traits.
 - **Backend → UI gating:** loaders return only permitted data and SSR emits only permitted HTML;
   non-secret `can` flags seed the hydration island for show/hide (UX only — server policy is the
   security).

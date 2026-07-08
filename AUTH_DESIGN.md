@@ -211,7 +211,101 @@ IdP. See §3.5 for why this matches Next/Nuxt's proven division of labor.
 TOTP/2FA engine, password/account-management UI, field-level encryption — all adapter
 territory.
 
-## 8. Open decisions
+## 8. Behaviors — the model's extension mechanism ("traits") — Phase D
+
+`defineModel` is the center of gravity, so cross-cutting concerns attach *there*, once,
+and flow to every surface. In a functional framework the Laravel-"trait" idiom becomes
+a **behavior**: a pure, composable descriptor that augments the model. This is the
+model's OCP extension seam — you add capability without editing the framework, and you
+author your own behaviors against a public contract.
+
+```ts
+defineModel('todos', {
+  fields: { title: 'string!' },
+  use: [
+    timestamps(),                 // + created_at/updated_at, server-managed
+    softDeletes(),                // + deleted_at, auto-hides deleted rows
+    auditable(),                  // + companion todos_audit table, logs who/what/when
+    observable({                  // lifecycle hooks (fire on REST *and* MCP)
+      afterCreate: ({ row, ctx }) => notify(row),
+      beforeDelete: ({ id, ctx }) => assertDeletable(id, ctx.user),
+    }),
+    owned('ownerId'),             // row-level auth: scope + stamp owner on create
+  ],
+})
+```
+
+### 8.1 The `Behavior` contract
+A behavior is `(config) => Behavior`, evaluated at definition time with **no side
+effects** (so each is unit-testable in isolation). It may contribute any of six things:
+
+| Contribution | Effect | Example |
+|---|---|---|
+| `fields` | extra columns merged into the model → flow into `table`/`insert`/`migrationSql` for free | `timestamps` adds `created_at`/`updated_at` |
+| `insert` tweak | omit/require in the create shape (server-managed columns) | timestamps/`deleted_at` omitted from `insert` |
+| `migration` | extra up + **down** SQL fragments — companion tables, indexes, triggers | `auditable` emits `CREATE TABLE todos_audit … / -- @down DROP …` |
+| `hooks` | lifecycle callbacks the resource dispatch invokes | `before/afterCreate\|Update\|Delete`, `after Get\|List` |
+| `scope` | row filter `(ctx) => Partial<Row>`, **AND-combined** with all other scopes | `softDeletes` → `{ deletedAt: null }`; `owned` → `{ ownerId: ctx.user.id }` |
+| `access` | per-op access contribution, combined **most-restrictive-wins** | `owned` → writes `authed` |
+
+Hooks receive `{ row?, id?, input?, ctx, db }` — `ctx.user` comes from `defineAuth`
+(§4.1). `before*` hooks may mutate `input` or **throw to abort** (→ 4xx); `after*`
+hooks react (audit, notify, cache-bust).
+
+### 8.2 Composition semantics (deterministic + fail-closed)
+- Behaviors apply **in array order**; the model's own `fields`/`access`/`scope` are
+  treated as the last, highest-priority layer.
+- **Fields** merge; a behavior adding a field the model already declares is a
+  **definition-time error** (fail fast, no silent shadowing). Reserved names (`pk`,
+  another behavior's column) likewise error.
+- **Scopes** AND-combine — every behavior's filter *and* the model's must hold. More
+  behaviors can only *narrow* what a row op sees, never widen it (fail-closed).
+- **Access** combines most-restrictive-wins — a behavior can tighten an op, never
+  loosen one another behavior locked.
+- **Hooks** run in array order for `before*` and array order for `after*` (documented;
+  no hidden onion reordering). One throwing `before*` aborts the op transactionally.
+
+### 8.3 Where they run — one seam, both surfaces
+`applyBehaviors(spec, use)` folds the behaviors into an **effective spec** *inside*
+`defineModel`, before it derives `table`/`insert`/`migrationSql`/`resource`. So the
+existing derivation pipeline is untouched — it just sees more fields. The `hooks`,
+`scope`, and `access` ride on the `ApexModel` into `defineResource`, and fire on the
+**single dispatch path** (§5) — so an `observable`/`auditable` hook runs identically
+whether a human hit REST or an **AI called the MCP tool**. Audit captures the AI's
+actions for free. This is the same seam auth enforces on; behaviors and auth are one
+mechanism, not two.
+
+### 8.4 Named examples (the ones you asked for)
+- **Audit table** — `auditable(opts?)`: declares companion `<name>_audit`
+  (`id, row_id, action, actor_id, changes json, at`) in the migration (+ its own
+  `-- @down`), and registers `afterCreate/Update/Delete` hooks that write a row with
+  `actor_id = ctx.user?.id`. *(Depends on `ctx.user` for the actor — degrades to null
+  actor before Phase C ships.)*
+- **Observable** — `observable({ ...hooks })`: pure lifecycle-hook registration.
+- **Inherit auth** — `owned(col='ownerId')`: `scope: ctx => ({ [col]: ctx.user.id })`
+  + stamps the owner on `create` + `access` authed. And `policy(sharedPolicy)` to reuse
+  one `{access, scope}` bundle across many models (DRY auth).
+- Stretch built-ins: `slug(from)`, `versioned()`, `searchable(cols)`.
+
+### 8.5 Robustness guarantees
+- Each behavior + `applyBehaviors` are unit-testable; a golden **migration snapshot**
+  per built-in behavior (up **and** down) guards drift.
+- Behaviors are **model-scoped** — not general request middleware (that stays
+  `defineMiddleware`) and not cross-model joins. Keeps the seam small and reasoned-about.
+- **Type-carrying (goal):** a behavior carries a phantom type of the fields it adds so
+  the model's inferred `Row` type includes them (e.g. `created_at` is typed after
+  `timestamps()`). Heavy generics; tracked as a follow-up, not a v1 gate.
+
+### 8.6 Interlock with the phases
+- **Pure-data** behaviors (`timestamps`, `softDeletes`) need no auth → can land first.
+- **Hook** behaviors (`observable`, `auditable`) need the hook seam in the resource
+  dispatch + `ctx.user` → ride on Phase C plumbing.
+- **Auth** behaviors (`owned`, `policy`) **are** Phase C's `access`/`scope`, packaged
+  for reuse. Decision (my lean): keep C1's `access`/`scope` as first-class fields but
+  make them **behavior-settable**, so the trait system slots in as Phase D with no
+  rewrite.
+
+## 9. Open decisions
 
 1. **Default posture when `defineAuth` exists.** *(still open — Andre's call before
    C1.)* Fail-closed (a resource op with no declared `access` is denied) is safest but
