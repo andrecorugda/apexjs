@@ -1,5 +1,12 @@
 # ssg-spike
 
+## 0.0.31
+
+### Patch Changes
+
+- Updated dependencies [7df0b00]
+  - @apex-stack/core@0.12.1
+
 ## 0.0.30
 
 ### Patch Changes
