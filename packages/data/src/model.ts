@@ -68,7 +68,9 @@ function zodFor(def: FieldDef): z.ZodTypeAny {
     case 'boolean':
       return z.coerce.boolean()
     case 'timestamp':
-      return z.coerce.date()
+      // ISO string, NOT z.coerce.date(): a Date output type can't be represented
+      // in JSON Schema, which crashes MCP tools/list for the whole app.
+      return z.string()
     case 'json':
       return z.any()
     default:
@@ -88,7 +90,7 @@ function column(name: string, def: FieldDef, dialect: Dialect): unknown {
           : def.type === 'boolean'
             ? integer(name, { mode: 'boolean' })
             : def.type === 'timestamp'
-              ? integer(name, { mode: 'timestamp' })
+              ? text(name) // ISO string (SQLite has no native timestamp type)
               : def.type === 'json'
                 ? text(name, { mode: 'json' })
                 : text(name)
@@ -101,7 +103,7 @@ function column(name: string, def: FieldDef, dialect: Dialect): unknown {
           : def.type === 'boolean'
             ? pgBoolean(name)
             : def.type === 'timestamp'
-              ? timestamp(name)
+              ? timestamp(name, { mode: 'string' })
               : def.type === 'json'
                 ? jsonb(name)
                 : pgText(name)
@@ -117,7 +119,7 @@ function sqlType(def: FieldDef, dialect: Dialect): string {
   if (dialect === 'sqlite') {
     return def.type === 'float'
       ? 'REAL'
-      : def.type === 'int' || def.type === 'boolean' || def.type === 'timestamp'
+      : def.type === 'int' || def.type === 'boolean'
         ? 'INTEGER'
         : 'TEXT'
   }
