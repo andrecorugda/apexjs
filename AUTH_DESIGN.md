@@ -54,6 +54,54 @@ what the logged-in user is allowed to do. **Fail-closed.**
    client shouldn't see; permission flags baked in are non-authoritative.
 6. **One enforcement path per surface.** No scattered ad-hoc checks.
 
+## 3.5 Prior art — what Next.js & Nuxt do (and their scars)
+
+**Next.js**
+- **Authorize at the Data Access Layer, fail-closed** — Next's current official
+  guidance is to centralize `verifySession()` + authorization in a server-only data
+  layer, *not* in components. Born from **CVE-2025-29927**: an `x-middleware-subrequest`
+  header let attackers skip `middleware.ts` entirely — so **middleware is not a
+  security boundary.** Enforce next to the data.
+- **Server Actions are public endpoints** — Next docs say treat every action like an
+  unauthenticated POST: authenticate + authorize *inside* it. Mitigations: encrypted
+  action IDs, dead-code elimination of unused actions, and **Origin/Host header checks
+  for CSRF**.
+- **`server-only` import poison** + **`NEXT_PUBLIC_` prefix** — server code can't be
+  bundled to the client; only explicitly-prefixed env vars reach the browser.
+- **Taint API** (`taintObjectReference`/`taintUniqueValue`) — runtime guard so secret
+  objects can't be passed across the server→client boundary.
+- Identity is **bring-your-own** (Auth.js/NextAuth); Next doesn't build a user store.
+  CSP via nonce headers.
+
+**Nuxt**
+- **`runtimeConfig` public/private split** — private keys server-only, `public` subset
+  to the client (Apex already copied this exact model).
+- **`nuxt-security`** — the de-facto module: CSP/HSTS/X-Frame headers, CORS, rate
+  limiting, request-size limits, XSS/CSRF helpers.
+- **`nuxt-auth-utils` / h3 `useSession`** — **sealed (encrypted, signed) cookies**,
+  `requireUserSession(event)`; enforce in Nitro server routes. Payload hygiene: don't
+  put secrets in the SSR payload (same island concern as Apex).
+
+**Convergent best practices (both):** explicit env public/private split · enforce
+authorization at the data/server layer and **fail-closed** (never middleware-only) ·
+treat every server route/action as a public endpoint · sealed/signed `HttpOnly`
+`Secure` `SameSite` cookies · CSRF via Origin check + SameSite · security headers/CSP
+· rate-limit public endpoints · never serialize secrets to the client · adopt an
+adapter for identity rather than rolling your own.
+
+**How this shapes Apex** — our design already reflects the big lessons: enforce in the
+**query/handler layer + route gating**, not middleware (§5, fail-closed §3); routes
+are public endpoints gated server-side (§4.2); no secrets in the state island (§3.6);
+sealed cookies + CSRF (§4.5). Two Apex-specific implications:
+1. **MCP is a Server-Action-grade public endpoint — doubled.** An AI tool call is an
+   unauthenticated POST *that an autonomous agent drives*. So MCP must inherit the
+   *exact* same gating as REST (per-user `tools/list` + `tools/call` re-check, §4.2),
+   and `scope` must hold there too. Neither Next nor Nuxt has this surface — it's our
+   novel risk and our moat, and it's why data-layer enforcement (not middleware) is
+   mandatory: the AI never goes through page middleware.
+2. **Adopt `server-only`-style hygiene + a taint-like guard** so a loader can't leak a
+   secret into the SSR state island (§3.6, C3 lint/guard).
+
 ## 4. Design
 
 ### 4.1 Identity — `defineAuth` (`server/auth.ts`, one per app)
@@ -107,10 +155,24 @@ Loaders receive `ctx.user`; a page guards by redirect (middleware or a page-leve
 `auth`) and returns only permitted data. SSR emits only permitted HTML. Non-secret
 `can` flags may seed hydration for show/hide — **UX only.**
 
-### 4.5 Hardening (C3)
-Signed, `HttpOnly`/`Secure`/`SameSite=Lax` session cookies; CSRF protection for
-cookie-based mutations; a rate-limit hook on `/api` + `/mcp`; a security-headers/CSP
-helper; and a lint/guard that secrets never reach the state island.
+### 4.5 Hardening (C3) — the "hybrid" scope (DECIDED)
+Because Apex **owns the h3 server end to end**, it ships more secure-by-default than
+Next core without reinventing an identity provider:
+
+**Built-in (Apex ships it):**
+- **Sealed-cookie sessions** via h3 `useSession` — encrypted+signed, `HttpOnly`/
+  `Secure`/`SameSite=Lax` defaults, one `session.password` secret. `apex make auth`
+  scaffolds login/logout + a `defineAuth` resolver on top of it.
+- **CSRF** — Origin/Host check on cookie-authenticated mutations (Next's model) +
+  `SameSite=Lax`; opt-in double-submit token for cross-origin cases.
+- **Rate-limit / throttle hook** on `/api` + `/mcp` (we own the handlers) — pluggable
+  store, sensible default.
+- **Security-headers / CSP helper** + a guard that secrets never reach the state island.
+
+**Adapter (bring-your-own / ecosystem — Apex does NOT reinvent):**
+- OAuth providers, JWT *issuance/rotation*, 2FA/TOTP, password/account management —
+  wired through `defineAuth.resolve` with guides for Lucia / Better-Auth / Auth.js.
+  (`resolve` can verify a bearer JWT or read the sealed session — both supported.)
 
 ## 5. Enforcement architecture (single source of truth)
 
@@ -140,22 +202,24 @@ Three surfaces, one policy object, one resolved identity. No per-handler ad-hoc 
   *Acceptance:* cookie session round-trips; CSRF blocks a cross-site mutation; no
   secret in the SSR state island.
 
-## 7. Non-goals (v1)
-- No from-scratch user store / password hashing (bring-your-own resolver or adapter;
-  C3 adds an optional helper).
-- No OAuth *provider* (adapters cover consuming providers).
-- No field-level encryption.
+## 7. Scope: hybrid (DECIDED 2026-07-08)
+Ship the security surface Apex can own safely (§4.5 built-in); delegate identity
+providers to adapters (§4.5 adapter). More out-of-box than Next core, no reinvented
+IdP. See §3.5 for why this matches Next/Nuxt's proven division of labor.
 
-## 8. Open decisions (need Andre's call before C1)
+**Non-goals (v1):** from-scratch OAuth *provider*, JWT issuance/rotation service,
+TOTP/2FA engine, password/account-management UI, field-level encryption — all adapter
+territory.
 
-1. **Default posture when `defineAuth` exists.** Fail-closed (a resource op with no
-   declared `access` is denied) is safest but is a breaking change for today's open
-   resources. Alternatives: (a) require explicit `access` per resource once auth is
-   configured (fail-closed + clear error), (b) default reads `public` / writes
-   `authed`, override per-op. **Recommendation: (a)** — explicit, safe, no silent
-   exposure. Cost: existing resources must declare access.
-2. **C3 session strategy.** Built-in signed-cookie sessions vs. adapter-only
-   (Lucia/Better-Auth/Auth.js). Recommendation: ship the built-in helper *and*
-   document adapters.
+## 8. Open decisions
+
+1. **Default posture when `defineAuth` exists.** *(still open — Andre's call before
+   C1.)* Fail-closed (a resource op with no declared `access` is denied) is safest but
+   breaks today's open resources. Options: (a) require explicit `access` per resource
+   once auth is configured (fail-closed + clear error), (b) default reads `public` /
+   writes `authed`, override per-op. **Recommendation: (a)** — explicit, safe, no
+   silent exposure.
+2. ~~**C3 session strategy.**~~ **RESOLVED (hybrid):** built-in sealed-cookie sessions
+   (h3 `useSession`) + documented adapters.
 3. **`ctx.user` shape.** Minimal + bring-your-own type (`resolve` returns whatever you
-   want; framework only requires an identity is present). Recommendation: yes.
+   want; framework only requires an identity is present). **Recommendation: yes.**
