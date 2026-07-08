@@ -66,7 +66,16 @@
         <ul>
           <li><a href="./routing.html">Routing</a></li>
           <li><a href="./components.html">Components</a></li>
-          <li><a href="./islands.html" aria-current="page">Islands</a></li>
+          <li><a href="./islands.html" aria-current="page">Islands</a>
+            <ul class="subnav">
+              <li><a href="#idea">The idea</a></li>
+              <li><a href="#modes">The four client:* modes</a></li>
+              <li><a href="#when">When to use each</a></li>
+              <li><a href="#example">A real example</a></li>
+              <li><a href="#how">How it works</a></li>
+              <li><a href="#run">Turning it on</a></li>
+            </ul>
+          </li>
         </ul>
       </div>
       <div class="group">
@@ -93,19 +102,7 @@
     </aside>
     <section class="doc">
 
-      <nav class="onpage" aria-label="On this page">
-        <span class="k">On this page</span>
-        <ul>
-          <li><a href="#idea">The idea</a></li>
-          <li><a href="#modes">The four client:* modes</a></li>
-          <li><a href="#when">When to use each</a></li>
-          <li><a href="#example">A real example</a></li>
-          <li><a href="#how">How it works</a></li>
-          <li><a href="#run">Turning it on</a></li>
-        </ul>
-      </nav>
-
-      <h2 id="idea">The idea <a class="anchor" href="#idea">#</a></h2>
+<h2 id="idea">The idea <a class="anchor" href="#idea">#</a></h2>
       <p>
         Alpine is islands-native by design — it only ever activates <code>x-data</code> roots. Apex
         makes that explicit and lazy: mark an interactive region with a <code>client:*</code> directive

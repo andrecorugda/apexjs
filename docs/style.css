@@ -1001,6 +1001,27 @@ figcaption {
   border-left-color: var(--glacier);
   font-weight: 600;
 }
+/* Third level: the current page's sections, nested under it. */
+.docs-sidebar .subnav {
+  list-style: none;
+  margin: 0.25rem 0 0.6rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--line);
+}
+.docs-sidebar .subnav li {
+  margin: 0;
+}
+.docs-sidebar .subnav a {
+  font-size: 0.82rem;
+  color: var(--faint);
+  padding: 0.22rem 0.55rem;
+  border-left: none;
+  font-weight: 400;
+}
+.docs-sidebar .subnav a:hover {
+  color: var(--glacier);
+  background: var(--glacier-soft);
+}
 @media (max-width: 720px) {
   .docs-shell {
     grid-template-columns: 1fr;
