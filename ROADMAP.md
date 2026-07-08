@@ -73,6 +73,34 @@ zero JS until an island needs it.
   [AUTH_DESIGN.md](AUTH_DESIGN.md).
 - **Next:** jobs/queues, events/observers (→ model behaviors, [AUTH_DESIGN.md](AUTH_DESIGN.md) §8).
 
+### ▢ Phase F — Apex Context (AI agent enablement)
+*Planned. Working name: **Apex Context** (alt: Compass / Boost).* The Laravel-Boost
+equivalent, but native — Apex already speaks MCP, so a coding agent can be made an
+expert in both Apex and *your* app. Distinct from the runtime per-route MCP (which
+exposes app **data**); this is **dev-time** codebase + framework awareness. Includes:
+- **Project MCP for coding agents** — introspection tools: list pages/routes/components/
+  models/resources + their input/output schemas, the DB schema + migration status, the
+  MCP tools already defined, resolved config; run read-only queries; tail logs.
+- **Framework guidelines** — curated, version-aware Apex conventions (the `.alpine`
+  format, `defineApexRoute`/`defineModel`/behaviors/auth/testing patterns, do's & don'ts)
+  fed to the agent so it writes idiomatic Apex.
+- **Docs access** — search the version-matched Apex docs as a tool.
+- **Rules-file generation** — `apex context init` writes/updates `CLAUDE.md` / `AGENTS.md`
+  / `.cursor/rules` with Apex conventions + a live map of the project.
+Package `@apex-stack/context`, CLI `apex context`.
+
+### ▢ Phase E — Reach: PWA + app packaging
+*Planned.* Turn Apex apps into installable, offline-capable, and app-store-shippable
+targets — leaning on Apex's Vite base rather than rebuilding.
+- **PWA (foundation):** integrate `vite-plugin-pwa` — `apex build`/`--islands` emit a web
+  manifest + Workbox service worker (precache built assets → offline + installable); a
+  `pwa` config block (name, icons, theme, caching). Nuxt-parity (its PWA module is the
+  same engine). Static/islands get full offline; the server build caches shell + assets.
+- **Mobile/desktop wrap:** a preset + guide to package the static build via **Capacitor**
+  (iOS/Android) or **Tauri 2** (desktop + mobile) — a native WebView shell with device
+  APIs. Mostly integration + docs; depends on the PWA/offline build. *Honest scope: this
+  is web-in-a-native-shell, not native-widget UI (Apex is Alpine/HTML, not React Native).*
+
 ### ◑ Phase D — Model behaviors ("traits")
 *Status: shipped in `@apex-stack/data@0.5.0` (see `AUTH_DESIGN.md` §8).* The model is the
 center of gravity, so cross-cutting concerns attach there once and flow to every
@@ -157,6 +185,9 @@ neither of them has. Legend: ✅ have · 🟡 partial · ❌ not yet.
 | Deploy presets (Vercel/CF/…) | ✅ | ✅ | ❌ | node only (P3) |
 | Testing kit for users | ✅ | ✅ | ✅ | `@apex-stack/core/testing` (`createTestApp`) + `factory()` + `apex test` + test-aware `make` |
 | i18n | 🟡 | ✅ | ✅ | `i18n` config + `locales/*.json`; `t`/`locale` in loaders; `/<locale>` + Accept-Language; SSR `<html lang>` |
+| PWA — offline / installable | 🟡 | ✅ | ❌ | planned — integrate `vite-plugin-pwa` + a `pwa` config (manifest + service worker) |
+| Mobile / desktop packaging | ❌ | ❌ | ❌ | planned — wrap the static build with Capacitor/Tauri (WebView shell + device APIs); not native UI |
+| **AI agent enablement (Boost-style)** | ❌ | ❌ | ▢ | planned — **Apex Context**: project MCP + guidelines + docs + rules-file gen (Laravel Boost equivalent) |
 | Plugin / module ecosystem | ✅ | ✅ | ❌ | (P3) |
 
 **Scorecard:** ~24 of the core dimensions at parity (✅), plus the AI-native moat that's ✅ for Apex

@@ -15,6 +15,7 @@ Apex JS is the full-stack meta-framework for Alpine.js: file-based routing, serv
 - [Build & deploy — Apex JS](https://apexjs.site/docs/deploy.html): The three apex build modes, apex start, databases in production, and hosting targets.
 - [Getting started — Apex JS](https://apexjs.site/docs/getting-started.html): Install Apex JS, understand the project structure, run the dev server, and follow the dev → build → deploy lifecycle.
 - [Islands — Apex JS](https://apexjs.site/docs/islands.html): The four client:* island modes in Apex JS and the zero-JS-until-needed story.
+- [Internationalization — Apex JS](https://apexjs.site/docs/i18n.html): Locale-aware Apex apps — config + locales/*.json, per-request locale from URL prefix or Accept-Language, and t/locale in loaders, with SSR <html lang>.
 - [Routing — Apex JS](https://apexjs.site/docs/routing.html): File-based routing in Apex JS: pages/**, index routes, dynamic [param] segments, and 404s.
 - [Testing — Apex JS](https://apexjs.site/docs/testing.html): Boot an app's REST + MCP surface in-process with createTestApp, generate fixtures with schema-inferred factories, and run it all through apex test.
 - [Theme Builder — Apex JS](https://apexjs.site/theme.html): Design your Apex theme visually — pick colors, radius and fonts, preview real components live, and copy the apex theme command that applies it.

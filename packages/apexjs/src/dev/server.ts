@@ -180,7 +180,15 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
         event.context.apexLocale = locale
         event.context.apexPath = path
         seed.locale = locale
-        seed.t = createI18n({ messages, locale, defaultLocale: i18nCfg.defaultLocale }).t
+        seed.t = createI18n({
+          messages,
+          locale,
+          defaultLocale: i18nCfg.defaultLocale,
+          // Dev-only: surface missing keys so typos are caught (prod stays silent).
+          onMissingKey: (key) =>
+            // biome-ignore lint/suspicious/noConsole: dev diagnostic
+            console.warn(`  ⚠ [i18n] missing key "${key}" for locale "${locale}"`),
+        }).t
       }
       const mws = await loadMiddleware(options.root, (id) => ssrLoad(id) as never)
       if (!mws.length) {
