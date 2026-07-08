@@ -15,6 +15,18 @@ describe('defineApexRoute', () => {
     expect(route.inputShape).toBeDefined()
   })
 
+  it('carries the auth gate (auth + can) onto the route object', () => {
+    const can = ({ user }: { user: { role?: string } | null }) => user?.role === 'admin'
+    const route = defineApexRoute({
+      method: 'DELETE',
+      auth: true,
+      can,
+      handler: ({ user }) => ({ deletedBy: user }),
+    })
+    expect(route.auth).toBe(true)
+    expect(route.can).toBe(can)
+  })
+
   it('carries input/output types for the frontend (InferInput/InferOutput)', () => {
     const route = defineApexRoute({
       input: { id: z.coerce.number() },

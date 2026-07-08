@@ -18,7 +18,13 @@ import {
 } from 'drizzle-orm/pg-core'
 import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { type ZodRawShape, z } from 'zod'
-import { type ApexDbHandle, type Dialect, defineResource } from './index.js'
+import {
+  type AccessMap,
+  type ApexDbHandle,
+  type Dialect,
+  defineResource,
+  type ScopeFn,
+} from './index.js'
 
 export type FieldType = 'string' | 'text' | 'int' | 'float' | 'boolean' | 'timestamp' | 'json'
 
@@ -37,6 +43,14 @@ export interface DefineModelOptions {
   fields: Fields
   /** Primary key column name (auto-increment integer). Default `id`. */
   pk?: string
+  /**
+   * Per-operation authorization for the derived resource (reuses the route gate).
+   * Declaring it (or `scope`) gates the whole resource — unlisted ops default to
+   * `'authed'`. See `defineResource`'s `access`.
+   */
+  access?: AccessMap
+  /** Row-level scope applied to every op of the derived resource. See `ScopeFn`. */
+  scope?: ScopeFn
 }
 
 /** A model: its schema derivations + a factory for its REST/MCP resource. */
@@ -191,7 +205,14 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
   }
 
   const resource = (handle: ApexDbHandle): ApexResource =>
-    defineResource(name, { db: handle.db, table: table(handle.dialect), insert, pk })
+    defineResource(name, {
+      db: handle.db,
+      table: table(handle.dialect),
+      insert,
+      pk,
+      access: opts.access,
+      scope: opts.scope,
+    })
 
   return { name, pk, fields, insert, table, migrationSql, resource }
 }

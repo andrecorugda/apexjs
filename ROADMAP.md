@@ -64,8 +64,32 @@ zero JS until an island needs it.
 - **Next:** Nitro deploy presets (Vercel/Netlify/Cloudflare adapters); streaming SSR. *(Island-mode
   client bundling in the built output shipped in core 0.9.0 — islands hydrate from static hosting.)*
 
-### ▢ Phase 3 — Backend
-Jobs/queues, events/observers, auth — all MCP-aware.
+### ◑ Phase 3 — Backend
+- **Done — auth (all MCP-aware):** `defineAuth` + `ctx.user`, route `auth`/`can`
+  (401/403), resource/model `access` + row-level `scope`, per-user MCP `tools/list` +
+  `tools/call` re-check, sealed-cookie sessions + CSRF + rate-limiter + security
+  headers, `apex make auth`. One policy enforced across pages/REST/MCP; fail-closed;
+  verified by two independent adversarial passes + prod-build parity. See
+  [AUTH_DESIGN.md](AUTH_DESIGN.md).
+- **Next:** jobs/queues, events/observers (→ model behaviors, [AUTH_DESIGN.md](AUTH_DESIGN.md) §8).
+
+### ▢ Phase D — Model behaviors ("traits")
+*Status: designed (see `AUTH_DESIGN.md` §8), not yet built.* The model is the center of
+gravity, so cross-cutting concerns attach there once and flow to every surface. A
+**behavior** is a pure, composable descriptor (`(config) => Behavior`) passed via
+`use: [...]` on `defineModel` — the model's OCP extension seam (author your own against
+a public contract). Each may contribute **fields**, an **insert-shape** tweak,
+**migration** up/down fragments (companion tables/indexes/triggers), lifecycle
+**hooks**, a row-level **scope**, and per-op **access**. Composition is deterministic
+and fail-closed: fields merge (collision = define-time error), scopes AND-combine,
+access is most-restrictive-wins. Behaviors fold into an *effective spec* inside
+`defineModel`, and their hooks/scope/access ride into `defineResource` — so they fire on
+the **single dispatch path for both REST and MCP** (an `auditable`/`observable` hook
+logs the AI's tool calls for free; same seam as auth). Built-ins: `timestamps`,
+`softDeletes`, `auditable` (companion audit table), `observable` (lifecycle hooks),
+`owned`/`policy` (reusable row-level auth — which *are* Phase C's `access`/`scope`,
+packaged). Pure-data behaviors can land first; hook + auth behaviors ride on Phase C
+plumbing.
 
 ## Known deferrals
 - **Client-side navigation in islands mode** — SPA nav ships for the standard SSR/hydration path;
@@ -78,7 +102,7 @@ Jobs/queues, events/observers, auth — all MCP-aware.
 - Component-in-loop where the component's **root x-data computes from props** (Counter-in-loop) uses
   a `with()` runtime shim — works, but a factory-based (`Alpine.data`) approach would be cleaner.
 - Nitro production build + deploy presets (dev server is h3 + Vite middleware today).
-- `outputSchema` → MCP structured content; route-level auth scoping for tools.
+- `outputSchema` → MCP structured content. *(Route-level auth scoping for tools shipped — see Security model.)*
 - **Apex Language Server (LSP).** The VS Code extension is grammar-only (TextMate
   syntax highlighting): it colors any PascalCase tag as a component by convention,
   but has no project awareness. An LSP would add: does-this-component-exist checks
@@ -130,7 +154,8 @@ neither of them has. Legend: ✅ have · 🟡 partial · ❌ not yet.
 | Fine-grained HMR | ✅ | ✅ | 🟡 | style edits hot-swap in place; template edits reload w/ scroll restored |
 | Template type-checking | ✅ | ✅ | ❌ | Volar-style (P3) |
 | Image / font optimization | ✅ | ✅ | ❌ | (P3) |
-| Auth module | 🟡 | 🟡 | ❌ | Security model below (P3) |
+| Auth module | 🟡 | 🟡 | ✅ | `defineAuth` + `auth`/`can` + resource `access`/`scope`; **one policy across pages/REST/MCP** |
+| **Auth governs the AI/MCP surface** | ❌ | ❌ | ✅ | per-user `tools/list` + `tools/call` re-check — **unique** |
 | Deploy presets (Vercel/CF/…) | ✅ | ✅ | ❌ | node only (P3) |
 | Testing kit for users | ✅ | ✅ | 🟡 | internal tests only (P3) |
 | i18n | 🟡 | ✅ | ❌ | (P3) |
@@ -139,7 +164,7 @@ neither of them has. Legend: ✅ have · 🟡 partial · ❌ not yet.
 **Scorecard:** ~22 of the core dimensions at parity (✅), plus the AI-native moat that's ✅ for Apex
 and ❌ for both Next and Nuxt. Remaining are the SPA/browser-runtime niceties (client-nav, loading
 boundaries, fine-grained HMR — need live-browser verification), component-level loaders, and the
-P3 ecosystem (deploy presets, image/font, i18n, auth, test kit, Volar, plugins).
+P3 ecosystem (deploy presets, image/font, i18n, test kit, Volar, plugins). *(Auth shipped — see Security model.)*
 
 **Delivery waves:**
 - **Wave B — "scales to real apps" (P2):** ✅ runtime config, middleware, `InferInput/Output`, nested
@@ -169,27 +194,29 @@ A first-class component library + theming story, all delivered:
 **Deferred within this area:** heavier AI-oriented components (`ai-*`); scaffold `.dark` persisted via
 SSR (today it's a client-side toggle); factory-based x-data for prop-computed component roots in loops.
 
-## Security model (planned)
+## Security model (shipped)
 
-*Status: design, not yet built.* One auth policy enforced on the server, applied to **every**
-surface — pages/loaders, REST `/api/*`, and MCP `/mcp` — so the AI-callable surface can never do
-more than the logged-in user can. Today all three are open.
+*Status: built + verified (two independent adversarial passes + prod-build parity).* One auth
+policy enforced on the server, applied to **every** surface — pages/loaders, REST `/api/*`, and MCP
+`/mcp` — so the AI-callable surface can never do more than the logged-in user can. **Fail-closed.**
+Full threat model + design: [AUTH_DESIGN.md](AUTH_DESIGN.md).
 
 - **`defineAuth`** (`server/auth.ts`) resolves "who is this request?" (cookie / JWT / adapter like
-  Lucia, Better-Auth, Auth.js) and injects `ctx.session` / `ctx.user` into every loader, route, and
-  MCP tool call.
-- **Route gating** on `defineApexRoute` via `auth: true` + optional `can: ({ user }) => …`.
+  Lucia, Better-Auth, Auth.js) and injects `user` into every loader, route handler, and MCP tool
+  call. `apex make auth` scaffolds it + login/logout routes.
+- **Route gating** on `defineApexRoute` via `auth: true` + optional `can: ({ user, input }) => …`.
   Unauthenticated REST → 401, unauthorized → 403. For MCP, an unauthorized route is **omitted from
-  `tools/list`** per-user and refused on `tools/call`.
-- **`defineResource`** gets per-operation `access` (`'public' | 'authed' | fn`) plus row-level
-  `scope(...)` applied on every read/write, so an AI sees only the caller's rows.
+  `tools/list`** per-user and refused on `tools/call` (defense-in-depth).
+- **`defineResource` / `defineModel`** get per-operation `access` (`'public' | 'authed' | fn`) plus
+  row-level `scope(...)` applied on every read/write (list/get/update/delete + create), so an AI
+  sees only the caller's rows. Declaring either gates the whole resource (unlisted ops → `authed`).
+  These are **behavior-settable** (see Phase D) — `owned('ownerId')` / `policy(...)`.
 - **Backend → UI gating:** loaders return only permitted data and SSR emits only permitted HTML;
   non-secret `can` flags seed the hydration island for show/hide (UX only — server policy is the
   security).
-- **Hardening defaults:** CSRF for cookie-based mutations, secure signed cookies
-  (`HttpOnly`/`Secure`/`SameSite=Lax`), rate-limit hook on `/api` + `/mcp`, never serialize secrets
-  into the SSR state island, security-headers/CSP helper.
-- **Phased plan:** Phase 1 — `defineAuth` + `ctx.user` threading + `auth`/`can` + 401/403 + per-user
-  `tools/list` (server-side, unit-testable). Phase 2 — `access` + `scope` on resources + `user`/`can`
-  in templates. Phase 3 — signed-cookie session helper, `apex make auth`, login/logout + CSRF, and
-  Lucia/Better-Auth/Auth.js + OAuth adapters.
+- **Hardening (`@apex-stack/core/server`):** CSRF Origin-check for cookie mutations, sealed
+  (`HttpOnly`/`Secure`/`SameSite=Lax`) session cookies (`sessionAuth`/`login`/`logout`), a
+  rate-limiter (`createRateLimiter`), and a security-headers helper. OAuth / JWT issuance / 2FA are
+  adapter territory (wire via `sessionAuth`'s `toUser` or a custom `defineAuth`).
+- **Delivered as** `@apex-stack/core@0.15.0` + `@apex-stack/data@0.4.1`, in three verified
+  increments (C1 identity + gating · C2 access + scope · C3 sessions + hardening).

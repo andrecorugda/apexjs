@@ -48,6 +48,12 @@ export async function buildServer(
       ids.push(`/middleware/${f}`)
     }
   }
+  // The auth resolver (server/auth.ts), if present — built so the prod server can
+  // resolve the request user the same way dev does.
+  const authFile = ['server/auth.ts', 'server/auth.js', 'server/auth.mjs'].find((f) =>
+    existsSync(join(root, f)),
+  )
+  if (authFile) ids.push(`/${authFile}`)
 
   const input: Record<string, string> = {}
   for (const id of ids) input[entryName(id)] = join(root, id.slice(1))

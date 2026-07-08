@@ -13,6 +13,8 @@ import {
   toNodeListener,
 } from 'h3'
 import { createApiHandler, expandApiModule } from '../api/routes.js'
+import type { AuthConfig } from '../auth/define.js'
+import { getRequestUser } from '../auth/run.js'
 import { toComponentEntry } from '../components/registry.js'
 import { applyEnvToRuntimeConfig } from '../config/resolve.js'
 import type { RuntimeConfig } from '../config/runtime.js'
@@ -33,6 +35,8 @@ export interface ProdManifest {
   api: Array<{ name: string; serverFile: string }>
   /** Middleware modules in run order. */
   middleware?: Array<{ serverFile: string }>
+  /** The auth resolver (server/auth.ts), if the app defined one. */
+  auth?: { serverFile: string }
   /** runtimeConfig defaults baked at build; env is applied at server start. */
   runtimeConfig?: RuntimeConfig
   /** Client-side navigation enabled (default true). */
@@ -102,6 +106,13 @@ export async function startProdServer(
     if (typeof mod.default === 'function') middleware.push(mod.default)
   }
 
+  // Load the auth resolver (server/auth.ts), if the app defined one.
+  let auth: AuthConfig | undefined
+  if (manifest.auth) {
+    const mod = await importServer(manifest.auth.serverFile)
+    if (mod.default && typeof mod.default.resolve === 'function') auth = mod.default
+  }
+
   const serverFileFor = new Map(manifest.routes.map((r) => [r.pageId, r.serverFile]))
   // Layout modules are loaded by renderPage via `/layouts/<name>.alpine` ids.
   const layoutNames: string[] = []
@@ -131,29 +142,36 @@ export async function startProdServer(
     }),
   )
 
-  // Run middleware before API + page handlers (after static assets, which the
-  // handler above already served). Sets locals; a redirect short-circuits.
-  if (middleware.length) {
-    app.use(
-      defineEventHandler(async (event) => {
-        const { redirect, locals } = await runMiddleware(middleware, {
-          url: getRequestURL(event).pathname,
-          method: event.method,
-          config: runtimeConfig,
-          headers: getRequestHeaders(event) as Record<string, string>,
-        })
-        event.context.apexLocals = locals
-        if (redirect) {
-          setResponseStatus(event, redirect.status)
-          setResponseHeader(event, 'Location', redirect.to)
-          return ''
-        }
-      }),
-    )
-  }
+  // Resolve the request user (defineAuth) + run middleware, before API + page
+  // handlers (after static assets). Seeds `locals.user`; a redirect short-circuits.
+  // Always runs so the user is resolved even with no middleware. Auth is *also*
+  // enforced inside the API/MCP handlers (the real gate).
+  app.use(
+    defineEventHandler(async (event) => {
+      const user = await getRequestUser(event, auth, runtimeConfig)
+      const seed: Record<string, unknown> = user ? { user } : {}
+      if (!middleware.length) {
+        event.context.apexLocals = seed
+        return
+      }
+      const { redirect, locals } = await runMiddleware(middleware, {
+        url: getRequestURL(event).pathname,
+        method: event.method,
+        config: runtimeConfig,
+        headers: getRequestHeaders(event) as Record<string, string>,
+        locals: seed,
+      })
+      event.context.apexLocals = locals
+      if (redirect) {
+        setResponseStatus(event, redirect.status)
+        setResponseHeader(event, 'Location', redirect.to)
+        return ''
+      }
+    }),
+  )
 
-  if (apiEntries.length) app.use('/api', createApiHandler(apiEntries, runtimeConfig))
-  if (hasMcpRoutes(apiEntries)) app.use('/mcp', createMcpHandler(apiEntries, runtimeConfig))
+  if (apiEntries.length) app.use('/api', createApiHandler(apiEntries, runtimeConfig, auth))
+  if (hasMcpRoutes(apiEntries)) app.use('/mcp', createMcpHandler(apiEntries, runtimeConfig, auth))
 
   app.use(
     defineEventHandler(async (event) => {

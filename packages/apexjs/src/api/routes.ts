@@ -5,12 +5,17 @@ import {
   type EventHandler,
   getQuery,
   getRequestURL,
+  getResponseStatus,
   readBody,
   setResponseHeader,
   setResponseStatus,
 } from 'h3'
 import { z } from 'zod'
+import { checkRouteAccess } from '../auth/check.js'
+import type { AuthConfig } from '../auth/define.js'
+import { getRequestUser } from '../auth/run.js'
 import type { RuntimeConfig } from '../config/runtime.js'
+import { checkCsrf } from '../security/csrf.js'
 import type { ApexRoute, HttpMethod } from './defineRoute.js'
 import { type ApexResource, isApexResource } from './resource.js'
 
@@ -115,7 +120,11 @@ export function matchApi(entries: ApiEntry[], path: string, method: string): Mat
 }
 
 /** A single h3 handler that routes, validates, and dispatches all `/api/*` requests. */
-export function createApiHandler(entries: ApiEntry[], config?: RuntimeConfig): EventHandler {
+export function createApiHandler(
+  entries: ApiEntry[],
+  config?: RuntimeConfig,
+  auth?: AuthConfig,
+): EventHandler {
   return defineEventHandler(async (event) => {
     const url = getRequestURL(event)
     const matched = matchApi(entries, url.pathname, event.method)
@@ -125,6 +134,14 @@ export function createApiHandler(entries: ApiEntry[], config?: RuntimeConfig): E
     }
 
     const { entry, params } = matched
+
+    // CSRF: reject a cookie-authenticated mutation whose Origin/Referer doesn't match
+    // (bearer/tokenless clients are exempt — they can't be forged by a browser).
+    if (!checkCsrf(event)) {
+      setResponseStatus(event, 403)
+      return { error: 'CSRF check failed' }
+    }
+
     const raw = {
       ...(entry.method === 'GET' ? getQuery(event) : ((await readBody(event)) ?? {})),
       ...params,
@@ -140,6 +157,14 @@ export function createApiHandler(entries: ApiEntry[], config?: RuntimeConfig): E
       input = parsed.data
     }
 
+    // Authorization gate (§4.2) — resolve the user once, then apply auth/can.
+    const user = await getRequestUser(event, auth, config)
+    const decision = await checkRouteAccess(entry.route, user, input)
+    if (!decision.ok) {
+      setResponseStatus(event, decision.status)
+      return { error: decision.message }
+    }
+
     let result: unknown
     try {
       result = await entry.route.handler({
@@ -147,6 +172,8 @@ export function createApiHandler(entries: ApiEntry[], config?: RuntimeConfig): E
         url: url.toString(),
         config: config ?? { public: {} },
         locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
+        user,
+        event,
       })
     } catch (err) {
       // Surface the underlying error (esp. the common "table doesn't exist yet")
@@ -165,9 +192,11 @@ export function createApiHandler(entries: ApiEntry[], config?: RuntimeConfig): E
       }
     }
     // Serialize explicitly so a `null` result (e.g. get-by-id not found) is a
-    // parseable `200 null` JSON body, not h3's default `204 No Content`.
+    // parseable `200 null` JSON body, not h3's default `204 No Content`. Preserve a
+    // status the handler set itself (e.g. a login route returning 401) — only
+    // default to 200 when the handler left a success status.
     setResponseHeader(event, 'Content-Type', 'application/json')
-    setResponseStatus(event, 200)
+    if (getResponseStatus(event) < 400) setResponseStatus(event, 200)
     return JSON.stringify(result ?? null)
   })
 }

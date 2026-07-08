@@ -1,4 +1,5 @@
 import type { ZodRawShape, z } from 'zod'
+import type { ApexUser, RouteGate } from '../auth/define.js'
 import type { RuntimeConfig } from '../config/runtime.js'
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
@@ -17,9 +18,22 @@ export interface ApexRouteHandlerContext<Shape extends ZodRawShape | undefined> 
   config: RuntimeConfig
   /** Request-scoped state set by middleware (e.g. an authenticated user). */
   locals: Record<string, unknown>
+  /**
+   * The authenticated user resolved by `defineAuth`, or `null` if anonymous. When
+   * the route declares `auth: true`, this is guaranteed present (a 401 is returned
+   * otherwise before the handler runs).
+   */
+  user: ApexUser | null
+  /**
+   * The raw h3 request event (server-only; typed loosely to keep this module
+   * dependency-free). Pass it to the session/response helpers in
+   * `@apex-stack/core/server` — e.g. `login(event, { user }, …)` or
+   * `setStatus(event, 401)`. `undefined` for MCP tool calls (no HTTP event).
+   */
+  event: unknown
 }
 
-export interface ApexRouteConfig<Shape extends ZodRawShape | undefined, Output> {
+export interface ApexRouteConfig<Shape extends ZodRawShape | undefined, Output> extends RouteGate {
   /** HTTP method. Defaults to GET. */
   method?: HttpMethod
   /** Human + AI-readable description. Becomes the MCP tool description. */
@@ -41,7 +55,7 @@ export interface ApexRouteConfig<Shape extends ZodRawShape | undefined, Output> 
 }
 
 /** The normalized, framework-facing route object produced by defineApexRoute. */
-export interface ApexRoute {
+export interface ApexRoute extends RouteGate {
   method: HttpMethod
   description?: string
   inputShape?: ZodRawShape
@@ -52,6 +66,8 @@ export interface ApexRoute {
     url: string
     config?: RuntimeConfig
     locals?: Record<string, unknown>
+    user?: ApexUser | null
+    event?: unknown
   }) => unknown | Promise<unknown>
 }
 
@@ -91,6 +107,8 @@ export function defineApexRoute<Shape extends ZodRawShape | undefined, Output>(
     inputShape: config.input,
     mcp: config.mcp ?? false,
     mcpName: config.mcpName,
+    auth: config.auth,
+    can: config.can,
     handler: config.handler as ApexRoute['handler'],
   }
 }

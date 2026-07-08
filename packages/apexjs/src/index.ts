@@ -17,6 +17,8 @@ export type {
 export { defineApexRoute } from './api/defineRoute.js'
 export type { ApexResource, ResourceRoute } from './api/resource.js'
 export { isApexResource } from './api/resource.js'
+export type { ApexUser, AuthConfig, AuthResolveContext, RouteGate } from './auth/define.js'
+export { defineAuth } from './auth/define.js'
 export type { ApexConfig, RuntimeConfig } from './config/runtime.js'
 export { defineConfig, env, useRuntimeConfig } from './config/runtime.js'
 export type { Middleware, MiddlewareContext, MiddlewareResult } from './middleware/define.js'

@@ -1,5 +1,53 @@
 # @apex-stack/core
 
+## 0.15.0
+
+### Minor Changes
+
+- Auth DX + hardening fixes from independent Phase C verification:
+
+  - **Route handlers now receive `event`** — the raw h3 request event is passed into
+    every `defineApexRoute` handler ctx (`undefined` for MCP calls). This makes the
+    documented login flow actually work: `login(event, { user }, { password })`.
+  - **Handler-set status is preserved** — `createApiHandler` no longer forces `200` over
+    a status the handler set (e.g. a login route returning `setStatus(event, 401)`).
+  - **`setStatus(event, code)`** added to `@apex-stack/core/server` so login routes need
+    no direct h3 import; session helpers (`login`/`logout`/`getSession`) accept the
+    loosely-typed handler `event` with no cast.
+  - **`SameSite=Lax`** is now set explicitly on the sealed session cookie.
+  - **No cookie for anonymous callers** — `sessionAuth` only reads an existing session
+    cookie; it no longer initializes (and sets) an empty one on unauthenticated requests.
+  - **`apex make auth`** now scaffolds working `server/api/login.ts` + `logout.ts`
+    routes alongside `server/auth.ts`.
+
+## 0.14.0
+
+### Minor Changes
+
+- d2a423d: Phase C1 — auth identity + route gating. New `defineAuth({ resolve })` in
+  `server/auth.ts` resolves the request's user once per request and injects it as
+  `user` into every route handler and MCP tool call (and `locals.user` for page
+  loaders). Routes gain a `auth: true` gate (anonymous → 401) and an optional
+  `can: ({ user, input }) => boolean` (→ 403). The MCP endpoint filters `tools/list`
+  per user and re-checks authorization on `tools/call` (defense-in-depth). Enforced
+  identically over REST and MCP, in the handler layer (not middleware-only),
+  fail-closed. Wired through both the dev server and the production build/server.
+- 233993e: Phase C3 — sessions + hardening (the "hybrid" scope). New `@apex-stack/core/server`
+  subpath with server-only helpers:
+
+  - **Sealed-cookie sessions** on h3: `sessionAuth({ password })` (an `AuthConfig` that
+    resolves the user from an encrypted+signed, HttpOnly cookie) plus `login`/`logout`/
+    `getSession`. `apex make auth` scaffolds `server/auth.ts`.
+  - **CSRF** — `createApiHandler` now rejects cookie-authenticated mutations whose
+    Origin/Referer host doesn't match (bearer/tokenless clients are exempt). Pure
+    `isCsrfSafe` + `checkCsrf(event)`.
+  - **Rate limiting** — `createRateLimiter({ limit, windowMs })` (pure, clock-injectable)
+    - `rateLimitKey(event)`.
+  - **Security headers** — `securityHeaders()` / `applySecurityHeaders(event)`.
+
+  OAuth / JWT issuance / 2FA remain adapter territory (wire via `sessionAuth`'s `toUser`
+  or a custom `defineAuth`).
+
 ## 0.13.1
 
 ### Patch Changes
