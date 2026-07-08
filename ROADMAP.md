@@ -53,8 +53,8 @@ zero JS until an island needs it.
   `defineResource` (list/get/create) where one table → REST endpoints **and** MCP tools on one DB.
   Proven: an MCP-tool write is visible via the REST list.
   Full CRUD (list/get/create/update/delete). `apex migrate` CLI + `apex make page/component/api`.
-- **Next:** `apex make:model` + `drizzle-kit`-generated migrations, per-route auth scoping, more
-  Drizzle drivers. Component `<script server>` loaders + slots.
+- **Next:** `drizzle-kit`-generated migrations, more Drizzle drivers. *(`apex make model`,
+  per-route/resource auth scoping, and component `<script server>` loaders + slots all shipped.)*
 
 ### ✅ Production build & deploy
 - `apex build --islands` — zero-JS static site (SSG).
@@ -98,7 +98,6 @@ plumbing.
   so a navbar keeps open-dropdown state across navigation) — v1 swaps the whole `[data-apex-root]`.
 - `x-for`/`x-if` inside **islands** (per-island clone removal at `initTree`). *(Note: in the
   standard SSR/hydration path, components in `x-for`/`x-if` now work — this deferral is islands-only.)*
-- Component `<script server>` loaders. *(Slots shipped.)*
 - Component-in-loop where the component's **root x-data computes from props** (Counter-in-loop) uses
   a `with()` runtime shim — works, but a factory-based (`Alpine.data`) approach would be cleaner.
 - Nitro production build + deploy presets (dev server is h3 + Vite middleware today).
@@ -150,7 +149,7 @@ neither of them has. Legend: ✅ have · 🟡 partial · ❌ not yet.
 | **AI-native — every route is an MCP tool** | ❌ | ❌ | ✅ | **unique moat** |
 | Client-side navigation (SPA) | ✅ | ✅ | ✅ | fetch + swap, history, prefetch, progress bar |
 | Loading boundaries | ✅ | ✅ | ✅ | `pages/loading.alpine` on slow navs |
-| Component-level data loaders | ✅ | ✅ | ❌ | props only (P2) |
+| Component-level data loaders | ✅ | ✅ | ✅ | `<script server> loader({props})` — singleton + in `x-for`/`x-if`, memoized |
 | Fine-grained HMR | ✅ | ✅ | 🟡 | style edits hot-swap in place; template edits reload w/ scroll restored |
 | Template type-checking | ✅ | ✅ | ❌ | Volar-style (P3) |
 | Image / font optimization | ✅ | ✅ | ❌ | (P3) |
@@ -161,19 +160,20 @@ neither of them has. Legend: ✅ have · 🟡 partial · ❌ not yet.
 | i18n | 🟡 | ✅ | ❌ | (P3) |
 | Plugin / module ecosystem | ✅ | ✅ | ❌ | (P3) |
 
-**Scorecard:** ~22 of the core dimensions at parity (✅), plus the AI-native moat that's ✅ for Apex
-and ❌ for both Next and Nuxt. Remaining are the SPA/browser-runtime niceties (client-nav, loading
-boundaries, fine-grained HMR — need live-browser verification), component-level loaders, and the
-P3 ecosystem (deploy presets, image/font, i18n, test kit, Volar, plugins). *(Auth shipped — see Security model.)*
+**Scorecard:** ~24 of the core dimensions at parity (✅), plus the AI-native moat that's ✅ for Apex
+and ❌ for both Next and Nuxt (now including auth that governs the MCP surface). Remaining are
+fine-grained (DOM-morphing) HMR and the P3 ecosystem (deploy presets, image/font, i18n, test kit,
+Volar, plugins). *(Auth + component-level loaders shipped.)*
 
 **Delivery waves:**
 - **Wave B — "scales to real apps" (P2):** ✅ runtime config, middleware, `InferInput/Output`, nested
   layouts, error boundary, form-action sugar, global styles, `apex upgrade`, **client-side navigation
-  + loading boundary + prefetch** (browser-verified in dev *and* the prod server) shipped. Remaining:
-  component-level loaders; fine-grained HMR is now partial (style-only edits hot-swap without a reload,
-  template edits reload with scroll restored — DOM-morphing template HMR is the remaining piece).
-- **Wave C — "ecosystem & polish" (P3):** deploy presets, image/font optimization, i18n, auth
-  module, test kit, template type-checking (Volar), plugin/module system.
+  + loading boundary + prefetch** (browser-verified in dev *and* the prod server) and
+  **component-level loaders** shipped. Remaining: fine-grained HMR is now partial (style-only edits
+  hot-swap without a reload, template edits reload with scroll restored — DOM-morphing template HMR
+  is the remaining piece).
+- **Wave C — "ecosystem & polish" (P3):** deploy presets, image/font optimization, i18n, test kit,
+  template type-checking (Volar), plugin/module system. *(Auth module shipped — see Security model.)*
 
 ## ✅ Big epic — Apex Stack Components + Theme Builder (SHIPPED)
 
