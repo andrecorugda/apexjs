@@ -13,6 +13,7 @@ type Kind =
   | 'middleware'
   | 'model'
   | 'migration'
+  | 'auth'
 
 /** Components are referenced as `<PascalCase/>`, so their file must be PascalCase. */
 function pascalCase(s: string): string {
@@ -112,6 +113,26 @@ export class ${cls} {
     return input
   }
 }
+`
+}
+
+function authTemplate(): string {
+  return `import { useRuntimeConfig } from '@apex-stack/core'
+import { sessionAuth } from '@apex-stack/core/server'
+
+// Resolves the request's user, injected as \`user\` into every loader, route handler,
+// and MCP tool call. This default reads a sealed (encrypted + signed) session cookie.
+// Log users in/out from your own /login route with \`login(event, { user }, { password })\`
+// and \`logout(event, { password })\` from '@apex-stack/core/server'.
+//
+// Set a 32+ char secret in apex.config.ts \`runtimeConfig.sessionPassword\` (override
+// per-environment via APEX_SESSION_PASSWORD). Prefer an adapter (Lucia / Better-Auth /
+// Auth.js) for OAuth / JWT / 2FA — return the user from its session in \`toUser\`.
+export default sessionAuth({
+  password:
+    (useRuntimeConfig().sessionPassword as string) ?? process.env.APEX_SESSION_PASSWORD ?? '',
+  // toUser: (data) => (data.user as { id: string; roles?: string[] }) ?? null,
+})
 `
 }
 
@@ -294,6 +315,8 @@ function plan(kind: Kind, name: string, fieldSpecs: string[], root: string): Art
           contents: migrationFileTemplate(name),
         },
       ]
+    case 'auth':
+      return [{ path: join(root, 'server', 'auth.ts'), contents: authTemplate() }]
     case 'model': {
       const fields = parseFields(fieldSpecs)
       return [
@@ -312,16 +335,17 @@ export const makeCommand = defineCommand({
   meta: {
     name: 'make',
     description:
-      'Generate a page, component, API route, store, layout, service, test, middleware, model, or migration',
+      'Generate a page, component, API route, store, layout, service, test, middleware, model, migration, or auth',
   },
   args: {
     kind: {
       type: 'positional',
       required: true,
       description:
-        'page | component | api | store | layout | service | test | middleware | model | migration',
+        'page | component | api | store | layout | service | test | middleware | model | migration | auth',
     },
-    name: { type: 'positional', required: true, description: 'Name (about, Counter, todos, …)' },
+    // Optional: `apex make auth` takes no name (it always writes server/auth.ts).
+    name: { type: 'positional', required: false, description: 'Name (about, Counter, todos, …)' },
     root: { type: 'string', description: 'Project root', default: '.' },
   },
   run({ args, rawArgs }) {
@@ -337,9 +361,15 @@ export const makeCommand = defineCommand({
       'middleware',
       'model',
       'migration',
+      'auth',
     ]
     if (!kinds.includes(kind)) {
       console.error(`\n  Unknown type "${args.kind}". Use: ${kinds.join(' | ')}\n`)
+      process.exit(1)
+    }
+    // Every kind except `auth` needs a name.
+    if (kind !== 'auth' && !args.name) {
+      console.error(`\n  ✗ A name is required: apex make ${kind} <name>\n`)
       process.exit(1)
     }
 
@@ -351,7 +381,7 @@ export const makeCommand = defineCommand({
     const root = resolve(process.cwd(), args.root)
     let artifacts: Artifact[]
     try {
-      artifacts = plan(kind, args.name, fieldSpecs, root)
+      artifacts = plan(kind, args.name ?? '', fieldSpecs, root)
     } catch (err) {
       console.error(`\n  ✗ ${(err as Error).message}\n`)
       process.exit(1)
@@ -374,6 +404,13 @@ export const makeCommand = defineCommand({
       console.log(
         `\n  Next: install the data layer + a driver (\x1b[36mnpm i @apex-stack/data @libsql/client\x1b[0m), ` +
           `run \x1b[36mapex migrate\x1b[0m, then \x1b[36mapex dev\x1b[0m — REST at /api/${args.name} and MCP tools are live.\n`,
+      )
+    } else if (kind === 'auth') {
+      // biome-ignore lint/suspicious/noConsole: CLI output
+      console.log(
+        `\n  Next: set a 32+ char \x1b[36msessionPassword\x1b[0m in apex.config.ts runtimeConfig ` +
+          `(or \x1b[36mAPEX_SESSION_PASSWORD\x1b[0m), then gate routes with \x1b[36mauth: true\x1b[0m / ` +
+          `\x1b[36mcan\x1b[0m and resources with \x1b[36maccess\x1b[0m / \x1b[36mscope\x1b[0m.\n`,
       )
     } else {
       // biome-ignore lint/suspicious/noConsole: CLI output

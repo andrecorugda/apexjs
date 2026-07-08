@@ -14,6 +14,7 @@ import { checkRouteAccess } from '../auth/check.js'
 import type { AuthConfig } from '../auth/define.js'
 import { getRequestUser } from '../auth/run.js'
 import type { RuntimeConfig } from '../config/runtime.js'
+import { checkCsrf } from '../security/csrf.js'
 import type { ApexRoute, HttpMethod } from './defineRoute.js'
 import { type ApexResource, isApexResource } from './resource.js'
 
@@ -132,6 +133,14 @@ export function createApiHandler(
     }
 
     const { entry, params } = matched
+
+    // CSRF: reject a cookie-authenticated mutation whose Origin/Referer doesn't match
+    // (bearer/tokenless clients are exempt — they can't be forged by a browser).
+    if (!checkCsrf(event)) {
+      setResponseStatus(event, 403)
+      return { error: 'CSRF check failed' }
+    }
+
     const raw = {
       ...(entry.method === 'GET' ? getQuery(event) : ((await readBody(event)) ?? {})),
       ...params,

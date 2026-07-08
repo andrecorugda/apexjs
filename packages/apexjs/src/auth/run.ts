@@ -46,6 +46,7 @@ export async function getRequestUser(
           url: getRequestURL(event).toString(),
           method: event.method,
           config: config ?? { public: {} },
+          event,
         })) ?? null
     } catch {
       user = null

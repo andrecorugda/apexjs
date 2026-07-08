@@ -27,6 +27,12 @@ export interface AuthResolveContext {
   method: string
   /** Resolved runtime config (private + public on the server). */
   config: RuntimeConfig
+  /**
+   * The raw h3 request event (server-only, typed loosely to keep this module
+   * dependency-free). Pass it to the sealed-session helpers in
+   * `@apex-stack/core/server` — e.g. `sessionAuth` reads the session from it.
+   */
+  event: unknown
 }
 
 export interface AuthConfig {
