@@ -112,7 +112,7 @@ describe('resolveApexConfig', () => {
       const original = defineConfig({ runtimeConfig: { public: { appName: 'default-name' } } })
       await resolveApexConfig(dir, async () => ({ default: original }))
       // The build bakes these DEFAULTS into the manifest — they must stay pristine.
-      expect((original.runtimeConfig?.public as Record<string, unknown>).appName).toBe(
+      expect(((original.runtimeConfig?.public ?? {}) as Record<string, unknown>).appName).toBe(
         'default-name',
       )
     } finally {
