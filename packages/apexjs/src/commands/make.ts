@@ -329,7 +329,80 @@ function migrationStamp(): string {
 type Artifact = { path: string; contents: string }
 
 /** Where a generated artifact lands, and its contents (one or more files). */
-function plan(kind: Kind, name: string, fieldSpecs: string[], root: string): Artifact[] {
+// ── Co-generated tests (emitted alongside service/api/model; opt out with --no-test) ──
+
+function serviceTestTemplate(name: string): string {
+  const cls = `${pascalCase(name)}Service`
+  return `import { describe, expect, it } from 'vitest'
+import { ${cls} } from '../services/${cls}'
+
+// Services are plain classes → unit-test them in isolation, no server needed.
+describe('${cls}', () => {
+  it('works', () => {
+    expect(new ${cls}().run('x')).toBe('x')
+  })
+})
+`
+}
+
+function apiTestTemplate(name: string): string {
+  return `import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { createTestApp, type TestApp } from '@apex-stack/core/testing'
+
+// The test kit boots your API + MCP surface in-process. Pass { user } to a call to
+// authenticate it (skips login) for auth: true routes.
+let app: TestApp
+beforeAll(async () => {
+  app = await createTestApp({ root: process.cwd() })
+})
+afterAll(() => app.close())
+
+describe('${name} route', () => {
+  it('responds over REST', async () => {
+    const res = await app.get('/api/${name}?name=world')
+    expect(res.status).toBe(200)
+  })
+
+  it('is callable as an MCP tool', async () => {
+    expect(await app.mcp.listTools()).toContain('${name}')
+  })
+})
+`
+}
+
+function modelTestTemplate(name: string): string {
+  return `import { createDb, factory } from '@apex-stack/data'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import model from '../models/${name}'
+
+// factory(model) builds schema-valid rows (override any field). createDb('pglite')
+// gives a fresh in-memory DB per run.
+describe('${name} model', () => {
+  it('factory builds a valid row', () => {
+    expect(factory(model).make()).toBeDefined()
+  })
+
+  it('creates rows in a fresh in-memory db', async () => {
+    const db = await createDb({ driver: 'pglite' })
+    await db.exec(model.migrationSql('postgres'))
+    await factory(model).createMany(db, 3)
+    const rows = await db.query('SELECT count(*)::int AS n FROM ${name}')
+    expect(rows[0]?.n).toBe(3)
+    await db.close()
+  })
+})
+`
+}
+
+function plan(
+  kind: Kind,
+  name: string,
+  fieldSpecs: string[],
+  root: string,
+  withTest = true,
+): Artifact[] {
+  const test = (file: string, contents: string): Artifact[] =>
+    withTest ? [{ path: join(root, 'tests', file), contents }] : []
   switch (kind) {
     case 'page':
       return [{ path: join(root, 'pages', `${name}.alpine`), contents: pageTemplate(name) }]
@@ -341,7 +414,10 @@ function plan(kind: Kind, name: string, fieldSpecs: string[], root: string): Art
         },
       ]
     case 'api':
-      return [{ path: join(root, 'server', 'api', `${name}.ts`), contents: apiTemplate(name) }]
+      return [
+        { path: join(root, 'server', 'api', `${name}.ts`), contents: apiTemplate(name) },
+        ...test(`${name}.test.ts`, apiTestTemplate(name)),
+      ]
     case 'store':
       return [{ path: join(root, 'stores', `${name}.ts`), contents: storeTemplate(name) }]
     case 'layout':
@@ -352,6 +428,7 @@ function plan(kind: Kind, name: string, fieldSpecs: string[], root: string): Art
           path: join(root, 'services', `${pascalCase(name)}Service.ts`),
           contents: serviceTemplate(name),
         },
+        ...test(`${pascalCase(name)}Service.test.ts`, serviceTestTemplate(name)),
       ]
     case 'test':
       return [{ path: join(root, 'tests', `${name}.test.ts`), contents: testTemplate(name) }]
@@ -379,6 +456,7 @@ function plan(kind: Kind, name: string, fieldSpecs: string[], root: string): Art
           path: join(root, 'db', 'migrations', `${migrationStamp()}_create_${name}.sql`),
           contents: modelMigration(name, fields),
         },
+        ...test(`${name}.test.ts`, modelTestTemplate(name)),
       ]
     }
   }
@@ -400,6 +478,11 @@ export const makeCommand = defineCommand({
     // Optional: `apex make auth` takes no name (it always writes server/auth.ts).
     name: { type: 'positional', required: false, description: 'Name (about, Counter, todos, …)' },
     root: { type: 'string', description: 'Project root', default: '.' },
+    test: {
+      type: 'boolean',
+      default: true,
+      description: 'Also generate a matching test (service/api/model). Use --no-test to skip.',
+    },
   },
   run({ args, rawArgs }) {
     const kind = args.kind as Kind
@@ -434,7 +517,7 @@ export const makeCommand = defineCommand({
     const root = resolve(process.cwd(), args.root)
     let artifacts: Artifact[]
     try {
-      artifacts = plan(kind, args.name ?? '', fieldSpecs, root)
+      artifacts = plan(kind, args.name ?? '', fieldSpecs, root, args.test !== false)
     } catch (err) {
       console.error(`\n  ✗ ${(err as Error).message}\n`)
       process.exit(1)
