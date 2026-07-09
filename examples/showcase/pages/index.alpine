@@ -29,19 +29,41 @@
     </div>
   </section>
 
-  <!-- Feature cards -->
-  <section class="mt-6 grid gap-4 sm:grid-cols-3">
-    <Card>
-      <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">Server-rendered</h3>
-      <p class="text-sm">Every page is real HTML from a <code>loader()</code>, then hydrated by Alpine — fast and indexable.</p>
-    </Card>
+  <!-- Feature showcase — every card is a live demo in this app. -->
+  <section class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="/blog" class="block transition hover:opacity-80">
+      <Card>
+        <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">SSR + file routing</h3>
+        <p class="text-sm">Pages are real HTML from a <code>loader()</code>, then hydrated. Dynamic routes like <code>blog/[slug]</code> included.</p>
+      </Card>
+    </a>
+    <a href="/guestbook" class="block transition hover:opacity-80">
+      <Card>
+        <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">Data &amp; models</h3>
+        <p class="text-sm">One <code>models/Message.ts</code> → schema, migration, DB table, and REST + MCP CRUD. Backed by SQLite/libSQL.</p>
+      </Card>
+    </a>
+    <a href="/account" class="block transition hover:opacity-80">
+      <Card>
+        <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">Auth</h3>
+        <p class="text-sm">Sealed-cookie sessions via <code>server/auth.ts</code>. Gated routes 401 until you log in; <code>ctx.user</code> everywhere.</p>
+      </Card>
+    </a>
+    <a href="/hello" class="block transition hover:opacity-80">
+      <Card>
+        <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">i18n</h3>
+        <p class="text-sm">Server-side translation from <code>locales/*.json</code>. A <code>/fr</code> prefix or Accept-Language picks the catalog.</p>
+      </Card>
+    </a>
+    <a href="/guestbook" class="block transition hover:opacity-80">
+      <Card>
+        <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">AI-native / MCP</h3>
+        <p class="text-sm">Every typed route (<code>mcp: true</code>) is also a tool your AI can call at <code>/mcp</code>. One definition, both worlds.</p>
+      </Card>
+    </a>
     <Card>
       <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">Themed</h3>
-      <p class="text-sm">All components use theme tokens. Restyle the whole app with one <code>apex theme</code> command.</p>
-    </Card>
-    <Card>
-      <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">AI-native</h3>
-      <p class="text-sm">Every typed API route is also an MCP tool your AI can call. See <code>server/api/posts.ts</code>.</p>
+      <p class="text-sm">Components use theme tokens (see <code>components/</code>, <code>stores/</code>, <code>composables/</code>). Restyle with one <code>apex theme</code>.</p>
     </Card>
   </section>
 

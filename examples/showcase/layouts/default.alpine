@@ -16,6 +16,9 @@
         </a>
         <a href="/" class="rounded-radius px-3 py-1.5 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt">Home</a>
         <a href="/blog" class="rounded-radius px-3 py-1.5 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt">Blog</a>
+        <a href="/guestbook" class="rounded-radius px-3 py-1.5 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt">Guestbook</a>
+        <a href="/hello" class="rounded-radius px-3 py-1.5 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt">i18n</a>
+        <a href="/account" class="rounded-radius px-3 py-1.5 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt">Account</a>
         <a href="/about" class="rounded-radius px-3 py-1.5 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt">About</a>
         <button
           type="button"

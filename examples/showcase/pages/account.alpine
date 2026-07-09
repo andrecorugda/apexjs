@@ -1,0 +1,54 @@
+<script server lang="ts">
+  // The user resolved by server/auth.ts is seeded into locals — so the page
+  // renders the signed-in state on the SERVER, no flash of "logged out".
+  export function loader({ locals }: { locals: Record<string, unknown> }) {
+    return { user: (locals.user as { name: string } | undefined) ?? null }
+  }
+
+  export function head() {
+    return { title: 'Account — apex-showcase' }
+  }
+</script>
+
+<template x-data="{
+    name: '',
+    async login() {
+      if (!this.name.trim()) return
+      await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: this.name }),
+      })
+      location.reload()
+    },
+    async logout() {
+      await fetch('/api/logout', { method: 'POST' })
+      location.reload()
+    },
+  }">
+  <section class="py-8">
+    <h1 class="font-title text-3xl font-extrabold tracking-tight text-on-surface-strong dark:text-on-surface-dark-strong">Account</h1>
+    <p class="mt-2 max-w-2xl text-on-surface/80 dark:text-on-surface-dark/80">
+      Sealed-cookie sessions via <code>server/auth.ts</code>. The signed-in name below is
+      rendered on the server from <code>locals.user</code>, and the gated route
+      <code>/api/whoami</code> returns 401 until you log in.
+    </p>
+
+    <div class="mt-6 max-w-md rounded-radius border border-outline p-5 dark:border-outline-dark">
+      <template x-if="user">
+        <div class="flex flex-col items-start gap-3">
+          <p class="text-on-surface-strong dark:text-on-surface-dark-strong">Signed in as <strong x-text="user.name"></strong>.</p>
+          <button type="button" @click="logout()" class="rounded-radius border border-outline px-4 py-2 text-sm font-medium transition hover:opacity-75 dark:border-outline-dark">Log out</button>
+        </div>
+      </template>
+
+      <template x-if="!user">
+        <form class="flex flex-col items-start gap-3" @submit.prevent="login()">
+          <p class="text-on-surface/80 dark:text-on-surface-dark/80">You are not signed in.</p>
+          <input x-model="name" placeholder="Your name" class="w-full rounded-radius border border-outline bg-transparent px-3 py-2 dark:border-outline-dark" />
+          <Button type="submit">Log in</Button>
+        </form>
+      </template>
+    </div>
+  </section>
+</template>

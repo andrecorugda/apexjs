@@ -1,0 +1,5 @@
+{
+  "greeting": "Hello from Apex!",
+  "intro": "This paragraph was translated on the server, before any JavaScript ran. Switch to /fr/hello for French — the /<locale> path prefix (or the Accept-Language header) selects the catalog.",
+  "nav": { "home": "Home", "guestbook": "Guestbook", "account": "Account", "hello": "i18n" }
+}
