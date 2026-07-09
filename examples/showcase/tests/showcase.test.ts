@@ -1,17 +1,25 @@
+import { fileURLToPath } from 'node:url'
+import { createTestApp, type TestApp } from '@apex-stack/core/testing'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { type TestApp, createTestApp } from '@apex-stack/core/testing'
+
+// Resolve the app root from this file, so the suite works whether vitest is run
+// from the package (pnpm --filter) or the repo root (CI's `pnpm test`).
+const APP_ROOT = fileURLToPath(new URL('..', import.meta.url))
 
 // Boots the whole app in-process (server/api + server/auth.ts) against the real
 // in-memory DB — no running server, no network. Exercises every backend pillar.
 describe('showcase app', () => {
   let app: TestApp
   beforeAll(async () => {
-    app = await createTestApp({ root: '.' })
+    app = await createTestApp({ root: APP_ROOT })
   })
   afterAll(() => app.close())
 
   it('data: create + list a message via the DB-backed model resource', async () => {
-    const created = await app.post('/api/messages', { author: 'Tester', body: 'hello from the test' })
+    const created = await app.post('/api/messages', {
+      author: 'Tester',
+      body: 'hello from the test',
+    })
     expect(created.status).toBe(200)
     const list = await app.get('/api/messages')
     expect(list.status).toBe(200)

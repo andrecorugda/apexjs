@@ -50,7 +50,7 @@
     <form class="mt-6 grid max-w-lg gap-3 rounded-radius border border-outline p-4 dark:border-outline-dark" @submit.prevent="submit($event)">
       <input name="author" placeholder="Your name" class="rounded-radius border border-outline bg-transparent px-3 py-2 dark:border-outline-dark" />
       <textarea name="body" placeholder="Say something…" required maxlength="280" class="rounded-radius border border-outline bg-transparent px-3 py-2 dark:border-outline-dark"></textarea>
-      <div><Button type="submit">Sign the guestbook</Button></div>
+      <div><button type="submit" class="inline-flex items-center justify-center gap-2 rounded-radius border border-primary bg-primary px-4 py-2 text-sm font-medium text-on-primary transition hover:opacity-75 dark:border-primary-dark dark:bg-primary-dark dark:text-on-primary-dark">Sign the guestbook</button></div>
     </form>
   </section>
 </template>

@@ -13,7 +13,7 @@
     "dev": "pnpm -r --parallel --filter \"./packages/*\" dev",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "pnpm --filter spike test:e2e",
+    "test:e2e": "pnpm --filter apex-e2e test:e2e",
     "lint": "biome check .",
     "format": "biome format --write .",
     "typecheck": "pnpm -r --filter \"./packages/*\" typecheck",

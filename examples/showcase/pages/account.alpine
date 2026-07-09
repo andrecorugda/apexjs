@@ -46,7 +46,7 @@
         <form class="flex flex-col items-start gap-3" @submit.prevent="login()">
           <p class="text-on-surface/80 dark:text-on-surface-dark/80">You are not signed in.</p>
           <input x-model="name" placeholder="Your name" class="w-full rounded-radius border border-outline bg-transparent px-3 py-2 dark:border-outline-dark" />
-          <Button type="submit">Log in</Button>
+          <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-radius border border-primary bg-primary px-4 py-2 text-sm font-medium text-on-primary transition hover:opacity-75 dark:border-primary-dark dark:bg-primary-dark dark:text-on-primary-dark">Log in</button>
         </form>
       </template>
     </div>

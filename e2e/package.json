@@ -5,11 +5,9 @@
   "type": "module",
   "description": "End-to-end tests: boots examples/showcase with the workspace CLI and drives it with Playwright.",
   "scripts": {
-    "test:e2e": "playwright test",
-    "check:mcp": "node mcp-check.mjs"
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
     "@playwright/test": "^1.49.1"
   }
 }

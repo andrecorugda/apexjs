@@ -14,7 +14,7 @@
       "!**/*.html",
       "!**/*.alpine",
       "!**/app.css",
-      "!**/playground/spike/e2e",
+      "!**/e2e/specs",
       "!**/packages/theme/theme.css",
       "!docs"
     ]
