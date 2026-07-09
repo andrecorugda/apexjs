@@ -1,5 +1,15 @@
 # @apex-stack/core
 
+## 0.18.0
+
+### Minor Changes
+
+- Optional feature recipes. New `apex extend <data|auth|i18n>` adds a whole
+  capability to an app — files plus wiring (deps, apex.config.ts, .env, nav),
+  idempotently. The same features are offered interactively during `apex new`
+  (per-feature prompts, or `--data`/`--auth`/`--i18n` flags) and by `apex upgrade`
+  (only for features not already present). Distinct from `apex add` (UI components).
+
 ## 0.17.1
 
 ### Patch Changes
