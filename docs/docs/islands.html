@@ -142,29 +142,28 @@
 
       <h2 id="example">A real example <a class="anchor" href="#example">#</a></h2>
       <p>
-        <code>playground/islands</code> is a static header plus a <code>client:none</code> island and a
-        below-the-fold <code>client:visible</code> island:
+        The reference app <code>examples/showcase</code> (<code>pages/index.alpine</code>) is a static
+        hero and feature grid — zero&nbsp;JS — plus a <code>client:load</code> island that immediately
+        hydrates an embedded <code>&lt;Counter /&gt;</code>:
       </p>
-      <pre><code>&lt;<span class="t">template</span>&gt;
-  &lt;<span class="t">header</span>&gt;
+      <pre><code>&lt;<span class="t">template</span> <span class="k">x-data</span>&gt;
+  &lt;<span class="c">&lt;!-- static: server-rendered from the loader, ships 0 KB of JS --&gt;</span>
+  &lt;<span class="t">section</span>&gt;
     &lt;<span class="t">h1</span> <span class="k">x-text</span>=<span class="s">"title"</span>&gt;&lt;/<span class="t">h1</span>&gt;
-    &lt;<span class="t">p</span>&gt;Server-rendered. No JavaScript hydrates this.&lt;/<span class="t">p</span>&gt;
-  &lt;/<span class="t">header</span>&gt;
-
-  &lt;<span class="c">&lt;!-- rendered on the server, never ships or runs JS --&gt;</span>
-  &lt;<span class="t">section</span> <span class="k">x-data</span>=<span class="s">"{ n: 0 }"</span> <span class="k">client:none</span>&gt;
-    &lt;<span class="t">button</span> <span class="k">@click</span>=<span class="s">"n++"</span> <span class="k">x-text</span>=<span class="s">"'count: ' + n"</span>&gt;&lt;/<span class="t">button</span>&gt;
+    &lt;<span class="t">p</span> <span class="k">x-text</span>=<span class="s">"tagline"</span>&gt;&lt;/<span class="t">p</span>&gt;
   &lt;/<span class="t">section</span>&gt;
 
-  &lt;<span class="c">&lt;!-- hydrates only when scrolled into view --&gt;</span>
-  &lt;<span class="t">section</span> <span class="k">x-data</span>=<span class="s">"{ n: 0 }"</span> <span class="k">client:visible</span>&gt;
-    &lt;<span class="t">button</span> <span class="k">@click</span>=<span class="s">"n++"</span> <span class="k">x-text</span>=<span class="s">"'count: ' + n"</span>&gt;&lt;/<span class="t">button</span>&gt;
+  &lt;<span class="c">&lt;!-- island: hydrates immediately in islands mode (whole page hydrates in default mode) --&gt;</span>
+  &lt;<span class="t">section</span> <span class="k">x-data</span>=<span class="s">"{ show: false }"</span> <span class="k">client:load</span>&gt;
+    &lt;<span class="t">Counter</span> <span class="k">start</span>=<span class="s">"0"</span> <span class="k">label</span>=<span class="s">"Clicks"</span> /&gt;
+    &lt;<span class="t">button</span> <span class="k">@click</span>=<span class="s">"show = !show"</span> <span class="k">x-text</span>=<span class="s">"show ? 'Hide' : 'How does this work?'"</span>&gt;&lt;/<span class="t">button</span>&gt;
+    &lt;<span class="t">p</span> <span class="k">x-show</span>=<span class="s">"show"</span> <span class="k">x-transition</span>&gt;The server ran loader(), rendered the HTML, and Alpine took over here.&lt;/<span class="t">p</span>&gt;
   &lt;/<span class="t">section</span>&gt;
 &lt;/<span class="t">template</span>&gt;</code></pre>
       <figure>
-        <img src="../assets/islands.png" loading="lazy"
-             alt="The Apex islands demo page: a server-rendered header with client:none and client:visible island cards." />
-        <figcaption>The islands demo — the top island never hydrates; the lower one wakes on scroll.</figcaption>
+        <img src="../assets/islands.png?v=20260709" loading="lazy"
+             alt="A hydrated Counter island in an Apex page, its click count incremented in the browser." />
+        <figcaption>A <code>client:load</code> island — server-rendered, then hydrated in the browser (the click count is live). From <code>examples/showcase</code>.</figcaption>
       </figure>
 
       <h2 id="how">How it works <a class="anchor" href="#how">#</a></h2>
@@ -185,9 +184,8 @@ apex build --islands    <span class="c"># zero-JS static site (SSG)</span></code
       <div class="callout warm">
         <span class="h">Known deferrals</span>
         <p>
-          <code>x-for</code> / <code>x-if</code> inside an island, component-file islands
-          (<code>&lt;Counter client:visible /&gt;</code>), and islands-as-automatic-per-page (instead of a
-          dev flag) are on the roadmap.
+          Islands are opt-in via the <code>--islands</code> flag; making them automatic per-page
+          (an island wherever a <code>client:*</code> directive appears, with no flag) is on the roadmap.
         </p>
       </div>
 

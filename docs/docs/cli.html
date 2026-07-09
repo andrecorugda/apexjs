@@ -96,8 +96,11 @@
               <li><a href="#start">apex start</a></li>
               <li><a href="#upgrade">apex upgrade</a></li>
               <li><a href="#make">apex make</a></li>
+              <li><a href="#add">apex add</a></li>
+              <li><a href="#theme">apex theme</a></li>
               <li><a href="#migrate">apex migrate</a></li>
               <li><a href="#mcp">apex mcp</a></li>
+              <li><a href="#test">apex test</a></li>
               <li><a href="#create">create-apexjs</a></li>
             </ul>
           </li>
@@ -121,17 +124,20 @@
             <tr><td><a href="#dev"><code>apex dev</code></a></td><td>Start the development server (SSR + hydrate, API + MCP, hot reload).</td></tr>
             <tr><td><a href="#build"><code>apex build</code></a></td><td>Prerender pages to deployable HTML + client bundles.</td></tr>
             <tr><td><a href="#start"><code>apex start</code></a></td><td>Run a production build made with <code>apex build --server</code>.</td></tr>
+            <tr><td><a href="#make"><code>apex make</code></a></td><td>Generate a page, component, API route, store, layout, service, test, middleware, model, migration, or auth.</td></tr>
+            <tr><td><a href="#add"><code>apex add</code></a></td><td>Copy a themeable UI-kit component into your project.</td></tr>
+            <tr><td><a href="#theme"><code>apex theme</code></a></td><td>Write/update your theme tokens (colors, radius, fonts) in your CSS.</td></tr>
             <tr><td><a href="#upgrade"><code>apex upgrade</code></a></td><td>Update the CLI, project deps, scaffold files, and the .alpine extension — one command.</td></tr>
-            <tr><td><a href="#make"><code>apex make</code></a></td><td>Generate a page, component, or API route.</td></tr>
-            <tr><td><a href="#migrate"><code>apex migrate</code></a></td><td>Apply pending SQL migrations.</td></tr>
+            <tr><td><a href="#migrate"><code>apex migrate</code></a></td><td>Apply pending SQL migrations (or roll back).</td></tr>
             <tr><td><a href="#mcp"><code>apex mcp</code></a></td><td>Inspect the local MCP server — list or call tools.</td></tr>
+            <tr><td><a href="#test"><code>apex test</code></a></td><td>Run your tests with Vitest.</td></tr>
           </tbody>
         </table>
       </div>
 
       <h2 id="new">apex new <a class="anchor" href="#new">#</a></h2>
       <p>Scaffold a new Apex JS app in a new directory — then install dependencies and initialize a git repo.</p>
-      <pre><code>apex new [dir] [--no-install] [--no-git]</code></pre>
+      <pre><code>apex new [dir] [--no-install] [--no-git] [--no-vscode]</code></pre>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
@@ -139,6 +145,7 @@
             <tr><td><code>dir</code> (positional)</td><td><code>apex-app</code></td><td>Target directory for the new app.</td></tr>
             <tr><td><code>--no-install</code></td><td>installs</td><td>Skip installing dependencies.</td></tr>
             <tr><td><code>--no-git</code></td><td>inits git</td><td>Skip initializing a git repository.</td></tr>
+            <tr><td><code>--no-vscode</code></td><td>prompts</td><td>Skip the offer to install the <code>.alpine</code> VS Code extension.</td></tr>
           </tbody>
         </table>
       </div>
@@ -220,14 +227,16 @@ apex build --server   <span class="c"># deployable Node server target</span></co
       <p class="muted">Your files are never overwritten; <code>package.json</code> entries are only version-bumped. It's the one command to run after a new release.</p>
 
       <h2 id="make">apex make <a class="anchor" href="#make">#</a></h2>
-      <p>Generate a page, component, or API route from a template.</p>
-      <pre><code>apex make &lt;kind&gt; &lt;name&gt; [--root &lt;dir&gt;]</code></pre>
+      <p>Generate a page, component, API route, store, layout, service, test, middleware, model, migration, or auth from a template.</p>
+      <pre><code>apex make &lt;kind&gt; [name] [fields…] [--root &lt;dir&gt;] [--no-test]</code></pre>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
           <tbody>
-            <tr><td><code>kind</code> (positional)</td><td>—</td><td><code>page</code> | <code>component</code> | <code>api</code> (required).</td></tr>
-            <tr><td><code>name</code> (positional)</td><td>—</td><td>Name, e.g. <code>about</code>, <code>Counter</code>, <code>todos</code> (required).</td></tr>
+            <tr><td><code>kind</code> (positional)</td><td>—</td><td><code>page</code> | <code>component</code> | <code>api</code> | <code>store</code> | <code>layout</code> | <code>service</code> | <code>test</code> | <code>middleware</code> | <code>model</code> | <code>migration</code> | <code>auth</code> (required).</td></tr>
+            <tr><td><code>name</code> (positional)</td><td>—</td><td>Name, e.g. <code>about</code>, <code>Counter</code>, <code>todos</code>. Required for every kind except <code>auth</code>.</td></tr>
+            <tr><td><code>fields</code> (positional, <code>model</code> only)</td><td>—</td><td>Field specs like <code>title:string</code>, <code>views:int</code>, <code>email:string!</code> (trailing <code>!</code> = NOT NULL).</td></tr>
+            <tr><td><code>--no-test</code></td><td>generates a test</td><td>Skip the co-generated test for <code>service</code> / <code>api</code> / <code>model</code>.</td></tr>
             <tr><td><code>--root</code></td><td><code>.</code></td><td>Project root.</td></tr>
           </tbody>
         </table>
@@ -237,23 +246,74 @@ apex build --server   <span class="c"># deployable Node server target</span></co
           <thead><tr><th>Kind</th><th>Creates</th></tr></thead>
           <tbody>
             <tr><td><code>page</code></td><td><code>pages/&lt;name&gt;.alpine</code> — a loader + <code>x-data</code> template + scoped style.</td></tr>
-            <tr><td><code>component</code></td><td><code>components/&lt;name&gt;.alpine</code> — a small interactive component.</td></tr>
-            <tr><td><code>api</code></td><td><code>server/api/&lt;name&gt;.ts</code> — a <code>defineApexRoute</code> that's REST + MCP.</td></tr>
+            <tr><td><code>component</code></td><td><code>components/&lt;Name&gt;.alpine</code> — a small interactive component (PascalCase).</td></tr>
+            <tr><td><code>api</code></td><td><code>server/api/&lt;name&gt;.ts</code> — a <code>defineApexRoute</code> that's REST + MCP (+ a test).</td></tr>
+            <tr><td><code>store</code></td><td><code>stores/&lt;name&gt;.ts</code> — a <code>defineStore</code> of shared reactive state.</td></tr>
+            <tr><td><code>layout</code></td><td><code>layouts/&lt;name&gt;.alpine</code> — a wrapper with a <code>&lt;slot&gt;</code>.</td></tr>
+            <tr><td><code>service</code></td><td><code>services/&lt;Name&gt;Service.ts</code> — a plain, testable class (+ a test).</td></tr>
+            <tr><td><code>test</code></td><td><code>tests/&lt;name&gt;.test.ts</code> — a Vitest spec.</td></tr>
+            <tr><td><code>middleware</code></td><td><code>middleware/&lt;name&gt;.ts</code> — a <code>defineMiddleware</code> that runs on every request.</td></tr>
+            <tr><td><code>model</code></td><td><code>models/&lt;name&gt;.ts</code> + <code>server/api/&lt;name&gt;.ts</code> + a migration (+ a test) — a <code>defineModel</code> (from <code>@apex-stack/data</code>) with a REST + MCP resource.</td></tr>
+            <tr><td><code>migration</code></td><td><code>db/migrations/&lt;stamp&gt;_&lt;name&gt;.sql</code> — an empty, reversible migration.</td></tr>
+            <tr><td><code>auth</code></td><td><code>server/auth.ts</code> + <code>server/api/login.ts</code> + <code>server/api/logout.ts</code> — sealed-cookie session auth (no name argument).</td></tr>
           </tbody>
         </table>
       </div>
       <pre><code>apex make page about
 apex make component Counter
-apex make api todos</code></pre>
+apex make api todos
+apex make model post title:string body:text published:boolean!
+apex make auth</code></pre>
       <p class="muted">Fails if the target file already exists (it won't overwrite your work).</p>
 
-      <h2 id="migrate">apex migrate <a class="anchor" href="#migrate">#</a></h2>
-      <p>Apply pending SQL migrations from <code>db/migrations/*.sql</code> (idempotent). Resolves <code>@apex-stack/data</code> from your app.</p>
-      <pre><code>apex migrate [--db &lt;file&gt;] [--driver &lt;d&gt;] [--url &lt;url&gt;] [--dir &lt;dir&gt;] [--root &lt;dir&gt;]</code></pre>
+      <h2 id="add">apex add <a class="anchor" href="#add">#</a></h2>
+      <p>Copy a themeable UI-kit component's <code>.alpine</code> source into your project. Run it with no name to list the registry.</p>
+      <pre><code>apex add [name…] [--all] [--force] [--root &lt;dir&gt;]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>name</code> (positional)</td><td>—</td><td>Component(s) to add, space-separated (e.g. <code>button card modal</code>). Omit to list what's available.</td></tr>
+            <tr><td><code>--all</code></td><td><code>false</code></td><td>Add every component in the registry.</td></tr>
+            <tr><td><code>--force</code></td><td><code>false</code></td><td>Overwrite existing component files.</td></tr>
+            <tr><td><code>--root</code></td><td><code>.</code></td><td>Project root.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>apex add                 <span class="c"># list available components</span>
+apex add button card
+apex add --all</code></pre>
+
+      <h2 id="theme">apex theme <a class="anchor" href="#theme">#</a></h2>
+      <p>Write or update your theme tokens (colors, radius, fonts) in a managed block of your <code>app.css</code>. With no flags it (re)writes the default tokens.</p>
+      <pre><code>apex theme [--primary &lt;c&gt;] [--primary-dark &lt;c&gt;] [--secondary &lt;c&gt;] [--radius &lt;r&gt;] [--font-body &lt;f&gt;] [--font-title &lt;f&gt;] [--out &lt;file&gt;] [--root &lt;dir&gt;]</code></pre>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Flag</th><th>Default</th><th>Description</th></tr></thead>
           <tbody>
+            <tr><td><code>--primary</code></td><td>—</td><td>Primary color (light), e.g. <code>#4f46e5</code>.</td></tr>
+            <tr><td><code>--primary-dark</code></td><td>—</td><td>Primary color (dark).</td></tr>
+            <tr><td><code>--secondary</code></td><td>—</td><td>Secondary color (light).</td></tr>
+            <tr><td><code>--radius</code></td><td>—</td><td>Border radius, e.g. <code>0.5rem</code>.</td></tr>
+            <tr><td><code>--font-body</code></td><td>—</td><td>Body font stack.</td></tr>
+            <tr><td><code>--font-title</code></td><td>—</td><td>Title font stack.</td></tr>
+            <tr><td><code>--out</code></td><td>your <code>app.css</code></td><td>Target stylesheet.</td></tr>
+            <tr><td><code>--root</code></td><td><code>.</code></td><td>Project root.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>apex theme
+apex theme --primary '#4f46e5' --radius 0.5rem</code></pre>
+
+      <h2 id="migrate">apex migrate <a class="anchor" href="#migrate">#</a></h2>
+      <p>Apply pending SQL migrations from <code>db/migrations/*.sql</code> (idempotent) — or roll the last one(s) back. Resolves <code>@apex-stack/data</code> from your app.</p>
+      <pre><code>apex migrate [--rollback] [--steps &lt;n&gt;] [--db &lt;file&gt;] [--driver &lt;d&gt;] [--url &lt;url&gt;] [--dir &lt;dir&gt;] [--root &lt;dir&gt;]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Flag</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>--rollback</code></td><td><code>false</code></td><td>Revert the most recent migration(s) instead of applying pending ones.</td></tr>
+            <tr><td><code>--steps</code></td><td><code>1</code></td><td>How many migrations to roll back (with <code>--rollback</code>).</td></tr>
             <tr><td><code>--db</code></td><td><code>data.db</code></td><td>SQLite file path (libSQL).</td></tr>
             <tr><td><code>--driver</code></td><td><code>sqlite</code></td><td><code>sqlite</code> | <code>postgres</code> | <code>pglite</code>.</td></tr>
             <tr><td><code>--url</code></td><td>—</td><td>Connection URL (Postgres) — overrides <code>--db</code>.</td></tr>
@@ -263,6 +323,7 @@ apex make api todos</code></pre>
         </table>
       </div>
       <pre><code>apex migrate
+apex migrate --rollback
 apex migrate --driver postgres --url $DATABASE_URL</code></pre>
       <p class="muted">See <a href="./data.html#migrations">Data → Migrations</a>.</p>
 
@@ -279,9 +340,17 @@ apex migrate --driver postgres --url $DATABASE_URL</code></pre>
           </tbody>
         </table>
       </div>
-      <pre><code>apex mcp                                  <span class="c"># list tools + signatures</span>
-apex mcp --call add --args '{"a":2,"b":3}'</code></pre>
+      <pre><code>apex mcp                                       <span class="c"># list tools + signatures</span>
+apex mcp --call posts --args '{"slug":"hello-apex"}'</code></pre>
       <p class="muted">Requires a running dev server. More on <a href="./ai-native.html#inspector">AI-native → inspector</a>.</p>
+
+      <h2 id="test">apex test <a class="anchor" href="#test">#</a></h2>
+      <p>Run your test suite with <a href="https://vitest.dev">Vitest</a> (the runner Apex apps ship with). It's a thin wrapper — any extra arguments pass straight through to Vitest.</p>
+      <pre><code>apex test [...vitest args]</code></pre>
+      <pre><code>apex test              <span class="c"># Vitest (watch mode, its default)</span>
+apex test run          <span class="c"># run once and exit</span>
+apex test --coverage   <span class="c"># with coverage</span></code></pre>
+      <p class="muted">See <a href="./testing.html">Test Kit</a> for the in-process API + MCP harness.</p>
 
       <h2 id="create">create-apexjs <a class="anchor" href="#create">#</a></h2>
       <p>The scaffolder (a separate, unscoped package) — the entry point for a new project.</p>

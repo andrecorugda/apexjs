@@ -210,9 +210,9 @@
   &lt;/<span class="t">main</span>&gt;
 &lt;/<span class="t">template</span>&gt;</code></pre>
       <figure>
-        <img src="../assets/components.png" loading="lazy"
-             alt="An Apex page rendering two embedded Counter components, each labelled and initialized from its own props." />
-        <figcaption>Two <code>&lt;Counter&gt;</code> instances, each initialized from its own props (from <code>playground/base-camp</code>).</figcaption>
+        <img src="../assets/components.png?v=20260709" loading="lazy"
+             alt="An Apex page composed from a grid of reusable Card components." />
+        <figcaption>Reusable <code>&lt;Card&gt;</code> components composing a page. <code>Card</code>, <code>Button</code>, <code>Badge</code>, and <code>Counter</code> ship in the scaffold — see <code>examples/showcase</code>.</figcaption>
       </figure>
 
       <h2 id="props">Props — static &amp; bound <a class="anchor" href="#props">#</a></h2>
@@ -235,15 +235,8 @@
       <ul>
         <li>Only <code>&lt;script&gt;</code>, <code>&lt;template&gt;</code>, and <code>&lt;style&gt;</code> are allowed at the top level — anything else is a parse error.</li>
         <li>Exactly one top-level <code>&lt;template&gt;</code>; at most one <code>&lt;script server&gt;</code>; any number of <code>&lt;style&gt;</code> blocks.</li>
-        <li><code>&lt;script&gt;</code> must be marked <code>server</code>. Client-only <code>&lt;script&gt;</code> blocks and component <code>&lt;script server&gt;</code> loaders/slots are on the roadmap.</li>
+        <li><code>&lt;script&gt;</code> must be marked <code>server</code> or <code>client</code> — <code>&lt;script server&gt;</code> for the loader, <code>&lt;script client&gt;</code> for browser-side imports and logic available to the template.</li>
       </ul>
-      <div class="callout warm">
-        <span class="h">Known deferrals</span>
-        <p>
-          <code>x-for</code> / <code>x-if</code> <em>inside</em> an island, and component-level
-          <code>&lt;script server&gt;</code> loaders + slots, are not in yet — see the roadmap.
-        </p>
-      </div>
 
   </section>
   </div>

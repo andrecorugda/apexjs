@@ -110,7 +110,28 @@
       <p class="muted">Postgres/PGlite drivers load on demand — install only the one you use (below).</p>
 
       <h2 id="define">Define once <a class="anchor" href="#define">#</a></h2>
-      <p>A schema, a database handle, and a resource — three small files:</p>
+      <p>The fastest path is <code>defineModel</code>: one file derives the Zod schema, the SQL
+      migration, the Drizzle table, <em>and</em> a full REST + MCP resource. Composable
+      <code>behaviors</code> (<code>timestamps()</code>, <code>owned()</code>, <code>softDeletes()</code>,
+      <code>auditable()</code>, <code>observable()</code>) add lifecycle logic.</p>
+      <p class="code-label">models/Message.ts</p>
+      <pre><code><span class="k">import</span> { defineModel, timestamps } <span class="k">from</span> <span class="s">'@apex-stack/data'</span>
+
+<span class="k">export const</span> Message = defineModel(<span class="s">'messages'</span>, {
+  fields: {
+    author: { type: <span class="s">'string'</span>, notNull: <span class="k">true</span> },
+    body: { type: <span class="s">'string'</span>, notNull: <span class="k">true</span> },
+  },
+  use: [timestamps()], <span class="c">// created_at / updated_at, kept out of the insert shape</span>
+})</code></pre>
+      <p>Mount it as a live resource from a <code>server/api/*.ts</code> file — that's the whole backend:</p>
+      <p class="code-label">server/api/messages.ts</p>
+      <pre><code><span class="k">import</span> { handle } <span class="k">from</span> <span class="s">'../../db/index.js'</span>
+<span class="k">import</span> { Message } <span class="k">from</span> <span class="s">'../../models/Message.js'</span>
+
+<span class="k">export default</span> Message.resource(handle)</code></pre>
+      <p>Already have a Drizzle table, or want full control? Drop to the lower-level
+      <code>defineResource</code> — a schema, a database handle, and a resource:</p>
       <p class="code-label">db/schema.ts</p>
       <pre><code><span class="k">import</span> { integer, sqliteTable, text } <span class="k">from</span> <span class="s">'drizzle-orm/sqlite-core'</span>
 
@@ -141,7 +162,7 @@
 })</code></pre>
 
       <h2 id="surfaces">The surfaces you get <a class="anchor" href="#surfaces">#</a></h2>
-      <p>From that single <code>defineResource</code> call:</p>
+      <p>From that single <code>defineModel</code> (or <code>defineResource</code>) definition:</p>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Action</th><th>REST</th><th>MCP tool</th></tr></thead>

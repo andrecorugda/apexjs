@@ -135,20 +135,40 @@ apex dev</code></pre>
         </p>
       </div>
       <figure>
-        <img src="../assets/app-hello.png" loading="lazy"
-             alt="The Apex JS starter page running in a browser, showing the welcome heading and a Show me how button." />
-        <figcaption>The starter you get out of the box — server-rendered, then hydrated.</figcaption>
+        <img src="../assets/app-hello.png?v=20260709" loading="lazy"
+             alt="An Apex JS app in the browser: a welcome hero and a grid of feature cards (SSR, data, auth, i18n)." />
+        <figcaption>An Apex app — server-rendered, then hydrated. (Shown: the <code>examples/showcase</code> app.)</figcaption>
       </figure>
 
       <h2 id="structure">Project structure <a class="anchor" href="#structure">#</a></h2>
-      <p>A fresh app is intentionally small. Everything is a file in a known place:</p>
+      <p>A fresh app is a lean, working starter. Everything is a file in a known place:</p>
       <pre><code>my-app/
-├─ pages/
-│  └─ index.alpine        <span class="c"># a route → "/"  (SSR + hydrate)</span>
+├─ pages/                    <span class="c"># routes (SSR + hydrate)</span>
+│  ├─ index.alpine           <span class="c">#   → "/"</span>
+│  ├─ about.alpine           <span class="c">#   → "/about"</span>
+│  ├─ loading.alpine         <span class="c">#   loading boundary for client-side nav</span>
+│  └─ blog/
+│     ├─ index.alpine        <span class="c">#   → "/blog"</span>
+│     └─ [slug].alpine       <span class="c">#   → "/blog/:slug"  (dynamic)</span>
+├─ layouts/
+│  └─ default.alpine         <span class="c"># wraps every page</span>
+├─ components/               <span class="c"># &lt;Button/&gt; &lt;Card/&gt; &lt;Badge/&gt; &lt;Counter/&gt;</span>
 ├─ server/
 │  └─ api/
-│     └─ hello.ts         <span class="c"># REST endpoint AND MCP tool</span>
+│     └─ posts.ts            <span class="c"># REST endpoint AND MCP tool</span>
+├─ services/PostService.ts   <span class="c"># business logic (a plain, testable class)</span>
+├─ stores/ui.ts              <span class="c"># shared reactive state</span>
+├─ composables/useToggle.ts
+├─ shared/types.ts
+├─ tests/posts.test.ts
+├─ db/README.md
+├─ public/favicon.svg
+├─ apex.config.ts
+├─ app.css
 ├─ package.json
+├─ tsconfig.json
+├─ vitest.config.ts
+├─ .env.example
 └─ .gitignore</code></pre>
       <div class="table-scroll">
         <table>
@@ -163,8 +183,10 @@ apex dev</code></pre>
         </table>
       </div>
       <p class="muted">
-        <code>components/</code>, <code>db/</code>, and <code>public/</code> are optional — add them
-        when you need them (or generate files with <a href="./cli.html#make"><code>apex make</code></a>).
+        The starter ships these folders working. More advanced ones — <code>models/</code>,
+        <code>middleware/</code>, <code>locales/</code>, <code>server/auth.ts</code> — are added when
+        you need them (or generated with <a href="./cli.html#make"><code>apex make</code></a>). The
+        feature-complete <code>examples/showcase</code> app demonstrates them all.
       </p>
 
       <h2 id="dev">Run the dev server <a class="anchor" href="#dev">#</a></h2>
