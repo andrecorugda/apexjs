@@ -1,5 +1,13 @@
 # @apex-stack/vite
 
+## 0.2.4
+
+### Patch Changes
+
+- Support Vite 7. `@apex-stack/vite` widens its `vite` peer range to include `^7`
+  (still `^5`/`^6`), and `@apex-stack/core` + `create-apexjs` build and run on Vite
+  7.3.x. Also bumps `citty` to 0.2.2. No public API changes.
+
 ## 0.2.3
 
 ### Patch Changes
