@@ -1,0 +1,15 @@
+# Normalize line endings: store as LF, check out as LF on every platform.
+# Without this, Git's default core.autocrlf=true on Windows rewrites files to
+# CRLF on checkout, which breaks byte-exact fixture tests (e.g. theme.test.ts)
+# and Biome's format check on non-JS files.
+* text=auto eol=lf
+
+# Binary files: never touch.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ico binary

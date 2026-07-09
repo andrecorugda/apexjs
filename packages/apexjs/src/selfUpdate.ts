@@ -64,7 +64,6 @@ export async function maybeSelfUpdate(
   const latest = latestPublished()
   if (!latest || cmpVersion(latest, VERSION) <= 0) return false
 
-  // biome-ignore lint/suspicious/noConsole: CLI output
   const log = console.log
   log(
     `\n  ${color.cyan('↑')} A newer Apex CLI is available: ${color.gray(VERSION)} → ${color.green(latest)}`,

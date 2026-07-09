@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
 import { defineEventHandler, type EventHandler, toWebRequest } from 'h3'
-import { z } from 'zod'
+import { type ZodRawShape, z } from 'zod'
 import type { ApiEntry } from '../api/routes.js'
 import { checkRouteAccess } from '../auth/check.js'
 import type { ApexUser, AuthConfig } from '../auth/define.js'
@@ -21,11 +21,11 @@ export function hasMcpRoutes(entries: ApiEntry[]): boolean {
  * working. (models avoid this by mapping timestamps to strings; this guards
  * hand-written routes too.)
  */
-function safeInputSchema(shape: Record<string, unknown> | undefined): Record<string, unknown> {
+function safeInputSchema(shape: ZodRawShape | undefined): ZodRawShape {
   if (!shape || Object.keys(shape).length === 0) return {}
   try {
     const toJSONSchema = (z as unknown as { toJSONSchema?: (s: unknown) => unknown }).toJSONSchema
-    if (typeof toJSONSchema === 'function') toJSONSchema(z.object(shape as never))
+    if (typeof toJSONSchema === 'function') toJSONSchema(z.object(shape))
     return shape
   } catch {
     return {}
@@ -48,7 +48,7 @@ function buildServer(
       entry.mcpName,
       {
         description: entry.route.description ?? `Apex route ${entry.mcpName}`,
-        inputSchema: safeInputSchema(entry.route.inputShape) as never,
+        inputSchema: safeInputSchema(entry.route.inputShape),
       },
       async (args: Record<string, unknown>) => {
         const decision = await checkRouteAccess(entry.route, user ?? null, args ?? {})

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { ZodTypeAny } from 'zod'
 import { defineModel } from './model.js'
 
 const todos = defineModel('todos', {
@@ -13,17 +14,17 @@ const todos = defineModel('todos', {
 describe('defineModel — zod insert shape', () => {
   it('requires NOT NULL fields without a default; others optional', () => {
     // title: notNull + no default → required
-    expect(() => todos.insert.title.parse(undefined)).toThrow()
-    expect(todos.insert.title.parse('hi')).toBe('hi')
+    expect(() => (todos.insert.title as ZodTypeAny).parse(undefined)).toThrow()
+    expect((todos.insert.title as ZodTypeAny).parse('hi')).toBe('hi')
     // done/views have defaults → optional; meta is nullable-ish → optional
-    expect(todos.insert.done.parse(undefined)).toBeUndefined()
-    expect(todos.insert.views.parse(undefined)).toBeUndefined()
-    expect(todos.insert.meta.parse(undefined)).toBeUndefined()
+    expect((todos.insert.done as ZodTypeAny).parse(undefined)).toBeUndefined()
+    expect((todos.insert.views as ZodTypeAny).parse(undefined)).toBeUndefined()
+    expect((todos.insert.meta as ZodTypeAny).parse(undefined)).toBeUndefined()
   })
 
   it('coerces types', () => {
-    expect(todos.insert.views.parse('5')).toBe(5)
-    expect(todos.insert.done.parse('true')).toBe(true)
+    expect((todos.insert.views as ZodTypeAny).parse('5')).toBe(5)
+    expect((todos.insert.done as ZodTypeAny).parse('true')).toBe(true)
   })
 })
 
@@ -51,7 +52,9 @@ describe('defineModel — timestamp is a JSON-Schema-safe string', () => {
   // MCP tools/list for the whole app. Timestamps are ISO strings instead.
   const events = defineModel('events', { fields: { at: 'timestamp' } })
   it('validates timestamps as ISO strings (not Date)', () => {
-    expect(events.insert.at.parse('2026-01-01T00:00:00Z')).toBe('2026-01-01T00:00:00Z')
+    expect((events.insert.at as ZodTypeAny).parse('2026-01-01T00:00:00Z')).toBe(
+      '2026-01-01T00:00:00Z',
+    )
   })
   it('uses a string column type in migrations', () => {
     expect(events.migrationSql('sqlite')).toContain('at TEXT')

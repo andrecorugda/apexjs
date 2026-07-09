@@ -27,6 +27,6 @@
     "registry"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit || true"
+    "typecheck": "echo \"no typescript to check\""
   }
 }
