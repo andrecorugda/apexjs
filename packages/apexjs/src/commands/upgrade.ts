@@ -3,9 +3,10 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { basename, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
+import { applyFeature, featureList } from '../features.js'
 import { maybeSelfUpdate } from '../selfUpdate.js'
 import { banner, color, VERSION } from '../ui.js'
-import { offerExtension } from '../vscode.js'
+import { offerExtension, promptYesNo } from '../vscode.js'
 
 const TEMPLATE_DIR = fileURLToPath(new URL('../templates/default', import.meta.url))
 
@@ -119,6 +120,9 @@ export const upgradeCommand = defineCommand({
       type: 'boolean',
       description: 'Update the global Apex CLI first if a newer one is published (default: ask)',
     },
+    data: { type: 'boolean', description: 'Add the data/models feature (skips the prompt)' },
+    auth: { type: 'boolean', description: 'Add the auth feature (skips the prompt)' },
+    i18n: { type: 'boolean', description: 'Add the i18n feature (skips the prompt)' },
   },
   async run({ args }) {
     const root = resolve(process.cwd(), String(args.root))
@@ -137,6 +141,9 @@ export const upgradeCommand = defineCommand({
       ...(args.force ? ['--force'] : []),
       ...(args.install === false ? ['--no-install'] : []),
       ...(args.vscode === true ? ['--vscode'] : args.vscode === false ? ['--no-vscode'] : []),
+      ...(args.data === true ? ['--data'] : []),
+      ...(args.auth === true ? ['--auth'] : []),
+      ...(args.i18n === true ? ['--i18n'] : []),
       '--no-self',
     ]
     if (await maybeSelfUpdate(reexecArgv, args.self as boolean | undefined)) return
@@ -180,6 +187,22 @@ export const upgradeCommand = defineCommand({
     }
     if (added.length || updated.length) {
       log(`\n  ${color.gray(`${unchanged} existing file(s) left untouched.`)}`)
+    }
+
+    // Offer any optional feature NOT already installed (never re-offers one that's
+    // present). A --data / --auth / --i18n flag adds it without prompting. Runs
+    // before the dep sync below so a new feature's deps get installed too.
+    for (const f of featureList()) {
+      if (f.detect(root)) continue
+      const flag = (args as Record<string, unknown>)[f.key] as boolean | undefined
+      const want =
+        flag !== undefined
+          ? flag
+          : await promptYesNo(
+              `\n  Add ${color.bold(f.title)}? ${color.gray(`— ${f.summary}`)}`,
+              false,
+            )
+      if (want) applyFeature(root, f.key, log)
     }
 
     // Bring @apex-stack/* deps to the latest PUBLISHED versions (registry-queried,

@@ -1,0 +1,56 @@
+<script server lang="ts">
+  import { handle } from '../db/index.js'
+
+  // Runs on the server: reads straight from the database, so the message list is
+  // real, indexable HTML before any JS loads. The data comes from the SAME model
+  // (models/Message.ts) that powers /api/messages and the messages_* MCP tools.
+  export async function loader() {
+    const messages = await handle.query(
+      'SELECT id, author, body, created_at FROM messages ORDER BY id DESC LIMIT 20',
+    )
+    return { messages }
+  }
+
+  export function head() {
+    return { title: 'Guestbook — apex-showcase' }
+  }
+</script>
+
+<template x-data="{
+    async submit(e) {
+      const f = new FormData(e.target)
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ author: f.get('author') || 'Anonymous', body: f.get('body') }),
+      })
+      location.reload()
+    }
+  }">
+  <section class="py-8">
+    <h1 class="font-title text-3xl font-extrabold tracking-tight text-on-surface-strong dark:text-on-surface-dark-strong">Guestbook</h1>
+    <p class="mt-2 max-w-2xl text-on-surface/80 dark:text-on-surface-dark/80">
+      A database-backed model in action. The list is server-rendered from
+      <code>models/Message.ts</code>; the form posts to <code>/api/messages</code>
+      — the very same route your AI can call as the <code>messages_create</code> MCP tool.
+    </p>
+
+    <ul class="mt-6 divide-y divide-outline dark:divide-outline-dark">
+      <template x-for="m in messages" :key="m.id">
+        <li class="flex gap-3 py-3">
+          <span class="grid size-9 flex-none place-items-center rounded-full bg-primary font-bold text-sm text-on-primary dark:bg-primary-dark dark:text-on-primary-dark" x-text="(m.author || '?').slice(0,1).toUpperCase()"></span>
+          <div>
+            <p class="text-on-surface-strong dark:text-on-surface-dark-strong" x-text="m.body"></p>
+            <p class="text-sm text-on-surface/70 dark:text-on-surface-dark/70"><strong x-text="m.author"></strong> · <span x-text="m.created_at"></span></p>
+          </div>
+        </li>
+      </template>
+    </ul>
+
+    <form class="mt-6 grid max-w-lg gap-3 rounded-radius border border-outline p-4 dark:border-outline-dark" @submit.prevent="submit($event)">
+      <input name="author" placeholder="Your name" class="rounded-radius border border-outline bg-transparent px-3 py-2 dark:border-outline-dark" />
+      <textarea name="body" placeholder="Say something…" required maxlength="280" class="rounded-radius border border-outline bg-transparent px-3 py-2 dark:border-outline-dark"></textarea>
+      <div><button type="submit" class="inline-flex items-center justify-center gap-2 rounded-radius border border-primary bg-primary px-4 py-2 text-sm font-medium text-on-primary transition hover:opacity-75 dark:border-primary-dark dark:bg-primary-dark dark:text-on-primary-dark">Sign the guestbook</button></div>
+    </form>
+  </section>
+</template>

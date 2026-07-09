@@ -3,8 +3,9 @@ import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSyn
 import { basename, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
+import { applyFeature, featureList } from '../features.js'
 import { banner, color, spinner } from '../ui.js'
-import { offerExtension } from '../vscode.js'
+import { offerExtension, promptYesNo } from '../vscode.js'
 
 const TEMPLATE_DIR = fileURLToPath(new URL('../templates/default', import.meta.url))
 
@@ -71,6 +72,9 @@ export const newCommand = defineCommand({
       type: 'boolean',
       description: 'Install the Apex VS Code extension (skip the interactive prompt)',
     },
+    data: { type: 'boolean', description: 'Include the data/models feature (skips the prompt)' },
+    auth: { type: 'boolean', description: 'Include the auth feature (skips the prompt)' },
+    i18n: { type: 'boolean', description: 'Include the i18n feature (skips the prompt)' },
   },
   async run({ args }) {
     const dir = String(args.dir)
@@ -90,6 +94,23 @@ export const newCommand = defineCommand({
     if (existsSync(gitignore)) renameSync(gitignore, join(target, '.gitignore'))
     substituteName(target, name)
     log(`  ${color.green('✓')} Created ${color.bold(dir)}`)
+
+    // Optional features — pick now (interactive), or add later with `apex extend <name>`.
+    // A --data / --auth / --i18n flag skips the prompt for that feature.
+    log(
+      `\n  ${color.bold('Optional features')} ${color.gray('(add later anytime with `apex extend <name>`)')}`,
+    )
+    for (const f of featureList()) {
+      const flag = (args as Record<string, unknown>)[f.key] as boolean | undefined
+      const want =
+        flag !== undefined
+          ? flag
+          : await promptYesNo(
+              `  Add ${color.bold(f.title)}? ${color.gray(`— ${f.summary}`)}`,
+              false,
+            )
+      if (want) applyFeature(target, f.key, log)
+    }
 
     const pm = detectPackageManager()
 
