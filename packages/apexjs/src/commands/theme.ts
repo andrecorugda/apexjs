@@ -50,7 +50,6 @@ export const themeCommand = defineCommand({
   },
   run({ args }) {
     const root = resolve(process.cwd(), String(args.root))
-    // biome-ignore lint/suspicious/noConsole: CLI output
     const log = console.log
     process.stdout.write(banner())
 

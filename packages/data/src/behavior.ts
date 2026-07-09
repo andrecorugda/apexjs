@@ -45,7 +45,6 @@ export interface BehaviorHooks {
 }
 
 /** Extra Drizzle WHERE conditions a behavior injects into every read/write. */
-// biome-ignore lint/suspicious/noExplicitAny: Drizzle table columns are dynamically keyed
 export type FilterFn = (args: { user: ApexUser | null; table: any }) => SQL | SQL[] | undefined
 
 /** A composable model trait. Author your own or use a built-in below. */

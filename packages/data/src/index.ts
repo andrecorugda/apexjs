@@ -297,7 +297,6 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
       try {
         await h[key]?.(ctx)
       } catch (e) {
-        // biome-ignore lint/suspicious/noConsole: surface a non-fatal after-hook failure
         console.warn(
           `[apex] ${key} failed (the ${ctx.op} already succeeded): ${(e as Error)?.message ?? e}`,
         )

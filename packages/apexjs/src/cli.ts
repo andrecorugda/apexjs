@@ -44,7 +44,6 @@ const main = defineCommand({
   run({ rawArgs }) {
     if (rawArgs.length > 0) return // a subcommand or --help was requested; let citty handle it
     process.stdout.write(banner())
-    // biome-ignore lint/suspicious/noConsole: CLI output
     const log = console.log
     log(
       `  ${color.bold('Usage')}  ${color.gray('apex')} ${color.cyan('<command>')} ${color.gray('[options]')}\n`,

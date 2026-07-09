@@ -532,24 +532,20 @@ export const makeCommand = defineCommand({
     for (const { path, contents } of artifacts) {
       mkdirSync(dirname(path), { recursive: true })
       writeFileSync(path, contents)
-      // biome-ignore lint/suspicious/noConsole: CLI output
       console.log(`  ${'\x1b[32m'}✓${'\x1b[0m'} ${path.replace(`${root}/`, '')}`)
     }
     if (kind === 'model') {
-      // biome-ignore lint/suspicious/noConsole: CLI output
       console.log(
         `\n  Next: install the data layer + a driver (\x1b[36mnpm i @apex-stack/data @libsql/client\x1b[0m), ` +
           `run \x1b[36mapex migrate\x1b[0m, then \x1b[36mapex dev\x1b[0m — REST at /api/${args.name} and MCP tools are live.\n`,
       )
     } else if (kind === 'auth') {
-      // biome-ignore lint/suspicious/noConsole: CLI output
       console.log(
         `\n  Next: set a 32+ char \x1b[36msessionPassword\x1b[0m in apex.config.ts runtimeConfig ` +
           `(or \x1b[36mAPEX_SESSION_PASSWORD\x1b[0m), then gate routes with \x1b[36mauth: true\x1b[0m / ` +
           `\x1b[36mcan\x1b[0m and resources with \x1b[36maccess\x1b[0m / \x1b[36mscope\x1b[0m.\n`,
       )
     } else {
-      // biome-ignore lint/suspicious/noConsole: CLI output
       console.log('')
     }
   },
