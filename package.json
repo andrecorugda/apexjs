@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "pnpm -r --filter \"./packages/*\" build",
+    "prepare": "pnpm -r --filter \"./packages/*\" build",
     "dev": "pnpm -r --parallel --filter \"./packages/*\" dev",
     "test": "vitest run",
     "test:watch": "vitest",

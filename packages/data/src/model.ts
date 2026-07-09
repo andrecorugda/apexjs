@@ -17,7 +17,7 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core'
 import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { type ZodRawShape, z } from 'zod'
+import { z } from 'zod'
 import { type Behavior, composeBehaviors } from './behavior.js'
 import {
   type AccessMap,
@@ -65,8 +65,8 @@ export interface ApexModel {
   name: string
   pk: string
   fields: Record<string, FieldDef>
-  /** Zod shape validating the create payload. */
-  insert: ZodRawShape
+  /** Zod shape validating the create payload (each field's schema exposes `.parse`). */
+  insert: Record<string, z.ZodTypeAny>
   /** Build the dialect-specific Drizzle table (lazy — the dialect is known at db time). */
   table(dialect: Dialect): unknown
   /** `CREATE TABLE IF NOT EXISTS` SQL for the dialect (the model's initial migration). */
