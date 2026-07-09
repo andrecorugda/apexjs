@@ -1,0 +1,27 @@
+{
+  "name": "apex-showcase",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "apex dev",
+    "dev:islands": "apex dev --islands",
+    "build": "apex build --server",
+    "build:static": "apex build",
+    "start": "apex start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@apex-stack/core": "workspace:*",
+    "alpinejs": "^3.14.8",
+    "@apex-stack/data": "workspace:*",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  }
+}

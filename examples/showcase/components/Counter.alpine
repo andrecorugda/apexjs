@@ -1,0 +1,10 @@
+<!-- A small interactive component, themed with Apex tokens. `start`/`label` are
+     props; the count lives in client state and updates on click (hydrated). -->
+<template x-data="{ count: Number(start) }">
+  <button
+    type="button"
+    class="inline-flex items-center gap-2 rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm font-medium text-on-surface transition hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark dark:focus-visible:outline-primary-dark"
+    @click="count++"
+    x-text="label + ': ' + count"
+  ></button>
+</template>

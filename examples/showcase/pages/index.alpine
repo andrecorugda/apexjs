@@ -1,0 +1,72 @@
+<script server lang="ts">
+  import { PostService } from '../services/PostService'
+
+  const posts = new PostService()
+
+  // Runs on the server. Its return value becomes the page's x-data — so the
+  // HTML is rendered from real data before a single byte of JS runs.
+  export function loader() {
+    return {
+      title: 'Welcome to apex-showcase',
+      tagline: 'A full-stack, server-rendered app built on Alpine.js — themed, typed, and AI-native.',
+      recent: posts.recent(3),
+    }
+  }
+</script>
+
+<template x-data>
+  <!-- Hero -->
+  <section class="flex flex-col items-center py-10 text-center sm:py-16">
+    <img src="/favicon.svg" alt="Apex JS" width="72" height="72" class="size-16 sm:size-20 drop-shadow" />
+    <p class="mt-5 inline-flex items-center gap-2 rounded-full border border-outline px-3 py-1 text-xs font-medium text-on-surface/80 dark:border-outline-dark dark:text-on-surface-dark/80">
+      Built with <span class="font-title font-bold text-on-surface-strong dark:text-on-surface-dark-strong">Apex&nbsp;JS</span>
+    </p>
+    <h1 class="mt-5 font-title text-4xl font-extrabold tracking-tight text-on-surface-strong sm:text-6xl dark:text-on-surface-dark-strong" x-text="title"></h1>
+    <p class="mx-auto mt-4 max-w-2xl text-lg" x-text="tagline"></p>
+    <div class="mt-7 flex flex-wrap justify-center gap-3">
+      <a href="/blog"><Button>Read the blog</Button></a>
+      <a href="https://apexjs.site" class="inline-flex items-center justify-center rounded-radius border border-outline px-4 py-2 text-sm font-medium text-on-surface transition hover:opacity-75 dark:border-outline-dark dark:text-on-surface-dark">Docs</a>
+    </div>
+  </section>
+
+  <!-- Feature cards -->
+  <section class="mt-6 grid gap-4 sm:grid-cols-3">
+    <Card>
+      <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">Server-rendered</h3>
+      <p class="text-sm">Every page is real HTML from a <code>loader()</code>, then hydrated by Alpine — fast and indexable.</p>
+    </Card>
+    <Card>
+      <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">Themed</h3>
+      <p class="text-sm">All components use theme tokens. Restyle the whole app with one <code>apex theme</code> command.</p>
+    </Card>
+    <Card>
+      <h3 class="font-title text-lg font-bold text-on-surface-strong dark:text-on-surface-dark-strong">AI-native</h3>
+      <p class="text-sm">Every typed API route is also an MCP tool your AI can call. See <code>server/api/posts.ts</code>.</p>
+    </Card>
+  </section>
+
+  <!-- Recent posts, from the loader -->
+  <section class="mt-10">
+    <h2 class="font-title text-xl font-bold text-on-surface-strong dark:text-on-surface-dark-strong">Recent posts</h2>
+    <ul class="mt-3 divide-y divide-outline dark:divide-outline-dark">
+      <template x-for="p in recent" :key="p.slug">
+        <li class="py-3">
+          <a :href="'/blog/' + p.slug" class="font-medium text-primary hover:opacity-75 dark:text-primary-dark" x-text="p.title"></a>
+          <p class="text-sm text-on-surface/80 dark:text-on-surface-dark/80" x-text="p.excerpt"></p>
+        </li>
+      </template>
+    </ul>
+  </section>
+
+  <!-- A hydrated, interactive island. `client:load` hydrates it immediately in
+       islands mode; in default mode the whole page hydrates anyway. -->
+  <section class="mt-10 flex flex-col items-start gap-3" x-data="{ show: false }" client:load>
+    <p class="text-sm text-on-surface/80 dark:text-on-surface-dark/80">Hydrated in the browser — click it:</p>
+    <Counter start="0" label="Clicks" />
+    <button type="button" class="text-sm text-primary hover:opacity-75 dark:text-primary-dark" @click="show = !show" x-text="show ? 'Hide details' : 'How does this work?'"></button>
+    <p x-show="show" x-transition class="max-w-2xl text-sm text-on-surface/80 dark:text-on-surface-dark/80">
+      This page is <code>pages/index.alpine</code>, wrapped in <code>layouts/default.alpine</code>.
+      The server ran <code>loader()</code>, rendered the HTML, and Alpine took over in the browser — the counter and this toggle are proof.
+    </p>
+  </section>
+</template>
