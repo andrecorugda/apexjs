@@ -29,7 +29,7 @@ function parseFrames(stack: string, root: string): Frame[] {
     /^\s*at\s+(?:(.*?)\s+\()?(?:file:\/\/\/?)?((?:[A-Za-z]:[\\/]|\/)[^\s():]+):(\d+):(\d+)\)?\s*$/
   for (const line of stack.split('\n')) {
     const m = line.match(re)
-    if (!m || !m[2]) continue
+    if (!m?.[2]) continue
     const file = m[2].replace(/[\\/]/g, sep)
     if (!existsSync(file)) continue
     frames.push({

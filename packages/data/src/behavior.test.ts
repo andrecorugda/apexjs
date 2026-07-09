@@ -1,3 +1,4 @@
+import type { ApexResource } from '@apex-stack/core'
 import { describe, expect, it } from 'vitest'
 import {
   auditable,
@@ -12,8 +13,9 @@ import { createDb } from './index.js'
 import { defineModel } from './model.js'
 
 type Handler = (ctx: { input?: unknown; user?: unknown }) => Promise<unknown>
-function ops(resource: { routes: Array<{ mcpName: string; route: { handler: Handler } }> }) {
-  const h = (op: string) => resource.routes.find((r) => r.mcpName.endsWith(`_${op}`))?.route.handler
+function ops(resource: ApexResource) {
+  const h = (op: string) =>
+    resource.routes.find((r) => r.mcpName.endsWith(`_${op}`))?.route.handler as Handler
   return {
     list: h('list'),
     get: h('get'),

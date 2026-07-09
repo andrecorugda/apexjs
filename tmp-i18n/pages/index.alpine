@@ -1,8 +1,0 @@
-<script server lang="ts">
-export function loader({ locals }) {
-  return { greeting: (locals.t)('hi', { name: 'Ada' }), lang: locals.locale }
-}
-</script>
-<template x-data>
-  <main><h1 x-text="greeting"></h1><p x-text="lang"></p></main>
-</template>

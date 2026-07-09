@@ -1,0 +1,13 @@
+<!--
+  pages/loading.alpine — the client-side navigation loading boundary.
+
+  Apex renders this once and shows it in the page region during a navigation that
+  takes longer than a moment (e.g. a slow loader). It's plain, presentational
+  HTML — no loader, no interactivity needed.
+-->
+<template x-data>
+  <div class="flex flex-col items-center justify-center gap-3 py-24 text-center">
+    <div class="size-8 animate-spin rounded-full border-2 border-outline border-t-primary dark:border-outline-dark dark:border-t-primary-dark"></div>
+    <p class="text-sm text-on-surface/70 dark:text-on-surface-dark/70">Loading…</p>
+  </div>
+</template>

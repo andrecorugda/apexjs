@@ -1,0 +1,29 @@
+<script server lang="ts">
+  export function loader() {
+    return {}
+  }
+
+  // SEO for this page — server-rendered <title> + meta description.
+  export function head() {
+    return {
+      title: 'About · apex-showcase',
+      meta: [{ name: 'description', content: 'What this Apex JS starter demonstrates.' }],
+    }
+  }
+</script>
+
+<template x-data>
+  <h1 class="font-title text-3xl font-extrabold text-on-surface-strong dark:text-on-surface-dark-strong">About this starter</h1>
+  <p class="mt-3 max-w-2xl">This app was scaffolded with <code>create-apexjs</code>. It's a small tour of what Apex gives you out of the box:</p>
+
+  <ul class="mt-6 grid gap-3 sm:grid-cols-2">
+    <li><Card><b class="text-on-surface-strong dark:text-on-surface-dark-strong">File routing</b><span class="text-sm">Pages, dynamic <code>[slug]</code>, and a shared layout — see <code>pages/</code>.</span></Card></li>
+    <li><Card><b class="text-on-surface-strong dark:text-on-surface-dark-strong">SSR + hydration</b><span class="text-sm">Loaders render real HTML; Alpine hydrates it with no flash.</span></Card></li>
+    <li><Card><b class="text-on-surface-strong dark:text-on-surface-dark-strong">Themed components</b><span class="text-sm">Add more with <code>apex add &lt;name&gt;</code>; restyle with <code>apex theme</code>.</span></Card></li>
+    <li><Card><b class="text-on-surface-strong dark:text-on-surface-dark-strong">AI-native API</b><span class="text-sm">Routes double as MCP tools at <code>/mcp</code>.</span></Card></li>
+  </ul>
+
+  <p class="mt-8 text-sm text-on-surface/80 dark:text-on-surface-dark/80">
+    Edit any file under <code>pages/</code>, <code>components/</code>, or <code>app.css</code> and save — the dev server updates instantly.
+  </p>
+</template>

@@ -1,0 +1,5 @@
+{
+  "greeting": "Bonjour depuis Apex !",
+  "intro": "Ce paragraphe a été traduit sur le serveur, avant l’exécution du moindre JavaScript. Passez à /hello pour l’anglais — le préfixe /<locale> (ou l’en-tête Accept-Language) choisit le catalogue.",
+  "nav": { "home": "Accueil", "guestbook": "Livre d’or", "account": "Compte", "hello": "i18n" }
+}

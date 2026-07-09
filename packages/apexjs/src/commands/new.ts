@@ -78,11 +78,9 @@ export const newCommand = defineCommand({
     const name = basename(target)
 
     process.stdout.write(banner())
-    // biome-ignore lint/suspicious/noConsole: CLI output
     const log = console.log
 
     if (existsSync(target) && readdirSync(target).length > 0) {
-      // biome-ignore lint/suspicious/noConsole: CLI output
       console.error(`  ${color.red('✗')} Target directory is not empty: ${target}\n`)
       process.exit(1)
     }

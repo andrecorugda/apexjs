@@ -1,0 +1,13 @@
+{
+  "name": "apex-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "End-to-end tests: boots examples/showcase with the workspace CLI and drives it with Playwright.",
+  "scripts": {
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
+  }
+}

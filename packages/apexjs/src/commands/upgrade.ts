@@ -122,10 +122,8 @@ export const upgradeCommand = defineCommand({
   },
   async run({ args }) {
     const root = resolve(process.cwd(), String(args.root))
-    // biome-ignore lint/suspicious/noConsole: CLI output
     const log = console.log
     if (!existsSync(join(root, 'package.json'))) {
-      // biome-ignore lint/suspicious/noConsole: CLI output
       console.error(`\n  ${color.red('✗')} No package.json in ${root} — is this an Apex project?\n`)
       process.exit(1)
     }

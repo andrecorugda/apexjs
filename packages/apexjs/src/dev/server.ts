@@ -186,7 +186,6 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           defaultLocale: i18nCfg.defaultLocale,
           // Dev-only: surface missing keys so typos are caught (prod stays silent).
           onMissingKey: (key) =>
-            // biome-ignore lint/suspicious/noConsole: dev diagnostic
             console.warn(`  ⚠ [i18n] missing key "${key}" for locale "${locale}"`),
         }).t
       }

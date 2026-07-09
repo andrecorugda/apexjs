@@ -41,13 +41,11 @@ export const addCommand = defineCommand({
   },
   run({ args }) {
     const registry = loadRegistry()
-    // biome-ignore lint/suspicious/noConsole: CLI output
     const log = console.log
     process.stdout.write(banner())
 
     const keys = Object.keys(registry)
     if (!keys.length) {
-      // biome-ignore lint/suspicious/noConsole: CLI output
       console.error(`  ${color.red('✗')} No component registry bundled in this build.\n`)
       process.exit(1)
     }
@@ -78,7 +76,6 @@ export const addCommand = defineCommand({
 
     const unknown = requested.filter((k) => !registry[k])
     if (unknown.length) {
-      // biome-ignore lint/suspicious/noConsole: CLI output
       console.error(
         `  ${color.red('✗')} Unknown component(s): ${unknown.join(', ')}. Run ${color.cyan('apex add')} to list.\n`,
       )

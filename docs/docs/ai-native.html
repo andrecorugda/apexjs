@@ -230,12 +230,13 @@ apex mcp --url http://localhost:4000/mcp</code></pre>
         <li><strong>The schema is the enabler.</strong> The Zod shape is used for REST validation and the MCP <code>inputSchema</code> — one source of truth.</li>
         <li><strong>Opt-in &amp; safe.</strong> MCP exposure is per-route (<code>mcp: true</code>). Free-form handlers without a schema aren't auto-exposed, by design.</li>
         <li><strong>Stateless.</strong> The <code>/mcp</code> transport runs in stateless JSON mode — a fresh server per request.</li>
+        <li><strong>Access-filtered.</strong> A route's <code>auth</code>/<code>can</code> gate applies to its MCP tool too — tools the caller can't reach are omitted from <code>tools/list</code> and refused on call, so the AI surface is scoped exactly like REST.</li>
       </ul>
       <div class="callout">
         <span class="h">On the roadmap</span>
         <p>
-          Route-level auth/permission scopes for tools, <code>outputSchema</code> → MCP structured
-          content, and extracting the MCP server into its own package to keep core lean.
+          <code>outputSchema</code> → MCP structured content, and extracting the MCP server into its
+          own package to keep core lean.
         </p>
       </div>
 

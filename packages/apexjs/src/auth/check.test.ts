@@ -59,7 +59,9 @@ describe('checkRouteAccess', () => {
   })
 
   it('still omits at list time when a pure role check returns false', async () => {
-    const gate: RouteGate = { can: ({ user }) => (user?.roles as string[]).includes('admin') }
+    const gate: RouteGate = {
+      can: ({ user }) => ((user?.roles ?? []) as string[]).includes('admin'),
+    }
     const d = await checkRouteAccess(gate, user, undefined, { listTime: true })
     expect(d.ok).toBe(false)
   })

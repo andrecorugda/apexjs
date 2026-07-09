@@ -1,5 +1,16 @@
 # @apex-stack/data
 
+## 0.7.4
+
+### Patch Changes
+
+- `ApexModel.insert` is now typed `Record<string, ZodTypeAny>` (public Zod type)
+  instead of `ZodRawShape`, so each field schema exposes `.parse()` for validation
+  and tests under Zod v4.
+- Updated dependencies [af459fa]
+- Updated dependencies
+  - @apex-stack/core@0.17.1
+
 ## 0.7.3
 
 ### Patch Changes

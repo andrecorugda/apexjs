@@ -128,14 +128,12 @@ export const buildCommand = defineCommand({
         const dest = join(outDir, outFile(route.pattern))
         mkdirSync(dirname(dest), { recursive: true })
         writeFileSync(dest, html)
-        // biome-ignore lint/suspicious/noConsole: CLI output
         console.log(`  ✓ ${route.pattern}  →  ${outFile(route.pattern)}`)
       }
 
       const pub = join(root, 'public')
       if (existsSync(pub)) cpSync(pub, outDir, { recursive: true })
 
-      // biome-ignore lint/suspicious/noConsole: CLI output
       console.log(
         `\n  Built ${staticRoutes.length} page(s) → ${args.outDir}/${args.islands ? ' (islands / static-first)' : ' (prerendered + hydrated)'}`,
       )
@@ -265,7 +263,6 @@ async function buildServerTarget(
   const pub = join(root, 'public')
   if (existsSync(pub)) cpSync(pub, outDir, { recursive: true })
 
-  // biome-ignore lint/suspicious/noConsole: CLI output
   console.log(
     `\n  Built server target → ${outLabel}/  (${routes.length} route(s), ${api.length} API module(s))\n  Run it:  apex start\n`,
   )

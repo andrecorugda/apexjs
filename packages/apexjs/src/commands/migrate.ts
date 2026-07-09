@@ -54,7 +54,6 @@ export const migrateCommand = defineCommand({
           : resolve(root, args.db)
     const handle = await data.createDb(config)
     const dir = resolve(root, args.dir)
-    // biome-ignore lint/suspicious/noConsole: CLI output
     const log = console.log
 
     if (args.rollback) {

@@ -1,0 +1,38 @@
+<script server lang="ts">
+  import { PostService } from '../../services/PostService'
+
+  const posts = new PostService()
+
+  // Dynamic route: pages/blog/[slug].alpine → /blog/:slug. The matched param
+  // arrives in loader({ params }).
+  export function loader({ params }: { params: Record<string, string> }) {
+    const post = posts.bySlug(params.slug)
+    return { post: post ?? null }
+  }
+
+  export function head({ data }: { data: { post: { title: string } | null } }) {
+    return { title: `${data.post ? data.post.title : 'Not found'} · apex-showcase` }
+  }
+</script>
+
+<template x-data>
+  <a href="/blog" class="text-sm text-primary hover:opacity-75 dark:text-primary-dark">← Back to blog</a>
+
+  <template x-if="post">
+    <article class="mt-4">
+      <div class="flex items-center gap-2 text-sm text-on-surface/70 dark:text-on-surface-dark/70">
+        <Badge><span x-text="post.author"></span></Badge>
+        <span x-text="post.date"></span>
+      </div>
+      <h1 class="mt-3 font-title text-3xl font-extrabold text-on-surface-strong dark:text-on-surface-dark-strong" x-text="post.title"></h1>
+      <p class="mt-4 text-lg leading-relaxed" x-text="post.body"></p>
+    </article>
+  </template>
+
+  <template x-if="!post">
+    <div class="mt-8">
+      <h1 class="font-title text-2xl font-bold text-on-surface-strong dark:text-on-surface-dark-strong">Post not found</h1>
+      <p class="mt-2 text-on-surface/80 dark:text-on-surface-dark/80">That post doesn't exist. Try the <a href="/blog" class="text-primary dark:text-primary-dark">blog index</a>.</p>
+    </div>
+  </template>
+</template>

@@ -124,11 +124,12 @@
         tool call — <code>null</code> means anonymous. Return whatever shape you like.
       </p>
       <p class="code-label">server/auth.ts</p>
-      <pre><code><span class="k">import</span> { sessionAuth } <span class="k">from</span> <span class="s">'@apex-stack/core/server'</span>
+      <pre><code><span class="k">import</span> { useRuntimeConfig } <span class="k">from</span> <span class="s">'@apex-stack/core'</span>
+<span class="k">import</span> { sessionAuth } <span class="k">from</span> <span class="s">'@apex-stack/core/server'</span>
 
 <span class="c">// Reads the sealed session cookie written by /api/login. Or write your own</span>
 <span class="c">// defineAuth({ resolve }) to read a JWT / header / adapter session.</span>
-<span class="k">export default</span> sessionAuth({ password: process.env.APEX_SESSION_PASSWORD! })</code></pre>
+<span class="k">export default</span> sessionAuth({ password: String(useRuntimeConfig().sessionPassword) })</code></pre>
 
       <h2 id="routes">Gate a route <a class="anchor" href="#routes">#</a></h2>
       <p>
@@ -183,7 +184,7 @@
         it to the session helpers. Anonymous requests get <em>no</em> cookie.
       </p>
       <p class="code-label">server/api/login.ts</p>
-      <pre><code><span class="k">import</span> { defineApexRoute } <span class="k">from</span> <span class="s">'@apex-stack/core'</span>
+      <pre><code><span class="k">import</span> { defineApexRoute, useRuntimeConfig } <span class="k">from</span> <span class="s">'@apex-stack/core'</span>
 <span class="k">import</span> { login, setStatus } <span class="k">from</span> <span class="s">'@apex-stack/core/server'</span>
 <span class="k">import</span> { z } <span class="k">from</span> <span class="s">'zod'</span>
 
@@ -193,7 +194,7 @@
   handler: <span class="k">async</span> ({ input, event }) => {
     <span class="k">const</span> user = <span class="k">await</span> verify(input)          <span class="c">// your credential check → user | null</span>
     <span class="k">if</span> (!user) { setStatus(event, <span class="s">401</span>); <span class="k">return</span> { error: <span class="s">'Invalid credentials'</span> } }
-    <span class="k">await</span> login(event, { user }, { password: process.env.APEX_SESSION_PASSWORD! })
+    <span class="k">await</span> login(event, { user }, { password: String(useRuntimeConfig().sessionPassword) })
     <span class="k">return</span> { ok: <span class="k">true</span> }
   },
 })</code></pre>

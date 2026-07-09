@@ -16,7 +16,6 @@ export const startCommand = defineCommand({
       process.exit(1)
     }
     const { port } = await startProdServer({ dir, port: Number(args.port) })
-    // biome-ignore lint/suspicious/noConsole: CLI output
     console.log(`\n  \x1b[36mApex JS\x1b[0m production server\n  → http://localhost:${port}\n`)
   },
 })

@@ -16,7 +16,6 @@ export const testCommand = defineCommand({
       shell: win,
     })
     child.on('error', () => {
-      // biome-ignore lint/suspicious/noConsole: CLI output
       console.error('\n  Vitest not found. Install it: npm i -D vitest\n')
       process.exit(1)
     })
