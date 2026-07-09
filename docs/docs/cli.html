@@ -97,6 +97,7 @@
               <li><a href="#upgrade">apex upgrade</a></li>
               <li><a href="#make">apex make</a></li>
               <li><a href="#add">apex add</a></li>
+              <li><a href="#extend">apex extend</a></li>
               <li><a href="#theme">apex theme</a></li>
               <li><a href="#migrate">apex migrate</a></li>
               <li><a href="#mcp">apex mcp</a></li>
@@ -126,6 +127,7 @@
             <tr><td><a href="#start"><code>apex start</code></a></td><td>Run a production build made with <code>apex build --server</code>.</td></tr>
             <tr><td><a href="#make"><code>apex make</code></a></td><td>Generate a page, component, API route, store, layout, service, test, middleware, model, migration, or auth.</td></tr>
             <tr><td><a href="#add"><code>apex add</code></a></td><td>Copy a themeable UI-kit component into your project.</td></tr>
+            <tr><td><a href="#extend"><code>apex extend</code></a></td><td>Add an optional feature (data, auth, i18n) — files + wiring.</td></tr>
             <tr><td><a href="#theme"><code>apex theme</code></a></td><td>Write/update your theme tokens (colors, radius, fonts) in your CSS.</td></tr>
             <tr><td><a href="#upgrade"><code>apex upgrade</code></a></td><td>Update the CLI, project deps, scaffold files, and the .alpine extension — one command.</td></tr>
             <tr><td><a href="#migrate"><code>apex migrate</code></a></td><td>Apply pending SQL migrations (or roll back).</td></tr>
@@ -136,8 +138,8 @@
       </div>
 
       <h2 id="new">apex new <a class="anchor" href="#new">#</a></h2>
-      <p>Scaffold a new Apex JS app in a new directory — then install dependencies and initialize a git repo.</p>
-      <pre><code>apex new [dir] [--no-install] [--no-git] [--no-vscode]</code></pre>
+      <p>Scaffold a new Apex JS app in a new directory — then install dependencies and initialize a git repo. You're also asked, interactively, whether to include each optional feature (<a href="#extend">data, auth, i18n</a>); answer no to any for the lean starter, or add them later with <a href="#extend"><code>apex extend</code></a>.</p>
+      <pre><code>apex new [dir] [--no-install] [--no-git] [--no-vscode] [--data] [--auth] [--i18n]</code></pre>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
@@ -146,6 +148,7 @@
             <tr><td><code>--no-install</code></td><td>installs</td><td>Skip installing dependencies.</td></tr>
             <tr><td><code>--no-git</code></td><td>inits git</td><td>Skip initializing a git repository.</td></tr>
             <tr><td><code>--no-vscode</code></td><td>prompts</td><td>Skip the offer to install the <code>.alpine</code> VS Code extension.</td></tr>
+            <tr><td><code>--data</code> / <code>--auth</code> / <code>--i18n</code></td><td>prompts</td><td>Include that <a href="#extend">feature</a> without prompting (great for scripts/CI).</td></tr>
           </tbody>
         </table>
       </div>
@@ -209,7 +212,9 @@ apex build --server   <span class="c"># deployable Node server target</span></co
         Bring an existing app up to date — non-destructively. One command handles the whole chain: it
         updates the global CLI if a newer one is published (then re-runs on it), bumps your
         <code>@apex-stack/*</code> dependencies and installs them, adds any new scaffold files (never
-        overwriting yours), and updates the <code>.alpine</code> editor extension.
+        overwriting yours), and updates the <code>.alpine</code> editor extension. It also offers any
+        <a href="#extend">optional feature</a> you don't already have — features already installed are never
+        re-offered.
       </p>
       <pre><code>apex upgrade [root] [--force] [--no-install] [--no-self]</code></pre>
       <div class="table-scroll">
@@ -283,6 +288,24 @@ apex make auth</code></pre>
       <pre><code>apex add                 <span class="c"># list available components</span>
 apex add button card
 apex add --all</code></pre>
+
+      <h2 id="extend">apex extend <a class="anchor" href="#extend">#</a></h2>
+      <p>Add an optional <em>feature</em> to an existing app. Unlike <a href="#add"><code>apex add</code></a> (which copies a UI component), <code>extend</code> installs a whole capability — its files plus the wiring: dependencies, <code>apex.config.ts</code> edits, <code>.env</code> keys, and nav links. It's idempotent: a feature already present is skipped. These are the same features <a href="#new"><code>apex new</code></a> offers interactively, and that <a href="#upgrade"><code>apex upgrade</code></a> offers for anything not yet installed.</p>
+      <pre><code>apex extend [name…] [--root &lt;dir&gt;]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Feature</th><th>What it adds</th></tr></thead>
+          <tbody>
+            <tr><td><code>data</code></td><td>A <code>defineModel</code> (SQLite/libSQL) → migrations + REST &amp; MCP CRUD, with a live <code>/guestbook</code> page. Adds <code>@apex-stack/data</code> + a driver.</td></tr>
+            <tr><td><code>auth</code></td><td>Sealed-cookie sessions (<code>server/auth.ts</code>) with login/logout, a gated <code>/api/whoami</code>, and an <code>/account</code> page. Adds a <code>sessionPassword</code> to your config.</td></tr>
+            <tr><td><code>i18n</code></td><td>Server-side translation from <code>locales/*.json</code> (a <code>/fr</code> path prefix selects the catalog), with a <code>/hello</code> demo.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>apex extend              <span class="c"># list available features</span>
+apex extend data         <span class="c"># add the data/models feature</span>
+apex extend auth i18n    <span class="c"># add several at once</span></code></pre>
+      <p class="muted">After adding a feature, run <code>npm install</code> (for any new deps) and restart the dev server.</p>
 
       <h2 id="theme">apex theme <a class="anchor" href="#theme">#</a></h2>
       <p>Write or update your theme tokens (colors, radius, fonts) in a managed block of your <code>app.css</code>. With no flags it (re)writes the default tokens.</p>

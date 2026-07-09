@@ -1,0 +1,24 @@
+<script server lang="ts">
+  // locals.t and locals.locale are injected by the i18n runtime once i18n is
+  // declared in apex.config.ts. Translation happens on the server, so the HTML
+  // arrives already localized — great for SEO.
+  export function loader({ locals }: { locals: Record<string, unknown> }) {
+    const t = locals.t as (k: string, p?: Record<string, unknown>) => string
+    return { greeting: t('greeting'), intro: t('intro'), locale: locals.locale as string }
+  }
+  export function head({ data }: { data: { greeting: string } }) {
+    return { title: data.greeting }
+  }
+</script>
+
+<template x-data>
+  <section class="py-8">
+    <p class="text-sm text-on-surface/70 dark:text-on-surface-dark/70">active locale: <strong x-text="locale"></strong></p>
+    <h1 class="mt-2 font-title text-3xl font-extrabold tracking-tight text-on-surface-strong dark:text-on-surface-dark-strong" x-text="greeting"></h1>
+    <p class="mt-3 max-w-2xl text-on-surface/80 dark:text-on-surface-dark/80" x-text="intro"></p>
+    <div class="mt-5 flex gap-3">
+      <a href="/hello" class="text-primary hover:opacity-75 dark:text-primary-dark">English</a>
+      <a href="/fr/hello" class="text-primary hover:opacity-75 dark:text-primary-dark">Français</a>
+    </div>
+  </section>
+</template>

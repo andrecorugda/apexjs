@@ -134,6 +134,18 @@ apex dev</code></pre>
           or <code>npx apex dev</code>. A bare <code>apex</code> only resolves once it's installed globally.
         </p>
       </div>
+      <div class="callout">
+        <span class="h">Optional features</span>
+        <p>
+          During <code>apex new</code>, Apex asks whether to include optional features —
+          <strong>Data &amp; models</strong>, <strong>Auth</strong>, and <strong>i18n</strong> (each with a
+          one-line explanation). They're completely optional: answer no to any and you get the lean starter
+          below. Add them later at any time with
+          <a href="./cli.html#extend"><code>apex extend &lt;feature&gt;</code></a>, which copies the files and
+          wires up dependencies, <code>apex.config.ts</code>, and the nav for you — see the
+          <a href="./cli.html#extend">CLI reference</a>.
+        </p>
+      </div>
       <figure>
         <img src="../assets/app-hello.png?v=20260709" loading="lazy"
              alt="An Apex JS app in the browser: a welcome hero and a grid of feature cards (SSR, data, auth, i18n)." />
