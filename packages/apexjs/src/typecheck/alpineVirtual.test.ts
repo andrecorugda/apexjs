@@ -45,6 +45,17 @@ describe('virtualFilesForAlpine', () => {
   it('emits nothing for a template-only component', () => {
     expect(virtualFilesForAlpine('<template x-data></template>', '/a/b.alpine')).toEqual([])
   })
+
+  it('normalizes Windows backslash paths to POSIX (TS host queries forward slashes)', () => {
+    // Regression: a backslash-keyed virtual map misses TS's forward-slash lookups on
+    // Windows, silently skipping every .alpine file. Emitted paths must be POSIX.
+    const win = virtualFilesForAlpine(SFC, 'C:\\app\\pages\\index.alpine')
+    expect(win.map((f) => f.path)).toEqual([
+      'C:/app/pages/index.alpine.server.ts',
+      'C:/app/pages/index.alpine.client.ts',
+    ])
+    for (const f of win) expect(f.path).not.toContain('\\')
+  })
 })
 
 describe('virtualToAlpine', () => {

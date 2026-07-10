@@ -1,5 +1,20 @@
 # @apex-stack/core
 
+## 0.27.1
+
+### Patch Changes
+
+- fix(check --alpine): normalize paths to POSIX so it works on Windows
+
+  `apex check --alpine` built its virtual-file map keyed on `path.join` output
+  (backslashes on Windows), but TypeScript's compiler host normalizes paths to
+  forward slashes before calling it — so every `.alpine` virtual file was silently
+  skipped on Windows, and the command reported "No type errors" no matter what. Now
+  the virtual paths are POSIX-normalized at generation and the host lookups normalize
+  too, so the check works cross-platform. Added a regression test for the path
+  normalization (the bug was invisible to Linux CI). Thanks to the Windows verifier
+  who root-caused it.
+
 ## 0.27.0
 
 ### Minor Changes

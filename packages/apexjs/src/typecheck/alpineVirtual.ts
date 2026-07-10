@@ -51,7 +51,11 @@ export function virtualFilesForAlpine(source: string, absPath: string): VirtualF
   for (const [block, suffix] of blocks) {
     if (!block) continue
     const [start, end] = contentRange(source, block)
-    out.push({ path: `${absPath}.${suffix}.ts`, content: keepOnly(source, start, end) })
+    // POSIX separators: TypeScript normalizes paths to forward slashes internally,
+    // so the virtual-file map must key on forward slashes or the host lookup misses
+    // on Windows (backslashes) — silently skipping every .alpine file.
+    const path = `${absPath}.${suffix}.ts`.replace(/\\/g, '/')
+    out.push({ path, content: keepOnly(source, start, end) })
   }
   return out
 }
