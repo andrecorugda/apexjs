@@ -1,0 +1,118 @@
+# Apex JS — Public API & Stability Contract
+
+This is the promise. Everything listed here is **public**; anything not listed is
+**internal** and may change without notice. The goal of this document is the road
+to **1.0**: a surface people can build on without it breaking under them.
+
+## Stability levels
+
+| Level | Meaning | Change policy |
+|---|---|---|
+| 🟢 **Stable** | Battle-tested; treated as a contract. | No breaking change without a deprecation notice first (see policy below). |
+| 🟡 **Experimental** | Works, but the shape may still change. | May change in any minor — the changeset will say so. Don't build load-bearing code on it yet. |
+
+Everything **not in this file is internal** — import it and you're on your own.
+
+## Deprecation policy
+
+- **Post-1.0:** semver, strictly. No breaking change to a 🟢 Stable API in a minor
+  or patch — breaking changes wait for a major.
+- **Pre-1.0 (now):** a 🟢 Stable API is **never** removed/changed without (1) a
+  `@deprecated` JSDoc tag naming the replacement, (2) an entry in the changeset,
+  and (3) **at least two minor releases** of overlap before removal. 🟡 Experimental
+  APIs may change in any minor, always noted in the changeset.
+- **Graduation:** new surface lands as 🟡 Experimental. It becomes 🟢 Stable after
+  ≥2 minors unchanged **and** at least one real app using it.
+- **Golden rule:** if it's not deliberate + deprecated-first, it doesn't ship. A
+  framework that hasn't broken you in months *feels* 1.0; one that breaks weekly
+  never earns it.
+
+---
+
+## `@apex-stack/core` — app authoring (client-safe)
+
+| Export | Status |
+|---|---|
+| `defineApexRoute` | 🟢 Stable |
+| `defineConfig`, `env`, `useRuntimeConfig` | 🟢 Stable |
+| `defineStore`, `isApexStore` | 🟢 Stable |
+| `defineMiddleware` | 🟢 Stable |
+| `defineAuth` | 🟢 Stable |
+| `isApexResource` | 🟢 Stable |
+| Types: `ApexConfig`, `RuntimeConfig`, `ApexUser`, `AuthConfig`, `AuthResolveContext`, `RouteGate`, `ApexResource`, `ResourceRoute`, `Middleware*`, `ApexStore`, `StoreState` | 🟢 Stable |
+| `createI18n`, `resolveLocale` | 🟡 Experimental (the **config-based** i18n — `apex.config.i18n` + `locals.t` — is 🟢 Stable; these imperative helpers may change) |
+
+## `@apex-stack/core/server` — server-only
+
+| Export | Status |
+|---|---|
+| `sessionAuth`, `login`, `logout`, `getSession` | 🟢 Stable |
+| `defineAuth`, `setStatus` | 🟢 Stable |
+| `checkCsrf`, `isCsrfSafe`, `applySecurityHeaders`, `securityHeaders` | 🟢 Stable |
+| `createRateLimiter`, `rateLimitKey` | 🟡 Experimental |
+| `createProdApp`, `createProdNodeHandler`, `createProdWebHandler`, `startProdServer` | 🟡 Experimental (serverless building blocks — new; shape may evolve) |
+| Types: `SessionOptions` | 🟢 Stable · `RateLimiter`, `RateLimitOptions` | 🟡 Experimental |
+
+## `@apex-stack/core/client` — browser runtime
+
+| Export | Status |
+|---|---|
+| `registerApexComponent`, `installNav`, `createAction` | 🟢 Stable |
+| Types: `NavOptions`, `ActionOptions`, `ActionState` | 🟢 Stable |
+
+## `@apex-stack/core/testing`
+
+| Export | Status |
+|---|---|
+| `createTestApp` | 🟢 Stable |
+| Types: `TestApp`, `TestResponse`, `CallOptions`, `CreateTestAppOptions` | 🟢 Stable |
+
+## `@apex-stack/data`
+
+| Export | Status |
+|---|---|
+| `defineModel` (+ `DefineModelOptions`, `ApexModel`, `FieldType`, `FieldDef`, `Field`, `Fields`) | 🟢 Stable |
+| `defineResource` (+ `DefineResourceOptions`, `ResourceOp`, `AccessRule`, `AccessMap`, `ScopeFn`) | 🟢 Stable |
+| `createDb` (+ `CreateDbConfig`, `ApexDbHandle`, `Dialect`) | 🟢 Stable |
+| `applyMigrations`, `rollbackMigrations` | 🟢 Stable |
+| `timestamps`, `owned`, `softDeletes`, `composeBehaviors` (+ `Behavior`, `BehaviorHooks`, `HookCtx`, `FilterFn`) | 🟢 Stable |
+| `auditable`, `observable` | 🟡 Experimental (hook shape not yet frozen) |
+| `factory` (+ `Factory`, `FactoryOptions`) | 🟢 Stable |
+| `postgresOptions`, `PostgresConnectOptions` | 🟡 Experimental (new) |
+| `parseMigration` | 🟡 Experimental (low-level) |
+
+---
+
+## CLI — `apex <command>`
+
+The command names + documented flags are part of the contract.
+
+| Command | Status |
+|---|---|
+| `dev`, `build`, `start`, `new`, `make`, `add`, `migrate`, `theme`, `upgrade`, `test`, `mcp` | 🟢 Stable |
+| `extend <feature>` | 🟡 Experimental (feature recipes — new) |
+| `build --preset <vercel\|netlify\|docker>` | 🟡 Experimental (deploy presets — new; `vercel`/`docker` proven, `netlify` handler-verified) |
+
+## Conventions — the "invisible API" (🟢 Stable)
+
+These are contracts too — changing them breaks apps silently:
+
+- **`apex.config.ts`**: `runtimeConfig` (+ `public`), `i18n: { defaultLocale, locales }`.
+- **File routing**: `pages/**/*.alpine`; `[param]` dynamic segments; `index.alpine` → parent path.
+- **`.alpine` SFC**: `<script server>` (`loader()` / `head()`), `<script client>`, `<template>`, `<style scoped>`.
+- **Islands**: `client:load` / `client:visible` / `client:idle`.
+- **Server**: `server/api/*.ts` default-exports a route or resource; `server/auth.ts` default-exports an `AuthConfig`; `middleware/*.ts`.
+- **Data**: `models/*.ts`, `db/migrations/*.sql`, `locales/*.json`.
+
+---
+
+## Not public (internal — no guarantees)
+
+`@apex-stack/kit`, `@apex-stack/vite`, `@apex-stack/theme`, `@apex-stack/components`
+are **implementation packages**. Use them only via `@apex-stack/core` / the `apex`
+CLI. Deep imports (`@apex-stack/core/dist/...`, any un-listed path) are internal.
+
+---
+
+*Toward 1.0: keep the 🟢 set from breaking, graduate 🟡 → 🟢 only after it's proven,
+and never break either without deprecating first.*

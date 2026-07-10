@@ -8,14 +8,14 @@
   <meta property="og:type" content="article" />
   <meta property="og:url" content="https://apexjs.site/docs/ai-native.html" />
   <meta property="og:title" content="AI-native APIs — Apex JS" />
-  <meta property="og:description" content="defineApexRoute serves REST and an MCP tool from one definition. The /mcp endpoint, the apex mcp inspector, and pointing Claude at your API." />
+  <meta property="og:description" content="defineApexRoute serves REST and an MCP tool from one definition — and apex mcp-server lets an AI agent build your app by calling the Apex CLI as tools." />
   <meta property="og:image" content="https://apexjs.site/assets/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="AI-native APIs — Apex JS" />
-  <meta name="twitter:description" content="defineApexRoute serves REST and an MCP tool from one definition. The /mcp endpoint, the apex mcp inspector, and pointing Claude at your API." />
+  <meta name="twitter:description" content="defineApexRoute serves REST and an MCP tool from one definition — and apex mcp-server lets an AI agent build your app by calling the Apex CLI as tools." />
   <meta name="twitter:image" content="https://apexjs.site/assets/og-image.png" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"AI-native APIs — Apex JS","description":"defineApexRoute serves REST and an MCP tool from one definition. The /mcp endpoint, the apex mcp inspector, and pointing Claude at your API.","url":"https://apexjs.site/docs/ai-native.html","isPartOf":{"@type":"WebSite","name":"Apex JS","url":"https://apexjs.site"},"inLanguage":"en"}]}</script>
-<meta name="description" content="defineApexRoute serves REST and an MCP tool from one definition. The /mcp endpoint, the apex mcp inspector, and pointing Claude at your API." />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"AI-native APIs — Apex JS","description":"defineApexRoute serves REST and an MCP tool from one definition — and apex mcp-server lets an AI agent build your app by calling the Apex CLI as tools.","url":"https://apexjs.site/docs/ai-native.html","isPartOf":{"@type":"WebSite","name":"Apex JS","url":"https://apexjs.site"},"inLanguage":"en"}]}</script>
+<meta name="description" content="defineApexRoute serves REST and an MCP tool from one definition — and apex mcp-server lets an AI agent build your app by calling the Apex CLI as tools." />
 <link rel="stylesheet" href="../style.css?v=20260709a" />
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
@@ -82,6 +82,9 @@
               <li><a href="#mcp-endpoint">The /mcp endpoint</a></li>
               <li><a href="#inspector">The apex mcp inspector</a></li>
               <li><a href="#claude">Point Claude at your API</a></li>
+              <li><a href="#build-with-agent">Build with an agent (CLI as MCP)</a></li>
+              <li><a href="#agents-md">The AGENTS.md context pack</a></li>
+              <li><a href="#agent-host">Connect Claude Desktop / Cursor</a></li>
               <li><a href="#resources">Resources are AI-native too</a></li>
               <li><a href="#design">Design notes</a></li>
             </ul>
@@ -215,6 +218,98 @@ apex mcp --url http://localhost:4000/mcp</code></pre>
         included — can connect to it and call your tools directly. Run your app, expose
         <code>/mcp</code>, and an assistant can read and write through the very same handlers your UI
         uses. No adapter, no second implementation, no drift between "the API" and "what the AI can do".
+      </p>
+
+      <h2 id="build-with-agent">Build with an agent (CLI as MCP) <a class="anchor" href="#build-with-agent">#</a></h2>
+      <p>
+        Everything above makes your <em>running app</em> AI-callable. Apex flips the other way too: the
+        <strong>CLI itself is an MCP server</strong>, so an agent can <em>build</em> your app — scaffold
+        pages, add models, wire up auth, run the build — by <strong>calling tools</strong> instead of
+        guessing at file contents and shelling out. Run it over stdio:
+      </p>
+      <pre><code><span class="c"># stdio MCP server exposing the Apex CLI as tools — for an AI agent host</span>
+apex mcp-server
+
+<span class="c"># operate on a specific project (agent hosts launch from their own cwd)</span>
+apex mcp-server --root /abs/path/to/your-app</code></pre>
+      <p class="muted">
+        It writes <strong>nothing but MCP protocol</strong> to stdout — no banner, no logs — so it's safe
+        as a stdio transport. Tools that fail return <code>isError: true</code>, so the agent can tell a
+        failed call from a successful one.
+      </p>
+      <p>The server exposes the generator, build, and introspection commands as seven tools:</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Tool</th><th>Does</th><th>Key inputs</th></tr></thead>
+          <tbody>
+            <tr><td><code>apex_make</code></td><td>Generate a file — page, component, api, service, store, layout, middleware, test, model, migration, auth.</td><td><code>kind</code>, <code>name</code>, <code>fields</code></td></tr>
+            <tr><td><code>apex_extend</code></td><td>Add an optional feature: <code>data</code>, <code>auth</code>, or <code>i18n</code>. Idempotent.</td><td><code>feature</code></td></tr>
+            <tr><td><code>apex_add</code></td><td>Copy in themeable UI components. <code>force: true</code> overwrites existing files.</td><td><code>components</code>, <code>force</code></td></tr>
+            <tr><td><code>apex_build</code></td><td>Build the app, optionally with a deploy preset (<code>vercel</code>&nbsp;|&nbsp;<code>netlify</code>&nbsp;|&nbsp;<code>docker</code>) or a Node server target.</td><td><code>preset</code>, <code>server</code></td></tr>
+            <tr><td><code>apex_list</code></td><td>Discover what's available: <code>features</code>, <code>components</code>, or <code>make-kinds</code>.</td><td><code>what</code></td></tr>
+            <tr><td><code>apex_project_info</code></td><td><strong>Read before you write</strong> — routes, API routes, models, components, and which features are installed.</td><td><code>root</code></td></tr>
+            <tr><td><code>apex_test</code></td><td>Run the app's tests once with Vitest, optionally filtered.</td><td><code>pattern</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warm">
+        <span class="h">Why tools beat a plain shell</span>
+        <p>
+          The tools carry typed inputs and structured results, so the agent scaffolds correct,
+          conventional code instead of hand-writing boilerplate it can get subtly wrong.
+          <code>apex_project_info</code> lets it read the app's real shape first; <code>apex_test</code>
+          lets it verify its own change. Read → generate → verify, all as tool calls.
+        </p>
+      </div>
+
+      <h2 id="agents-md">The <code>AGENTS.md</code> context pack <a class="anchor" href="#agents-md">#</a></h2>
+      <p>
+        Every new app is scaffolded with an <code>AGENTS.md</code> — a concise brief that teaches an agent
+        how to work in an Apex project <em>before</em> it touches a file. It's the same idea as this page,
+        distilled for a coding agent:
+      </p>
+      <ul>
+        <li><strong>Golden rules</strong> — prefer generators over hand-writing, one place for everything, let the framework own security, verify with tests, lean on strict TypeScript.</li>
+        <li><strong>The generator table</strong> — every <code>apex make</code>/<code>extend</code>/<code>add</code> command and what it produces.</li>
+        <li><strong>Project structure</strong> — what each folder is for, so the agent never invents one.</li>
+        <li><strong>The <code>.alpine</code> format and the core APIs</strong> — routes, models, auth, testing.</li>
+      </ul>
+      <p class="muted">
+        Agent hosts that auto-discover <code>AGENTS.md</code> (Cursor, and others) pick it up with no
+        configuration. Already have an app from an older scaffold? <code>apex upgrade</code> writes the
+        latest <code>AGENTS.md</code> in, non-destructively.
+      </p>
+
+      <h2 id="agent-host">Connect Claude Desktop or Cursor <a class="anchor" href="#agent-host">#</a></h2>
+      <p>
+        Point any MCP-capable agent host at <code>apex mcp-server</code> and it gains the seven tools
+        above. With the CLI installed globally (<code>npm i -g @apex-stack/core</code>):
+      </p>
+      <p class="code-label">claude_desktop_config.json / Cursor MCP settings</p>
+      <pre><code>{
+  <span class="s">"mcpServers"</span>: {
+    <span class="s">"apex"</span>: {
+      <span class="s">"command"</span>: <span class="s">"apex"</span>,
+      <span class="s">"args"</span>: [<span class="s">"mcp-server"</span>, <span class="s">"--root"</span>, <span class="s">"/abs/path/to/your-app"</span>]
+    }
+  }
+}</code></pre>
+      <p>
+        Not installed globally? Launch it through the project's local binary with <code>npx</code>, using
+        the package explicitly so it resolves from anywhere:
+      </p>
+      <pre><code>{
+  <span class="s">"mcpServers"</span>: {
+    <span class="s">"apex"</span>: {
+      <span class="s">"command"</span>: <span class="s">"npx"</span>,
+      <span class="s">"args"</span>: [<span class="s">"--package"</span>, <span class="s">"@apex-stack/core"</span>, <span class="s">"apex"</span>, <span class="s">"mcp-server"</span>, <span class="s">"--root"</span>, <span class="s">"/abs/path/to/your-app"</span>]
+    }
+  }
+}</code></pre>
+      <p class="muted">
+        Give <code>--root</code> an <strong>absolute</strong> path — the host launches the server from its
+        own working directory, not your project's. Restart the host, and the agent can scaffold, build,
+        and test your Apex app conversationally.
       </p>
 
       <h2 id="resources">Resources are AI-native too <a class="anchor" href="#resources">#</a></h2>

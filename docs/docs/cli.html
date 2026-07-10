@@ -101,6 +101,7 @@
               <li><a href="#theme">apex theme</a></li>
               <li><a href="#migrate">apex migrate</a></li>
               <li><a href="#mcp">apex mcp</a></li>
+              <li><a href="#mcp-server">apex mcp-server</a></li>
               <li><a href="#test">apex test</a></li>
               <li><a href="#create">create-apexjs</a></li>
             </ul>
@@ -132,6 +133,7 @@
             <tr><td><a href="#upgrade"><code>apex upgrade</code></a></td><td>Update the CLI, project deps, scaffold files, and the .alpine extension — one command.</td></tr>
             <tr><td><a href="#migrate"><code>apex migrate</code></a></td><td>Apply pending SQL migrations (or roll back).</td></tr>
             <tr><td><a href="#mcp"><code>apex mcp</code></a></td><td>Inspect the local MCP server — list or call tools.</td></tr>
+            <tr><td><a href="#mcp-server"><code>apex mcp-server</code></a></td><td>Run an MCP server exposing the CLI as tools, so an AI agent can build your app.</td></tr>
             <tr><td><a href="#test"><code>apex test</code></a></td><td>Run your tests with Vitest.</td></tr>
           </tbody>
         </table>
@@ -368,6 +370,24 @@ apex migrate --driver postgres --url $DATABASE_URL</code></pre>
       <pre><code>apex mcp                                       <span class="c"># list tools + signatures</span>
 apex mcp --call posts --args '{"slug":"hello-apex"}'</code></pre>
       <p class="muted">Requires a running dev server. More on <a href="./ai-native.html#inspector">AI-native → inspector</a>.</p>
+
+      <h2 id="mcp-server">apex mcp-server <a class="anchor" href="#mcp-server">#</a></h2>
+      <p>
+        Run an MCP server (over stdio) that exposes the Apex CLI <em>itself</em> as tools, so an AI agent
+        host — Claude Desktop, Cursor — can scaffold, build, and test your app by calling tools rather than
+        shelling out. It writes only MCP protocol to stdout; failed tools return <code>isError: true</code>.
+      </p>
+      <pre><code>apex mcp-server [--root &lt;dir&gt;]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Flag</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>--root</code></td><td><code>.</code></td><td>Default project root the tools operate on. Pass an absolute path — an agent host launches the server from its own working directory.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Tools: <code>apex_make</code>, <code>apex_extend</code>, <code>apex_add</code>, <code>apex_build</code>, <code>apex_list</code>, <code>apex_project_info</code>, <code>apex_test</code>.</p>
+      <p class="muted">Setup and the agent-host config JSON on <a href="./ai-native.html#build-with-agent">AI-native → Build with an agent</a>.</p>
 
       <h2 id="test">apex test <a class="anchor" href="#test">#</a></h2>
       <p>Run your test suite with <a href="https://vitest.dev">Vitest</a> (the runner Apex apps ship with). It's a thin wrapper — any extra arguments pass straight through to Vitest.</p>

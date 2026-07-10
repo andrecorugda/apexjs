@@ -1,5 +1,58 @@
 # @apex-stack/core
 
+## 0.24.3
+
+### Patch Changes
+
+- fix(pkg): expose `./package.json` in the exports map
+
+  Tools and user code commonly `require('@apex-stack/core/package.json')` (e.g. to
+  read the version); with the `exports` map present but no `./package.json` entry,
+  that threw `ERR_PACKAGE_PATH_NOT_EXPORTED`. Both packages now map
+  `"./package.json": "./package.json"` so the conventional access works.
+
+## 0.24.2
+
+### Patch Changes
+
+- fix(mcp-server): honor `force` on `apex_add` and set `isError` on failed tool calls
+
+  The `apex mcp-server` tools now surface failure to the calling agent: any CLI
+  tool that exits non-zero (e.g. `apex_add` with an unknown component) returns an
+  MCP result with `isError: true` instead of a success-shaped text result, so an
+  agent can tell a failure from a success. `apex_add` also gains a `force` boolean
+  that appends `--force` to overwrite existing component files (previously the
+  parameter was absent and overwrite was impossible via the tool).
+
+## 0.24.1
+
+### Patch Changes
+
+- `apex mcp-server` tools now return clean, agent-friendly text — the ASCII brand
+  banner and ANSI colour codes are stripped, so a tool response is just the signal
+  (e.g. `✓ pages/foo.alpine`, `• Skipped 1 existing: Button (use --force)`). Failures
+  report usefully (exit code / signal) instead of a bare "code null".
+
+## 0.24.0
+
+### Minor Changes
+
+- `apex mcp-server` gains two tools that complete the agent loop: **`apex_project_info`**
+  (read an app's routes, models, components, and installed features — so the agent can
+  understand before it changes) and **`apex_test`** (run the app's tests once to verify
+  its own work). Now agents can write, read, and verify through MCP tools.
+
+## 0.23.0
+
+### Minor Changes
+
+- **AI-native tooling (Apex Compass + CLI-as-MCP).** New `apex mcp-server` runs an MCP
+  server (stdio) that exposes the Apex CLI as tools — `apex_make`, `apex_extend`,
+  `apex_add`, `apex_build`, `apex_list` — so an AI agent scaffolds/extends/builds an app
+  by calling structured tools instead of hand-writing files. Point any agent host at
+  `apex mcp-server`. Scaffolded apps now include an `AGENTS.md` that teaches agents the
+  conventions, generators, and APIs (also synced into existing apps by `apex upgrade`).
+
 ## 0.22.0
 
 ### Minor Changes
