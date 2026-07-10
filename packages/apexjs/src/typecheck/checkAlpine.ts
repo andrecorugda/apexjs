@@ -74,14 +74,20 @@ export function checkAlpineProject(cwd: string): AlpineCheckResult {
 
   const rootNames = [...config.fileNames, ...virtual.keys()]
 
+  // TS normalizes paths to forward slashes before calling the host; normalize the
+  // lookup too so Windows backslash paths still hit the (POSIX-keyed) virtual map.
+  const norm = (p: string) => p.replace(/\\/g, '/')
   const host = ts.createCompilerHost(options)
   const origGetSourceFile = host.getSourceFile.bind(host)
   const origReadFile = host.readFile.bind(host)
   const origFileExists = host.fileExists.bind(host)
-  host.fileExists = (p) => virtual.has(p) || origFileExists(p)
-  host.readFile = (p) => (virtual.has(p) ? virtual.get(p) : origReadFile(p))
+  host.fileExists = (p) => virtual.has(norm(p)) || origFileExists(p)
+  host.readFile = (p) => {
+    const v = virtual.get(norm(p))
+    return v !== undefined ? v : origReadFile(p)
+  }
   host.getSourceFile = (p, lang, onErr, shouldCreate) => {
-    const v = virtual.get(p)
+    const v = virtual.get(norm(p))
     return v !== undefined
       ? ts.createSourceFile(p, v, lang, true)
       : origGetSourceFile(p, lang, onErr, shouldCreate)
