@@ -1,5 +1,19 @@
 # create-apexjs
 
+## 0.6.1
+
+### Patch Changes
+
+- fix(scaffold): guard `params.slug` in the blog `[slug].alpine` so a fresh app type-checks clean
+
+  The scaffolded `pages/blog/[slug].alpine` passed `params.slug` straight to
+  `posts.bySlug(...)`, but the scaffold's tsconfig enables `noUncheckedIndexedAccess`,
+  so `params.slug` is `string | undefined` — a real `TS2345`. It was invisible until
+  `apex check --alpine` started type-checking `.alpine` script blocks; now a brand-new
+  app would fail its own `apex check --alpine`. Guarded the access
+  (`params.slug ? posts.bySlug(params.slug) : null`). Fixes both scaffolders
+  (`npm create apexjs` and `apex new`, which bundles the same template).
+
 ## 0.6.0
 
 ### Minor Changes
