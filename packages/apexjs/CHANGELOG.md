@@ -1,5 +1,24 @@
 # @apex-stack/core
 
+## 0.25.0
+
+### Minor Changes
+
+- feat(check): `apex check` command + `apex_check` MCP tool — a fast, native-compiler-aware type gate
+
+  New `apex check` type-checks the app with `tsc --noEmit`, honoring the app's own
+  `tsconfig.json`. It prefers the native `tsgo` compiler when installed (and `tsc`
+  is itself native + fast under TypeScript 7), so a full check is quick enough to
+  run after every change. Extra args pass through (`apex check --watch`).
+
+  `apex mcp-server` gains an eighth tool, `apex_check`, exposing the same gate to AI
+  agents — so the agent loop becomes read → generate → **check** → test, catching
+  type errors before a test run. Returns `isError: true` with the errors when the
+  check fails. Scaffolded `AGENTS.md` now tells agents to check-then-test.
+
+  Additive — the public API contract (`API.md`) stays green; `check` and
+  `mcp-server` are documented there as 🟡 Experimental.
+
 ## 0.24.3
 
 ### Patch Changes
