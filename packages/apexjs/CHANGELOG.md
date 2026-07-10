@@ -1,5 +1,24 @@
 # @apex-stack/core
 
+## 0.26.0
+
+### Minor Changes
+
+- feat: `npm create apexjs` feature parity + richer `apex_project_info`
+
+  **create-apexjs** now supports the optional-feature selection that `apex new`
+  always had: pass `--data` / `--auth` / `--i18n` (or answer the interactive
+  prompt) and the scaffolder applies them via `apex extend` after install, landing
+  them in the initial commit. Previously these flags were silently ignored by the
+  `npm create apexjs` path — the two entry points are now at parity.
+
+  **`apex_project_info`** (the MCP tool agents read before writing) now returns
+  _shape_, not just an inventory: API routes carry their `method`, mounted `path`,
+  and `mcp`/`auth` flags (and whether they're a route or a model resource); models
+  carry their `table`, `fields` (name/type/notNull/default), and `behaviors`. An
+  agent can now act — "add a `views:int` field to `Post`" — without opening files.
+  Best-effort static parse; never throws. Additive; API contract stays green.
+
 ## 0.25.0
 
 ### Minor Changes

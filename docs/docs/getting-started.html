@@ -138,9 +138,11 @@ apex dev</code></pre>
       <div class="callout">
         <span class="h">Optional features</span>
         <p>
-          During <code>apex new</code>, Apex asks whether to include optional features —
-          <strong>Data &amp; models</strong>, <strong>Auth</strong>, and <strong>i18n</strong> (each with a
-          one-line explanation). They're completely optional: answer no to any and you get the lean starter
+          When you scaffold — with either <code>apex new</code> or
+          <code>npm create apexjs</code> — Apex asks whether to include optional features —
+          <strong>Data &amp; models</strong>, <strong>Auth</strong>, and <strong>i18n</strong> (or pass
+          <code>--data</code> / <code>--auth</code> / <code>--i18n</code> to skip the prompt). They're
+          completely optional: answer no to any and you get the lean starter
           below. Add them later at any time with
           <a href="./cli.html#extend"><code>apex extend &lt;feature&gt;</code></a>, which copies the files and
           wires up dependencies, <code>apex.config.ts</code>, and the nav for you — see the
