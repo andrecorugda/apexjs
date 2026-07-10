@@ -9,24 +9,53 @@ import { defineCommand } from 'citty'
 // TypeScript 7's native `tsc`), the check is ~10x faster — fast enough to run as a
 // gate after every code change, including from an AI agent (see `apex mcp-server`).
 //
+// With `--alpine` (preview), it ALSO type-checks the `<script server>` /
+// `<script client>` blocks inside `.alpine` components — which plain `tsc` can't
+// see. That path uses the TypeScript compiler API (so it needs `typescript`, or
+// `@typescript/typescript6` on a TS7 app) and does not use `tsgo`.
+//
 // Extra args pass through: `apex check --watch`, `apex check -p tsconfig.build.json`.
 export const checkCommand = defineCommand({
   meta: {
     name: 'check',
-    description: 'Type-check the app (tsc --noEmit; uses the native compiler when installed)',
+    description: 'Type-check the app (tsc --noEmit; --alpine also checks .alpine script blocks)',
   },
-  run({ rawArgs }) {
+  args: {
+    alpine: {
+      type: 'boolean',
+      default: false,
+      description: 'Also type-check the <script> blocks inside .alpine components (preview)',
+    },
+  },
+  async run({ args, rawArgs }) {
     const cwd = process.cwd()
-    const win = process.platform === 'win32'
-    const passthrough = rawArgs.filter((a) => a !== 'check')
 
-    // Prefer the native `tsgo` binary when present; otherwise fall back to `tsc`
-    // (which is itself native + fast when TypeScript 7 is the installed compiler).
+    if (args.alpine) {
+      const { checkAlpineProject } = await import('../typecheck/checkAlpine.js')
+      const res = checkAlpineProject(cwd)
+      if (res.unavailable) {
+        console.error(`\n  ${res.message}\n`)
+        process.exit(1)
+      }
+      if (res.output) process.stdout.write(res.output)
+      const files = res.checkedAlpine
+      console.log(
+        res.errorCount === 0
+          ? `\n  ✓ No type errors (checked .ts + ${files} .alpine file${files === 1 ? '' : 's'}).\n`
+          : `\n  ✗ ${res.errorCount} type error${res.errorCount === 1 ? '' : 's'} (including ${files} .alpine file${files === 1 ? '' : 's'}).\n`,
+      )
+      process.exit(res.errorCount === 0 ? 0 : 1)
+    }
+
+    // Default path: fast `tsc`/`tsgo --noEmit` over the app's `.ts` files.
+    const win = process.platform === 'win32'
+    const passthrough = rawArgs.filter((a) => a !== 'check' && a !== '--alpine')
     const tsgoBin = join(cwd, 'node_modules', '.bin', win ? 'tsgo.cmd' : 'tsgo')
     const bin = existsSync(tsgoBin) ? 'tsgo' : 'tsc'
-    const args = ['--noEmit', ...passthrough]
-
-    const child = spawn(win ? 'npx.cmd' : 'npx', [bin, ...args], { stdio: 'inherit', shell: win })
+    const child = spawn(win ? 'npx.cmd' : 'npx', [bin, '--noEmit', ...passthrough], {
+      stdio: 'inherit',
+      shell: win,
+    })
     child.on('error', () => {
       console.error('\n  TypeScript not found. Install it: npm i -D typescript\n')
       process.exit(1)

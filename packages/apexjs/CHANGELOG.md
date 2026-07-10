@@ -1,5 +1,24 @@
 # @apex-stack/core
 
+## 0.27.0
+
+### Minor Changes
+
+- feat(check): `apex check --alpine` — type-check the `<script>` blocks inside `.alpine` components (preview)
+
+  Plain `tsc` can't see inside `.alpine` files, so the TypeScript in your
+  `<script server>` / `<script client>` blocks has never been type-checked. The new
+  `apex check --alpine` represents each block as a line-preserved virtual `.ts` file
+  and checks it alongside your `.ts` sources via the TypeScript compiler API, mapping
+  any diagnostics back to the `.alpine` source. It caught a real latent error in the
+  `examples/showcase` app on its first run.
+
+  This is #21 Phase 1 — **script blocks** only; template-expression checking
+  (`x-text`, `:class`, `x-for` against the `x-data` scope) is Phase 2. The `--alpine`
+  path uses the compiler API (needs `typescript`, or `@typescript/typescript6` on a
+  TypeScript 7 app) and does not use `tsgo`. Plain `apex check` is unchanged.
+  Additive; the public API contract stays green.
+
 ## 0.26.0
 
 ### Minor Changes

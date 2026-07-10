@@ -367,8 +367,21 @@ apex migrate --driver postgres --url $DATABASE_URL</code></pre>
       </p>
       <pre><code>apex check                     <span class="c"># type-check once (tsc --noEmit)</span>
 apex check --watch             <span class="c"># re-check on change</span>
+apex check --alpine            <span class="c"># also check &lt;script&gt; blocks inside .alpine (preview)</span>
 apex check -p tsconfig.app.json</code></pre>
       <p class="muted">Exits non-zero on type errors. Needs <code>typescript</code> (or the native preview) in the app — the scaffold includes it.</p>
+      <div class="callout warm">
+        <span class="h"><code>--alpine</code> — type-check your components too (preview)</span>
+        <p>
+          Plain <code>tsc</code> can't see inside <code>.alpine</code> files, so the TypeScript in your
+          <code>&lt;script server&gt;</code> / <code>&lt;script client&gt;</code> blocks normally goes
+          unchecked. <code>apex check --alpine</code> represents each block as virtual TypeScript and checks
+          it alongside your <code>.ts</code> files, mapping any errors back to the <code>.alpine</code>
+          source. This <strong>preview</strong> covers the script blocks; template expressions
+          (<code>x-text</code>, <code>:class</code>, …) come next. It uses the TypeScript compiler API, so on
+          a TypeScript&nbsp;7 app also install <code>@typescript/typescript6</code>.
+        </p>
+      </div>
 
       <h2 id="mcp">apex mcp <a class="anchor" href="#mcp">#</a></h2>
       <p>Inspect the local MCP server — list its tools or call one. Reuses the bundled MCP SDK (nothing to install).</p>
