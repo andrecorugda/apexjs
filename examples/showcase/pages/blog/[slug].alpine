@@ -6,7 +6,7 @@
   // Dynamic route: pages/blog/[slug].alpine → /blog/:slug. The matched param
   // arrives in loader({ params }).
   export function loader({ params }: { params: Record<string, string> }) {
-    const post = posts.bySlug(params.slug)
+    const post = params.slug ? posts.bySlug(params.slug) : null
     return { post: post ?? null }
   }
 
