@@ -29,10 +29,24 @@ const KINDS = [
   'auth',
 ] as const
 
+// ESC written without a literal control char (keeps the linter happy).
+const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g')
+
+/** Run the CLI and return clean, agent-friendly text: ANSI stripped, the ASCII
+ * brand banner removed, and failures reported usefully (not "code null"). */
 function runApex(args: string[], cwd: string): string {
   const r = spawnSync(process.execPath, [CLI, ...args], { cwd, encoding: 'utf8' })
-  const out = `${r.stdout ?? ''}${r.stderr ?? ''}`.trim()
-  return out || (r.status === 0 ? 'done' : `apex exited with code ${r.status}`)
+  if (r.error) return `apex failed to run: ${r.error.message}`
+  const clean = `${r.stdout ?? ''}\n${r.stderr ?? ''}`
+    .replace(ANSI, '')
+    .split('\n')
+    .filter((l) => !/[█╗╝╔═║╚]/.test(l) && !/The full-stack, AI-native/.test(l))
+    .join('\n')
+    .trim()
+  if (clean) return clean
+  if (r.status === 0) return 'done'
+  if (r.status != null) return `apex exited with code ${r.status}`
+  return `apex terminated with no output${r.signal ? ` (signal ${r.signal})` : ''}`
 }
 
 function text(t: string) {

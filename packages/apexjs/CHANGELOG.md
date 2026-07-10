@@ -1,5 +1,14 @@
 # @apex-stack/core
 
+## 0.24.1
+
+### Patch Changes
+
+- `apex mcp-server` tools now return clean, agent-friendly text — the ASCII brand
+  banner and ANSI colour codes are stripped, so a tool response is just the signal
+  (e.g. `✓ pages/foo.alpine`, `• Skipped 1 existing: Button (use --force)`). Failures
+  report usefully (exit code / signal) instead of a bare "code null".
+
 ## 0.24.0
 
 ### Minor Changes
