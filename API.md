@@ -92,6 +92,8 @@ The command names + documented flags are part of the contract.
 | `dev`, `build`, `start`, `new`, `make`, `add`, `migrate`, `theme`, `upgrade`, `test`, `mcp` | 🟢 Stable |
 | `extend <feature>` | 🟡 Experimental (feature recipes — new) |
 | `build --preset <vercel\|netlify\|docker>` | 🟡 Experimental (deploy presets — new; `vercel`/`docker` proven, `netlify` handler-verified) |
+| `check` | 🟡 Experimental (type-check gate — new; `tsc --noEmit`, native-compiler-aware) |
+| `mcp-server` | 🟡 Experimental (CLI-as-MCP for AI agents — new) |
 
 ## Conventions — the "invisible API" (🟢 Stable)
 

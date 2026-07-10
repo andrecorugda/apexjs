@@ -221,6 +221,16 @@ export const mcpServerCommand = defineCommand({
       async (a) => run(['test', 'run', ...(a.pattern ? [a.pattern] : [])], rootOf(a)),
     )
 
+    server.registerTool(
+      'apex_check',
+      {
+        description:
+          "Type-check the app (tsc --noEmit; uses the native compiler when installed). Run this after generating or editing code to catch type errors before running tests — it's the fast type gate in the write→check→test loop. Fails (isError) when there are type errors, with the errors in the output.",
+        inputSchema: { root: z.string().optional() },
+      },
+      async (a) => run(['check'], rootOf(a)),
+    )
+
     await server.connect(new StdioServerTransport())
   },
 })

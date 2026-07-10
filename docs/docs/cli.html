@@ -100,6 +100,7 @@
               <li><a href="#extend">apex extend</a></li>
               <li><a href="#theme">apex theme</a></li>
               <li><a href="#migrate">apex migrate</a></li>
+              <li><a href="#check">apex check</a></li>
               <li><a href="#mcp">apex mcp</a></li>
               <li><a href="#mcp-server">apex mcp-server</a></li>
               <li><a href="#test">apex test</a></li>
@@ -133,6 +134,7 @@
             <tr><td><a href="#theme"><code>apex theme</code></a></td><td>Write/update your theme tokens (colors, radius, fonts) in your CSS.</td></tr>
             <tr><td><a href="#upgrade"><code>apex upgrade</code></a></td><td>Update the CLI, project deps, scaffold files, and the .alpine extension — one command.</td></tr>
             <tr><td><a href="#migrate"><code>apex migrate</code></a></td><td>Apply pending SQL migrations (or roll back).</td></tr>
+            <tr><td><a href="#check"><code>apex check</code></a></td><td>Type-check the app (<code>tsc --noEmit</code>) — fast with the native compiler.</td></tr>
             <tr><td><a href="#mcp"><code>apex mcp</code></a></td><td>Inspect the local MCP server — list or call tools.</td></tr>
             <tr><td><a href="#mcp-server"><code>apex mcp-server</code></a></td><td>Run an MCP server exposing the CLI as tools, so an AI agent can build your app.</td></tr>
             <tr><td><a href="#test"><code>apex test</code></a></td><td>Run your tests with Vitest.</td></tr>
@@ -355,6 +357,19 @@ apex migrate --rollback
 apex migrate --driver postgres --url $DATABASE_URL</code></pre>
       <p class="muted">See <a href="./data.html#migrations">Data → Migrations</a>.</p>
 
+      <h2 id="check">apex check <a class="anchor" href="#check">#</a></h2>
+      <p>
+        Type-check the app with <code>--noEmit</code>, honoring your <code>tsconfig.json</code>. It prefers
+        the native <code>tsgo</code> compiler when installed (and <code>tsc</code> is itself native + fast
+        under <a href="./versioning.html">TypeScript&nbsp;7</a>), so a full check is quick enough to run as a
+        gate after every change — including from an AI agent via <a href="#mcp-server"><code>apex mcp-server</code></a>'s
+        <code>apex_check</code> tool. Extra args pass through.
+      </p>
+      <pre><code>apex check                     <span class="c"># type-check once (tsc --noEmit)</span>
+apex check --watch             <span class="c"># re-check on change</span>
+apex check -p tsconfig.app.json</code></pre>
+      <p class="muted">Exits non-zero on type errors. Needs <code>typescript</code> (or the native preview) in the app — the scaffold includes it.</p>
+
       <h2 id="mcp">apex mcp <a class="anchor" href="#mcp">#</a></h2>
       <p>Inspect the local MCP server — list its tools or call one. Reuses the bundled MCP SDK (nothing to install).</p>
       <pre><code>apex mcp [--url &lt;url&gt;] [--call &lt;name&gt;] [--args &lt;json&gt;]</code></pre>
@@ -387,7 +402,7 @@ apex mcp --call posts --args '{"slug":"hello-apex"}'</code></pre>
           </tbody>
         </table>
       </div>
-      <p>Tools: <code>apex_make</code>, <code>apex_extend</code>, <code>apex_add</code>, <code>apex_build</code>, <code>apex_list</code>, <code>apex_project_info</code>, <code>apex_test</code>.</p>
+      <p>Tools: <code>apex_make</code>, <code>apex_extend</code>, <code>apex_add</code>, <code>apex_build</code>, <code>apex_list</code>, <code>apex_project_info</code>, <code>apex_check</code>, <code>apex_test</code>.</p>
       <p class="muted">Setup and the agent-host config JSON on <a href="./ai-native.html#build-with-agent">AI-native → Build with an agent</a>.</p>
 
       <h2 id="test">apex test <a class="anchor" href="#test">#</a></h2>
