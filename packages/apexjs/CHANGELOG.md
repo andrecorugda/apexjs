@@ -1,5 +1,16 @@
 # @apex-stack/core
 
+## 0.24.3
+
+### Patch Changes
+
+- fix(pkg): expose `./package.json` in the exports map
+
+  Tools and user code commonly `require('@apex-stack/core/package.json')` (e.g. to
+  read the version); with the `exports` map present but no `./package.json` entry,
+  that threw `ERR_PACKAGE_PATH_NOT_EXPORTED`. Both packages now map
+  `"./package.json": "./package.json"` so the conventional access works.
+
 ## 0.24.2
 
 ### Patch Changes

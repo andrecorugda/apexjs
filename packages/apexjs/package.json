@@ -1,6 +1,6 @@
 {
   "name": "@apex-stack/core",
-  "version": "0.24.2",
+  "version": "0.24.3",
   "description": "The full-stack meta-framework for Alpine.js — CLI and runtime",
   "type": "module",
   "license": "MIT",
@@ -41,7 +41,8 @@
     "./testing": {
       "types": "./dist/testing.d.ts",
       "import": "./dist/testing.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
