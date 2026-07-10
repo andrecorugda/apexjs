@@ -1,9 +1,10 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
 import { z } from 'zod'
+import { mountedApiPath, parseModelInfo, parseRouteInfo } from '../introspect/projectKnowledge.js'
 import { scanPages } from '../routing/router.js'
 import { VERSION } from '../ui.js'
 
@@ -83,19 +84,40 @@ function listFiles(dir: string, ext: string): string[] {
   return out
 }
 
-/** A machine-readable map of an Apex app — so an agent can read before it writes. */
+/** Read a file, returning '' if it can't be read (missing/permission). */
+function readSafe(p: string): string {
+  try {
+    return readFileSync(p, 'utf8')
+  } catch {
+    return ''
+  }
+}
+
+/** A machine-readable map of an Apex app — so an agent can read before it writes.
+ * Routes/models carry their SHAPE (method + mount + mcp/auth flags; table + fields
+ * + behaviors), so an agent can act — "add a `views:int` field to Post" — without
+ * having to open and parse the files itself. */
 function projectInfo(root: string) {
+  const apiDir = join(root, 'server', 'api')
+  const modelsDir = join(root, 'models')
   return {
     routes: existsSync(join(root, 'pages'))
       ? scanPages(root).map((r) => ({ url: r.pattern, dynamic: r.isDynamic }))
       : [],
-    apiRoutes: listFiles(join(root, 'server', 'api'), '.ts'),
-    models: listFiles(join(root, 'models'), '.ts'),
+    apiRoutes: listFiles(apiDir, '.ts').map((file) => ({
+      file,
+      path: mountedApiPath(file),
+      ...parseRouteInfo(readSafe(join(apiDir, file))),
+    })),
+    models: listFiles(modelsDir, '.ts').map((file) => ({
+      file,
+      ...parseModelInfo(readSafe(join(modelsDir, file))),
+    })),
     components: listFiles(join(root, 'components'), '.alpine'),
     features: {
       auth: existsSync(join(root, 'server', 'auth.ts')),
       i18n: existsSync(join(root, 'locales')),
-      data: existsSync(join(root, 'models')) || existsSync(join(root, 'db', 'index.ts')),
+      data: existsSync(modelsDir) || existsSync(join(root, 'db', 'index.ts')),
     },
   }
 }
@@ -205,7 +227,7 @@ export const mcpServerCommand = defineCommand({
       'apex_project_info',
       {
         description:
-          'Read the current Apex app: its routes (from pages/), API routes, models, components, and which features (auth/i18n/data) are installed. Use this to understand an app before changing it.',
+          'Read the current Apex app: page routes; API routes with their method, mounted path, and mcp/auth flags; models with their table, fields (name/type/notNull/default) and behaviors; components; and which features (auth/i18n/data) are installed. Gives enough shape to act (e.g. add a field to a model) without opening files. Use this to understand an app before changing it.',
         inputSchema: { root: z.string().optional() },
       },
       async (a) => result(JSON.stringify(projectInfo(rootOf(a)), null, 2)),

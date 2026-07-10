@@ -1,10 +1,22 @@
 import { spawnSync } from 'node:child_process'
 import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
+import { createInterface } from 'node:readline'
 import { fileURLToPath } from 'node:url'
 import { defineCommand, runMain } from 'citty'
 
 const TEMPLATE_DIR = fileURLToPath(new URL('../templates/default', import.meta.url))
+
+/**
+ * Optional features the installed CLI can add via `apex extend <name>`. Kept as a
+ * tiny local list (key + title) so this scaffolder stays dependency-light — it
+ * must NOT import @apex-stack/core's features.ts. The keys mirror it exactly.
+ */
+const FEATURES: { key: 'data' | 'auth' | 'i18n'; title: string }[] = [
+  { key: 'data', title: 'Data & models' },
+  { key: 'auth', title: 'Auth' },
+  { key: 'i18n', title: 'i18n' },
+]
 
 /** Replace the `{{name}}` placeholder in every scaffolded file. */
 function substituteName(dir: string, name: string): void {
@@ -32,10 +44,22 @@ function run(cmd: string, cmdArgs: string[], cwd: string, quiet = false): boolea
   const res = spawnSync(cmd, cmdArgs, {
     cwd,
     stdio: quiet ? 'ignore' : 'inherit',
-    // On Windows, npm/pnpm/yarn are .cmd shims that need a shell.
+    // On Windows, npm/pnpm/yarn/npx are .cmd shims that need a shell.
     shell: process.platform === 'win32',
   })
   return res.status === 0
+}
+
+/** Minimal readline yes/no prompt. Returns `def` on an empty answer. */
+function promptYesNo(question: string, def = false): Promise<boolean> {
+  const rl = createInterface({ input: process.stdin, output: process.stdout })
+  return new Promise((res) => {
+    rl.question(`${question} ${c.dim(def ? '(Y/n)' : '(y/N)')} `, (ans) => {
+      rl.close()
+      const a = ans.trim().toLowerCase()
+      res(a === '' ? def : a === 'y' || a === 'yes')
+    })
+  })
 }
 
 const c = {
@@ -67,8 +91,20 @@ const main = defineCommand({
       default: true,
       description: 'Initialize a git repository (use --no-git to skip)',
     },
+    data: {
+      type: 'boolean',
+      description: 'Include the data/models feature (skips the prompt)',
+    },
+    auth: {
+      type: 'boolean',
+      description: 'Include the auth feature (skips the prompt)',
+    },
+    i18n: {
+      type: 'boolean',
+      description: 'Include the i18n feature (skips the prompt)',
+    },
   },
-  run({ args }) {
+  async run({ args }) {
     const target = resolve(process.cwd(), args.dir)
     const name = basename(target)
 
@@ -90,17 +126,27 @@ const main = defineCommand({
 
     const pm = detectPackageManager()
 
-    // Initialize git (like create-next-app / nuxi) — best-effort, never fatal.
-    let gitOk = false
-    if (args.git) {
-      const hasGit =
-        spawnSync('git', ['--version'], { stdio: 'ignore', shell: process.platform === 'win32' })
-          .status === 0
-      if (hasGit && run('git', ['init', '-q'], target, true)) {
-        run('git', ['add', '-A'], target, true)
-        run('git', ['commit', '-m', 'Initial commit from Apex JS', '--no-gpg-sign'], target, true)
-        gitOk = true
+    // Optional features — honor an explicit --data/--auth/--i18n flag; otherwise
+    // prompt (interactive TTY only); otherwise (CI) default to none. Selection
+    // happens now, but the features are applied AFTER install (see below), since
+    // `apex extend` needs @apex-stack/core on disk.
+    const selected: string[] = []
+    let headerShown = false
+    for (const f of FEATURES) {
+      const flag = (args as Record<string, unknown>)[f.key] as boolean | undefined
+      let want = false
+      if (flag !== undefined) {
+        want = flag
+      } else if (process.stdin.isTTY) {
+        if (!headerShown) {
+          console.log(
+            `\n  ${c.cyan('Optional features')} ${c.dim("(add later anytime with 'apex extend <name>')")}`,
+          )
+          headerShown = true
+        }
+        want = await promptYesNo(`  Add ${f.title}?`, false)
       }
+      if (want) selected.push(f.key)
     }
 
     // Install dependencies with the detected package manager.
@@ -120,6 +166,44 @@ const main = defineCommand({
       }
     }
 
+    // Apply the selected features via the installed CLI's `apex extend <feature>`.
+    // npx resolves the local `apex` bin from the freshly installed node_modules.
+    // Best-effort throughout — a feature failure warns but never aborts.
+    const applied: string[] = []
+    if (selected.length) {
+      if (installed) {
+        console.log(`\n  Adding features: ${c.cyan(selected.join(', '))}…\n`)
+        for (const key of selected) {
+          if (run('npx', ['apex', 'extend', key], target)) applied.push(key)
+          else
+            console.log(
+              `\n  ${c.yellow('⚠')}  Could not add ${key} — run ${c.cyan(`npx apex extend ${key}`)} yourself.\n`,
+            )
+        }
+      } else {
+        // No deps on disk (--no-install or a failed install) → extend can't run.
+        console.log(
+          `\n  ${c.yellow('⚠')}  Features ${selected.join(', ')} need dependencies — after installing, run: ${c.cyan(
+            selected.map((k) => `apex extend ${k}`).join(' && '),
+          )}\n`,
+        )
+      }
+    }
+
+    // Initialize git LAST (like create-next-app / nuxi) — best-effort, never
+    // fatal — so any features applied above land in the initial commit.
+    let gitOk = false
+    if (args.git) {
+      const hasGit =
+        spawnSync('git', ['--version'], { stdio: 'ignore', shell: process.platform === 'win32' })
+          .status === 0
+      if (hasGit && run('git', ['init', '-q'], target, true)) {
+        run('git', ['add', '-A'], target, true)
+        run('git', ['commit', '-m', 'Initial commit from Apex JS', '--no-gpg-sign'], target, true)
+        gitOk = true
+      }
+    }
+
     // Package-manager-aware run commands.
     const runPrefix = pm === 'npm' ? 'npm run' : pm
 
@@ -129,10 +213,14 @@ const main = defineCommand({
       `${runPrefix} dev          ${c.dim('# start the dev server → http://localhost:3000')}`,
     )
 
+    const featuresNote = applied.length
+      ? `\n  ${c.green('Features added:')} ${c.cyan(applied.join(', '))} ${c.dim("(add more with 'apex extend <name>')")}`
+      : ''
+
     console.log(`
   ${installed ? c.green('Ready.') : 'Next steps:'}
 ${steps.map((s) => `    ${s}`).join('\n')}
-
+${featuresNote}
   ${c.yellow('Run the CLI with:')} ${c.cyan(`${runPrefix} dev`)}   ${c.dim('(or ' + 'npx apex dev' + ')')}
         A bare ${c.cyan('apex')} won't resolve — it's a local dependency, like ${c.cyan('next')} or ${c.cyan('vite')}.
         ${c.dim('Prefer a global command? ')}${c.cyan('npm i -g @apex-stack/core')}${c.dim(' → then `apex dev` works anywhere.')}
