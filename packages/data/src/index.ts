@@ -42,14 +42,57 @@ export interface ApexDbHandle {
   close(): Promise<void>
 }
 
+/** Postgres connection tuning (passed through to postgres-js). */
+export interface PostgresConnectOptions {
+  /**
+   * Use prepared statements. Auto-disabled on a transaction pooler (Supabase
+   * Supavisor / pgBouncer), which doesn't support them. Set explicitly to override.
+   */
+  prepare?: boolean
+  /** TLS. Auto-enabled (`'require'`) for remote hosts; off for localhost. */
+  ssl?: boolean | 'require' | 'prefer'
+  /** Max pool size. */
+  max?: number
+  /** Idle connection timeout (seconds). */
+  idleTimeout?: number
+}
+
 export type CreateDbConfig =
   | string // shorthand: a SQLite file path (libSQL), e.g. "data.db"
   | { driver: 'sqlite' | 'libsql'; url: string } // local file (file:…) or Turso (libsql://…)
-  | { driver: 'postgres'; url: string } // Supabase / Neon / any Postgres
+  | { driver: 'postgres'; url: string; options?: PostgresConnectOptions } // Supabase / Neon / any PG
   | { driver: 'pglite'; dir?: string } // embedded Postgres (in-memory if no dir)
 
 function libsqlUrl(pathOrUrl: string): string {
   return /^(file:|libsql:|https?:|:memory:)/.test(pathOrUrl) ? pathOrUrl : `file:${pathOrUrl}`
+}
+
+/**
+ * Derive safe postgres-js options for a connection URL. Transaction poolers
+ * (Supabase Supavisor / pgBouncer — `*.pooler.supabase.com` or `:6543`) can't run
+ * prepared statements, so we disable them; remote hosts get SSL. Explicit
+ * `override` values always win. Exported for testing.
+ */
+export function postgresOptions(
+  url: string,
+  override: PostgresConnectOptions = {},
+): Record<string, unknown> {
+  const isPooler = /pooler\.supabase\.com|:6543(\D|$)/.test(url)
+  let host = ''
+  try {
+    host = new URL(url).hostname
+  } catch {
+    /* leave host empty → treated as local (no forced SSL) */
+  }
+  const isLocal = host === '' || host === 'localhost' || host === '127.0.0.1' || host === '::1'
+  const opts: Record<string, unknown> = {}
+  const prepare = override.prepare ?? (isPooler ? false : undefined)
+  if (prepare !== undefined) opts.prepare = prepare
+  const ssl = override.ssl ?? (isLocal ? undefined : 'require')
+  if (ssl !== undefined) opts.ssl = ssl
+  if (override.max !== undefined) opts.max = override.max
+  if (override.idleTimeout !== undefined) opts.idle_timeout = override.idleTimeout
+  return opts
 }
 
 // Module types for the optional-peer drivers. Aliases keep the cast lines short
@@ -99,7 +142,7 @@ export async function createDb(config: CreateDbConfig): Promise<ApexDbHandle> {
   if (cfg.driver === 'postgres') {
     const postgres = ((await loadDriver('postgres')) as PostgresMod).default
     const { drizzle } = await import('drizzle-orm/postgres-js')
-    const client = postgres(cfg.url)
+    const client = postgres(cfg.url, postgresOptions(cfg.url, cfg.options))
     return {
       db: drizzle(client),
       dialect: 'postgres',
