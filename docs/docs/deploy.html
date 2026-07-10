@@ -95,6 +95,7 @@
               <li><a href="#ssg">1 · Static site (SSG)</a></li>
               <li><a href="#hydrated">2 · Prerendered + hydrated</a></li>
               <li><a href="#server">3 · Server target</a></li>
+              <li><a href="#presets">One-command deploys</a></li>
               <li><a href="#db">Databases in production</a></li>
               <li><a href="#hosting">Hosting targets</a></li>
             </ul>
@@ -157,14 +158,39 @@ apex start              <span class="c"># run the production server (no Vite)</s
         <li><strong>Any database</strong> — SQLite/Turso/Supabase/Neon via <code>@apex-stack/data</code>.</li>
       </ul>
 
+      <h2 id="presets">One-command deploys <a class="anchor" href="#presets">#</a></h2>
+      <p><code>apex build --preset &lt;target&gt;</code> generates the host config for a server-target deploy. Set <code>DATABASE_URL</code> and <code>APEX_SESSION_PASSWORD</code> in the host's environment, then deploy.</p>
+      <p class="code-label">Vercel — serverless</p>
+      <pre><code>apex build --preset vercel   <span class="c"># writes api/index.mjs + vercel.json</span>
+vercel deploy</code></pre>
+      <p class="code-label">Netlify — serverless</p>
+      <pre><code>apex build --preset netlify  <span class="c"># writes netlify/functions/server.mjs + netlify.toml</span>
+netlify deploy</code></pre>
+      <p class="code-label">Docker — Railway / Render / Fly.io / any container or VM</p>
+      <pre><code>apex build --preset docker   <span class="c"># writes a Dockerfile (+ .dockerignore)</span>
+<span class="c"># push to your host — apex start listens on the injected $PORT</span></code></pre>
+      <div class="callout">
+        <span class="h">How it works</span>
+        <p>The serverless presets wrap the built app in one function via <code>createProdNodeHandler</code> (Vercel) / <code>createProdWebHandler</code> (Netlify) from <code>@apex-stack/core/server</code>; the Docker preset builds and runs <code>apex start</code>. All serve SSR + <code>/api</code> + <code>/mcp</code> from the same server target — one build, any host.</p>
+      </div>
+
       <h2 id="db">Databases in production <a class="anchor" href="#db">#</a></h2>
-      <p>
-        Local SQLite is great for a Node host. For serverless/edge (e.g. Cloudflare Workers), pair with
-        a fetch-based driver — Turso (libSQL) or Supabase/Neon (Postgres) — since native SQLite can't
-        run on edge. Swap drivers in one line:
-      </p>
-      <pre><code><span class="k">await</span> createDb({ driver: <span class="s">'libsql'</span>, url: process.env.TURSO_URL })       <span class="c">// Turso</span>
-<span class="k">await</span> createDb({ driver: <span class="s">'postgres'</span>, url: process.env.DATABASE_URL })   <span class="c">// Supabase / Neon</span></code></pre>
+      <p>Set <code>DATABASE_URL</code> in your host's env and <code>createDb</code> connects — one driver switch, no code changes:</p>
+      <pre><code><span class="k">await</span> createDb({ driver: <span class="s">'postgres'</span>, url: process.env.DATABASE_URL }) <span class="c">// Supabase / Neon / RDS</span>
+<span class="k">await</span> createDb({ driver: <span class="s">'libsql'</span>,   url: process.env.TURSO_URL })    <span class="c">// Turso (hosted libSQL)</span></code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Provider</th><th>Driver</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Supabase</td><td><code>postgres</code></td><td>App: the <strong>transaction pooler</strong> URL (<code>:6543</code>) — Apex auto-sets <code>prepare:false</code> + SSL. Migrations: the <strong>session/direct</strong> URL (<code>:5432</code>).</td></tr>
+            <tr><td>Neon</td><td><code>postgres</code></td><td>Serverless Postgres; use the pooled connection string.</td></tr>
+            <tr><td>Railway / AWS RDS / any Postgres</td><td><code>postgres</code></td><td>Standard connection string.</td></tr>
+            <tr><td>Turso</td><td><code>libsql</code></td><td>Hosted libSQL — <code>libsql://…</code> URL + auth token.</td></tr>
+            <tr><td>SQLite file / PGlite</td><td><code>libsql</code> / <code>pglite</code></td><td>Single Node host / local / embedded.</td></tr>
+            <tr><td>PlanetScale / MySQL</td><td>—</td><td>Not supported yet — Apex's data layer is SQLite + Postgres.</td></tr>
+          </tbody>
+        </table>
+      </div>
       <p class="muted">
         Run <code>apex migrate</code> as a deploy step (with the matching <code>--driver</code>/<code>--url</code>).
         See <a href="./data.html#drivers">Data → Drivers</a>.
@@ -185,8 +211,8 @@ apex start              <span class="c"># run the production server (no Vite)</s
       <div class="callout warm">
         <span class="h">On the roadmap</span>
         <p>
-          Nitro deploy presets (Vercel/Netlify/Workers adapters) — today <code>apex start</code> targets
-          Node. Also planned: island-mode client bundling in the built output, and streaming SSR.
+          A <strong>Cloudflare Workers</strong> (edge) preset — the shipped presets (<a href="#presets">Vercel, Netlify, Docker</a>)
+          target Node / serverless-Node. Also planned: streaming SSR and a MySQL/PlanetScale driver.
         </p>
       </div>
 

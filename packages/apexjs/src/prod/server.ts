@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import type { ComponentRegistry } from '@apex-stack/kit'
 import {
+  type App,
   createApp,
   defineEventHandler,
   getRequestHeaders,
@@ -11,6 +12,7 @@ import {
   setResponseHeader,
   setResponseStatus,
   toNodeListener,
+  toWebHandler,
 } from 'h3'
 import { createApiHandler, expandApiModule } from '../api/routes.js'
 import type { AuthConfig } from '../auth/define.js'
@@ -67,12 +69,14 @@ export interface ProdServerOptions {
   port?: number
 }
 
-/** Run the built app: dynamic routes, API + MCP, and static assets — no Vite. */
-export async function startProdServer(
-  options: ProdServerOptions,
-): Promise<{ server: Server; port: number }> {
+/**
+ * Build the production h3 app from a `apex build --server` output dir — routes,
+ * API + MCP, static assets; no Vite, no listen. Wrap with h3's `toNodeListener`
+ * (or `createProdNodeHandler`) for a serverless target, or use `startProdServer`
+ * to run it as a standalone Node server.
+ */
+export async function createProdApp(options: { dir: string }): Promise<App> {
   const dir = options.dir
-  const port = options.port ?? 3000
   const manifest = JSON.parse(readFileSync(join(dir, 'apex-manifest.json'), 'utf8')) as ProdManifest
 
   // Apply deploy-time .env / process.env over the baked runtimeConfig defaults.
@@ -230,6 +234,27 @@ export async function startProdServer(
     }),
   )
 
+  return app
+}
+
+/** A Node request handler `(req, res) => void` for the built app — for serverless
+ * targets (Vercel, etc.). */
+export async function createProdNodeHandler(options: { dir: string }) {
+  return toNodeListener(await createProdApp(options))
+}
+
+/** A Web fetch handler `(Request) => Promise<Response>` for the built app — for
+ * fetch-style serverless targets (Netlify Functions v2, edge runtimes, etc.). */
+export async function createProdWebHandler(options: { dir: string }) {
+  return toWebHandler(await createProdApp(options))
+}
+
+/** Run the built app as a standalone Node HTTP server (used by `apex start`). */
+export async function startProdServer(
+  options: ProdServerOptions,
+): Promise<{ server: Server; port: number }> {
+  const port = options.port ?? 3000
+  const app = await createProdApp({ dir: options.dir })
   const server = createHttpServer(toNodeListener(app))
   await new Promise<void>((resolve) => server.listen(port, resolve))
   return { server, port }

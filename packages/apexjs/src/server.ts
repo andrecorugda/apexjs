@@ -11,6 +11,14 @@ export {
   type SessionOptions,
   sessionAuth,
 } from './auth/session.js'
+// Production server building blocks — run the built app as a standalone server
+// or wrap it for a serverless target (Vercel, etc.).
+export {
+  createProdApp,
+  createProdNodeHandler,
+  createProdWebHandler,
+  startProdServer,
+} from './prod/server.js'
 export { checkCsrf, isCsrfSafe } from './security/csrf.js'
 export { applySecurityHeaders, securityHeaders } from './security/headers.js'
 export {

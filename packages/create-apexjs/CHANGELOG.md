@@ -1,5 +1,15 @@
 # create-apexjs
 
+## 0.5.2
+
+### Patch Changes
+
+- One-command Vercel deploys: `apex build --preset vercel` builds the server target
+  and generates `api/index.mjs` (a serverless function serving the whole app via
+  `createProdNodeHandler`) + `vercel.json` — commit them and run `vercel deploy`.
+  The `data` feature is now Supabase-ready: its `db/index.ts` uses Postgres when
+  `DATABASE_URL` is set (in-memory libSQL otherwise), and ships the `postgres` driver.
+
 ## 0.5.1
 
 ### Patch Changes

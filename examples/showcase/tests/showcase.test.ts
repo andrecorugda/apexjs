@@ -10,9 +10,11 @@ const APP_ROOT = fileURLToPath(new URL('..', import.meta.url))
 // in-memory DB — no running server, no network. Exercises every backend pillar.
 describe('showcase app', () => {
   let app: TestApp
+  // Booting the app (DB migrate + seed + module discovery) can be slow under a
+  // loaded parallel run — give it room so it doesn't flake.
   beforeAll(async () => {
     app = await createTestApp({ root: APP_ROOT })
-  })
+  }, 30_000)
   afterAll(() => app.close())
 
   it('data: create + list a message via the DB-backed model resource', async () => {

@@ -1,5 +1,41 @@
 # @apex-stack/core
 
+## 0.22.0
+
+### Minor Changes
+
+- Netlify deploys: `apex build --preset netlify` scaffolds a Netlify Functions-v2
+  handler (`netlify/functions/server.mjs`) that serves the whole app via the new
+  `createProdWebHandler` (a Web `fetch` handler, exported from `@apex-stack/core/server`),
+  plus `netlify.toml`. Commit and `netlify deploy`.
+
+## 0.21.0
+
+### Minor Changes
+
+- Container deploys: `apex build --preset docker` scaffolds a Dockerfile (+ .dockerignore)
+  that builds and runs the app on any container host — Railway, Render, Fly.io, a VPS,
+  Kubernetes. `apex start` now honours `$PORT` (host-injected), then falls back to 3000.
+
+## 0.20.0
+
+### Minor Changes
+
+- One-command Vercel deploys: `apex build --preset vercel` builds the server target
+  and generates `api/index.mjs` (a serverless function serving the whole app via
+  `createProdNodeHandler`) + `vercel.json` — commit them and run `vercel deploy`.
+  The `data` feature is now Supabase-ready: its `db/index.ts` uses Postgres when
+  `DATABASE_URL` is set (in-memory libSQL otherwise), and ships the `postgres` driver.
+
+## 0.19.0
+
+### Minor Changes
+
+- Serverless-ready production server. New `createProdApp({ dir })` builds the h3 app
+  from a `apex build --server` output without listening, and `createProdNodeHandler`
+  returns a Node `(req, res)` handler — both exported from `@apex-stack/core/server`
+  for serverless targets (Vercel, etc.). `startProdServer` now wraps them.
+
 ## 0.18.0
 
 ### Minor Changes

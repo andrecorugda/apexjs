@@ -15,6 +15,119 @@ import { renderIslandsPage } from '../islands/render.js'
 import { type RouteDef, scanPages } from '../routing/router.js'
 import { loadStores } from '../stores/loader.js'
 
+/**
+ * Generate Vercel deploy config next to a server build: one serverless function
+ * (`api/index.mjs`) that serves the whole app via `createProdNodeHandler`, plus a
+ * `vercel.json` that rewrites everything to it. Idempotent; commit the two files
+ * and run `vercel deploy` (set DATABASE_URL / APEX_SESSION_PASSWORD in Vercel env).
+ */
+function emitVercelPreset(root: string, outDir: string): void {
+  mkdirSync(join(root, 'api'), { recursive: true })
+  writeFileSync(
+    join(root, 'api', 'index.mjs'),
+    `import { fileURLToPath } from 'node:url'
+import { createProdNodeHandler } from '@apex-stack/core/server'
+
+// Serves the whole built Apex app (SSR + /api + /mcp + static) from one function.
+const dir = fileURLToPath(new URL('../${outDir}', import.meta.url))
+const handler = await createProdNodeHandler({ dir })
+
+export default (req, res) => handler(req, res)
+`,
+  )
+  writeFileSync(
+    join(root, 'vercel.json'),
+    `${JSON.stringify(
+      {
+        $schema: 'https://openapi.vercel.sh/vercel.json',
+        framework: null,
+        buildCommand: 'apex build --server',
+        installCommand: 'npm install',
+        functions: { 'api/index.mjs': { includeFiles: `${outDir}/**`, maxDuration: 30 } },
+        rewrites: [{ source: '/(.*)', destination: '/api/index' }],
+      },
+      null,
+      2,
+    )}\n`,
+  )
+  console.log(
+    `  ${'\x1b[36m'}Vercel${'\x1b[0m'} preset → wrote api/index.mjs + vercel.json\n` +
+      '  Set DATABASE_URL + APEX_SESSION_PASSWORD in your Vercel env, then: vercel deploy\n',
+  )
+}
+
+/**
+ * Generate Netlify deploy config next to a server build: one Functions-v2 handler
+ * (`netlify/functions/server.mjs`) serving the whole app via `createProdWebHandler`
+ * (a Web fetch handler), plus `netlify.toml`. Commit them and run `netlify deploy`
+ * (set DATABASE_URL / APEX_SESSION_PASSWORD in Netlify env).
+ */
+function emitNetlifyPreset(root: string, outDir: string): void {
+  mkdirSync(join(root, 'netlify', 'functions'), { recursive: true })
+  writeFileSync(
+    join(root, 'netlify', 'functions', 'server.mjs'),
+    `import { fileURLToPath } from 'node:url'
+import { createProdWebHandler } from '@apex-stack/core/server'
+
+// Serves the whole built Apex app (SSR + /api + /mcp) as a Web fetch handler.
+const dir = fileURLToPath(new URL('../../${outDir}', import.meta.url))
+const handler = await createProdWebHandler({ dir })
+
+export default (req) => handler(req)
+export const config = { path: '/*', preferStatic: true }
+`,
+  )
+  writeFileSync(
+    join(root, 'netlify.toml'),
+    `[build]
+  command = "apex build --server"
+  publish = "${outDir}"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  included_files = ["${outDir}/**"]
+`,
+  )
+  console.log(
+    `  ${'\x1b[36m'}Netlify${'\x1b[0m'} preset → wrote netlify/functions/server.mjs + netlify.toml\n` +
+      '  Set DATABASE_URL + APEX_SESSION_PASSWORD in your Netlify env, then: netlify deploy\n',
+  )
+}
+
+/**
+ * Scaffold a Dockerfile that builds + runs the app — deployable on any container
+ * host (Railway, Render, Fly.io, a VPS, Kubernetes). `apex start` honours $PORT,
+ * so the host's injected port just works. Set DATABASE_URL / APEX_SESSION_PASSWORD
+ * in the host's env.
+ */
+function emitDockerPreset(root: string): void {
+  writeFileSync(
+    join(root, 'Dockerfile'),
+    `# Apex JS — build + run on any container host (Railway / Render / Fly / VPS).
+FROM node:20-slim
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+RUN npx apex build --server
+
+# apex start listens on $PORT (host-injected) or 3000.
+EXPOSE 3000
+CMD ["npx", "apex", "start"]
+`,
+  )
+  if (!existsSync(join(root, '.dockerignore'))) {
+    writeFileSync(join(root, '.dockerignore'), 'node_modules\ndist\n.git\n.env\n.env.*\n')
+  }
+  console.log(
+    `  ${'\x1b[36m'}Docker${'\x1b[0m'} preset → wrote Dockerfile (+ .dockerignore)\n` +
+      '  Deploy on Railway/Render/Fly/any container host. Set DATABASE_URL + APEX_SESSION_PASSWORD in its env.\n',
+  )
+}
+
 /** `/` → index.html, `/about` → about/index.html. */
 function outFile(pattern: string): string {
   const clean = pattern.replace(/^\//, '')
@@ -41,6 +154,12 @@ export const buildCommand = defineCommand({
       description: 'Public base path for a subpath deploy (e.g. /demo/)',
       default: '/',
     },
+    preset: {
+      type: 'string',
+      description:
+        'Deploy preset config. Supported: vercel · netlify (serverless) · docker (Railway/Render/Fly/any container)',
+      default: '',
+    },
   },
   async run({ args }) {
     const root = resolve(process.cwd(), args.root)
@@ -51,8 +170,17 @@ export const buildCommand = defineCommand({
     const staticRoutes = routes.filter((r: RouteDef) => !r.isDynamic)
     const dynamic = routes.filter((r: RouteDef) => r.isDynamic)
 
-    if (args.server) {
-      return buildServerTarget(root, outDir, args.outDir, routes)
+    // Docker preset just scaffolds a Dockerfile — the container runs the build.
+    if (args.preset === 'docker') {
+      emitDockerPreset(root)
+      return
+    }
+
+    if (args.server || args.preset === 'vercel' || args.preset === 'netlify') {
+      await buildServerTarget(root, outDir, args.outDir, routes)
+      if (args.preset === 'vercel') emitVercelPreset(root, args.outDir)
+      else if (args.preset === 'netlify') emitNetlifyPreset(root, args.outDir)
+      return
     }
 
     // Component mode: build a client bundle per page so the prerendered HTML hydrates.
