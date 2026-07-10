@@ -238,7 +238,7 @@ apex mcp-server --root /abs/path/to/your-app</code></pre>
         as a stdio transport. Tools that fail return <code>isError: true</code>, so the agent can tell a
         failed call from a successful one.
       </p>
-      <p>The server exposes the generator, build, and introspection commands as seven tools:</p>
+      <p>The server exposes the generator, build, and introspection commands as eight tools:</p>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Tool</th><th>Does</th><th>Key inputs</th></tr></thead>
@@ -249,6 +249,7 @@ apex mcp-server --root /abs/path/to/your-app</code></pre>
             <tr><td><code>apex_build</code></td><td>Build the app, optionally with a deploy preset (<code>vercel</code>&nbsp;|&nbsp;<code>netlify</code>&nbsp;|&nbsp;<code>docker</code>) or a Node server target.</td><td><code>preset</code>, <code>server</code></td></tr>
             <tr><td><code>apex_list</code></td><td>Discover what's available: <code>features</code>, <code>components</code>, or <code>make-kinds</code>.</td><td><code>what</code></td></tr>
             <tr><td><code>apex_project_info</code></td><td><strong>Read before you write</strong> — routes, API routes, models, components, and which features are installed.</td><td><code>root</code></td></tr>
+            <tr><td><code>apex_check</code></td><td><strong>Type-check the app</strong> (<code>tsc --noEmit</code>; uses the native compiler when installed). The fast type gate — run it after generating code, before tests. Fails with the type errors when there are any.</td><td><code>root</code></td></tr>
             <tr><td><code>apex_test</code></td><td>Run the app's tests once with Vitest, optionally filtered.</td><td><code>pattern</code></td></tr>
           </tbody>
         </table>
@@ -258,8 +259,10 @@ apex mcp-server --root /abs/path/to/your-app</code></pre>
         <p>
           The tools carry typed inputs and structured results, so the agent scaffolds correct,
           conventional code instead of hand-writing boilerplate it can get subtly wrong.
-          <code>apex_project_info</code> lets it read the app's real shape first; <code>apex_test</code>
-          lets it verify its own change. Read → generate → verify, all as tool calls.
+          <code>apex_project_info</code> lets it read the app's real shape first; <code>apex_check</code>
+          then <code>apex_test</code> let it verify its own change. Read → generate → <strong>check</strong>
+          → test, all as tool calls — and with the native TypeScript compiler the check is fast enough to
+          run after every edit.
         </p>
       </div>
 
@@ -283,7 +286,7 @@ apex mcp-server --root /abs/path/to/your-app</code></pre>
 
       <h2 id="agent-host">Connect Claude Desktop or Cursor <a class="anchor" href="#agent-host">#</a></h2>
       <p>
-        Point any MCP-capable agent host at <code>apex mcp-server</code> and it gains the seven tools
+        Point any MCP-capable agent host at <code>apex mcp-server</code> and it gains the eight tools
         above. With the CLI installed globally (<code>npm i -g @apex-stack/core</code>):
       </p>
       <p class="code-label">claude_desktop_config.json / Cursor MCP settings</p>

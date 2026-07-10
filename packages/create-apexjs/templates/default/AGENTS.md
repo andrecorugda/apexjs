@@ -11,7 +11,8 @@ an MCP tool**. This file tells you (the agent) how to work here effectively.
 2. **Everything has one place.** Follow the structure below; don't invent folders.
 3. **Security is the framework's job, not yours.** Use `auth`/`can`/`scope` — never
    hand-roll auth. Defaults are fail-closed.
-4. **Verify your work.** Add tests with `createTestApp` and run `apex test`.
+4. **Verify your work.** After changing code, run `apex check` (type gate) then
+   `apex test`. Add tests with `createTestApp`. Fix type errors before moving on.
 5. **TypeScript is strict.** If it compiles, it's probably right; lean on the types.
 
 ## Do things with the CLI (this is the fast path)
@@ -26,6 +27,7 @@ apex extend data                  # add a DB-backed model + /guestbook demo (Sup
 apex extend i18n                  # add locales/*.json + /fr routing
 apex add button card modal        # copy themeable UI components in
 apex migrate                      # apply DB migrations
+apex check                        # type-check (tsc --noEmit; fast with the native compiler)
 apex build --preset vercel        # build + Vercel config (also: netlify, docker); then deploy
 apex test                         # run Vitest
 ```
@@ -79,7 +81,8 @@ The full stability contract of public APIs is in the framework's `API.md` — �
 
 ## Drive Apex as MCP tools (optional, powerful)
 Apex ships an MCP server for its own CLI — run `apex mcp-server` (stdio). Point your
-agent host at it to get `apex_make`, `apex_extend`, `apex_add`, `apex_build`, and
-`apex_list` as structured tools, so you scaffold by calling tools instead of shelling out.
+agent host at it to get `apex_make`, `apex_extend`, `apex_add`, `apex_build`, `apex_list`,
+`apex_project_info`, `apex_check`, and `apex_test` as structured tools, so you scaffold,
+type-check, and test by calling tools instead of shelling out.
 
 Docs: https://apexjs.site/docs/
