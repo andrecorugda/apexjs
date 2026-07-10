@@ -40,7 +40,8 @@ export const FEATURES: Record<string, Feature> = {
       existsSync(join(root, 'models')) || existsSync(join(root, 'server/api/messages.ts')),
     deps: {
       '@apex-stack/data': 'latest',
-      '@libsql/client': '^0.17.4',
+      '@libsql/client': '^0.17.4', // local dev (in-memory)
+      postgres: '^3.4.5', // production: Supabase/Neon via DATABASE_URL
       'drizzle-orm': '^0.45.2',
     },
     navLinks: [{ href: '/guestbook', label: 'Guestbook' }],

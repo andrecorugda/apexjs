@@ -1,6 +1,6 @@
 {
   "name": "create-apexjs",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Scaffold a new Apex JS app",
   "type": "module",
   "license": "MIT",

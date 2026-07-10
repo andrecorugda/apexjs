@@ -15,6 +15,47 @@ import { renderIslandsPage } from '../islands/render.js'
 import { type RouteDef, scanPages } from '../routing/router.js'
 import { loadStores } from '../stores/loader.js'
 
+/**
+ * Generate Vercel deploy config next to a server build: one serverless function
+ * (`api/index.mjs`) that serves the whole app via `createProdNodeHandler`, plus a
+ * `vercel.json` that rewrites everything to it. Idempotent; commit the two files
+ * and run `vercel deploy` (set DATABASE_URL / APEX_SESSION_PASSWORD in Vercel env).
+ */
+function emitVercelPreset(root: string, outDir: string): void {
+  mkdirSync(join(root, 'api'), { recursive: true })
+  writeFileSync(
+    join(root, 'api', 'index.mjs'),
+    `import { fileURLToPath } from 'node:url'
+import { createProdNodeHandler } from '@apex-stack/core/server'
+
+// Serves the whole built Apex app (SSR + /api + /mcp + static) from one function.
+const dir = fileURLToPath(new URL('../${outDir}', import.meta.url))
+const handler = await createProdNodeHandler({ dir })
+
+export default (req, res) => handler(req, res)
+`,
+  )
+  writeFileSync(
+    join(root, 'vercel.json'),
+    `${JSON.stringify(
+      {
+        $schema: 'https://openapi.vercel.sh/vercel.json',
+        framework: null,
+        buildCommand: 'apex build --server',
+        installCommand: 'npm install',
+        functions: { 'api/index.mjs': { includeFiles: `${outDir}/**`, maxDuration: 30 } },
+        rewrites: [{ source: '/(.*)', destination: '/api/index' }],
+      },
+      null,
+      2,
+    )}\n`,
+  )
+  console.log(
+    `  ${'\x1b[36m'}Vercel${'\x1b[0m'} preset → wrote api/index.mjs + vercel.json\n` +
+      '  Set DATABASE_URL + APEX_SESSION_PASSWORD in your Vercel env, then: vercel deploy\n',
+  )
+}
+
 /** `/` → index.html, `/about` → about/index.html. */
 function outFile(pattern: string): string {
   const clean = pattern.replace(/^\//, '')
@@ -41,6 +82,11 @@ export const buildCommand = defineCommand({
       description: 'Public base path for a subpath deploy (e.g. /demo/)',
       default: '/',
     },
+    preset: {
+      type: 'string',
+      description: 'Deploy preset — generates host config after a server build. Supported: vercel',
+      default: '',
+    },
   },
   async run({ args }) {
     const root = resolve(process.cwd(), args.root)
@@ -51,8 +97,10 @@ export const buildCommand = defineCommand({
     const staticRoutes = routes.filter((r: RouteDef) => !r.isDynamic)
     const dynamic = routes.filter((r: RouteDef) => r.isDynamic)
 
-    if (args.server) {
-      return buildServerTarget(root, outDir, args.outDir, routes)
+    if (args.server || args.preset === 'vercel') {
+      await buildServerTarget(root, outDir, args.outDir, routes)
+      if (args.preset === 'vercel') emitVercelPreset(root, args.outDir)
+      return
     }
 
     // Component mode: build a client bundle per page so the prerendered HTML hydrates.
