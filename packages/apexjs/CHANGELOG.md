@@ -1,5 +1,18 @@
 # @apex-stack/core
 
+## 0.24.2
+
+### Patch Changes
+
+- fix(mcp-server): honor `force` on `apex_add` and set `isError` on failed tool calls
+
+  The `apex mcp-server` tools now surface failure to the calling agent: any CLI
+  tool that exits non-zero (e.g. `apex_add` with an unknown component) returns an
+  MCP result with `isError: true` instead of a success-shaped text result, so an
+  agent can tell a failure from a success. `apex_add` also gains a `force` boolean
+  that appends `--force` to overwrite existing component files (previously the
+  parameter was absent and overwrite was impossible via the tool).
+
 ## 0.24.1
 
 ### Patch Changes

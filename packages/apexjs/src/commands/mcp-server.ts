@@ -34,23 +34,38 @@ const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g')
 
 /** Run the CLI and return clean, agent-friendly text: ANSI stripped, the ASCII
  * brand banner removed, and failures reported usefully (not "code null"). */
-function runApex(args: string[], cwd: string): string {
+function runApex(args: string[], cwd: string): { text: string; ok: boolean } {
   const r = spawnSync(process.execPath, [CLI, ...args], { cwd, encoding: 'utf8' })
-  if (r.error) return `apex failed to run: ${r.error.message}`
+  if (r.error) return { text: `apex failed to run: ${r.error.message}`, ok: false }
   const clean = `${r.stdout ?? ''}\n${r.stderr ?? ''}`
     .replace(ANSI, '')
     .split('\n')
     .filter((l) => !/[█╗╝╔═║╚]/.test(l) && !/The full-stack, AI-native/.test(l))
     .join('\n')
     .trim()
-  if (clean) return clean
-  if (r.status === 0) return 'done'
-  if (r.status != null) return `apex exited with code ${r.status}`
-  return `apex terminated with no output${r.signal ? ` (signal ${r.signal})` : ''}`
+  const ok = r.status === 0
+  const text =
+    clean ||
+    (ok
+      ? 'done'
+      : r.status != null
+        ? `apex exited with code ${r.status}`
+        : `apex terminated with no output${r.signal ? ` (signal ${r.signal})` : ''}`)
+  return { text, ok }
 }
 
-function text(t: string) {
-  return { content: [{ type: 'text' as const, text: t }] }
+/** An MCP tool result. `isError: true` is set on failure so a client can tell
+ * failure from success — the text body alone isn't enough. */
+function result(text: string, isError = false) {
+  return isError
+    ? { content: [{ type: 'text' as const, text }], isError: true }
+    : { content: [{ type: 'text' as const, text }] }
+}
+
+/** Run the CLI and return an MCP result carrying its success/failure. */
+function run(args: string[], cwd: string) {
+  const r = runApex(args, cwd)
+  return result(r.text, !r.ok)
 }
 
 /** List files with an extension under a dir (recursive), relative paths. */
@@ -120,7 +135,7 @@ export const mcpServerCommand = defineCommand({
       },
       async (a) => {
         const extra = a.fields ? a.fields.split(/\s+/).filter(Boolean) : []
-        return text(runApex(['make', a.kind, a.name, ...extra], rootOf(a)))
+        return run(['make', a.kind, a.name, ...extra], rootOf(a))
       },
     )
 
@@ -131,16 +146,25 @@ export const mcpServerCommand = defineCommand({
           'Add an optional feature to an Apex app: data (DB model + REST/MCP CRUD + a demo page), auth (sealed-cookie sessions + login/logout + gated route), or i18n (locales + /<locale> routing). Idempotent.',
         inputSchema: { feature: z.enum(['data', 'auth', 'i18n']), root: z.string().optional() },
       },
-      async (a) => text(runApex(['extend', a.feature], rootOf(a))),
+      async (a) => run(['extend', a.feature], rootOf(a)),
     )
 
     server.registerTool(
       'apex_add',
       {
-        description: 'Add themeable UI components (space-separated), e.g. "button card modal".',
-        inputSchema: { components: z.string(), root: z.string().optional() },
+        description:
+          'Add themeable UI components (space-separated), e.g. "button card modal". Pass force:true to overwrite existing files.',
+        inputSchema: {
+          components: z.string(),
+          force: z.boolean().optional(),
+          root: z.string().optional(),
+        },
       },
-      async (a) => text(runApex(['add', ...a.components.split(/\s+/).filter(Boolean)], rootOf(a))),
+      async (a) =>
+        run(
+          ['add', ...a.components.split(/\s+/).filter(Boolean), ...(a.force ? ['--force'] : [])],
+          rootOf(a),
+        ),
     )
 
     server.registerTool(
@@ -156,7 +180,7 @@ export const mcpServerCommand = defineCommand({
       },
       async (a) => {
         const flags = a.preset ? ['--preset', a.preset] : a.server ? ['--server'] : []
-        return text(runApex(['build', ...flags], rootOf(a)))
+        return run(['build', ...flags], rootOf(a))
       },
     )
 
@@ -171,9 +195,9 @@ export const mcpServerCommand = defineCommand({
         },
       },
       async (a) => {
-        if (a.what === 'make-kinds') return text(KINDS.join(' '))
-        if (a.what === 'features') return text(runApex(['extend'], rootOf(a)))
-        return text(runApex(['add'], rootOf(a)))
+        if (a.what === 'make-kinds') return result(KINDS.join(' '))
+        if (a.what === 'features') return run(['extend'], rootOf(a))
+        return run(['add'], rootOf(a))
       },
     )
 
@@ -184,7 +208,7 @@ export const mcpServerCommand = defineCommand({
           'Read the current Apex app: its routes (from pages/), API routes, models, components, and which features (auth/i18n/data) are installed. Use this to understand an app before changing it.',
         inputSchema: { root: z.string().optional() },
       },
-      async (a) => text(JSON.stringify(projectInfo(rootOf(a)), null, 2)),
+      async (a) => result(JSON.stringify(projectInfo(rootOf(a)), null, 2)),
     )
 
     server.registerTool(
@@ -194,7 +218,7 @@ export const mcpServerCommand = defineCommand({
           "Run the app's tests once with Vitest (optionally filtered by a name pattern). Use it to verify your changes.",
         inputSchema: { pattern: z.string().optional(), root: z.string().optional() },
       },
-      async (a) => text(runApex(['test', 'run', ...(a.pattern ? [a.pattern] : [])], rootOf(a))),
+      async (a) => run(['test', 'run', ...(a.pattern ? [a.pattern] : [])], rootOf(a)),
     )
 
     await server.connect(new StdioServerTransport())
