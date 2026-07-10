@@ -1,5 +1,16 @@
 # @apex-stack/core
 
+## 0.23.0
+
+### Minor Changes
+
+- **AI-native tooling (Apex Compass + CLI-as-MCP).** New `apex mcp-server` runs an MCP
+  server (stdio) that exposes the Apex CLI as tools — `apex_make`, `apex_extend`,
+  `apex_add`, `apex_build`, `apex_list` — so an AI agent scaffolds/extends/builds an app
+  by calling structured tools instead of hand-writing files. Point any agent host at
+  `apex mcp-server`. Scaffolded apps now include an `AGENTS.md` that teaches agents the
+  conventions, generators, and APIs (also synced into existing apps by `apex upgrade`).
+
 ## 0.22.0
 
 ### Minor Changes
