@@ -101,6 +101,7 @@
         <ul>
           <li><a href="./cli.html">CLI</a></li>
           <li><a href="./deploy.html">Build &amp; Deploy</a></li>
+          <li><a href="./versioning.html">Stability &amp; Versioning</a></li>
         </ul>
       </div>
     </aside>
@@ -175,6 +176,7 @@ apex dev</code></pre>
 ├─ tests/posts.test.ts
 ├─ db/README.md
 ├─ public/favicon.svg
+├─ AGENTS.md                 <span class="c"># brief for AI coding agents (read this first)</span>
 ├─ apex.config.ts
 ├─ app.css
 ├─ package.json
@@ -200,6 +202,15 @@ apex dev</code></pre>
         you need them (or generated with <a href="./cli.html#make"><code>apex make</code></a>). The
         feature-complete <code>examples/showcase</code> app demonstrates them all.
       </p>
+      <div class="callout warm">
+        <span class="h">Building with an AI agent?</span>
+        <p>
+          The scaffold ships an <code>AGENTS.md</code> at the project root — a brief that teaches a coding
+          agent the conventions, the generator commands, and where things live. Point your agent at it (or
+          run <code>apex mcp-server</code> to give it the CLI as tools). See
+          <a href="./ai-native.html#build-with-agent">AI-native → Build with an agent</a>.
+        </p>
+      </div>
 
       <h2 id="dev">Run the dev server <a class="anchor" href="#dev">#</a></h2>
       <p>The scaffold wires two scripts. Start the standard dev server:</p>
