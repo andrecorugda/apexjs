@@ -176,7 +176,7 @@ apex dev --islands</code></pre>
 
       <h2 id="build">apex build <a class="anchor" href="#build">#</a></h2>
       <p>Prerender pages to deployable HTML plus per-page client bundles.</p>
-      <pre><code>apex build [root] [--outDir &lt;dir&gt;] [--islands] [--server]</code></pre>
+      <pre><code>apex build [root] [--outDir &lt;dir&gt;] [--islands] [--server] [--preset &lt;vercel|netlify|docker&gt;]</code></pre>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
@@ -190,7 +190,9 @@ apex dev --islands</code></pre>
       </div>
       <pre><code>apex build            <span class="c"># prerender + hydrate → static dist/</span>
 apex build --islands  <span class="c"># zero-JS static site (SSG)</span>
-apex build --server   <span class="c"># deployable Node server target</span></code></pre>
+apex build --server   <span class="c"># deployable Node server target</span>
+apex build --preset vercel   <span class="c"># server target + Vercel config (also: netlify, docker)</span></code></pre>
+      <p class="muted">Deploy presets generate the host config (function/Dockerfile) for a one-command deploy — see <a href="./deploy.html#presets">Deploy → One-command deploys</a>.</p>
       <p class="muted">The three modes are explained in full on <a href="./deploy.html">Build &amp; deploy</a>.</p>
 
       <h2 id="start">apex start <a class="anchor" href="#start">#</a></h2>
