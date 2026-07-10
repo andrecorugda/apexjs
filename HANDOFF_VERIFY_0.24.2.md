@@ -47,7 +47,9 @@ npm install
 Confirm the installed core is 0.24.2:
 
 ```bash
-node -e "console.log(require('@apex-stack/core/package.json').version)"   # expect 0.24.2
+# NB: `require('@apex-stack/core/package.json')` fails — ./package.json isn't in
+# the package exports map. Read it off disk instead:
+node -p "JSON.parse(require('fs').readFileSync('node_modules/@apex-stack/core/package.json','utf8')).version"   # expect 0.24.2
 ```
 
 The scaffold ships some components already in `components/` (e.g. `Button.alpine`).
