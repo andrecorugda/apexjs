@@ -59,15 +59,8 @@ Every major reactive library has a meta-framework — React has Next, Vue has Nu
 
 ## Status
 
-**On npm — start with `npm create apexjs@latest`** (packages are versioned independently via
-Changesets; use `@latest`). SSR + hydration, islands (`client:load|idle|visible|none`), file routing,
-components, AI-native APIs (REST + MCP from one typed route), a multi-database data layer
-(SQLite/Turso/Supabase/Neon), a **security model** (`defineAuth` + route `auth`/`can` + resource
-`access`/`scope` + sealed sessions/CSRF — one fail-closed policy across pages/REST/MCP, verified by
-two independent adversarial passes), and a full production build — static (`apex build`), zero-JS
-(`apex build --islands`), or a Node server (`apex build --server` + `apex start`) for dynamic
-routes + API/MCP. All covered by tests. Jobs/queues and Nitro deploy presets are next.
-See [ROADMAP.md](./ROADMAP.md).
+On npm — start with `npm create apexjs@latest`. See [ROADMAP.md](./ROADMAP.md) for
+what's built and what's planned.
 
 ## Support
 
