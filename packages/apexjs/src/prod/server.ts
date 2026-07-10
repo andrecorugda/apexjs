@@ -12,6 +12,7 @@ import {
   setResponseHeader,
   setResponseStatus,
   toNodeListener,
+  toWebHandler,
 } from 'h3'
 import { createApiHandler, expandApiModule } from '../api/routes.js'
 import type { AuthConfig } from '../auth/define.js'
@@ -240,6 +241,12 @@ export async function createProdApp(options: { dir: string }): Promise<App> {
  * targets (Vercel, etc.). */
 export async function createProdNodeHandler(options: { dir: string }) {
   return toNodeListener(await createProdApp(options))
+}
+
+/** A Web fetch handler `(Request) => Promise<Response>` for the built app — for
+ * fetch-style serverless targets (Netlify Functions v2, edge runtimes, etc.). */
+export async function createProdWebHandler(options: { dir: string }) {
+  return toWebHandler(await createProdApp(options))
 }
 
 /** Run the built app as a standalone Node HTTP server (used by `apex start`). */

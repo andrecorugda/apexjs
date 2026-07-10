@@ -1,5 +1,14 @@
 # @apex-stack/core
 
+## 0.22.0
+
+### Minor Changes
+
+- Netlify deploys: `apex build --preset netlify` scaffolds a Netlify Functions-v2
+  handler (`netlify/functions/server.mjs`) that serves the whole app via the new
+  `createProdWebHandler` (a Web `fetch` handler, exported from `@apex-stack/core/server`),
+  plus `netlify.toml`. Commit and `netlify deploy`.
+
 ## 0.21.0
 
 ### Minor Changes
