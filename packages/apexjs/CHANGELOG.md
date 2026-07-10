@@ -1,5 +1,13 @@
 # @apex-stack/core
 
+## 0.21.0
+
+### Minor Changes
+
+- Container deploys: `apex build --preset docker` scaffolds a Dockerfile (+ .dockerignore)
+  that builds and runs the app on any container host — Railway, Render, Fly.io, a VPS,
+  Kubernetes. `apex start` now honours `$PORT` (host-injected), then falls back to 3000.
+
 ## 0.20.0
 
 ### Minor Changes

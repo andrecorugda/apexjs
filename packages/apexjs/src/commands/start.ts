@@ -7,7 +7,11 @@ export const startCommand = defineCommand({
   meta: { name: 'start', description: 'Run a production build (from `apex build --server`)' },
   args: {
     dir: { type: 'positional', required: false, description: 'Build directory', default: 'dist' },
-    port: { type: 'string', description: 'Port to listen on', default: '3000' },
+    port: {
+      type: 'string',
+      description: 'Port to listen on (defaults to $PORT, then 3000 — for Railway/Render/Fly/etc.)',
+      default: process.env.PORT || '3000',
+    },
   },
   async run({ args }) {
     const dir = resolve(process.cwd(), args.dir)
