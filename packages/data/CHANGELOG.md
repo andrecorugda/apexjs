@@ -1,5 +1,19 @@
 # @apex-stack/data
 
+## 0.8.0
+
+### Minor Changes
+
+- `createDb({ driver:'postgres', url, options })` — pooler/SSL-aware. Auto-disables
+  prepared statements on a transaction pooler (Supabase Supavisor / pgBouncer:
+  `*.pooler.supabase.com` or `:6543`) and enables SSL for remote hosts; passes
+  through prepare/ssl/max/idleTimeout. Verified against live Supabase.
+
+### Patch Changes
+
+- Updated dependencies
+  - @apex-stack/core@0.19.0
+
 ## 0.7.5
 
 ### Patch Changes

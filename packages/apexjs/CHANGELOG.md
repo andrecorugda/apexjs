@@ -1,5 +1,14 @@
 # @apex-stack/core
 
+## 0.19.0
+
+### Minor Changes
+
+- Serverless-ready production server. New `createProdApp({ dir })` builds the h3 app
+  from a `apex build --server` output without listening, and `createProdNodeHandler`
+  returns a Node `(req, res)` handler — both exported from `@apex-stack/core/server`
+  for serverless targets (Vercel, etc.). `startProdServer` now wraps them.
+
 ## 0.18.0
 
 ### Minor Changes
