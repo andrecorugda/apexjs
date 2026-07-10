@@ -1,8 +1,10 @@
 import { spawnSync } from 'node:child_process'
-import { resolve } from 'node:path'
+import { existsSync, readdirSync } from 'node:fs'
+import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
 import { z } from 'zod'
+import { scanPages } from '../routing/router.js'
 import { VERSION } from '../ui.js'
 
 // An MCP server that exposes the Apex CLI itself as tools over stdio — so an AI
@@ -35,6 +37,38 @@ function runApex(args: string[], cwd: string): string {
 
 function text(t: string) {
   return { content: [{ type: 'text' as const, text: t }] }
+}
+
+/** List files with an extension under a dir (recursive), relative paths. */
+function listFiles(dir: string, ext: string): string[] {
+  if (!existsSync(dir)) return []
+  const out: string[] = []
+  const walk = (d: string, rel: string) => {
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      const r = rel ? `${rel}/${e.name}` : e.name
+      if (e.isDirectory()) walk(join(d, e.name), r)
+      else if (e.name.endsWith(ext)) out.push(r)
+    }
+  }
+  walk(dir, '')
+  return out
+}
+
+/** A machine-readable map of an Apex app — so an agent can read before it writes. */
+function projectInfo(root: string) {
+  return {
+    routes: existsSync(join(root, 'pages'))
+      ? scanPages(root).map((r) => ({ url: r.pattern, dynamic: r.isDynamic }))
+      : [],
+    apiRoutes: listFiles(join(root, 'server', 'api'), '.ts'),
+    models: listFiles(join(root, 'models'), '.ts'),
+    components: listFiles(join(root, 'components'), '.alpine'),
+    features: {
+      auth: existsSync(join(root, 'server', 'auth.ts')),
+      i18n: existsSync(join(root, 'locales')),
+      data: existsSync(join(root, 'models')) || existsSync(join(root, 'db', 'index.ts')),
+    },
+  }
 }
 
 export const mcpServerCommand = defineCommand({
@@ -127,6 +161,26 @@ export const mcpServerCommand = defineCommand({
         if (a.what === 'features') return text(runApex(['extend'], rootOf(a)))
         return text(runApex(['add'], rootOf(a)))
       },
+    )
+
+    server.registerTool(
+      'apex_project_info',
+      {
+        description:
+          'Read the current Apex app: its routes (from pages/), API routes, models, components, and which features (auth/i18n/data) are installed. Use this to understand an app before changing it.',
+        inputSchema: { root: z.string().optional() },
+      },
+      async (a) => text(JSON.stringify(projectInfo(rootOf(a)), null, 2)),
+    )
+
+    server.registerTool(
+      'apex_test',
+      {
+        description:
+          "Run the app's tests once with Vitest (optionally filtered by a name pattern). Use it to verify your changes.",
+        inputSchema: { pattern: z.string().optional(), root: z.string().optional() },
+      },
+      async (a) => text(runApex(['test', 'run', ...(a.pattern ? [a.pattern] : [])], rootOf(a))),
     )
 
     await server.connect(new StdioServerTransport())

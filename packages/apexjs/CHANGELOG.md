@@ -1,5 +1,14 @@
 # @apex-stack/core
 
+## 0.24.0
+
+### Minor Changes
+
+- `apex mcp-server` gains two tools that complete the agent loop: **`apex_project_info`**
+  (read an app's routes, models, components, and installed features — so the agent can
+  understand before it changes) and **`apex_test`** (run the app's tests once to verify
+  its own work). Now agents can write, read, and verify through MCP tools.
+
 ## 0.23.0
 
 ### Minor Changes
