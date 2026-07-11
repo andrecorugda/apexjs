@@ -90,3 +90,63 @@
     enhance()
   }
 })()
+
+// Ko-fi floating support button — site-wide (replaces the old top-nav button).
+;(() => {
+  const s = document.createElement('script')
+  s.src = 'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'
+  s.onload = () => {
+    if (!window.kofiWidgetOverlay) return
+    window.kofiWidgetOverlay.draw('andrecorugda', {
+      type: 'floating-chat',
+      'floating-chat.donateButton.text': 'Support me',
+      'floating-chat.donateButton.background-color': '#323842',
+      'floating-chat.donateButton.text-color': '#fff',
+    })
+  }
+  document.head.appendChild(s)
+})()
+
+// Docs mobile drawer — on small screens the sidebar slides in over the content
+// (via a bottom-left toggle) instead of stacking above it, so you never scroll
+// back up to navigate. Desktop is untouched (toggle + scrim are CSS-hidden there).
+;(() => {
+  const sidebar = document.querySelector('.docs-sidebar')
+  if (!sidebar) return
+
+  const toggle = document.createElement('button')
+  toggle.className = 'docs-nav-toggle'
+  toggle.type = 'button'
+  toggle.setAttribute('aria-label', 'Open contents')
+  toggle.setAttribute('aria-expanded', 'false')
+  toggle.innerHTML =
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg><span>Contents</span>'
+
+  const scrim = document.createElement('div')
+  scrim.className = 'docs-scrim'
+
+  const open = () => {
+    sidebar.classList.add('open')
+    scrim.classList.add('show')
+    toggle.setAttribute('aria-expanded', 'true')
+  }
+  const close = () => {
+    sidebar.classList.remove('open')
+    scrim.classList.remove('show')
+    toggle.setAttribute('aria-expanded', 'false')
+  }
+  toggle.addEventListener('click', () =>
+    sidebar.classList.contains('open') ? close() : open(),
+  )
+  scrim.addEventListener('click', close)
+  // Tapping a nav link navigates → close the drawer so the reader lands on content.
+  sidebar.addEventListener('click', (e) => {
+    if (e.target.closest('a')) close()
+  })
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close()
+  })
+
+  document.body.appendChild(scrim)
+  document.body.appendChild(toggle)
+})()
