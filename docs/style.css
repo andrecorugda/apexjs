@@ -1029,10 +1029,36 @@ figcaption {
   color: var(--glacier);
   font-weight: 600;
 }
-/* Docs mobile drawer — toggle + scrim are hidden on desktop. */
-.docs-nav-toggle,
+/* Docs mobile drawer — burger, drawer header, and scrim are hidden on desktop. */
+.docs-burger,
+.docs-drawer-head,
 .docs-scrim {
   display: none;
+}
+
+/* Ko-fi floating support button — small coffee icon, bottom-right, all screens. */
+.kofi-float {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #323842;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease;
+}
+.kofi-float:hover {
+  transform: scale(1.08);
+}
+.kofi-float img {
+  display: block;
+  width: 30px;
+  height: 30px;
 }
 
 @media (max-width: 720px) {
@@ -1040,28 +1066,94 @@ figcaption {
     grid-template-columns: 1fr;
     gap: 0;
   }
-  /* The sidebar becomes an off-canvas drawer that slides in over the content —
-     so the reader lands on the content, and navigation is one tap away. */
+  /* Burger lives in the sticky navbar, left of the brand. */
+  .docs-burger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    padding: 0;
+    margin-left: -0.35rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+  .docs-burger:hover {
+    color: var(--glacier);
+  }
+
+  /* Sidebar becomes an off-canvas drawer: a flex column with a fixed header and a
+     scrollable body, sliding in over the content. */
   .docs-sidebar {
     position: fixed;
     top: 0;
     left: 0;
-    bottom: 0;
-    width: min(82vw, 20rem);
+    /* Size to the viewport with vh/dvh (not bottom:0): the drawer's own transform
+       makes it its own containing block, so bottom:0 would size to content. */
+    height: 100vh;
+    height: 100dvh;
+    width: min(84vw, 20rem);
     max-height: none;
     margin: 0;
-    padding: 4.5rem 1.25rem 2rem;
+    padding: 0;
     background: var(--ground);
     border-right: 1px solid var(--line);
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.35);
     z-index: 70;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     transform: translateX(-100%);
     transition: transform 0.28s ease;
   }
   .docs-sidebar.open {
     transform: translateX(0);
+  }
+
+  /* Drawer's own sticky header: back button + title. */
+  .docs-drawer-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: none;
+    padding: 0.7rem 0.75rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--ground);
+  }
+  .docs-drawer-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    border: none;
+    border-radius: var(--radius-btn, 8px);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .docs-drawer-close:hover {
+    background: var(--glacier-soft);
+    color: var(--glacier);
+  }
+  .docs-drawer-title {
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  /* The scrollable list of nav groups. */
+  .docs-drawer-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 1rem 1.25rem 2rem;
   }
   .docs-sidebar .group {
     margin-bottom: 1rem;
@@ -1081,28 +1173,6 @@ figcaption {
   .docs-scrim.show {
     opacity: 1;
     pointer-events: auto;
-  }
-
-  /* Bottom-right floating toggle (the ko-fi mobile button sits bottom-left — no overlap). */
-  .docs-nav-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    position: fixed;
-    right: 1rem;
-    bottom: 1rem;
-    z-index: 72;
-    padding: 0.62rem 0.95rem;
-    font: 600 0.85rem/1 var(--mono, monospace);
-    color: #0a0a0b;
-    background: var(--glacier, #22d3ee);
-    border: none;
-    border-radius: 999px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-    cursor: pointer;
-  }
-  .docs-nav-toggle:hover {
-    filter: brightness(1.06);
   }
 }
 

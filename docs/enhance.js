@@ -91,56 +91,72 @@
   }
 })()
 
-// Ko-fi floating support button — site-wide (replaces the old top-nav button).
+// Ko-fi floating support button — a small coffee icon, bottom-right, site-wide.
+// (Ko-fi's own overlay widget renders oversized + off-screen on mobile and can't
+// be resized from outside its iframe, so we use a clean, fully-controlled button.)
 ;(() => {
-  const s = document.createElement('script')
-  s.src = 'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'
-  s.onload = () => {
-    if (!window.kofiWidgetOverlay) return
-    window.kofiWidgetOverlay.draw('andrecorugda', {
-      type: 'floating-chat',
-      'floating-chat.donateButton.text': 'Support me',
-      'floating-chat.donateButton.background-color': '#323842',
-      'floating-chat.donateButton.text-color': '#fff',
-    })
-  }
-  document.head.appendChild(s)
+  const a = document.createElement('a')
+  a.className = 'kofi-float'
+  a.href = 'https://ko-fi.com/G7S722N0L8'
+  a.target = '_blank'
+  a.rel = 'noopener'
+  a.setAttribute('aria-label', 'Support me on Ko-fi')
+  a.title = 'Support me on Ko-fi'
+  a.innerHTML = '<img src="https://storage.ko-fi.com/cdn/cup-border.png" alt="" width="30" height="30" />'
+  document.body.appendChild(a)
 })()
 
 // Docs mobile drawer — on small screens the sidebar slides in over the content
-// (via a bottom-left toggle) instead of stacking above it, so you never scroll
-// back up to navigate. Desktop is untouched (toggle + scrim are CSS-hidden there).
+// instead of stacking above it, so you never scroll back up to navigate. Opened
+// by a burger in the sticky navbar (left of the brand); the drawer has its own
+// sticky header with a back button, and a scrollable body. Desktop is untouched
+// (the burger, drawer header, and scrim are CSS-hidden there).
 ;(() => {
   const sidebar = document.querySelector('.docs-sidebar')
   if (!sidebar) return
 
-  const toggle = document.createElement('button')
-  toggle.className = 'docs-nav-toggle'
-  toggle.type = 'button'
-  toggle.setAttribute('aria-label', 'Open contents')
-  toggle.setAttribute('aria-expanded', 'false')
-  toggle.innerHTML =
-    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg><span>Contents</span>'
+  // 1) Burger in the sticky navbar, before the brand.
+  const bar = document.querySelector('.site-header .bar')
+  const burger = document.createElement('button')
+  burger.className = 'docs-burger'
+  burger.type = 'button'
+  burger.setAttribute('aria-label', 'Open contents')
+  burger.setAttribute('aria-expanded', 'false')
+  burger.innerHTML =
+    '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>'
+  if (bar) bar.insertBefore(burger, bar.firstChild)
 
+  // 2) Give the drawer a sticky header (back button + title) and a scrollable body.
+  const head = document.createElement('div')
+  head.className = 'docs-drawer-head'
+  head.innerHTML =
+    '<button type="button" class="docs-drawer-close" aria-label="Close contents"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><span class="docs-drawer-title">Contents</span>'
+  const body = document.createElement('div')
+  body.className = 'docs-drawer-body'
+  while (sidebar.firstChild) body.appendChild(sidebar.firstChild)
+  sidebar.appendChild(head)
+  sidebar.appendChild(body)
+
+  // 3) Backdrop + open/close wiring.
   const scrim = document.createElement('div')
   scrim.className = 'docs-scrim'
-
   const open = () => {
     sidebar.classList.add('open')
     scrim.classList.add('show')
-    toggle.setAttribute('aria-expanded', 'true')
+    burger.setAttribute('aria-expanded', 'true')
   }
   const close = () => {
     sidebar.classList.remove('open')
     scrim.classList.remove('show')
-    toggle.setAttribute('aria-expanded', 'false')
+    burger.setAttribute('aria-expanded', 'false')
   }
-  toggle.addEventListener('click', () =>
+  burger.addEventListener('click', () =>
     sidebar.classList.contains('open') ? close() : open(),
   )
+  head.querySelector('.docs-drawer-close').addEventListener('click', close)
   scrim.addEventListener('click', close)
   // Tapping a nav link navigates → close the drawer so the reader lands on content.
-  sidebar.addEventListener('click', (e) => {
+  body.addEventListener('click', (e) => {
     if (e.target.closest('a')) close()
   })
   document.addEventListener('keydown', (e) => {
@@ -148,5 +164,4 @@
   })
 
   document.body.appendChild(scrim)
-  document.body.appendChild(toggle)
 })()
