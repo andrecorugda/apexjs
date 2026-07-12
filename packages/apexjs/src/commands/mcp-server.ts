@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
 import { z } from 'zod'
+import { componentName } from '../components/registry.js'
 import { mountedApiPath, parseModelInfo, parseRouteInfo } from '../introspect/projectKnowledge.js'
 import { scanPages } from '../routing/router.js'
 import { VERSION } from '../ui.js'
@@ -113,7 +114,10 @@ function projectInfo(root: string) {
       file,
       ...parseModelInfo(readSafe(join(modelsDir, file))),
     })),
-    components: listFiles(join(root, 'components'), '.alpine'),
+    components: listFiles(join(root, 'components'), '.alpine').map((file) => ({
+      file,
+      tag: componentName(file.replace(/\.alpine$/, '')),
+    })),
     features: {
       auth: existsSync(join(root, 'server', 'auth.ts')),
       i18n: existsSync(join(root, 'locales')),
@@ -147,7 +151,7 @@ export const mcpServerCommand = defineCommand({
       'apex_make',
       {
         description:
-          'Generate a file in an Apex app. Kinds: page, component, api, service, store, layout, middleware, test, model, migration, auth. For a model, pass fields like "title:string done:boolean".',
+          'Generate a file in an Apex app. Kinds: page, component, api, service, store, layout, middleware, test, model, migration, auth. For a model, pass fields like "title:string done:boolean". A page or component name may include a folder (e.g. "ui/Card") to group it — the folder is created, and a nested component\'s tag is namespaced by folder (components/ui/Card.alpine → <UiCard/>).',
         inputSchema: {
           kind: z.enum(KINDS),
           name: z.string(),
@@ -175,7 +179,7 @@ export const mcpServerCommand = defineCommand({
       'apex_add',
       {
         description:
-          'Add themeable UI components (space-separated), e.g. "button card modal". Pass force:true to overwrite existing files.',
+          'Add themeable UI components (space-separated), e.g. "button card modal". A name may carry a folder (e.g. "ui/button") to copy it into components/ui/ (namespaced tag <UiButton/>). Pass force:true to overwrite existing files.',
         inputSchema: {
           components: z.string(),
           force: z.boolean().optional(),
@@ -227,7 +231,7 @@ export const mcpServerCommand = defineCommand({
       'apex_project_info',
       {
         description:
-          'Read the current Apex app: page routes; API routes with their method, mounted path, and mcp/auth flags; models with their table, fields (name/type/notNull/default) and behaviors; components; and which features (auth/i18n/data) are installed. Gives enough shape to act (e.g. add a field to a model) without opening files. Use this to understand an app before changing it.',
+          'Read the current Apex app: page routes; API routes with their method, mounted path, and mcp/auth flags; models with their table, fields (name/type/notNull/default) and behaviors; components with their &lt;Tag&gt; name (folder-namespaced); and which features (auth/i18n/data) are installed. Gives enough shape to act (e.g. add a field to a model) without opening files. Use this to understand an app before changing it.',
         inputSchema: { root: z.string().optional() },
       },
       async (a) => result(JSON.stringify(projectInfo(rootOf(a)), null, 2)),

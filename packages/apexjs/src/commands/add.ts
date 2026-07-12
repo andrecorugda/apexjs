@@ -2,6 +2,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
+import { componentName } from '../components/registry.js'
 import { banner, color } from '../ui.js'
 
 // The component registry is bundled into the package at build time
@@ -52,13 +53,21 @@ export const addCommand = defineCommand({
 
     // Collect requested names (all positionals, deduped, lowercased) or --all.
     const rest = (args._ as string[] | undefined) ?? []
+    // Each name may carry a target folder, like a page: `ui/button` → registry
+    // component `button` copied into `components/ui/`. The folder is created if missing.
     const requested = args.all
-      ? keys
+      ? keys.map((k) => ({ dir: '', key: k }))
       : [
           ...new Set(
             [...rest, ...(args.name ? [String(args.name)] : [])].map((s) => s.toLowerCase()),
           ),
-        ]
+        ].map((s) => {
+          const clean = s.replace(/^\/+/, '')
+          const i = clean.lastIndexOf('/')
+          return i === -1
+            ? { dir: '', key: clean }
+            : { dir: clean.slice(0, i), key: clean.slice(i + 1) }
+        })
 
     // No names → list what's available.
     if (!requested.length) {
@@ -74,34 +83,36 @@ export const addCommand = defineCommand({
       return
     }
 
-    const unknown = requested.filter((k) => !registry[k])
+    const unknown = requested.filter((r) => !registry[r.key])
     if (unknown.length) {
       console.error(
-        `  ${color.red('✗')} Unknown component(s): ${unknown.join(', ')}. Run ${color.cyan('apex add')} to list.\n`,
+        `  ${color.red('✗')} Unknown component(s): ${unknown.map((u) => u.key).join(', ')}. Run ${color.cyan('apex add')} to list.\n`,
       )
       process.exit(1)
     }
 
     const root = resolve(process.cwd(), String(args.root))
-    const added: string[] = []
+    const added: Array<{ rel: string; tag: string }> = []
     const skipped: string[] = []
-    for (const key of requested) {
+    for (const { dir, key } of requested) {
       const entry = registry[key] as RegistryEntry
-      const dest = join(root, 'components', `${entry.name}.alpine`)
+      const rel = dir ? `${dir}/${entry.name}` : entry.name
+      const dest = join(root, 'components', `${rel}.alpine`)
       if (existsSync(dest) && !args.force) {
-        skipped.push(entry.name)
+        skipped.push(rel)
         continue
       }
       mkdirSync(dirname(dest), { recursive: true })
       cpSync(join(REGISTRY_DIR, entry.file), dest)
-      added.push(entry.name)
+      added.push({ rel, tag: componentName(rel) })
     }
 
     if (added.length) {
       log(
         `  ${color.green('+')} Added ${added.length} component(s) to ${color.bold('components/')}:`,
       )
-      for (const n of added) log(`      ${color.green(`${n}.alpine`)}  ${color.gray(`<${n} />`)}`)
+      for (const { rel, tag } of added)
+        log(`      ${color.green(`${rel}.alpine`)}  ${color.gray(`<${tag} />`)}`)
     }
     if (skipped.length) {
       log(

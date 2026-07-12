@@ -1,5 +1,26 @@
 # create-apexjs
 
+## 0.6.2
+
+### Patch Changes
+
+- feat(components): group components in folders (Nuxt-style, folder-namespaced tags)
+
+  `components/` is now scanned recursively, so you can organize components into
+  subfolders. Nested components are namespaced by folder, Nuxt-style, with overlapping
+  segments deduped: `components/ui/Card.alpine` → `<UiCard/>`,
+  `components/base/BaseButton.alpine` → `<BaseButton/>`. **Top-level components are
+  unchanged** (`components/Card.alpine` → `<Card/>`), so existing apps are unaffected.
+  A build-time error is thrown if two files resolve to the same tag.
+
+  CLI: `apex make component ui/Navbar` and `apex add ui/button` now accept a folder
+  path (creating it if missing), matching how `apex make page` already worked.
+
+  AI-native: `apex_project_info` reports each component's resolved `<Tag>` name, and
+  the `apex_make`/`apex_add` tool descriptions document folder paths — so an agent
+  knows to write `<UiCard/>` for `components/ui/Card.alpine`. Additive; the public API
+  contract stays green.
+
 ## 0.6.1
 
 ### Patch Changes
