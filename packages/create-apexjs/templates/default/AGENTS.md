@@ -19,6 +19,7 @@ an MCP tool**. This file tells you (the agent) how to work here effectively.
 ```bash
 apex make page dashboard          # pages/dashboard.alpine (a route → /dashboard)
 apex make component Card          # components/Card.alpine  (<Card /> in templates)
+apex make component ui/Navbar     # group in a folder → components/ui/Navbar.alpine (<UiNavbar />)
 apex make model Post title:string body:string   # models/Post.ts → migration + REST + MCP CRUD
 apex make api webhooks            # server/api/webhooks.ts (defineApexRoute; also an MCP tool)
 apex make service Billing         # services/BillingService.ts
@@ -37,7 +38,8 @@ apex test                         # run Vitest
 ```
 pages/**/*.alpine   Routes. File path → URL. [param] = dynamic. index.alpine → parent path.
 layouts/*.alpine    Shared shells; default.alpine wraps every page (<slot/>).
-components/*.alpine  Reusable <PascalCase/> components (props via attributes).
+components/**/*.alpine  Reusable <PascalCase/> components (props via attributes). Group in
+                     folders: components/ui/Card.alpine → <UiCard/> (folder-namespaced, Nuxt-style).
 server/api/*.ts     Typed routes (defineApexRoute) / model resources → REST + MCP.
 server/auth.ts      Identity (sessionAuth) → ctx.user everywhere. (from `apex extend auth`)
 models/*.ts         defineModel → schema + migration + table + REST/MCP CRUD.

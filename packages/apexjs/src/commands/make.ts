@@ -22,6 +22,14 @@ function pascalCase(s: string): string {
     .replace(/^(.)/, (c) => c.toUpperCase())
 }
 
+/** A possibly-nested component name → its path under `components/`, PascalCasing only
+ * the filename so folders group them: `ui/navbar` → `ui/Navbar`, `Card` → `Card`. */
+function componentRel(name: string): string {
+  const parts = name.replace(/^\/+/, '').split('/')
+  const base = parts.pop() ?? name
+  return [...parts, pascalCase(base)].join('/')
+}
+
 function pageTemplate(name: string): string {
   return `<script server lang="ts">
   export function loader() {
@@ -409,7 +417,7 @@ function plan(
     case 'component':
       return [
         {
-          path: join(root, 'components', `${pascalCase(name)}.alpine`),
+          path: join(root, 'components', `${componentRel(name)}.alpine`),
           contents: componentTemplate(),
         },
       ]
