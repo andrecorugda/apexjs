@@ -7,7 +7,7 @@ import { createServer as createViteServer } from 'vite'
 import { buildClient, type ClientAssets } from '../build/buildClient.js'
 import { buildIslandsRuntime } from '../build/buildIslands.js'
 import { buildServer } from '../build/buildServer.js'
-import { loadComponents } from '../components/registry.js'
+import { loadComponents, scanComponents } from '../components/registry.js'
 import { resolveApexConfig } from '../config/resolve.js'
 import type { RuntimeConfig } from '../config/runtime.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
@@ -318,12 +318,9 @@ async function buildServerTarget(
   }
 
   const components: Record<string, string> = {}
-  const compDir = join(root, 'components')
-  if (existsSync(compDir)) {
-    for (const f of readdirSync(compDir).filter((f) => f.endsWith('.alpine'))) {
-      const sf = server.modules[`/components/${f}`]
-      if (sf) components[f.replace(/\.alpine$/, '')] = sf
-    }
+  for (const { id, name } of scanComponents(root)) {
+    const sf = server.modules[id]
+    if (sf) components[name] = sf
   }
 
   // Layouts, so the prod server can wrap pages in them (like dev + static build).

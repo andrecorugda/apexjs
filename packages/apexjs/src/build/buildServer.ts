@@ -2,6 +2,7 @@ import { existsSync, readdirSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { apex } from '@apex-stack/vite'
 import { build, type Rollup } from 'vite'
+import { scanComponents } from '../components/registry.js'
 import type { RouteDef } from '../routing/router.js'
 
 export interface ServerBuild {
@@ -22,12 +23,7 @@ export async function buildServer(
   // Collect entry module ids (as root-absolute ids, matching dev's ssrLoadModule keys).
   const ids: string[] = routes.map((r) => r.pageId)
 
-  const compDir = join(root, 'components')
-  if (existsSync(compDir)) {
-    for (const f of readdirSync(compDir).filter((f) => f.endsWith('.alpine'))) {
-      ids.push(`/components/${f}`)
-    }
-  }
+  for (const { id } of scanComponents(root)) ids.push(id)
   // Layouts must be SSR-built too so the prod server can wrap pages in them
   // (renderPage loads `/layouts/<name>.alpine` at request time).
   const layoutsDir = join(root, 'layouts')

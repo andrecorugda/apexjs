@@ -192,6 +192,18 @@
         file name. <code>components/Counter.alpine</code> becomes <code>&lt;Counter /&gt;</code>. It is
         server-rendered in place and hydrated like everything else.
       </p>
+      <div class="callout">
+        <span class="h">Group components in folders</span>
+        <p>
+          Organize larger apps into subfolders — the tag is <strong>namespaced by folder</strong>
+          (Nuxt-style): <code>components/ui/Card.alpine</code> → <code>&lt;UiCard /&gt;</code>,
+          <code>components/forms/Input.alpine</code> → <code>&lt;FormsInput /&gt;</code>. An overlapping
+          folder + filename is deduped (<code>components/base/BaseButton.alpine</code> →
+          <code>&lt;BaseButton /&gt;</code>). Top-level files are unchanged
+          (<code>components/Card.alpine</code> → <code>&lt;Card /&gt;</code>). Generate one straight into
+          a folder with <code>apex make component ui/Card</code> (or <code>apex add ui/button</code>).
+        </p>
+      </div>
       <p class="code-label">components/Counter.alpine</p>
       <pre><code>&lt;<span class="t">template</span> <span class="k">x-data</span>=<span class="s">"{ count: Number(start) }"</span>&gt;
   &lt;<span class="t">button</span> <span class="k">class</span>=<span class="s">"counter"</span> <span class="k">@click</span>=<span class="s">"count++"</span>
