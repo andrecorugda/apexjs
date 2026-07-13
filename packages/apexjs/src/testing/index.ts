@@ -61,7 +61,17 @@ export interface TestApp {
 }
 
 export type CreateTestAppOptions =
-  | { root: string; config?: RuntimeConfig }
+  | {
+      root: string
+      config?: RuntimeConfig
+      /**
+       * Skip `server/api/*` routes whose imports don't resolve (e.g. a model route that
+       * needs `@apex-stack/data` before it's installed) instead of failing the whole boot.
+       * Off by default — an unresolvable route throws a clear, actionable error naming the
+       * route + missing module. Turn on to test the rest of the surface in isolation.
+       */
+      lenientRoutes?: boolean
+    }
   | { entries: ApiEntry[]; auth?: AuthConfig; config?: RuntimeConfig }
 
 const MCP_INIT = {
@@ -109,7 +119,7 @@ export async function createTestApp(opts: CreateTestAppOptions): Promise<TestApp
         id[0] === '/' && !id.startsWith(root) ? join(root, id).replace(/\\/g, '/') : id
       return vite?.ssrLoadModule(resolved) as Promise<Record<string, unknown>>
     }
-    entries = await loadApiRoutes(root, load as never)
+    entries = await loadApiRoutes(root, load as never, { lenient: opts.lenientRoutes })
     appAuth = await loadAuth(root, load as never)
     middleware = await loadMiddleware(root, load as never)
   }

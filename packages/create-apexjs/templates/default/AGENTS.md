@@ -21,8 +21,8 @@ apex make page dashboard          # pages/dashboard.alpine (a route → /dashboa
 apex make component Card          # components/Card.alpine  (<Card /> in templates)
 apex make component ui/Navbar     # group in a folder → components/ui/Navbar.alpine (<UiNavbar />)
 apex make client                  # app.client.ts — register Alpine plugins/directives/magics
-apex make model Post title:string body:string   # models/Post.ts → defineModel('posts') → /api/posts + MCP CRUD
-apex make composable Post         # composables/usePosts.ts — typed client data-hook off the model
+apex make model Article title:string body:string # models/Article.ts → defineModel('articles') → /api/articles + MCP CRUD (avoid `Post` — the starter ships a posts demo)
+apex make composable Article      # composables/useArticles.ts — typed client data-hook off the model (make the model first)
 apex make api webhooks            # server/api/webhooks.ts (defineApexRoute; also an MCP tool)
 apex make service Billing         # services/BillingService.ts
 apex extend auth                  # add sealed-cookie sessions + login/logout + /account
@@ -36,12 +36,12 @@ apex test                         # run Vitest
 ```
 `apex make <kind> …` kinds: `page component api service store layout middleware test model migration auth client composable`.
 
-**Data flow, end to end.** One `defineModel` drives the whole stack: schema + migration + REST (`/api/posts` list/get/create/update/delete) + MCP tools **and** the client. `apex make composable Post` emits `composables/usePosts.ts` — a typed `usePosts()` returning `items / loading / error` + `fetch / find / create / update / remove` bound to that resource. Spread it into an x-data:
+**Data flow, end to end.** One `defineModel` drives the whole stack: schema + migration + REST (`/api/articles` list/get/create/update/delete) + MCP tools **and** the client. `apex make composable Article` emits `composables/useArticles.ts` — a typed `useArticles()` returning `items / loading / error` + `fetch / find / create / update / remove` bound to that resource. Spread it into an x-data:
 ```alpine
 <script client>
-  import { usePosts } from '../composables/usePosts'
+  import { useArticles } from '../composables/useArticles'
 </script>
-<template x-data="{ ...usePosts(), init() { this.fetch() } }">
+<template x-data="{ ...useArticles(), init() { this.fetch() } }">
   <template x-for="p in items" :key="p.id"><li x-text="p.title"></li></template>
 </template>
 ```
@@ -87,7 +87,7 @@ tests/*.test.ts     Vitest. createTestApp boots the whole app in-process.
 
 ## APIs you'll use (import from `@apex-stack/core`, `/server`, `/testing`; data from `@apex-stack/data`)
 - **Route** → `defineApexRoute({ method, input: { …zod }, mcp: true, auth: true, can, handler })`. `mcp: true` makes it an AI-callable tool at `/mcp`.
-- **Model** → `defineModel('posts', { fields: {…}, use: [timestamps(), owned()] })` → `.resource(handle)` mounts REST + MCP CRUD.
+- **Model** → `defineModel('articles', { fields: {…}, use: [timestamps(), owned()] })` → `.resource(handle)` mounts REST + MCP CRUD. Its route imports `@apex-stack/data`, so install it (`npm i @apex-stack/data @libsql/client`) — otherwise `createTestApp` can't mount `/api` and every API test errors (or pass `createTestApp({ root, lenientRoutes: true })` to skip unresolvable routes).
 - **Auth** → `server/auth.ts` default-exports `sessionAuth({ password })`; gate routes with `auth: true` / `can`. In loaders, the user is `locals.user`.
 - **Config** → `apex.config.ts`: `defineConfig({ runtimeConfig: { …, public: {…} }, i18n: {…} })`. Read with `useRuntimeConfig()`.
 - **Test** → `createTestApp({ root })` → `app.get/post(path, body?, { user })`, `app.mcp.listTools()`.

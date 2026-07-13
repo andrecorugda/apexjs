@@ -76,9 +76,28 @@ export function expandApiModule(
  * A default export is either a single `ApexRoute` (from `defineApexRoute`) or an
  * `ApexResource` (from `defineResource`), which expands to several entries.
  */
+/** Turn a module-load failure into an actionable message: name the route, the module that
+ * couldn't resolve, and how to install it. A missing route dep otherwise surfaces as a raw
+ * ESM "Cannot find module" with no hint about which route or what to do. */
+function loadErrorMessage(file: string, err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err)
+  // Handle Node's "Cannot find package/module 'X'" and Vite's "Failed to resolve import 'X'".
+  const dep =
+    /Cannot find (?:package|module) ['"]([^'"]+)['"]/.exec(raw)?.[1] ??
+    /Failed to resolve import ['"]([^'"]+)['"]/.exec(raw)?.[1]
+  if (!dep) return `Failed to load server/api/${file}: ${raw}`
+  const extra = dep === '@apex-stack/data' ? ' @libsql/client' : ''
+  return (
+    `Failed to load server/api/${file}: "${dep}" isn't installed. ` +
+    `This route depends on it — run \`npm i ${dep}${extra}\` (or delete the route). ` +
+    `Pass { lenientRoutes: true } to createTestApp to skip unresolvable routes in tests.`
+  )
+}
+
 export async function loadApiRoutes(
   root: string,
   loadModule: (id: string) => Promise<{ default?: ApexRoute | ApexResource }>,
+  opts: { lenient?: boolean } = {},
 ): Promise<ApiEntry[]> {
   const dir = join(root, 'server', 'api')
   if (!existsSync(dir)) return []
@@ -86,7 +105,19 @@ export async function loadApiRoutes(
   const entries: ApiEntry[] = []
   for (const file of readdirSync(dir).filter((f) => /\.(ts|js|mjs)$/.test(f))) {
     const name = file.replace(/\.(ts|js|mjs)$/, '')
-    const def = (await loadModule(`/server/api/${file}`)).default
+    let def: ApexRoute | ApexResource | undefined
+    try {
+      def = (await loadModule(`/server/api/${file}`)).default
+    } catch (err) {
+      // One route with an unresolvable import must not crash the whole surface with a
+      // cryptic error: fail loud + legible (default), or skip it when `lenient`.
+      const message = loadErrorMessage(file, err)
+      if (opts.lenient) {
+        console.warn(`[apex] skipping ${file} — ${message}`)
+        continue
+      }
+      throw new Error(message)
+    }
     entries.push(...expandApiModule(name, def))
   }
   return entries

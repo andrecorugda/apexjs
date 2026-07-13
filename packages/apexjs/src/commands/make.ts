@@ -663,7 +663,7 @@ beforeAll(async () => {
   process.env.APEX_SESSION_PASSWORD ||= 'test-session-password-please-change-me-0123'
   app = await createTestApp({ root: process.cwd() })
 })
-afterAll(() => app.close())
+afterAll(() => app?.close())
 
 describe('auth', () => {
   it('logs in with credentials, then logs out', async () => {
@@ -740,7 +740,7 @@ let app: TestApp
 beforeAll(async () => {
   app = await createTestApp({ root: process.cwd() })
 })
-afterAll(() => app.close())
+afterAll(() => app?.close())
 
 describe('${name} route', () => {
   it('responds over REST', async () => {
