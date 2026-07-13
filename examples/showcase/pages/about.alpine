@@ -1,4 +1,4 @@
-<script server lang="ts">
+<script server>
   export function loader() {
     return {}
   }

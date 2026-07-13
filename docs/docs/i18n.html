@@ -157,7 +157,7 @@
         arrive as ordinary loader data:
       </p>
       <p class="code-label">pages/index.alpine</p>
-      <pre><code><span class="c">&lt;script server lang="ts"&gt;</span>
+      <pre><code><span class="c">&lt;script server&gt;</span>
 <span class="k">export function</span> loader({ locals }) {
   <span class="k">return</span> {
     greeting: locals.t(<span class="s">'welcome'</span>, { name: <span class="s">'Ada'</span> }),

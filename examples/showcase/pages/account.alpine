@@ -1,4 +1,4 @@
-<script server lang="ts">
+<script server>
   // The user resolved by server/auth.ts is seeded into locals — so the page
   // renders the signed-in state on the SERVER, no flash of "logged out".
   export function loader({ locals }: { locals: Record<string, unknown> }) {

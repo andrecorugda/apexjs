@@ -56,13 +56,15 @@ tests/*.test.ts     Vitest. createTestApp boots the whole app in-process.
 ```
 
 ## The `.alpine` single-file component
+`.alpine` is **TypeScript-only** — `<script>` blocks are always TS; `lang` is optional
+(a `lang="js"` is a parse error).
 ```alpine
-<script server lang="ts">
+<script server>
   // Runs on the server. loader() data becomes the page's x-data (real HTML first).
   export function loader() { return { title: 'Hello' } }
   export function head() { return { title: 'Hello' } }   // SEO
 </script>
-<script client lang="ts">
+<script client>
   // Optional client-only logic; import composables here.
 </script>
 <template x-data>

@@ -275,7 +275,7 @@ pages/blog/[slug].alpine  → <span class="s">/blog/:slug</span></code></pre>
 })</code></pre>
 
       <p class="code-label">pages/index.alpine — the list is rendered from the DB on the server</p>
-      <pre><code>&lt;<span class="t">script</span> <span class="k">server</span> <span class="k">lang</span>=<span class="s">"ts"</span>&gt;
+      <pre><code>&lt;<span class="t">script</span> <span class="k">server</span>&gt;
   <span class="k">import</span> { db, schema } <span class="k">from</span> <span class="s">'../db/index.js'</span>
   <span class="k">export async function</span> loader() {
     <span class="k">const</span> features = <span class="k">await</span> db.select().from(schema.features)
@@ -503,7 +503,7 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
   (() => {
     var FILES = {
       "pages/index.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
-"<script server lang=\"ts\">\n" +
+"<script server>\n" +
 "  import { PostService } from '../services/PostService'\n" +
 "  const posts = new PostService()\n" +
 "\n" +
@@ -514,7 +514,7 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
 "  }\n" +
 "<\/script>\n" +
 "\n" +
-"<script client lang=\"ts\">\n" +
+"<script client>\n" +
 "  import { useToggle } from '../composables/useToggle'\n" +
 "<\/script>\n" +
 "\n" +
@@ -539,7 +539,7 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
 "</style>\n" },
 
       "pages/about.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
-"<script server lang=\"ts\">\n" +
+"<script server>\n" +
 "  export function loader() {\n" +
 "    return { title: 'About my-app' }\n" +
 "  }\n" +
@@ -557,7 +557,7 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
 "</template>\n" },
 
       "pages/blog/index.alpine": { lang: "ALPINE SFC", dot: "alpine", code:
-"<script server lang=\"ts\">\n" +
+"<script server>\n" +
 "  import { PostService } from '../../services/PostService'\n" +
 "  const posts = new PostService()\n" +
 "\n" +
@@ -584,7 +584,7 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
 "</template>\n" },
 
       "pages/blog/[slug].alpine": { lang: "ALPINE SFC", dot: "alpine", code:
-"<script server lang=\"ts\">\n" +
+"<script server>\n" +
 "  import { PostService } from '../../services/PostService'\n" +
 "  const posts = new PostService()\n" +
 "\n" +

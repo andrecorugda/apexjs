@@ -138,7 +138,7 @@
         <code>loader()</code> as <code>params</code>:
       </p>
       <p class="code-label">pages/blog/[slug].alpine</p>
-      <pre><code>&lt;<span class="t">script</span> <span class="k">server</span> <span class="k">lang</span>=<span class="s">"ts"</span>&gt;
+      <pre><code>&lt;<span class="t">script</span> <span class="k">server</span>&gt;
   <span class="k">export function</span> loader({ params }: { params: Record&lt;string, string&gt; }) {
     <span class="k">return</span> { slug: params.slug }
   }

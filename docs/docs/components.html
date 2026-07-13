@@ -113,8 +113,12 @@
         treats only <em>depth-0</em> tags as delimiters, so nested <code>&lt;template x-for&gt;</code> /
         <code>&lt;template x-if&gt;</code> inside your markup are safe.
       </p>
+      <p>
+        <code>&lt;script&gt;</code> blocks are <strong>TypeScript-only</strong>. You never write
+        <code>lang="ts"</code> — it's the default; <code>lang="js"</code> is a parse error.
+      </p>
       <p class="code-label">pages/index.alpine — the scaffold's home page</p>
-      <pre><code>&lt;<span class="t">script</span> <span class="k">server</span> <span class="k">lang</span>=<span class="s">"ts"</span>&gt;
+      <pre><code>&lt;<span class="t">script</span> <span class="k">server</span>&gt;
   <span class="k">export function</span> loader() {
     <span class="k">return</span> {
       title: <span class="s">'Welcome to Apex JS'</span>,
@@ -147,7 +151,7 @@
         becomes the component's Alpine <code>x-data</code> scope, already available in the very first
         server-rendered HTML.
       </p>
-      <pre><code>&lt;<span class="t">script</span> <span class="k">server</span> <span class="k">lang</span>=<span class="s">"ts"</span>&gt;
+      <pre><code>&lt;<span class="t">script</span> <span class="k">server</span>&gt;
   <span class="c">// runs on the server; return value = the x-data scope</span>
   <span class="k">export function</span> loader({ params }: { params: Record&lt;string, string&gt; }) {
     <span class="k">return</span> { slug: params.slug }
