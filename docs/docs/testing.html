@@ -269,16 +269,23 @@ apex test auth.test.ts    <span class="c"># filter by file</span></code></pre>
 
       <h2 id="scaffold">Test-aware scaffolding <a class="anchor" href="#scaffold">#</a></h2>
       <p>
-        The generators write a matching test in <code>tests/</code> for whatever they create, so new
-        code ships with a starting spec instead of a blank file:
+        The logic-bearing generators write a matching test in <code>tests/</code>, so new code ships
+        with a starting spec instead of a blank file:
       </p>
-      <pre><code>apex make service billing   <span class="c"># → services/BillingService.ts + tests/BillingService.test.ts</span>
-apex make api invoices      <span class="c"># → server/api/invoices.ts + tests/invoices.test.ts</span>
-apex make model Invoice     <span class="c"># → models/Invoice.ts + server/api/invoices.ts + tests/Invoice.test.ts</span></code></pre>
+      <pre><code>apex make service billing    <span class="c"># → services/BillingService.ts + tests/BillingService.test.ts</span>
+apex make api invoices       <span class="c"># → server/api/invoices.ts + tests/invoices.test.ts</span>
+apex make model Invoice      <span class="c"># → models/Invoice.ts + server/api/invoices.ts + tests/Invoice.test.ts</span>
+apex make store cart         <span class="c"># → stores/cart.ts + tests/cart.test.ts</span>
+apex make middleware guard   <span class="c"># → middleware/guard.ts + tests/guard.test.ts</span>
+apex make composable Invoice <span class="c"># → composables/useInvoices.ts + tests/useInvoices.test.ts</span>
+apex make auth               <span class="c"># → server/auth.ts + login/logout + tests/auth.test.ts</span></code></pre>
       <p>
-        The generated <code>api</code> test boots the surface with <code>createTestApp</code>; the
-        <code>model</code> test uses <code>factory</code> against an in-memory DB; the <code>service</code>
-        test unit-tests the class. Don't want one? Pass <code>--no-test</code>.
+        The <code>api</code> / <code>auth</code> tests boot the surface with <code>createTestApp</code>;
+        <code>model</code> uses <code>factory</code> against an in-memory DB; <code>service</code> and
+        <code>store</code> are unit tests; <code>composable</code> mocks <code>fetch</code>;
+        <code>middleware</code> is called with a request ctx. Kinds with nothing worth asserting
+        (<code>page</code>, <code>component</code>, <code>layout</code>, <code>client</code>,
+        <code>migration</code>) don't emit one. Don't want a test? Pass <code>--no-test</code>.
       </p>
       <pre><code>apex make api invoices --no-test   <span class="c"># skip the generated spec</span></code></pre>
 

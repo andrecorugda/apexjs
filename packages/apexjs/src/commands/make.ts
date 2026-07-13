@@ -578,8 +578,110 @@ export function ${hook}(): ResourceClientState<${item}, New${item}> {
 `
 }
 
-/** Exported for testing — plan the composable artifact off an existing model file. */
-export function planComposable(name: string, root: string): Artifact[] {
+function composableTestTemplate(hook: string, resource: string): string {
+  return `import { afterEach, describe, expect, it, vi } from 'vitest'
+import { ${hook} } from '../composables/${hook}'
+
+// The composable is a reactive data object over /api/${resource} — mock fetch and drive it.
+const realFetch = globalThis.fetch
+afterEach(() => {
+  globalThis.fetch = realFetch
+  vi.restoreAllMocks()
+})
+
+describe('${hook}', () => {
+  it('fetch() loads items from /api/${resource}', async () => {
+    globalThis.fetch = vi.fn(async () => new Response(JSON.stringify([{ id: 1 }]), { status: 200 }))
+    const c = ${hook}()
+    await c.fetch()
+    expect(c.items).toEqual([{ id: 1 }])
+    expect(c.error).toBeNull()
+  })
+
+  it('create() appends the created row to items', async () => {
+    globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ id: 2 }), { status: 201 }))
+    const c = ${hook}()
+    await c.create({} as never)
+    expect(c.items).toContainEqual({ id: 2 })
+  })
+})
+`
+}
+
+function storeTestTemplate(name: string): string {
+  return `import { describe, expect, it } from 'vitest'
+import store from '../stores/${name}'
+
+// A store is a plain factory of reactive state — unit-test it with no server.
+describe('${name} store', () => {
+  it('starts at its initial state and mutates via its action', () => {
+    const s = store.factory() as { count: number; increment(): void }
+    expect(s.count).toBe(0)
+    s.increment()
+    expect(s.count).toBe(1)
+  })
+})
+`
+}
+
+function middlewareTestTemplate(name: string): string {
+  return `import { describe, expect, it } from 'vitest'
+import mw from '../middleware/${name}'
+
+// Middleware is a function of the request ctx — call it directly with a fake ctx.
+// The scaffold is a no-op (returns undefined = "continue"); once you add logic
+// (attach ctx.locals, or return ctx.redirect('/login')), assert it here.
+type Ctx = Parameters<typeof mw>[0]
+function ctx(over: Partial<Ctx> = {}): Ctx {
+  return {
+    url: '/',
+    method: 'GET',
+    config: { public: {} },
+    headers: {},
+    locals: {},
+    redirect: (to: string, status = 302) => ({ __apexRedirect: true, to, status }),
+    ...over,
+  } as Ctx
+}
+
+describe('${name} middleware', () => {
+  it('runs without throwing and continues (no redirect) by default', async () => {
+    expect(await mw(ctx())).toBeUndefined()
+  })
+})
+`
+}
+
+function authTestTemplate(): string {
+  return `import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { createTestApp, type TestApp } from '@apex-stack/core/testing'
+
+// Boots your API + auth surface in-process. Sealing the session cookie needs a 32+ char
+// password — set one here for the test if you haven't configured runtimeConfig.sessionPassword.
+let app: TestApp
+beforeAll(async () => {
+  process.env.APEX_SESSION_PASSWORD ||= 'test-session-password-please-change-me-0123'
+  app = await createTestApp({ root: process.cwd() })
+})
+afterAll(() => app.close())
+
+describe('auth', () => {
+  it('logs in with credentials, then logs out', async () => {
+    const login = await app.post('/api/login', { email: 'ada@example.com', password: 'secret' })
+    expect(login.status).toBe(200)
+    expect((login.body as { ok?: boolean }).ok).toBe(true)
+    expect((await app.post('/api/logout')).status).toBe(200)
+  })
+
+  it('rejects missing credentials', async () => {
+    expect((await app.post('/api/login', { email: '', password: '' })).status).toBe(401)
+  })
+})
+`
+}
+
+/** Exported for testing — plan the composable artifact (+ its test) off an existing model file. */
+export function planComposable(name: string, root: string, withTest = true): Artifact[] {
   const modelPath = resolveModelPath(root, name)
   if (!modelPath)
     throw new Error(
@@ -597,13 +699,22 @@ export function planComposable(name: string, root: string): Artifact[] {
       path: join(root, 'composables', `${hook}.ts`),
       contents: composableTemplate(resource, item, fields, ['id', ...extras.omit]),
     },
+    ...(withTest
+      ? [
+          {
+            path: join(root, 'tests', `${hook}.test.ts`),
+            contents: composableTestTemplate(hook, resource),
+          },
+        ]
+      : []),
   ]
 }
 
 type Artifact = { path: string; contents: string }
 
 /** Where a generated artifact lands, and its contents (one or more files). */
-// ── Co-generated tests (emitted alongside service/api/model; opt out with --no-test) ──
+// ── Co-generated tests (emitted alongside service/api/model/store/middleware/composable/auth;
+//    opt out with --no-test) ──
 
 function serviceTestTemplate(name: string): string {
   const cls = `${pascalCase(name)}Service`
@@ -693,7 +804,10 @@ function plan(
         ...test(`${name}.test.ts`, apiTestTemplate(name)),
       ]
     case 'store':
-      return [{ path: join(root, 'stores', `${name}.ts`), contents: storeTemplate(name) }]
+      return [
+        { path: join(root, 'stores', `${name}.ts`), contents: storeTemplate(name) },
+        ...test(`${name}.test.ts`, storeTestTemplate(name)),
+      ]
     case 'layout':
       return [{ path: join(root, 'layouts', `${name}.alpine`), contents: layoutTemplate() }]
     case 'service':
@@ -707,7 +821,10 @@ function plan(
     case 'test':
       return [{ path: join(root, 'tests', `${name}.test.ts`), contents: testTemplate(name) }]
     case 'middleware':
-      return [{ path: join(root, 'middleware', `${name}.ts`), contents: middlewareTemplate() }]
+      return [
+        { path: join(root, 'middleware', `${name}.ts`), contents: middlewareTemplate() },
+        ...test(`${name}.test.ts`, middlewareTestTemplate(name)),
+      ]
     case 'migration':
       return [
         {
@@ -720,11 +837,12 @@ function plan(
         { path: join(root, 'server', 'auth.ts'), contents: authTemplate() },
         { path: join(root, 'server', 'api', 'login.ts'), contents: loginRouteTemplate() },
         { path: join(root, 'server', 'api', 'logout.ts'), contents: logoutRouteTemplate() },
+        ...test('auth.test.ts', authTestTemplate()),
       ]
     case 'client':
       return [{ path: join(root, 'app.client.ts'), contents: clientTemplate() }]
     case 'composable':
-      return planComposable(name, root)
+      return planComposable(name, root, withTest)
     case 'model': {
       const fields = parseFields(fieldSpecs)
       // File stays PascalCase (the import identity); resource is lowercase-plural and
@@ -766,7 +884,8 @@ export const makeCommand = defineCommand({
     test: {
       type: 'boolean',
       default: true,
-      description: 'Also generate a matching test (service/api/model). Use --no-test to skip.',
+      description:
+        'Also generate a matching test (api/service/model/store/middleware/composable/auth). Use --no-test to skip.',
     },
   },
   run({ args, rawArgs }) {
