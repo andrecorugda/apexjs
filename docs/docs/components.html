@@ -74,6 +74,7 @@
               <li><a href="#embedding">Embedding components</a></li>
               <li><a href="#props">Props (static &amp; bound)</a></li>
               <li><a href="#rules">Rules &amp; constraints</a></li>
+              <li><a href="#plugins">Alpine plugins &amp; extending</a></li>
             </ul>
           </li>
           <li><a href="./islands.html">Islands</a></li>
@@ -249,6 +250,30 @@
         <li>Exactly one top-level <code>&lt;template&gt;</code>; at most one <code>&lt;script server&gt;</code>; any number of <code>&lt;style&gt;</code> blocks.</li>
         <li><code>&lt;script&gt;</code> must be marked <code>server</code> or <code>client</code> — <code>&lt;script server&gt;</code> for the loader, <code>&lt;script client&gt;</code> for browser-side imports and logic available to the template.</li>
       </ul>
+
+      <h2 id="plugins">Alpine plugins &amp; extending Alpine <a class="anchor" href="#plugins">#</a></h2>
+      <p>
+        Apex ships the full Alpine core. To add the official plugins — <code>$persist</code>,
+        <code>x-intersect</code>, <code>x-collapse</code>, <code>x-mask</code>, <code>x-trap</code>,
+        <code>morph</code>, <code>sort</code>, <code>anchor</code> — or your own custom directives and
+        magics, create an <strong><code>app.client.ts</code></strong> at the project root. Its default
+        export runs <strong>before <code>Alpine.start()</code></strong> in every mode (dev, build, islands):
+      </p>
+      <p class="code-label">app.client.ts</p>
+      <pre><code><span class="k">import</span> persist <span class="k">from</span> <span class="s">'@alpinejs/persist'</span>
+<span class="k">import</span> intersect <span class="k">from</span> <span class="s">'@alpinejs/intersect'</span>
+<span class="k">import type</span> { Alpine } <span class="k">from</span> <span class="s">'alpinejs'</span>
+
+<span class="k">export default</span> (Alpine: Alpine) =&gt; {
+  Alpine.plugin(persist)
+  Alpine.plugin(intersect)
+  Alpine.directive(<span class="s">'my-directive'</span>, (el) =&gt; { <span class="c">/* … */</span> })
+  Alpine.magic(<span class="s">'shout'</span>, () =&gt; (s: string) =&gt; s.toUpperCase())
+}</code></pre>
+      <p class="muted">
+        Generate it with <code>apex make client</code>. Install the plugin packages you use
+        (<code>npm i @alpinejs/persist</code>, …). The file is optional — apps without it are unchanged.
+      </p>
 
   </section>
   </div>

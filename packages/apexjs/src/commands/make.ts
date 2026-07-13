@@ -14,6 +14,7 @@ type Kind =
   | 'model'
   | 'migration'
   | 'auth'
+  | 'client'
 
 /** Components are referenced as `<PascalCase/>`, so their file must be PascalCase. */
 function pascalCase(s: string): string {
@@ -46,6 +47,22 @@ function pageTemplate(name: string): string {
 <style scoped>
   main { max-width: 40rem; margin: 3rem auto; font-family: system-ui, sans-serif; }
 </style>
+`
+}
+
+function clientTemplate(): string {
+  return `// app.client.ts — runs on the client BEFORE Alpine.start().
+// Register Alpine plugins, custom directives, and magics here.
+//
+//   import persist from '@alpinejs/persist'
+//   export default (Alpine) => { Alpine.plugin(persist) }
+import type { Alpine } from 'alpinejs'
+
+export default (Alpine: Alpine) => {
+  // Alpine.plugin(somePlugin)
+  // Alpine.directive('my-directive', (el) => { /* … */ })
+  // Alpine.magic('my-magic', () => (arg) => arg)
+}
 `
 }
 
@@ -455,6 +472,8 @@ function plan(
         { path: join(root, 'server', 'api', 'login.ts'), contents: loginRouteTemplate() },
         { path: join(root, 'server', 'api', 'logout.ts'), contents: logoutRouteTemplate() },
       ]
+    case 'client':
+      return [{ path: join(root, 'app.client.ts'), contents: clientTemplate() }]
     case 'model': {
       const fields = parseFields(fieldSpecs)
       return [
@@ -474,14 +493,14 @@ export const makeCommand = defineCommand({
   meta: {
     name: 'make',
     description:
-      'Generate a page, component, API route, store, layout, service, test, middleware, model, migration, or auth',
+      'Generate a page, component, API route, store, layout, service, test, middleware, model, migration, auth, or the Alpine client hook',
   },
   args: {
     kind: {
       type: 'positional',
       required: true,
       description:
-        'page | component | api | store | layout | service | test | middleware | model | migration | auth',
+        'page | component | api | store | layout | service | test | middleware | model | migration | auth | client',
     },
     // Optional: `apex make auth` takes no name (it always writes server/auth.ts).
     name: { type: 'positional', required: false, description: 'Name (about, Counter, todos, …)' },
@@ -506,13 +525,14 @@ export const makeCommand = defineCommand({
       'model',
       'migration',
       'auth',
+      'client',
     ]
     if (!kinds.includes(kind)) {
       console.error(`\n  Unknown type "${args.kind}". Use: ${kinds.join(' | ')}\n`)
       process.exit(1)
     }
-    // Every kind except `auth` needs a name.
-    if (kind !== 'auth' && !args.name) {
+    // `auth` and `client` take no name (they write a fixed file).
+    if (kind !== 'auth' && kind !== 'client' && !args.name) {
       console.error(`\n  ✗ A name is required: apex make ${kind} <name>\n`)
       process.exit(1)
     }

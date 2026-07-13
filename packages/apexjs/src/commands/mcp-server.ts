@@ -29,6 +29,7 @@ const KINDS = [
   'model',
   'migration',
   'auth',
+  'client',
 ] as const
 
 // ESC written without a literal control char (keeps the linter happy).
@@ -151,7 +152,7 @@ export const mcpServerCommand = defineCommand({
       'apex_make',
       {
         description:
-          'Generate a file in an Apex app. Kinds: page, component, api, service, store, layout, middleware, test, model, migration, auth. For a model, pass fields like "title:string done:boolean". A page or component name may include a folder (e.g. "ui/Card") to group it — the folder is created, and a nested component\'s tag is namespaced by folder (components/ui/Card.alpine → <UiCard/>).',
+          'Generate a file in an Apex app. Kinds: page, component, api, service, store, layout, middleware, test, model, migration, auth, client. For a model, pass fields like "title:string done:boolean". A page or component name may include a folder (e.g. "ui/Card") to group it — the folder is created, and a nested component\'s tag is namespaced by folder (components/ui/Card.alpine → <UiCard/>). The "client" kind (no name) scaffolds app.client.ts — the hook that runs before Alpine.start() where you register Alpine plugins ($persist, x-intersect, x-mask, …), custom directives, and magics.',
         inputSchema: {
           kind: z.enum(KINDS),
           name: z.string(),

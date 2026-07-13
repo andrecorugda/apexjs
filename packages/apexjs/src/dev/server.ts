@@ -18,6 +18,7 @@ import {
 import { createServer as createViteServer, type PluginOption, type ViteDevServer } from 'vite'
 import { createApiHandler, loadApiRoutes } from '../api/routes.js'
 import { getRequestUser, loadAuth } from '../auth/run.js'
+import { clientEntryId } from '../client-entry.js'
 import { loadComponents } from '../components/registry.js'
 import { resolveApexConfig } from '../config/resolve.js'
 import { createI18n, resolveLocale } from '../i18n/index.js'
@@ -308,6 +309,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           runtimeConfig,
           publicConfig,
           clientNav,
+          clientEntry: clientEntryId(options.root) ?? undefined,
           loadingHtml,
           locale,
           locals: (event.context.apexLocals as Record<string, unknown>) ?? {},

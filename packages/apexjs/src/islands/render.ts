@@ -14,14 +14,19 @@ const SLOT_RE = /<slot\b[^>]*>[\s\S]*?<\/slot>/
  *   - visible → IntersectionObserver
  *   - none    → never (stays static; Alpine may never load at all)
  */
-export const ISLAND_LOADER = /* js */ `
+export function islandLoader(clientEntry?: string | null): string {
+  return /* js */ `
 let __alpine
 function __ensureAlpine() {
   return __alpine ??= import('alpinejs').then(function (m) {
-    const Alpine = m.default
+    var Alpine = m.default
     window.Alpine = Alpine
-    Alpine.start() // islands are x-ignore'd, so this hydrates nothing on its own
-    return Alpine
+    ${
+      clientEntry
+        ? `return import(${JSON.stringify(clientEntry)}).then(function (c) { if (typeof c.default === 'function') c.default(Alpine); Alpine.start(); return Alpine })`
+        : `Alpine.start() // islands are x-ignore'd, so this hydrates nothing on its own
+    return Alpine`
+    }
   })
 }
 async function __hydrate(el) {
@@ -49,6 +54,7 @@ document.querySelectorAll('[data-apex-island]').forEach(function (el) {
   // 'none' → do nothing; the SSR HTML is the final, static output.
 })
 `.trim()
+}
 
 export interface RenderIslandsPageOptions {
   loadModule: (id: string) => Promise<PageModule>
@@ -72,6 +78,9 @@ export interface RenderIslandsPageOptions {
    * bare `import('alpinejs')` only Vite's dev server can resolve.
    */
   loaderHref?: string
+  /** Optional user client hook (`app.client.ts`) — called before Alpine.start() in the
+   * inlined dev island loader (prod bundles bake it in via buildIslands). */
+  clientEntry?: string
 }
 
 /**
@@ -139,7 +148,7 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
     hydratingCount > 0
       ? opts.loaderHref
         ? `\n<script type="module" src="${opts.loaderHref}"></script>`
-        : `\n<script type="module">${ISLAND_LOADER}</script>`
+        : `\n<script type="module">${islandLoader(opts.clientEntry)}</script>`
       : ''
   const configScript = hydratingCount > 0 ? `\n${clientConfigScript(opts.publicConfig ?? {})}` : ''
   const appCssLink = [...(opts.appCss ? [opts.appCss] : []), ...(opts.cssHrefs ?? [])]

@@ -1,7 +1,8 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { build, type Plugin, type Rollup } from 'vite'
-import { ISLAND_LOADER } from '../islands/render.js'
+import { clientEntryId } from '../client-entry.js'
+import { islandLoader } from '../islands/render.js'
 import { runtimeAlias } from './buildClient.js'
 
 const VIRT = 'virtual:apex-islands'
@@ -31,6 +32,7 @@ export async function buildIslandsRuntime(
   const appCssRel = ['app.css', 'styles/app.css', 'src/app.css'].find((f) =>
     existsSync(join(root, f)),
   )
+  const clientEntry = clientEntryId(root)
 
   const entryPlugin: Plugin = {
     name: 'apex:islands-entry',
@@ -41,7 +43,7 @@ export async function buildIslandsRuntime(
       if (id === `\0${VIRT}`) {
         return [
           ...(appCssRel ? [`import ${JSON.stringify(`/${appCssRel}`)}`] : []),
-          ISLAND_LOADER,
+          islandLoader(clientEntry),
         ].join('\n')
       }
     },

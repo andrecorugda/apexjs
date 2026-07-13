@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { apex } from '@apex-stack/vite'
 import { build, type Plugin } from 'vite'
+import { clientEntryId } from '../client-entry.js'
 import type { RouteDef } from '../routing/router.js'
 
 const VIRT = 'virtual:apex-client:'
@@ -96,6 +97,7 @@ export async function buildClient(
   const appCssRel = ['app.css', 'styles/app.css', 'src/app.css'].find((f) =>
     existsSync(join(root, f)),
   )
+  const clientEntry = clientEntryId(root)
 
   const entryPlugin: Plugin = {
     name: 'apex:client-entries',
@@ -109,6 +111,8 @@ export async function buildClient(
           ...(appCssRel ? [`import ${JSON.stringify(`/${appCssRel}`)}`] : []),
           `import Alpine from 'alpinejs'`,
           `import { installNav } from '@apex-stack/core/client'`,
+          // Optional user hook (app.client.ts) — register Alpine plugins/directives before start.
+          ...(clientEntry ? [`import __apexClient from ${JSON.stringify(clientEntry)}`] : []),
           ...storeIds.map((sid, i) => `import __s${i} from ${JSON.stringify(sid)}`),
           // Registers this page's Alpine factory as a side effect. During client-side
           // navigation this bundle is dynamic-imported again for the target page —
@@ -118,6 +122,9 @@ export async function buildClient(
           'if (!window.__apexBooted) {',
           '  window.__apexBooted = true',
           '  window.Alpine = Alpine',
+          ...(clientEntry
+            ? [`  if (typeof __apexClient === 'function') __apexClient(Alpine)`]
+            : []),
           ...storeIds.map((_, i) => `  Alpine.store(__s${i}.name, __s${i}.factory())`),
           '  Alpine.start()',
           '  installNav()',
