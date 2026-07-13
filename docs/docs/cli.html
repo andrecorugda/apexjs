@@ -264,8 +264,8 @@ apex build --preset vercel   <span class="c"># server target + Vercel config (al
             <tr><td><code>service</code></td><td><code>services/&lt;Name&gt;Service.ts</code> — a plain, testable class (+ a test).</td></tr>
             <tr><td><code>test</code></td><td><code>tests/&lt;name&gt;.test.ts</code> — a Vitest spec.</td></tr>
             <tr><td><code>middleware</code></td><td><code>middleware/&lt;name&gt;.ts</code> — a <code>defineMiddleware</code> that runs on every request (+ a test).</td></tr>
-            <tr><td><code>model</code></td><td><code>models/&lt;Name&gt;.ts</code> (PascalCase) + <code>server/api/&lt;resource&gt;.ts</code> + a migration (+ a test) — a <code>defineModel</code> (from <code>@apex-stack/data</code>) with a REST + MCP resource. The <strong>resource</strong> is normalized to lowercase-plural (<code>Post</code> → <code>/api/posts</code>, table <code>posts</code>, <code>posts_*</code> tools).</td></tr>
-            <tr><td><code>composable</code></td><td><code>composables/use&lt;Plural&gt;.ts</code> — a typed client data-hook off an existing model (<code>apex make composable Post</code> → <code>usePosts()</code>), + a test. See <a href="./data.html#composable">Data</a>.</td></tr>
+            <tr><td><code>model</code></td><td><code>models/&lt;Name&gt;.ts</code> (PascalCase) + <code>server/api/&lt;resource&gt;.ts</code> + a migration (+ a test) — a <code>defineModel</code> (from <code>@apex-stack/data</code>) with a REST + MCP resource. The <strong>resource</strong> is normalized to lowercase-plural (<code>Article</code> → <code>/api/articles</code>, table <code>articles</code>, <code>articles_*</code> tools).</td></tr>
+            <tr><td><code>composable</code></td><td><code>composables/use&lt;Plural&gt;.ts</code> — a typed client data-hook off an existing model (<code>apex make composable Article</code> → <code>useArticles()</code>), + a test. See <a href="./data.html#composable">Data</a>.</td></tr>
             <tr><td><code>migration</code></td><td><code>db/migrations/&lt;stamp&gt;_&lt;name&gt;.sql</code> — an empty, reversible migration.</td></tr>
             <tr><td><code>auth</code></td><td><code>server/auth.ts</code> + <code>server/api/login.ts</code> + <code>server/api/logout.ts</code> — sealed-cookie session auth (no name argument), + a login/logout round-trip test.</td></tr>
             <tr><td><code>client</code></td><td><code>app.client.ts</code> — the hook that runs before <code>Alpine.start()</code> (register plugins / directives / magics; no name argument).</td></tr>
@@ -275,8 +275,8 @@ apex build --preset vercel   <span class="c"># server target + Vercel config (al
       <pre><code>apex make page about
 apex make component Counter
 apex make api todos
-apex make model Post title:string body:text published:boolean!   <span class="c"># → models/Post.ts, /api/posts, table posts</span>
-apex make composable Post                                         <span class="c"># → composables/usePosts.ts (usePosts())</span>
+apex make model Article title:string body:text published:boolean!   <span class="c"># → models/Article.ts, /api/articles, table articles</span>
+apex make composable Article                                        <span class="c"># → composables/useArticles.ts (useArticles())</span>
 apex make auth</code></pre>
       <p class="muted">Fails if the target file already exists (it won't overwrite your work).</p>
 
