@@ -1,5 +1,24 @@
 # @apex-stack/kit
 
+## 0.9.0
+
+### Minor Changes
+
+- 2d8bb33: Polish the two rough edges from the 0.33.0 verify.
+
+  - **Smarter pluralizer** (`apex make model`). The resource normalizer now knows the
+    common English irregulars and uncountables in both directions: `Person` → `people`,
+    `Child` → `children`, `Datum` → `data`, `Analysis` → `analyses`, `Status` →
+    `statuses` (not `stati`); `Sheep` / `Series` stay put. Still idempotent
+    (`people` → `people`). Fixes the naive `Person` → `persons` result.
+
+  - **Root x-data magic diagnostic** (#47 follow-up). A plugin magic used in a page's
+    root `x-data` now routes through `resolveRootMagic(name, Alpine)` on the client:
+    a magic with a global form (`$persist`) works as before; one _without_ a global form
+    no longer degrades to a _silent_ no-op — it logs a one-time console warning naming the
+    magic and the fix (use a nested `x-data`), then returns undefined so the page never
+    crashes. The helper is imported only when a page actually uses such a magic.
+
 ## 0.8.0
 
 ### Minor Changes
