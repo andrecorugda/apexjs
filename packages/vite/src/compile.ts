@@ -6,6 +6,38 @@ export interface CompileResult {
   css: string
 }
 
+// Alpine core magics — evaluated fine server-side (Apex stubs them) and bound by
+// Alpine on the client. Left untouched by the rewrite below.
+const CORE_MAGICS = new Set([
+  'el',
+  'refs',
+  'store',
+  'watch',
+  'dispatch',
+  'nextTick',
+  'id',
+  'root',
+  'data',
+])
+
+/**
+ * A page's root `<template x-data>` is compiled into an `Alpine.data` factory, which
+ * runs as ordinary JS — outside Alpine's expression scope, so a bare *plugin* magic
+ * (`$persist(0)`, registered via `app.client.ts`) is a `ReferenceError` there, even
+ * though it works in a nested x-data. Alpine's own answer for magics inside
+ * `Alpine.data` is the global form (`Alpine.$persist`), so we rewrite non-core
+ * `$magic(` calls to it. Both sides degrade to a no-op when the magic is absent
+ * (server has no Alpine; a magic with no global form) so the root never crashes —
+ * the client re-binds real values on hydration. See #47.
+ */
+function rewriteRootMagics(expr: string, side: 'client' | 'ssr'): string {
+  const g = side === 'client' ? 'window.Alpine' : 'globalThis.Alpine'
+  // Skip `$` preceded by a word char / `.` / `$` (so `this.$store(`, `Alpine.$x(` are left alone).
+  return expr.replace(/(?<![\w.$])\$([a-zA-Z_]\w*)\s*\(/g, (m, name: string) =>
+    CORE_MAGICS.has(name) ? m : `(${g}&&${g}.$${name}||(()=>{}))(`,
+  )
+}
+
 /**
  * Generate the JavaScript module for a parsed `.alpine` file.
  *
@@ -53,7 +85,7 @@ export function compileAlpine(
     // string evaluator, which can't import. Backward compatible: without a
     // client script, the renderer keeps evaluating the `rootXData` string.
     const rootDataExport = descriptor.clientScript
-      ? `export function rootData() { return (${authoredExpr}) }`
+      ? `export function rootData() { return (${rewriteRootMagics(authoredExpr, 'ssr')}) }`
       : ''
 
     const code = [
@@ -82,7 +114,7 @@ export function compileAlpine(
   const code = [
     `import { registerApexComponent } from ${JSON.stringify(runtime)}`,
     clientCode,
-    `registerApexComponent(${JSON.stringify(componentId)}, () => (${authoredExpr}))`,
+    `registerApexComponent(${JSON.stringify(componentId)}, () => (${rewriteRootMagics(authoredExpr, 'client')}))`,
     // Dev-only HMR wiring (Vite strips the whole block from production builds):
     //  - apex:css — a style-only edit hot-swaps the component's scoped CSS in
     //    place (see the plugin's handleHotUpdate); no reload, state preserved.
