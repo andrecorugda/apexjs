@@ -108,3 +108,31 @@ export { installNav, type NavOptions } from './nav.js'
 // Reactive CRUD data-hook for a model resource (see ./resource.ts).
 export type { ResourceClientOptions, ResourceClientState } from './resource.js'
 export { createResourceClient } from './resource.js'
+
+const warnedMagics = new Set<string>()
+
+/**
+ * Resolve an Alpine magic used to initialize a page's ROOT `x-data`. The root compiles
+ * into an `Alpine.data` factory (plain JS), so a bare `$magic` isn't in scope — the
+ * working form is the global `Alpine.$magic` (e.g. `@alpinejs/persist`). This returns
+ * that global when it exists; when it doesn't (a magic with no global form), it warns
+ * ONCE with the fix and returns a no-op, so a page root never crashes. Nested `x-data`
+ * (evaluated by Alpine with all magics in scope) is the place for global-less magics.
+ * Emitted by the `@apex-stack/vite` compiler for non-core `$magic(…)` calls. See #47.
+ */
+export function resolveRootMagic(
+  name: string,
+  alpine: AlpineLike | undefined,
+): (...args: unknown[]) => unknown {
+  const fn = (alpine as unknown as Record<string, unknown> | undefined)?.[`$${name}`]
+  if (typeof fn === 'function') return fn as (...args: unknown[]) => unknown
+  if (!warnedMagics.has(name)) {
+    warnedMagics.add(name)
+    console.warn(
+      `[apex] $${name} has no global form (Alpine.$${name}), so it can't initialize a page-root ` +
+        `x-data — it evaluates to undefined. Use it in a nested <div x-data="{ … }"> instead. ` +
+        `https://apexjs.site/docs/components.html#plugins`,
+    )
+  }
+  return () => undefined
+}
