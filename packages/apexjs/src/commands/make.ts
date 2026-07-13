@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { defineCommand } from 'citty'
 
@@ -15,6 +15,7 @@ type Kind =
   | 'migration'
   | 'auth'
   | 'client'
+  | 'composable'
 
 /** Components are referenced as `<PascalCase/>`, so their file must be PascalCase. */
 function pascalCase(s: string): string {
@@ -32,7 +33,7 @@ function componentRel(name: string): string {
 }
 
 function pageTemplate(name: string): string {
-  return `<script server lang="ts">
+  return `<script server>
   export function loader() {
     return { title: '${name}' }
   }
@@ -351,6 +352,170 @@ function migrationStamp(): string {
   return new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)
 }
 
+// ── Composable generation (`apex make composable Post` — a typed client data-hook) ──
+
+/** The TS type a field maps to on the client (matches @apex-stack/data's JSON shape). */
+function tsType(t: FieldType): string {
+  switch (t) {
+    case 'int':
+    case 'float':
+      return 'number'
+    case 'boolean':
+      return 'boolean'
+    case 'json':
+      return 'unknown'
+    default:
+      return 'string' // string, text, timestamp (ISO)
+  }
+}
+
+function coerceType(raw: string): FieldType {
+  return TYPE_ALIASES[raw.toLowerCase()] ?? 'string'
+}
+
+/** Inner text of the `{ … }` whose opening brace is at `open`, honoring nesting. */
+function sliceBraces(src: string, open: number): string | undefined {
+  let depth = 0
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === '{') depth++
+    else if (src[i] === '}' && --depth === 0) return src.slice(open + 1, i)
+  }
+  return undefined
+}
+
+/** Best-effort read of a model's declared fields (object form + `name: 'type'` shorthand). */
+function parseModelFields(src: string): ParsedField[] {
+  const at = src.search(/fields\s*:\s*\{/)
+  if (at === -1) return []
+  const block = sliceBraces(src, src.indexOf('{', at))
+  if (!block) return []
+  const out: ParsedField[] = []
+  const seen = new Set<string>()
+  // Object form: `name: { type: 'int', notNull: true }`.
+  const objRe = /(\w+)\s*:\s*\{([^{}]*)\}/g
+  let m: RegExpExecArray | null
+  // biome-ignore lint/suspicious/noAssignInExpressions: standard exec loop
+  while ((m = objRe.exec(block)) !== null) {
+    const name = m[1]
+    const type = m[2]?.match(/type\s*:\s*['"](\w+)['"]/)?.[1]
+    if (name && type && !seen.has(name)) {
+      seen.add(name)
+      out.push({ name, type: coerceType(type), notNull: /notNull\s*:\s*true/.test(m[2] ?? '') })
+    }
+  }
+  // Shorthand: `name: 'string'` — object blocks stripped so their inner `type:` is ignored.
+  const shortRe = /(\w+)\s*:\s*['"](\w+)['"]/g
+  // biome-ignore lint/suspicious/noAssignInExpressions: standard exec loop
+  while ((m = shortRe.exec(block.replace(/\{[^{}]*\}/g, ''))) !== null) {
+    const name = m[1]
+    if (name && !seen.has(name)) {
+      seen.add(name)
+      out.push({ name, type: coerceType(m[2] ?? ''), notNull: false })
+    }
+  }
+  return out
+}
+
+/** Fields added by `use: [...]` behaviors, plus the keys the server stamps (omit from create). */
+function behaviorExtras(src: string): { fields: ParsedField[]; omit: string[] } {
+  const use = src.match(/use\s*:\s*\[([^\]]*)\]/)?.[1] ?? ''
+  const fields: ParsedField[] = []
+  const omit: string[] = []
+  if (/\btimestamps\s*\(/.test(use)) {
+    fields.push(
+      { name: 'created_at', type: 'timestamp', notNull: false },
+      { name: 'updated_at', type: 'timestamp', notNull: false },
+    )
+    omit.push('created_at', 'updated_at')
+  }
+  if (/\bsoftDeletes\s*\(/.test(use)) {
+    fields.push({ name: 'deleted_at', type: 'timestamp', notNull: false })
+    omit.push('deleted_at')
+  }
+  return { fields, omit }
+}
+
+/** `posts` → `Post`, `categories` → `Category`, `boxes` → `Box` (naive, good enough for a scaffold). */
+function singularize(s: string): string {
+  if (/ies$/i.test(s)) return s.replace(/ies$/i, 'y')
+  if (/(s|x|z|ch|sh)es$/i.test(s)) return s.replace(/es$/i, '')
+  if (/s$/i.test(s) && !/ss$/i.test(s)) return s.replace(/s$/i, '')
+  return s
+}
+
+/** Locate a model file by the name the user typed (models/Post.ts, case-insensitive fallback). */
+function resolveModelPath(root: string, name: string): string | undefined {
+  const exact = join(root, 'models', `${name}.ts`)
+  if (existsSync(exact)) return exact
+  const dir = join(root, 'models')
+  if (!existsSync(dir)) return undefined
+  const hit = readdirSync(dir).find(
+    (f) => f.toLowerCase() === `${name.toLowerCase()}.ts` && f.endsWith('.ts'),
+  )
+  return hit ? join(dir, hit) : undefined
+}
+
+function composableTemplate(
+  resource: string,
+  item: string,
+  fields: ParsedField[],
+  omit: string[],
+): string {
+  const hook = `use${pascalCase(resource)}`
+  const rows = ['  id: number', ...fields.map((f) => `  ${f.name}: ${tsType(f.type)}`)].join('\n')
+  const omitUnion = omit.map((k) => `'${k}'`).join(' | ')
+  const newType = omit.length
+    ? `export type New${item} = Omit<${item}, ${omitUnion}>`
+    : `export type New${item} = ${item}`
+  return `import { createResourceClient, type ResourceClientState } from '@apex-stack/core/client'
+
+/** A \`${resource}\` row as returned by \`GET /api/${resource}\`. */
+export interface ${item} {
+${rows}
+}
+
+/** \`create()\` payload — the server stamps ${omit.map((k) => `\`${k}\``).join(', ') || 'the id'}. */
+${newType}
+
+/**
+ * Reactive Alpine data-hook for the \`${resource}\` resource, bound to /api/${resource}.
+ * Spread it into an x-data and drive the UI from items / loading / error:
+ *
+ *   <script client>
+ *     import { ${hook} } from '../composables/${hook}'
+ *   </script>
+ *   <template x-data="{ ...${hook}(), init() { this.fetch() } }">
+ *     <template x-for="row in items" :key="row.id"><li x-text="row.id"></li></template>
+ *   </template>
+ */
+export function ${hook}(): ResourceClientState<${item}, New${item}> {
+  return createResourceClient<${item}, New${item}>('${resource}')
+}
+`
+}
+
+/** Exported for testing — plan the composable artifact off an existing model file. */
+export function planComposable(name: string, root: string): Artifact[] {
+  const modelPath = resolveModelPath(root, name)
+  if (!modelPath)
+    throw new Error(
+      `No model found for "${name}" — expected models/${name}.ts (run \`apex make model ${name} …\` first)`,
+    )
+  const src = readFileSync(modelPath, 'utf8')
+  const resource = src.match(/defineModel\(\s*['"]([^'"]+)['"]/)?.[1]
+  if (!resource) throw new Error(`Couldn't find defineModel('<name>', …) in ${modelPath}`)
+  const extras = behaviorExtras(src)
+  const fields = [...parseModelFields(src), ...extras.fields]
+  const item = pascalCase(singularize(resource))
+  const hook = `use${pascalCase(resource)}`
+  return [
+    {
+      path: join(root, 'composables', `${hook}.ts`),
+      contents: composableTemplate(resource, item, fields, ['id', ...extras.omit]),
+    },
+  ]
+}
+
 type Artifact = { path: string; contents: string }
 
 /** Where a generated artifact lands, and its contents (one or more files). */
@@ -474,6 +639,8 @@ function plan(
       ]
     case 'client':
       return [{ path: join(root, 'app.client.ts'), contents: clientTemplate() }]
+    case 'composable':
+      return planComposable(name, root)
     case 'model': {
       const fields = parseFields(fieldSpecs)
       return [
@@ -493,14 +660,14 @@ export const makeCommand = defineCommand({
   meta: {
     name: 'make',
     description:
-      'Generate a page, component, API route, store, layout, service, test, middleware, model, migration, auth, or the Alpine client hook',
+      'Generate a page, component, API route, store, layout, service, test, middleware, model, migration, auth, the Alpine client hook, or a typed client composable',
   },
   args: {
     kind: {
       type: 'positional',
       required: true,
       description:
-        'page | component | api | store | layout | service | test | middleware | model | migration | auth | client',
+        'page | component | api | store | layout | service | test | middleware | model | migration | auth | client | composable',
     },
     // Optional: `apex make auth` takes no name (it always writes server/auth.ts).
     name: { type: 'positional', required: false, description: 'Name (about, Counter, todos, …)' },
@@ -526,6 +693,7 @@ export const makeCommand = defineCommand({
       'migration',
       'auth',
       'client',
+      'composable',
     ]
     if (!kinds.includes(kind)) {
       console.error(`\n  Unknown type "${args.kind}". Use: ${kinds.join(' | ')}\n`)
@@ -572,6 +740,11 @@ export const makeCommand = defineCommand({
         `\n  Next: set a 32+ char \x1b[36msessionPassword\x1b[0m in apex.config.ts runtimeConfig ` +
           `(or \x1b[36mAPEX_SESSION_PASSWORD\x1b[0m), then gate routes with \x1b[36mauth: true\x1b[0m / ` +
           `\x1b[36mcan\x1b[0m and resources with \x1b[36maccess\x1b[0m / \x1b[36mscope\x1b[0m.\n`,
+      )
+    } else if (kind === 'composable') {
+      console.log(
+        `\n  Use it in a component: \x1b[36m<template x-data="{ ...use…(), init() { this.fetch() } }">\x1b[0m — ` +
+          `items / loading / error + fetch / find / create / update / remove are ready.\n`,
       )
     } else {
       console.log('')

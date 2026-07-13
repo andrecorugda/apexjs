@@ -78,6 +78,7 @@
               <li><a href="#install">Install</a></li>
               <li><a href="#define">Define once</a></li>
               <li><a href="#surfaces">The surfaces you get</a></li>
+              <li><a href="#composable">Consume it on the client</a></li>
               <li><a href="#drivers">Databases &amp; drivers</a></li>
               <li><a href="#migrations">Migrations</a></li>
               <li><a href="#custom">Beyond CRUD</a></li>
@@ -189,6 +190,36 @@
           for how the MCP transport is carried for you.
         </p>
       </div>
+
+      <h2 id="composable">Consume it on the client <a class="anchor" href="#composable">#</a></h2>
+      <p>
+        The model drives the client too. <code>apex make composable Post</code> reads
+        <code>models/Post.ts</code> and generates a typed data-hook at
+        <code>composables/usePosts.ts</code> — <code>items / current / loading / error</code> plus
+        <code>fetch / find / create / update / remove</code>, all bound to the model's REST resource,
+        with the field types lifted from <code>defineModel</code>:
+      </p>
+      <pre><code><span class="c">// composables/usePosts.ts (generated)</span>
+<span class="k">import</span> { createResourceClient, <span class="k">type</span> ResourceClientState } <span class="k">from</span> <span class="s">'@apex-stack/core/client'</span>
+
+<span class="k">export interface</span> Post { id: <span class="t">number</span>; title: <span class="t">string</span>; published: <span class="t">boolean</span> }
+<span class="k">export type</span> NewPost = Omit&lt;Post, <span class="s">'id'</span>&gt;
+
+<span class="k">export function</span> usePosts(): ResourceClientState&lt;Post, NewPost&gt; {
+  <span class="k">return</span> createResourceClient&lt;Post, NewPost&gt;(<span class="s">'posts'</span>)
+}</code></pre>
+      <p>Spread it into an <code>x-data</code> and drive the UI straight from the model:</p>
+      <pre><code>&lt;<span class="t">script</span> <span class="k">client</span>&gt;
+  <span class="k">import</span> { usePosts } <span class="k">from</span> <span class="s">'../composables/usePosts'</span>
+&lt;/<span class="t">script</span>&gt;
+&lt;<span class="t">template</span> <span class="k">x-data</span>=<span class="s">"{ ...usePosts(), init() { this.fetch() } }"</span>&gt;
+  &lt;<span class="t">template</span> <span class="k">x-for</span>=<span class="s">"p in items"</span> <span class="k">:key</span>=<span class="s">"p.id"</span>&gt;&lt;<span class="t">li</span> <span class="k">x-text</span>=<span class="s">"p.title"</span>&gt;&lt;/<span class="t">li</span>&gt;&lt;/<span class="t">template</span>&gt;
+&lt;/<span class="t">template</span>&gt;</code></pre>
+      <p>
+        Prefer to skip the file? Call <code>createResourceClient('posts')</code> inline — the generated
+        wrapper just adds the types. One <code>defineModel</code> now spans schema, migration, REST, MCP,
+        <em>and</em> the browser.
+      </p>
 
       <h2 id="drivers">Databases &amp; drivers <a class="anchor" href="#drivers">#</a></h2>
       <p>
