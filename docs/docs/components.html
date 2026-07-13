@@ -274,6 +274,18 @@
         Generate it with <code>apex make client</code>. Install the plugin packages you use
         (<code>npm i @alpinejs/persist</code>, …). The file is optional — apps without it are unchanged.
       </p>
+      <div class="callout warm">
+        <span class="h">Plugin <em>magics</em> and the page root</span>
+        <p>
+          A plugin <strong>magic</strong> (like <code>$persist</code>) can't be used in a
+          <em>page's root</em> <code>&lt;template x-data="…"&gt;</code> expression — that one is
+          evaluated during server rendering (where the <code>loader()</code> data is merged), before
+          client plugins register, so it'd throw <code>$persist is not defined</code>. Use it in a
+          <strong>nested</strong> <code>&lt;div x-data="{ n: $persist(0) }"&gt;</code> instead. Plugin
+          <strong>directives</strong> (<code>x-intersect</code>, <code>x-mask</code>, …) and child
+          bindings (<code>x-text</code>, <code>@click</code>) work anywhere.
+        </p>
+      </div>
 
   </section>
   </div>
