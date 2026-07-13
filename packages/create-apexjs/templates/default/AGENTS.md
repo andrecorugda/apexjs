@@ -22,6 +22,7 @@ apex make component Card          # components/Card.alpine  (<Card /> in templat
 apex make component ui/Navbar     # group in a folder → components/ui/Navbar.alpine (<UiNavbar />)
 apex make client                  # app.client.ts — register Alpine plugins/directives/magics
 apex make model Post title:string body:string   # models/Post.ts → migration + REST + MCP CRUD
+apex make composable Post         # composables/usePosts.ts — typed client data-hook off the model
 apex make api webhooks            # server/api/webhooks.ts (defineApexRoute; also an MCP tool)
 apex make service Billing         # services/BillingService.ts
 apex extend auth                  # add sealed-cookie sessions + login/logout + /account
@@ -33,7 +34,17 @@ apex check                        # type-check (tsc --noEmit; fast with the nati
 apex build --preset vercel        # build + Vercel config (also: netlify, docker); then deploy
 apex test                         # run Vitest
 ```
-`apex make <kind> …` kinds: `page component api service store layout middleware test model migration auth client`.
+`apex make <kind> …` kinds: `page component api service store layout middleware test model migration auth client composable`.
+
+**Data flow, end to end.** One `defineModel` drives the whole stack: schema + migration + REST (`/api/posts` list/get/create/update/delete) + MCP tools **and** the client. `apex make composable Post` emits `composables/usePosts.ts` — a typed `usePosts()` returning `items / loading / error` + `fetch / find / create / update / remove` bound to that resource. Spread it into an x-data:
+```alpine
+<script client>
+  import { usePosts } from '../composables/usePosts'
+</script>
+<template x-data="{ ...usePosts(), init() { this.fetch() } }">
+  <template x-for="p in items" :key="p.id"><li x-text="p.title"></li></template>
+</template>
+```
 
 ## Project structure
 ```

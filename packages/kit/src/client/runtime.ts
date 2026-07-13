@@ -105,3 +105,6 @@ export type { ActionOptions, ActionState } from './action.js'
 export { createAction } from './action.js'
 // Client-side navigation (see ./nav.ts).
 export { installNav, type NavOptions } from './nav.js'
+// Reactive CRUD data-hook for a model resource (see ./resource.ts).
+export type { ResourceClientOptions, ResourceClientState } from './resource.js'
+export { createResourceClient } from './resource.js'
