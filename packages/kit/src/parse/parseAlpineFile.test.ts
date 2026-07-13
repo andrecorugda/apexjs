@@ -65,6 +65,16 @@ describe('parseAlpineFile', () => {
     expect(() => parseAlpineFile('<script>alert(1)</script>')).toThrow(AlpineParseError)
   })
 
+  it('is TypeScript-only: bare/ts scripts pass, lang="js" is rejected', () => {
+    expect(parseAlpineFile('<script server>const x=1</script>').script?.lang).toBe('ts')
+    expect(parseAlpineFile('<script client lang="ts">const x=1</script>').clientScript?.lang).toBe(
+      'ts',
+    )
+    expect(() => parseAlpineFile('<script server lang="js">var z=1</script>')).toThrow(
+      /must be TypeScript/,
+    )
+  })
+
   it('rejects duplicate <template>', () => {
     expect(() => parseAlpineFile('<template></template><template></template>')).toThrow(
       /only have one/,

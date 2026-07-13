@@ -101,7 +101,7 @@ These are contracts too — changing them breaks apps silently:
 
 - **`apex.config.ts`**: `runtimeConfig` (+ `public`), `i18n: { defaultLocale, locales }`.
 - **File routing**: `pages/**/*.alpine`; `[param]` dynamic segments; `index.alpine` → parent path.
-- **`.alpine` SFC**: `<script server>` (`loader()` / `head()`), `<script client>`, `<template>`, `<style scoped>`.
+- **`.alpine` SFC**: `<script server>` (`loader()` / `head()`), `<script client>`, `<template>`, `<style scoped>`. Scripts are **TypeScript-only** — `lang` is optional and defaults to `ts`; `lang="js"` is a parse error.
 - **Islands**: `client:load` / `client:visible` / `client:idle`.
 - **Server**: `server/api/*.ts` default-exports a route or resource; `server/auth.ts` default-exports an `AuthConfig`; `middleware/*.ts`.
 - **Data**: `models/*.ts`, `db/migrations/*.sql`, `locales/*.json`.

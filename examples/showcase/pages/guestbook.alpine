@@ -1,4 +1,4 @@
-<script server lang="ts">
+<script server>
   import { handle } from '../db/index.js'
 
   // Runs on the server: reads straight from the database, so the message list is

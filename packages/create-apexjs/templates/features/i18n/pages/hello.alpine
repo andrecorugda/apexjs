@@ -1,4 +1,4 @@
-<script server lang="ts">
+<script server>
   // locals.t and locals.locale are injected by the i18n runtime once i18n is
   // declared in apex.config.ts. Translation happens on the server, so the HTML
   // arrives already localized — great for SEO.

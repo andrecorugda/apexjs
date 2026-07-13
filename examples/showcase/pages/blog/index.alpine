@@ -1,4 +1,4 @@
-<script server lang="ts">
+<script server>
   import { PostService } from '../../services/PostService'
 
   const posts = new PostService()

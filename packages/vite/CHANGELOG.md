@@ -1,5 +1,12 @@
 # @apex-stack/vite
 
+## 0.2.5
+
+### Patch Changes
+
+- Updated dependencies [3d37eb1]
+  - @apex-stack/kit@0.7.0
+
 ## 0.2.4
 
 ### Patch Changes

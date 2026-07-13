@@ -148,7 +148,15 @@ function commitBlock(
           loc.start,
         )
       }
-      const lang = block.attrs.lang === 'ts' || block.attrs.lang === 'js' ? block.attrs.lang : 'ts'
+      // Apex .alpine components are TypeScript-only. `lang` may be omitted (defaults
+      // to ts) or `lang="ts"`; anything else (e.g. lang="js") is a hard error.
+      if (block.attrs.lang && block.attrs.lang !== 'ts') {
+        fail(
+          `<script> must be TypeScript — remove lang="${block.attrs.lang}" (Apex .alpine components are TS-only; \`lang\` is optional and defaults to ts)`,
+          loc.start,
+        )
+      }
+      const lang = 'ts'
       if (isClient) {
         if (descriptor.clientScript) fail('duplicate <script client> block', loc.start)
         descriptor.clientScript = { content, lang, attrs: block.attrs, loc }
