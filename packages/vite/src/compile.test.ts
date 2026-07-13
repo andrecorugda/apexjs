@@ -53,14 +53,15 @@ describe('compileAlpine', () => {
   // #47 — a plugin magic in a page's ROOT x-data compiles into an Alpine.data
   // factory (ordinary JS), so bare `$persist` isn't in scope. Rewrite it to the
   // global form Alpine documents for use inside Alpine.data.
-  it('rewrites a non-core plugin magic in the root x-data to the global form (client)', () => {
+  it('routes a non-core plugin magic in the root x-data through resolveRootMagic (client)', () => {
     const d = parseAlpineFile('<template x-data="{ n: $persist(0) }"><p x-text="n"></p></template>')
     const { code } = compileAlpine(d, '/pages/p.alpine', { ssr: false })
-    expect(code).toContain('window.Alpine&&window.Alpine.$persist')
-    expect(code).not.toMatch(/\(\s*\)\s*=>\s*\(\{ n: \$persist\(/) // no bare $persist( in the factory
+    expect(code).toContain('resolveRootMagic as __apexRootMagic') // helper imported only when used
+    expect(code).toContain('__apexRootMagic("persist",window.Alpine)')
+    expect(code).not.toMatch(/=>\s*\(\{ n: \$persist\(/) // no bare $persist( in the factory
   })
 
-  it('leaves core magics and plain calls untouched', () => {
+  it('leaves core magics and plain calls untouched (and does not import the helper)', () => {
     const d = parseAlpineFile(
       '<template x-data="{ s: $store(\'x\'), items: usePosts(), r: this.$refs }"><p></p></template>',
     )
@@ -68,7 +69,8 @@ describe('compileAlpine', () => {
     expect(code).toContain("$store('x')") // core magic — untouched
     expect(code).toContain('usePosts()') // composable call — untouched
     expect(code).toContain('this.$refs') // dotted access — untouched
-    expect(code).not.toContain('window.Alpine.$store')
+    expect(code).not.toContain('__apexRootMagic') // no non-core magic → no rewrite
+    expect(code).not.toContain('resolveRootMagic') // helper import omitted
   })
 
   it('rewrites to the server-safe global on the SSR factory (client script present)', () => {

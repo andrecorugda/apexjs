@@ -287,7 +287,8 @@
           Alpine expects inside a data factory), evaluated no-op on the server and re-bound on the
           client, so it persists across reloads without a <code>$persist is not defined</code> throw.
           A magic with <em>no</em> global form still can't initialize root data as a bare
-          <code>$name(…)</code> call (it degrades to a no-op) — put those in a <strong>nested</strong>
+          <code>$name(…)</code> call — it degrades to a no-op and logs a one-time console warning
+          naming the magic and the fix: put those in a <strong>nested</strong>
           <code>&lt;div x-data="{ n: $custom() }"&gt;</code>, which Alpine evaluates client-side with
           all magics in scope. Plugin <strong>directives</strong> (<code>x-intersect</code>,
           <code>x-mask</code>, …) and child bindings (<code>x-text</code>, <code>@click</code>) work

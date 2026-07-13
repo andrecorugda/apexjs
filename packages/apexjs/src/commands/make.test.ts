@@ -70,6 +70,19 @@ describe('resourceName (model → REST/table resource)', () => {
     expect(resourceName('Category')).toBe('categories')
     expect(resourceName('categories')).toBe('categories')
     expect(resourceName('Box')).toBe('boxes')
-    expect(resourceName('Person')).toBe('persons') // naive (no irregulars) — documented
+  })
+
+  it('handles irregular plurals in both directions (idempotent)', () => {
+    expect(resourceName('Person')).toBe('people')
+    expect(resourceName('people')).toBe('people') // plural input → same
+    expect(resourceName('Child')).toBe('children')
+    expect(resourceName('Datum')).toBe('data')
+    expect(resourceName('Status')).toBe('statuses') // NOT stati
+    expect(resourceName('Analysis')).toBe('analyses')
+  })
+
+  it('leaves uncountables alone', () => {
+    expect(resourceName('Sheep')).toBe('sheep')
+    expect(resourceName('Series')).toBe('series')
   })
 })

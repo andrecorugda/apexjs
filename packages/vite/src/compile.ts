@@ -26,17 +26,31 @@ const CORE_MAGICS = new Set([
  * (`$persist(0)`, registered via `app.client.ts`) is a `ReferenceError` there, even
  * though it works in a nested x-data. Alpine's own answer for magics inside
  * `Alpine.data` is the global form (`Alpine.$persist`), so we rewrite non-core
- * `$magic(` calls to it. Both sides degrade to a no-op when the magic is absent
- * (server has no Alpine; a magic with no global form) so the root never crashes —
- * the client re-binds real values on hydration. See #47.
+ * `$magic(` calls to it. See #47.
+ *
+ *  - **client**: routes through `resolveRootMagic(name, window.Alpine)` — returns the
+ *    real global when present ($persist works + persists), else warns once with the fix
+ *    and returns a no-op (a magic with no global form can't init root data; use a nested
+ *    x-data). Never crashes.
+ *  - **ssr**: no Alpine and no console (SSR intentionally degrades), so it inlines a
+ *    silent no-op; the client re-binds the real value on hydration.
+ *
+ * Returns `used: true` when a rewrite fired, so the caller only imports the helper then.
  */
-function rewriteRootMagics(expr: string, side: 'client' | 'ssr'): string {
-  const g = side === 'client' ? 'window.Alpine' : 'globalThis.Alpine'
+function rewriteRootMagics(expr: string, side: 'client' | 'ssr'): { code: string; used: boolean } {
+  let used = false
   // Skip `$` preceded by a word char / `.` / `$` (so `this.$store(`, `Alpine.$x(` are left alone).
-  return expr.replace(/(?<![\w.$])\$([a-zA-Z_]\w*)\s*\(/g, (m, name: string) =>
-    CORE_MAGICS.has(name) ? m : `(${g}&&${g}.$${name}||(()=>{}))(`,
-  )
+  const code = expr.replace(/(?<![\w.$])\$([a-zA-Z_]\w*)\s*\(/g, (m, name: string) => {
+    if (CORE_MAGICS.has(name)) return m
+    used = true
+    return side === 'client'
+      ? `${ROOT_MAGIC}(${JSON.stringify(name)},window.Alpine)(`
+      : `(globalThis.Alpine&&globalThis.Alpine.$${name}||(()=>{}))(`
+  })
+  return { code, used }
 }
+
+const ROOT_MAGIC = '__apexRootMagic'
 
 /**
  * Generate the JavaScript module for a parsed `.alpine` file.
@@ -85,7 +99,7 @@ export function compileAlpine(
     // string evaluator, which can't import. Backward compatible: without a
     // client script, the renderer keeps evaluating the `rootXData` string.
     const rootDataExport = descriptor.clientScript
-      ? `export function rootData() { return (${rewriteRootMagics(authoredExpr, 'ssr')}) }`
+      ? `export function rootData() { return (${rewriteRootMagics(authoredExpr, 'ssr').code}) }`
       : ''
 
     const code = [
@@ -111,10 +125,15 @@ export function compileAlpine(
   // Client module: never includes <script server> code, but DOES include
   // <script client> so composables/imports referenced by x-data resolve.
   const runtime = opts.clientRuntime ?? '@apex-stack/kit/client'
+  const rootExpr = rewriteRootMagics(authoredExpr, 'client')
+  const imports = [
+    'registerApexComponent',
+    ...(rootExpr.used ? [`resolveRootMagic as ${ROOT_MAGIC}`] : []),
+  ]
   const code = [
-    `import { registerApexComponent } from ${JSON.stringify(runtime)}`,
+    `import { ${imports.join(', ')} } from ${JSON.stringify(runtime)}`,
     clientCode,
-    `registerApexComponent(${JSON.stringify(componentId)}, () => (${rewriteRootMagics(authoredExpr, 'client')}))`,
+    `registerApexComponent(${JSON.stringify(componentId)}, () => (${rootExpr.code}))`,
     // Dev-only HMR wiring (Vite strips the whole block from production builds):
     //  - apex:css — a style-only edit hot-swaps the component's scoped CSS in
     //    place (see the plugin's handleHotUpdate); no reload, state preserved.

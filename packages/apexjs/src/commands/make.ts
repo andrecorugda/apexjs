@@ -435,16 +435,84 @@ function behaviorExtras(src: string): { fields: ParsedField[]; omit: string[] } 
   return { fields, omit }
 }
 
-/** `posts` → `Post`, `categories` → `Category`, `boxes` → `Box` (naive, good enough for a scaffold). */
+// Irregular singular→plural pairs the rule-based logic below can't derive. Keys are
+// lowercase; both directions are looked up (the reverse map is built once). Covers the
+// common English irregulars + a few tech gotchas (status→statuses, NOT stati).
+const IRREGULAR_PLURALS: Record<string, string> = {
+  person: 'people',
+  man: 'men',
+  woman: 'women',
+  child: 'children',
+  tooth: 'teeth',
+  foot: 'feet',
+  mouse: 'mice',
+  goose: 'geese',
+  datum: 'data',
+  index: 'indices',
+  vertex: 'vertices',
+  matrix: 'matrices',
+  analysis: 'analyses',
+  crisis: 'crises',
+  thesis: 'theses',
+  diagnosis: 'diagnoses',
+  basis: 'bases',
+  phenomenon: 'phenomena',
+  criterion: 'criteria',
+  life: 'lives',
+  knife: 'knives',
+  wife: 'wives',
+  leaf: 'leaves',
+  half: 'halves',
+  shelf: 'shelves',
+  self: 'selves',
+  loaf: 'loaves',
+  potato: 'potatoes',
+  tomato: 'tomatoes',
+  hero: 'heroes',
+  echo: 'echoes',
+  cactus: 'cacti',
+  focus: 'foci',
+  fungus: 'fungi',
+  nucleus: 'nuclei',
+  radius: 'radii',
+  status: 'statuses',
+}
+const IRREGULAR_SINGULARS: Record<string, string> = Object.fromEntries(
+  Object.entries(IRREGULAR_PLURALS).map(([s, p]) => [p, s]),
+)
+// Same in both numbers — never inflect these.
+const UNCOUNTABLE = new Set([
+  'sheep',
+  'fish',
+  'series',
+  'species',
+  'deer',
+  'aircraft',
+  'information',
+  'equipment',
+  'money',
+  'news',
+  'media',
+  'data',
+])
+
+/** `posts` → `post`, `categories` → `category`, `people` → `person` (irregulars + rules). */
 function singularize(s: string): string {
+  const lower = s.toLowerCase()
+  if (UNCOUNTABLE.has(lower)) return s
+  if (IRREGULAR_SINGULARS[lower]) return IRREGULAR_SINGULARS[lower]
   if (/ies$/i.test(s)) return s.replace(/ies$/i, 'y')
   if (/(s|x|z|ch|sh)es$/i.test(s)) return s.replace(/es$/i, '')
-  if (/s$/i.test(s) && !/ss$/i.test(s)) return s.replace(/s$/i, '')
+  // Strip a plural `-s`, but not a singular that merely ends in one (status, analysis, bus).
+  if (/s$/i.test(s) && !/(ss|us|is|os)$/i.test(s)) return s.replace(/s$/i, '')
   return s
 }
 
-/** `post` → `posts`, `category` → `categories`, `box` → `boxes` (inverse of singularize). */
+/** `post` → `posts`, `category` → `categories`, `person` → `people` (inverse of singularize). */
 function pluralize(s: string): string {
+  const lower = s.toLowerCase()
+  if (UNCOUNTABLE.has(lower)) return s
+  if (IRREGULAR_PLURALS[lower]) return IRREGULAR_PLURALS[lower]
   if (/[^aeiou]y$/i.test(s)) return s.replace(/y$/i, 'ies')
   if (/(s|x|z|ch|sh)$/i.test(s)) return `${s}es`
   return `${s}s`
