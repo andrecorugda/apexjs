@@ -275,7 +275,7 @@ function parseFields(specs: string[]): ParsedField[] {
   })
 }
 
-function modelTemplate(name: string, fields: ParsedField[]): string {
+function modelTemplate(resource: string, fields: ParsedField[]): string {
   const body =
     fields
       .map((f) =>
@@ -288,7 +288,7 @@ function modelTemplate(name: string, fields: ParsedField[]): string {
 
 // One definition → zod validation + a Drizzle table + the CREATE TABLE migration
 // + a REST resource (list/get/create/update/delete) that is ALSO an MCP tool set.
-export default defineModel('${name}', {
+export default defineModel('${resource}', {
   fields: {
 ${body}
   },
@@ -296,12 +296,12 @@ ${body}
 `
 }
 
-function modelApiTemplate(name: string): string {
+function modelApiTemplate(file: string, resource: string): string {
   return `import { createDb } from '@apex-stack/data'
-import model from '../../models/${name}'
+import model from '../../models/${file}'
 
-// Auto-served by Apex's API loader: REST at /api/${name} (+ /:id) and MCP tools
-// ${name}_list / _get / _create / _update / _delete. Override any op by adding your
+// Auto-served by Apex's API loader: REST at /api/${resource} (+ /:id) and MCP tools
+// ${resource}_list / _get / _create / _update / _delete. Override any op by adding your
 // own defineApexRoute here, or swap the connection for Turso/Supabase/Neon/PGlite.
 const db = await createDb('data.db')
 export default model.resource(db)
@@ -319,18 +319,18 @@ function sqliteType(t: FieldType): string {
       : 'INTEGER'
 }
 
-function modelMigration(name: string, fields: ParsedField[]): string {
+function modelMigration(resource: string, fields: ParsedField[]): string {
   const cols = [
     '  id INTEGER PRIMARY KEY AUTOINCREMENT',
     ...fields.map((f) => `  ${f.name} ${sqliteType(f.type)}${f.notNull ? ' NOT NULL' : ''}`),
   ]
-  return `-- Create the ${name} table. Run \`apex migrate\` (reverse with \`apex migrate --rollback\`).
-CREATE TABLE IF NOT EXISTS ${name} (
+  return `-- Create the ${resource} table. Run \`apex migrate\` (reverse with \`apex migrate --rollback\`).
+CREATE TABLE IF NOT EXISTS ${resource} (
 ${cols.join(',\n')}
 );
 
 -- @down
-DROP TABLE IF EXISTS ${name};
+DROP TABLE IF EXISTS ${resource};
 `
 }
 
@@ -441,6 +441,22 @@ function singularize(s: string): string {
   if (/(s|x|z|ch|sh)es$/i.test(s)) return s.replace(/es$/i, '')
   if (/s$/i.test(s) && !/ss$/i.test(s)) return s.replace(/s$/i, '')
   return s
+}
+
+/** `post` → `posts`, `category` → `categories`, `box` → `boxes` (inverse of singularize). */
+function pluralize(s: string): string {
+  if (/[^aeiou]y$/i.test(s)) return s.replace(/y$/i, 'ies')
+  if (/(s|x|z|ch|sh)$/i.test(s)) return `${s}es`
+  return `${s}s`
+}
+
+/**
+ * Normalize a model name to its REST/table resource: lowercase-plural, regardless of
+ * how the user typed it. `Post` / `post` / `posts` → `posts`, `Category` → `categories`.
+ * The model FILE stays PascalCase (Post.ts); the resource drives /api, the table, and MCP.
+ */
+export function resourceName(name: string): string {
+  return pluralize(singularize(name.toLowerCase()))
 }
 
 /** Locate a model file by the name the user typed (models/Post.ts, case-insensitive fallback). */
@@ -560,14 +576,14 @@ describe('${name} route', () => {
 `
 }
 
-function modelTestTemplate(name: string): string {
+function modelTestTemplate(file: string, resource: string): string {
   return `import { createDb, factory } from '@apex-stack/data'
 import { describe, expect, it } from 'vitest'
-import model from '../models/${name}'
+import model from '../models/${file}'
 
 // factory(model) builds schema-valid rows (override any field). An in-memory SQLite db
 // (via @libsql/client, the driver you already installed) gives a fresh DB per run.
-describe('${name} model', () => {
+describe('${file} model', () => {
   it('factory builds a valid row', () => {
     expect(factory(model).make()).toBeDefined()
   })
@@ -576,7 +592,7 @@ describe('${name} model', () => {
     const db = await createDb({ driver: 'sqlite', url: ':memory:' })
     await db.exec(model.migrationSql('sqlite'))
     await factory(model).createMany(db, 3)
-    const rows = await db.query('SELECT COUNT(*) AS n FROM ${name}')
+    const rows = await db.query('SELECT COUNT(*) AS n FROM ${resource}')
     expect(Number(rows[0]?.n)).toBe(3)
     await db.close()
   })
@@ -643,14 +659,21 @@ function plan(
       return planComposable(name, root)
     case 'model': {
       const fields = parseFields(fieldSpecs)
+      // File stays PascalCase (the import identity); resource is lowercase-plural and
+      // drives /api, the table, and MCP tools — regardless of how `name` was typed.
+      const file = pascalCase(name)
+      const resource = resourceName(name)
       return [
-        { path: join(root, 'models', `${name}.ts`), contents: modelTemplate(name, fields) },
-        { path: join(root, 'server', 'api', `${name}.ts`), contents: modelApiTemplate(name) },
+        { path: join(root, 'models', `${file}.ts`), contents: modelTemplate(resource, fields) },
         {
-          path: join(root, 'db', 'migrations', `${migrationStamp()}_create_${name}.sql`),
-          contents: modelMigration(name, fields),
+          path: join(root, 'server', 'api', `${resource}.ts`),
+          contents: modelApiTemplate(file, resource),
         },
-        ...test(`${name}.test.ts`, modelTestTemplate(name)),
+        {
+          path: join(root, 'db', 'migrations', `${migrationStamp()}_create_${resource}.sql`),
+          contents: modelMigration(resource, fields),
+        },
+        ...test(`${file}.test.ts`, modelTestTemplate(file, resource)),
       ]
     }
   }
@@ -733,7 +756,7 @@ export const makeCommand = defineCommand({
     if (kind === 'model') {
       console.log(
         `\n  Next: install the data layer + a driver (\x1b[36mnpm i @apex-stack/data @libsql/client\x1b[0m), ` +
-          `run \x1b[36mapex migrate\x1b[0m, then \x1b[36mapex dev\x1b[0m — REST at /api/${args.name} and MCP tools are live.\n`,
+          `run \x1b[36mapex migrate\x1b[0m, then \x1b[36mapex dev\x1b[0m — REST at /api/${resourceName(args.name ?? '')} and MCP tools are live.\n`,
       )
     } else if (kind === 'auth') {
       console.log(

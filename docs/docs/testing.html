@@ -274,7 +274,7 @@ apex test auth.test.ts    <span class="c"># filter by file</span></code></pre>
       </p>
       <pre><code>apex make service billing   <span class="c"># → services/BillingService.ts + tests/BillingService.test.ts</span>
 apex make api invoices      <span class="c"># → server/api/invoices.ts + tests/invoices.test.ts</span>
-apex make model invoice     <span class="c"># → models/invoice.ts + server/api/invoice.ts + tests/invoice.test.ts</span></code></pre>
+apex make model Invoice     <span class="c"># → models/Invoice.ts + server/api/invoices.ts + tests/Invoice.test.ts</span></code></pre>
       <p>
         The generated <code>api</code> test boots the surface with <code>createTestApp</code>; the
         <code>model</code> test uses <code>factory</code> against an in-memory DB; the <code>service</code>

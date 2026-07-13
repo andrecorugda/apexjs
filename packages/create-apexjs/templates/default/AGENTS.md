@@ -21,7 +21,7 @@ apex make page dashboard          # pages/dashboard.alpine (a route → /dashboa
 apex make component Card          # components/Card.alpine  (<Card /> in templates)
 apex make component ui/Navbar     # group in a folder → components/ui/Navbar.alpine (<UiNavbar />)
 apex make client                  # app.client.ts — register Alpine plugins/directives/magics
-apex make model Post title:string body:string   # models/Post.ts → migration + REST + MCP CRUD
+apex make model Post title:string body:string   # models/Post.ts → defineModel('posts') → /api/posts + MCP CRUD
 apex make composable Post         # composables/usePosts.ts — typed client data-hook off the model
 apex make api webhooks            # server/api/webhooks.ts (defineApexRoute; also an MCP tool)
 apex make service Billing         # services/BillingService.ts
