@@ -1,5 +1,12 @@
 # @apex-stack/data
 
+## 0.8.21
+
+### Patch Changes
+
+- Updated dependencies [f16817e]
+  - @apex-stack/core@0.34.1
+
 ## 0.8.20
 
 ### Patch Changes
