@@ -281,13 +281,17 @@
       <div class="callout warm">
         <span class="h">Plugin <em>magics</em> and the page root</span>
         <p>
-          A plugin <strong>magic</strong> (like <code>$persist</code>) can't be used in a
-          <em>page's root</em> <code>&lt;template x-data="…"&gt;</code> expression — that one is
-          evaluated during server rendering (where the <code>loader()</code> data is merged), before
-          client plugins register, so it'd throw <code>$persist is not defined</code>. Use it in a
-          <strong>nested</strong> <code>&lt;div x-data="{ n: $persist(0) }"&gt;</code> instead. Plugin
-          <strong>directives</strong> (<code>x-intersect</code>, <code>x-mask</code>, …) and child
-          bindings (<code>x-text</code>, <code>@click</code>) work anywhere.
+          A plugin <strong>magic</strong> that ships a global form — like <code>$persist</code>
+          (<code>Alpine.$persist</code>) — works in a <em>page's root</em>
+          <code>&lt;template x-data="…"&gt;</code>: Apex rewrites it to that global form (the shape
+          Alpine expects inside a data factory), evaluated no-op on the server and re-bound on the
+          client, so it persists across reloads without a <code>$persist is not defined</code> throw.
+          A magic with <em>no</em> global form still can't initialize root data as a bare
+          <code>$name(…)</code> call (it degrades to a no-op) — put those in a <strong>nested</strong>
+          <code>&lt;div x-data="{ n: $custom() }"&gt;</code>, which Alpine evaluates client-side with
+          all magics in scope. Plugin <strong>directives</strong> (<code>x-intersect</code>,
+          <code>x-mask</code>, …) and child bindings (<code>x-text</code>, <code>@click</code>) work
+          anywhere.
         </p>
       </div>
 

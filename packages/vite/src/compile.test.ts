@@ -49,4 +49,37 @@ describe('compileAlpine', () => {
     const b = compileAlpine(d, '/pages/index.alpine', { ssr: true }).code
     expect(a).toBe(b)
   })
+
+  // #47 — a plugin magic in a page's ROOT x-data compiles into an Alpine.data
+  // factory (ordinary JS), so bare `$persist` isn't in scope. Rewrite it to the
+  // global form Alpine documents for use inside Alpine.data.
+  it('rewrites a non-core plugin magic in the root x-data to the global form (client)', () => {
+    const d = parseAlpineFile('<template x-data="{ n: $persist(0) }"><p x-text="n"></p></template>')
+    const { code } = compileAlpine(d, '/pages/p.alpine', { ssr: false })
+    expect(code).toContain('window.Alpine&&window.Alpine.$persist')
+    expect(code).not.toMatch(/\(\s*\)\s*=>\s*\(\{ n: \$persist\(/) // no bare $persist( in the factory
+  })
+
+  it('leaves core magics and plain calls untouched', () => {
+    const d = parseAlpineFile(
+      '<template x-data="{ s: $store(\'x\'), items: usePosts(), r: this.$refs }"><p></p></template>',
+    )
+    const { code } = compileAlpine(d, '/pages/p.alpine', { ssr: false })
+    expect(code).toContain("$store('x')") // core magic — untouched
+    expect(code).toContain('usePosts()') // composable call — untouched
+    expect(code).toContain('this.$refs') // dotted access — untouched
+    expect(code).not.toContain('window.Alpine.$store')
+  })
+
+  it('rewrites to the server-safe global on the SSR factory (client script present)', () => {
+    const d = parseAlpineFile(
+      [
+        '<script client>import x from "y"</script>',
+        '<template x-data="{ n: $persist(0) }"></template>',
+      ].join('\n'),
+    )
+    const { code } = compileAlpine(d, '/pages/p.alpine', { ssr: true })
+    expect(code).toContain('export function rootData()')
+    expect(code).toContain('globalThis.Alpine&&globalThis.Alpine.$persist')
+  })
 })
