@@ -46,6 +46,20 @@ describe('make composable', () => {
     expect(out).toContain("return createResourceClient<Post, NewPost>('posts')")
   })
 
+  it('co-generates a matching test (and honors --no-test)', () => {
+    const root = fixture(
+      'Post.ts',
+      `export default defineModel('posts', { fields: { title: 'string' } })`,
+    )
+    const withTest = planComposable('Post', root, true)
+    expect(withTest.map((a) => a.path.replace(/.*[/\\]/, ''))).toEqual([
+      'usePosts.ts',
+      'usePosts.test.ts',
+    ])
+    expect(withTest[1]?.contents).toContain("import { usePosts } from '../composables/usePosts'")
+    expect(planComposable('Post', root, false)).toHaveLength(1) // --no-test → no test artifact
+  })
+
   it('singularizes the item type and finds the model case-insensitively', () => {
     const root = fixture(
       'category.ts',

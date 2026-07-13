@@ -244,10 +244,10 @@ apex build --preset vercel   <span class="c"># server target + Vercel config (al
         <table>
           <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
           <tbody>
-            <tr><td><code>kind</code> (positional)</td><td>—</td><td><code>page</code> | <code>component</code> | <code>api</code> | <code>store</code> | <code>layout</code> | <code>service</code> | <code>test</code> | <code>middleware</code> | <code>model</code> | <code>migration</code> | <code>auth</code> (required).</td></tr>
-            <tr><td><code>name</code> (positional)</td><td>—</td><td>Name, e.g. <code>about</code>, <code>Counter</code>, <code>todos</code>. Required for every kind except <code>auth</code>.</td></tr>
+            <tr><td><code>kind</code> (positional)</td><td>—</td><td><code>page</code> | <code>component</code> | <code>api</code> | <code>store</code> | <code>layout</code> | <code>service</code> | <code>test</code> | <code>middleware</code> | <code>model</code> | <code>migration</code> | <code>auth</code> | <code>client</code> | <code>composable</code> (required).</td></tr>
+            <tr><td><code>name</code> (positional)</td><td>—</td><td>Name, e.g. <code>about</code>, <code>Counter</code>, <code>todos</code>. Required for every kind except <code>auth</code> and <code>client</code>.</td></tr>
             <tr><td><code>fields</code> (positional, <code>model</code> only)</td><td>—</td><td>Field specs like <code>title:string</code>, <code>views:int</code>, <code>email:string!</code> (trailing <code>!</code> = NOT NULL).</td></tr>
-            <tr><td><code>--no-test</code></td><td>generates a test</td><td>Skip the co-generated test for <code>service</code> / <code>api</code> / <code>model</code>.</td></tr>
+            <tr><td><code>--no-test</code></td><td>generates a test</td><td>Skip the co-generated test for <code>api</code> / <code>service</code> / <code>model</code> / <code>store</code> / <code>middleware</code> / <code>composable</code> / <code>auth</code>.</td></tr>
             <tr><td><code>--root</code></td><td><code>.</code></td><td>Project root.</td></tr>
           </tbody>
         </table>
@@ -259,15 +259,15 @@ apex build --preset vercel   <span class="c"># server target + Vercel config (al
             <tr><td><code>page</code></td><td><code>pages/&lt;name&gt;.alpine</code> — a loader + <code>x-data</code> template + scoped style.</td></tr>
             <tr><td><code>component</code></td><td><code>components/&lt;Name&gt;.alpine</code> — a small interactive component (PascalCase).</td></tr>
             <tr><td><code>api</code></td><td><code>server/api/&lt;name&gt;.ts</code> — a <code>defineApexRoute</code> that's REST + MCP (+ a test).</td></tr>
-            <tr><td><code>store</code></td><td><code>stores/&lt;name&gt;.ts</code> — a <code>defineStore</code> of shared reactive state.</td></tr>
+            <tr><td><code>store</code></td><td><code>stores/&lt;name&gt;.ts</code> — a <code>defineStore</code> of shared reactive state (+ a test).</td></tr>
             <tr><td><code>layout</code></td><td><code>layouts/&lt;name&gt;.alpine</code> — a wrapper with a <code>&lt;slot&gt;</code>.</td></tr>
             <tr><td><code>service</code></td><td><code>services/&lt;Name&gt;Service.ts</code> — a plain, testable class (+ a test).</td></tr>
             <tr><td><code>test</code></td><td><code>tests/&lt;name&gt;.test.ts</code> — a Vitest spec.</td></tr>
-            <tr><td><code>middleware</code></td><td><code>middleware/&lt;name&gt;.ts</code> — a <code>defineMiddleware</code> that runs on every request.</td></tr>
+            <tr><td><code>middleware</code></td><td><code>middleware/&lt;name&gt;.ts</code> — a <code>defineMiddleware</code> that runs on every request (+ a test).</td></tr>
             <tr><td><code>model</code></td><td><code>models/&lt;Name&gt;.ts</code> (PascalCase) + <code>server/api/&lt;resource&gt;.ts</code> + a migration (+ a test) — a <code>defineModel</code> (from <code>@apex-stack/data</code>) with a REST + MCP resource. The <strong>resource</strong> is normalized to lowercase-plural (<code>Post</code> → <code>/api/posts</code>, table <code>posts</code>, <code>posts_*</code> tools).</td></tr>
-            <tr><td><code>composable</code></td><td><code>composables/use&lt;Plural&gt;.ts</code> — a typed client data-hook off an existing model (<code>apex make composable Post</code> → <code>usePosts()</code>). See <a href="./data.html#composable">Data</a>.</td></tr>
+            <tr><td><code>composable</code></td><td><code>composables/use&lt;Plural&gt;.ts</code> — a typed client data-hook off an existing model (<code>apex make composable Post</code> → <code>usePosts()</code>), + a test. See <a href="./data.html#composable">Data</a>.</td></tr>
             <tr><td><code>migration</code></td><td><code>db/migrations/&lt;stamp&gt;_&lt;name&gt;.sql</code> — an empty, reversible migration.</td></tr>
-            <tr><td><code>auth</code></td><td><code>server/auth.ts</code> + <code>server/api/login.ts</code> + <code>server/api/logout.ts</code> — sealed-cookie session auth (no name argument).</td></tr>
+            <tr><td><code>auth</code></td><td><code>server/auth.ts</code> + <code>server/api/login.ts</code> + <code>server/api/logout.ts</code> — sealed-cookie session auth (no name argument), + a login/logout round-trip test.</td></tr>
             <tr><td><code>client</code></td><td><code>app.client.ts</code> — the hook that runs before <code>Alpine.start()</code> (register plugins / directives / magics; no name argument).</td></tr>
           </tbody>
         </table>
