@@ -105,6 +105,8 @@ These are contracts too — changing them breaks apps silently:
 - **Islands**: `client:load` / `client:visible` / `client:idle`.
 - **Server**: `server/api/*.ts` default-exports a route or resource; `server/auth.ts` default-exports an `AuthConfig`; `middleware/*.ts`.
 - **Data**: `models/*.ts`, `db/migrations/*.sql`, `locales/*.json`.
+- **Components in folders**: `components/**/*.alpine`; nested files are folder-namespaced (`components/ui/Card.alpine` → `<UiCard/>`).
+- **Client hook** (🟡 Experimental): `app.client.ts` default-exports `(Alpine) => void`, run before `Alpine.start()` — register Alpine plugins, directives, magics.
 
 ---
 

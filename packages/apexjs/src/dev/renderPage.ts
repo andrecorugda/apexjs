@@ -93,6 +93,9 @@ export interface RenderPageOptions {
   /** In a production build, the href of the built client bundle for this page.
    * When set, the shell references it instead of the inline dev module. */
   clientHref?: string
+  /** Optional user client hook (`app.client.ts`) — imported + called before Alpine.start()
+   * in the dev inline entry (prod bundles bake it in via buildClient). */
+  clientEntry?: string
   /** Global stores discovered from `stores/*` — SSR initial state + client registration. */
   stores?: LoadedStore[]
   /** A global stylesheet href (e.g. `/app.css`) linked in <head> — Tailwind + shared styles. */
@@ -216,6 +219,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     cssBlocks,
     pageId: opts.pageId,
     clientHref: opts.clientHref,
+    clientEntry: opts.clientEntry,
     storeIds: stores.map((s) => s.id),
     appCss: opts.appCss,
     clientCss: opts.clientCss,
@@ -237,6 +241,8 @@ interface ShellParts {
   cssBlocks: Array<{ scopeId: string; css: string }>
   pageId: string
   clientHref?: string
+  /** Optional user client hook (`app.client.ts`) run before Alpine.start() — dev inline entry only. */
+  clientEntry?: string
   storeIds?: string[]
   appCss?: string
   /** Built CSS hrefs (production) to link in <head>. */
@@ -259,6 +265,7 @@ function shell({
   cssBlocks,
   pageId,
   clientHref,
+  clientEntry,
   storeIds = [],
   appCss,
   clientCss = [],
@@ -287,13 +294,20 @@ function shell({
 
   // Production build → reference the built, hashed client bundle. Dev → inline
   // the module so Vite serves + HMRs it.
+  // Optional user hook (app.client.ts) — register Alpine plugins/directives before start.
+  const hookImport = clientEntry
+    ? `  import __apexClient from ${JSON.stringify(clientEntry)}\n`
+    : ''
+  const hookCall = clientEntry
+    ? `  if (typeof __apexClient === 'function') __apexClient(Alpine)\n`
+    : ''
   const clientScript = clientHref
     ? `<script type="module" src="${clientHref}"></script>`
     : `<script type="module">
   import Alpine from 'alpinejs'
-${navImport}${storeImports ? `${storeImports}\n` : ''}  import ${JSON.stringify(pageId)}
+${hookImport}${navImport}${storeImports ? `${storeImports}\n` : ''}  import ${JSON.stringify(pageId)}
   window.Alpine = Alpine
-${storeRegs ? `${storeRegs}\n` : ''}  Alpine.start()
+${hookCall}${storeRegs ? `${storeRegs}\n` : ''}  Alpine.start()
 ${navInstall}</script>`
 
   // Global stylesheet(s) as render-blocking <link>s in <head> — NOT a deferred

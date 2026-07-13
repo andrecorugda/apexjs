@@ -1,5 +1,33 @@
 # @apex-stack/core
 
+## 0.29.0
+
+### Minor Changes
+
+- feat(client): `app.client.ts` hook — register Alpine plugins, directives & magics
+
+  An optional `app.client.ts` at the app root, default-exporting `(Alpine) => void`,
+  now runs **before `Alpine.start()`** in every client bootstrap — dev, production
+  build, and islands. This unlocks the official Alpine plugin ecosystem (`$persist`,
+  `x-intersect`, `x-collapse`, `x-mask`, `x-trap`, `morph`, `sort`, `anchor`) plus
+  custom `Alpine.directive()` / `Alpine.magic()` — none of which had a registration
+  point before.
+
+  ```ts
+  // app.client.ts
+  import persist from "@alpinejs/persist";
+  export default (Alpine) => {
+    Alpine.plugin(persist);
+  };
+  ```
+
+  - `apex make client` scaffolds it; the `apex_make` MCP tool gains the `client` kind,
+    so an AI agent can add it too.
+  - **Additive & opt-in** — apps without the file are byte-identical; the public API
+    contract stays green (documented in `API.md` as a 🟡 Experimental convention).
+  - Verified end-to-end: a custom magic + directive registered via `app.client.ts`
+    work in `apex dev`, `apex build` (served), and `apex build --islands`.
+
 ## 0.28.0
 
 ### Minor Changes

@@ -20,6 +20,7 @@ an MCP tool**. This file tells you (the agent) how to work here effectively.
 apex make page dashboard          # pages/dashboard.alpine (a route → /dashboard)
 apex make component Card          # components/Card.alpine  (<Card /> in templates)
 apex make component ui/Navbar     # group in a folder → components/ui/Navbar.alpine (<UiNavbar />)
+apex make client                  # app.client.ts — register Alpine plugins/directives/magics
 apex make model Post title:string body:string   # models/Post.ts → migration + REST + MCP CRUD
 apex make api webhooks            # server/api/webhooks.ts (defineApexRoute; also an MCP tool)
 apex make service Billing         # services/BillingService.ts
@@ -32,7 +33,7 @@ apex check                        # type-check (tsc --noEmit; fast with the nati
 apex build --preset vercel        # build + Vercel config (also: netlify, docker); then deploy
 apex test                         # run Vitest
 ```
-`apex make <kind> …` kinds: `page component api service store layout middleware test model migration auth`.
+`apex make <kind> …` kinds: `page component api service store layout middleware test model migration auth client`.
 
 ## Project structure
 ```
@@ -48,6 +49,8 @@ locales/*.json      i18n catalogs. (from `apex extend i18n`)
 services/*.ts       Business logic (classes). Keep routes thin; delegate here.
 stores/*.ts         Global SSR-safe state ($store.x).
 composables/*.ts    Reusable client logic (useX) for <script client>.
+app.client.ts       Optional. Default-exports (Alpine) => {…}, run BEFORE Alpine.start() —
+                     register Alpine plugins ($persist, x-intersect, x-mask…), directives, magics.
 shared/*.ts         Types shared by server + client.
 tests/*.test.ts     Vitest. createTestApp boots the whole app in-process.
 ```
