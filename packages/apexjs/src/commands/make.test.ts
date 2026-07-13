@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { planComposable } from './make.js'
+import { planComposable, resourceName } from './make.js'
 
 function fixture(modelFile: string, source: string): string {
   const root = mkdtempSync(join(tmpdir(), 'apex-make-'))
@@ -59,5 +59,17 @@ describe('make composable', () => {
   it('throws a helpful error when no model exists', () => {
     const root = mkdtempSync(join(tmpdir(), 'apex-make-'))
     expect(() => planComposable('Ghost', root)).toThrow(/No model found/)
+  })
+})
+
+describe('resourceName (model → REST/table resource)', () => {
+  it('normalizes any casing/number to lowercase-plural', () => {
+    expect(resourceName('Post')).toBe('posts')
+    expect(resourceName('post')).toBe('posts')
+    expect(resourceName('posts')).toBe('posts') // idempotent
+    expect(resourceName('Category')).toBe('categories')
+    expect(resourceName('categories')).toBe('categories')
+    expect(resourceName('Box')).toBe('boxes')
+    expect(resourceName('Person')).toBe('persons') // naive (no irregulars) — documented
   })
 })
