@@ -13,4 +13,7 @@ export {
   createResourceClient,
   installNav,
   registerApexComponent,
+  // Emitted into page glue by the .alpine compiler for root-x-data plugin magics — MUST
+  // stay re-exported here (the compiler imports it from THIS entry). See client.test.ts.
+  resolveRootMagic,
 } from '@apex-stack/kit/client'

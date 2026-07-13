@@ -126,6 +126,9 @@ export function compileAlpine(
   // <script client> so composables/imports referenced by x-data resolve.
   const runtime = opts.clientRuntime ?? '@apex-stack/kit/client'
   const rootExpr = rewriteRootMagics(authoredExpr, 'client')
+  // These are imported from the app's client runtime (core/client in a real app), so any
+  // symbol added here MUST be re-exported by @apex-stack/core/client — see that package's
+  // client.test.ts (COMPILER_GLUE), which fails if the barrel forgets one.
   const imports = [
     'registerApexComponent',
     ...(rootExpr.used ? [`resolveRootMagic as ${ROOT_MAGIC}`] : []),
