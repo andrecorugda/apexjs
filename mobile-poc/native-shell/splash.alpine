@@ -11,7 +11,8 @@
 
 <template x-data="{}" x-init="setTimeout(() => { window.location.href = '/' }, 2600)">
   <div class="splash">
-    <div class="mark">A</div>
+    <!-- The app's icon (served from /favicon.svg — swap for your own brand mark). -->
+    <img class="mark" src="/favicon.svg" alt="Apex" width="96" height="96" />
     <div class="typed">APEX JS</div>
   </div>
 </template>
@@ -25,12 +26,8 @@
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
   .mark {
-    display: grid; place-items: center;
-    width: clamp(4rem, 22vw, 6rem); aspect-ratio: 1;
-    border-radius: 24%;
-    border: 2px solid #1e293b;
-    font-family: system-ui, sans-serif; font-weight: 800; line-height: 1;
-    font-size: clamp(2.5rem, 14vw, 3.75rem);
+    width: clamp(4.5rem, 24vw, 6.5rem); height: auto; aspect-ratio: 1;
+    display: block; object-fit: contain;
     animation: pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
   }
   .typed {
