@@ -165,3 +165,89 @@
 
   document.body.appendChild(scrim)
 })()
+
+// On-device mobile keynote — the swipeable phone (splash → app → how it works).
+// Drag/swipe, dots, arrows, or ← → keys; the caption tracks the active screen.
+;(() => {
+  const root = document.getElementById('apexPhone')
+  if (!root) return
+  const track = root.querySelector('[data-phone-track]')
+  const pages = track ? track.children : null
+  if (!track || !pages || !pages.length) return
+  const capEl = root.querySelector('[data-phone-cap]')
+  const dotsEl = root.querySelector('[data-phone-dots]')
+  const splash = root.querySelector('[data-phone-splash]')
+  const n = pages.length
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
+  const captions = [
+    ['01', 'Cold-starts offline — no server to reach.'],
+    ['02', 'Your app, server-rendered on the device.'],
+    ['03', 'The whole server runs inside the phone.'],
+  ]
+  let i = 0
+
+  for (let d = 0; d < n; d++) {
+    const b = document.createElement('button')
+    b.className = 'dot'
+    b.type = 'button'
+    b.setAttribute('role', 'tab')
+    b.setAttribute('aria-label', 'Screen ' + (d + 1))
+    b.dataset.i = String(d)
+    dotsEl.appendChild(b)
+  }
+  const dots = dotsEl.children
+
+  const render = (animateSplash) => {
+    track.style.transform = 'translateX(' + -i * 100 + '%)'
+    const c = captions[i] || ['', '']
+    capEl.innerHTML = '<span class="n">' + c[0] + '</span><span class="t">' + c[1] + '</span>'
+    for (let k = 0; k < n; k++) dots[k].classList.toggle('on', k === i)
+    if (i === 0 && animateSplash && splash && !reduce) {
+      splash.classList.remove('on')
+      void splash.offsetWidth
+      splash.classList.add('on')
+    }
+  }
+  const go = (to, animate) => {
+    i = ((to % n) + n) % n
+    render(animate !== false)
+  }
+
+  dotsEl.addEventListener('click', (e) => {
+    const t = e.target.closest('.dot')
+    if (t) go(+t.dataset.i)
+  })
+  root.querySelector('[data-phone-prev]').addEventListener('click', () => go(i - 1))
+  root.querySelector('[data-phone-next]').addEventListener('click', () => go(i + 1))
+  root.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') go(i - 1)
+    else if (e.key === 'ArrowRight') go(i + 1)
+  })
+
+  // drag / swipe
+  let startX = 0, dx = 0, dragging = false, w = 0
+  const down = (x) => { dragging = true; startX = x; w = track.offsetWidth; track.classList.add('dragging') }
+  const move = (x) => {
+    if (!dragging) return
+    dx = x - startX
+    track.style.transform = 'translateX(' + (-i * 100 + (dx / w) * 100) + '%)'
+  }
+  const up = () => {
+    if (!dragging) return
+    dragging = false
+    track.classList.remove('dragging')
+    if (Math.abs(dx) > w * 0.18) go(i + (dx < 0 ? 1 : -1))
+    else render(false)
+    dx = 0
+  }
+  track.addEventListener('touchstart', (e) => down(e.touches[0].clientX), { passive: true })
+  track.addEventListener('touchmove', (e) => move(e.touches[0].clientX), { passive: true })
+  track.addEventListener('touchend', up)
+  track.addEventListener('mousedown', (e) => { e.preventDefault(); down(e.clientX) })
+  window.addEventListener('mousemove', (e) => move(e.clientX))
+  window.addEventListener('mouseup', up)
+
+  render(true)
+  // gentle auto-boot once (splash → app), like a real launch
+  if (!reduce) setTimeout(() => { if (i === 0) go(1) }, 2600)
+})()

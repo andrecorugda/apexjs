@@ -66,11 +66,13 @@ It's a WebView app (like Capacitor or Ionic), but unlike them it runs your **act
 
 ```bash
 apex build --mobile                          # self-contained on-device bundle
-apex mobile android --app-id com.you.app \
+apex mobile android --appId com.you.app \
   --name "My App" --assemble                 # scaffold native shell, sync assets → APK
+apex mobile ios --appId com.you.app \
+  --name "My App" --generate                 # scaffold WKWebView shell, sync assets (build on a Mac)
 ```
 
-`apex mobile android` scaffolds the native shell and syncs your assets; `--assemble` runs gradle to produce an installable APK (needs the Android SDK). An iOS shell (WKWebView + JavaScriptCore) exists and its engine is CI-verified on the iOS Simulator; shipping to a physical iPhone needs a Mac. See the [mobile docs](https://apexjs.site/docs/mobile.html).
+`apex mobile android` scaffolds the native shell and syncs your assets; `--assemble` runs gradle to produce an installable APK (needs the Android SDK). `apex mobile ios` scaffolds a WKWebView + JavaScriptCore shell into `mobile/ios` and syncs the same bundle; `--generate` runs XcodeGen for you, but building and signing needs a Mac + Xcode. The iOS engine is CI-verified on the iOS Simulator; Android is turnkey (one command → APK) while iOS scaffolds anywhere and compiles on a Mac. See the [mobile docs](https://apexjs.site/docs/mobile.html).
 
 ## Status
 

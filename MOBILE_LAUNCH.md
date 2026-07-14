@@ -83,11 +83,25 @@ build — byte-for-byte identical.**
 apex build --mobile
 
 # 2. Package it as an Android app (scaffolds the shell + syncs your assets)
-apex mobile android --app-id com.you.app --name "My App"
+apex mobile android --appId com.you.app --name "My App"
 
 # 3. Build the APK (needs the Android SDK) and install
 apex mobile android --assemble
 adb install -r mobile/android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Prefer iPhone? The same bundle drives an iOS shell:
+
+```bash
+# 1. Build the on-device bundle (same one)
+apex build --mobile
+
+# 2. Scaffold the iOS shell (WKWebView + JavaScriptCore) + sync your assets
+apex mobile ios --appId com.you.app --name "My App"
+
+# 3. Generate the Xcode project and open it — on a Mac
+apex mobile ios --generate     # runs `xcodegen generate` (no committed .xcodeproj)
+open mobile/ios/ApexShell.xcodeproj   # add a free Apple ID team, run on a device or the Simulator
 ```
 
 That's the whole workflow. Your guestbook writes to a local database offline; your login works
@@ -107,8 +121,9 @@ We're not going to oversell it:
   heavy native SQLite engine.
 - ⚠️ **Native device APIs** (camera, etc.) need shell wiring today; talk to external services
   (Supabase / Turso over HTTP) from client code, which has real network when you're online.
-- 🍎 **iOS**: the shell exists and its engine is verified on the iOS Simulator in CI; shipping to a
-  physical iPhone needs a Mac to build and sign.
+- 🍎 **iOS**: `apex mobile ios` now scaffolds the WKWebView + JavaScriptCore shell on any OS and
+  syncs your bundle; its engine is verified on the iOS Simulator in CI. Building and signing (the
+  `xcodegen generate` → Xcode step) still needs a Mac.
 
 The sweet spot: **offline-first, data-driven apps** — field data capture, an offline CRM, a
 local-first notes or CMS app — where "run my server on the device" is exactly the shape you want.
