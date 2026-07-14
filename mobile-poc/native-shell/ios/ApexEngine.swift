@@ -36,7 +36,7 @@ final class ApexEngine {
   /// Build the engine: create the JSContext, wire host globals JSCore lacks, restore the DB
   /// snapshot, then evaluate the server bundle + bridge. Synchronous (see file header for why
   /// this is not async like the Kotlin version). Throws if the bundle resources are missing.
-  init(snapshot: String?) throws {
+  init(snapshot: String?, bundle: Bundle = .main) throws {
     guard let context = JSContext() else { throw ApexEngineError.contextCreationFailed }
     self.context = context
 
@@ -65,8 +65,8 @@ final class ApexEngine {
 
     // 2) + 3) Evaluate the self-contained server bundle (sets globalThis.APEX = { run }) then the
     //    bridge (defines globalThis.__apexHandle). Read from the app bundle Resources.
-    let serverJS = try ApexEngine.bundledSource(resource: "server", ext: "mjs")
-    let bridgeJS = try ApexEngine.bundledSource(resource: "apex-bridge", ext: "js")
+    let serverJS = try ApexEngine.bundledSource(resource: "server", ext: "mjs", bundle: bundle)
+    let bridgeJS = try ApexEngine.bundledSource(resource: "apex-bridge", ext: "js", bundle: bundle)
     context.evaluateScript(serverJS, withSourceURL: URL(string: "apex-internal://server.mjs"))
     context.evaluateScript(bridgeJS, withSourceURL: URL(string: "apex-internal://apex-bridge.js"))
 
@@ -162,8 +162,8 @@ final class ApexEngine {
   }
 
   /// Read a bundled JS resource from the app bundle Resources as UTF-8 text.
-  private static func bundledSource(resource: String, ext: String) throws -> String {
-    guard let url = Bundle.main.url(forResource: resource, withExtension: ext) else {
+  private static func bundledSource(resource: String, ext: String, bundle: Bundle) throws -> String {
+    guard let url = bundle.url(forResource: resource, withExtension: ext) else {
       throw ApexEngineError.missingResource("\(resource).\(ext)")
     }
     return try String(contentsOf: url, encoding: .utf8)
