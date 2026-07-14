@@ -1,0 +1,74 @@
+name: ios-shell
+
+# Builds the iOS native shell and runs the on-device engine tests in the iOS Simulator, on a
+# free GitHub-hosted macOS runner — so the iOS shell can be verified without a local Mac.
+# Trigger manually (Actions → ios-shell → Run workflow) or on changes to the shell / mobile build.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+    paths:
+      - "mobile-poc/native-shell/ios/**"
+      - "packages/apexjs/src/prod/**"
+      - ".github/workflows/ios.yml"
+
+jobs:
+  ios:
+    # macos-15 ships Xcode 16, which reads the project format XcodeGen (latest) emits.
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Build the mobile bundle (showcase)
+        working-directory: examples/showcase
+        run: node "$GITHUB_WORKSPACE/packages/apexjs/dist/cli.js" build --mobile
+
+      - name: Stage bundle into the iOS project (Generated/)
+        run: |
+          IOS="$GITHUB_WORKSPACE/mobile-poc/native-shell/ios"
+          SC="$GITHUB_WORKSPACE/examples/showcase"
+          mkdir -p "$IOS/Generated/assets"
+          cp "$SC/dist/mobile/server.mjs" "$IOS/Generated/server.mjs"
+          cp "$GITHUB_WORKSPACE/mobile-poc/native-shell/apex-bridge.js" "$IOS/Generated/apex-bridge.js"
+          [ -d "$SC/dist/assets" ] && cp -R "$SC/dist/assets/." "$IOS/Generated/assets/" || true
+          [ -f "$SC/dist/favicon.svg" ] && cp "$SC/dist/favicon.svg" "$IOS/Generated/favicon.svg" || echo "<svg xmlns='http://www.w3.org/2000/svg'/>" > "$IOS/Generated/favicon.svg"
+          ls -la "$IOS/Generated"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: mobile-poc/native-shell/ios
+        run: xcodegen generate
+
+      - name: Pick an available iPhone simulator
+        id: sim
+        run: |
+          NAME=$(xcrun simctl list devices available | grep -oE 'iPhone [0-9]+( Pro)?' | head -1)
+          echo "name=${NAME:-iPhone 15}" >> "$GITHUB_OUTPUT"
+          echo "Using simulator: ${NAME:-iPhone 15}"
+
+      - name: Build & test (iOS Simulator)
+        working-directory: mobile-poc/native-shell/ios
+        run: |
+          xcodebuild test \
+            -project ApexShell.xcodeproj \
+            -scheme ApexShell \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
+            CODE_SIGNING_ALLOWED=NO

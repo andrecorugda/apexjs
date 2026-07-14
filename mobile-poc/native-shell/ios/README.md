@@ -129,3 +129,25 @@ this straightforward — add it in `ApexEngine` before evaluating `server.mjs`).
    relaunch → still logged in). The jar persists to `UserDefaults`.
 6. **DB snapshot** survives a cold start (create data, force-quit, relaunch → data still there). File
    is `apex-db.b64` in Application Support.
+
+## Testing without a Mac — CI on the iOS Simulator
+
+No Mac? The `ios-shell` GitHub Actions workflow (`.github/workflows/ios.yml`) builds this shell and
+runs `Tests/ApexEngineTests.swift` on the iOS Simulator on a **free GitHub-hosted macOS runner**.
+Trigger it from the repo's **Actions → ios-shell → Run workflow** (or it runs on pushes touching
+`ios/`). It:
+
+1. builds the packages + the showcase `--mobile` bundle,
+2. stages `server.mjs` / `apex-bridge.js` / `assets/` / `favicon.svg` into `ios/Generated/`,
+3. `xcodegen generate` (from `project.yml` — no committed `.xcodeproj`),
+4. `xcodebuild test` on an iPhone simulator.
+
+`ApexEngineTests` proves the bundle — the shim, SSR + API pipeline, **asm.js SQLite**, sealed-cookie
+auth, and the snapshot persistence seam — actually runs under **JavaScriptCore** (iOS's engine),
+which is the main iOS unknown. It does NOT exercise `WKURLSchemeHandler` (the custom-scheme POST-body
+question in the checklist above) — that still needs a device/UI test on a real Mac + iPhone.
+
+### To run on your actual iPhone
+Open the generated project on a Mac (`brew install xcodegen && cd ios && xcodegen generate && open
+ApexShell.xcodeproj`), copy the four `Generated/` items into the app's Resources, set a free Apple ID
+signing team, pick your iPhone, and Run. A free personal team gives a 7-day provisioning profile.
