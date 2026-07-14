@@ -37,20 +37,31 @@ class ApexInterceptor(
       }
     }
 
-    // 2) Dynamic routes (SSR pages + /api) → the engine.
+    // 2) Dynamic routes (SSR pages) → the engine. shouldInterceptRequest can't read a request
+    //    body, so these are effectively GET/navigation; POST/fetch with a body goes through the
+    //    ApexBridge JS interface instead. We inject the stored session cookie so a login made via
+    //    fetch() is visible to the next full page load.
+    val url = request.url.toString()
+    val reqHeaders = JSONObject(request.requestHeaders as Map<*, *>)
+    val cookie = android.webkit.CookieManager.getInstance().getCookie(url)
+    if (!cookie.isNullOrBlank() && !reqHeaders.has("cookie") && !reqHeaders.has("Cookie")) {
+      reqHeaders.put("cookie", cookie)
+    }
     val reqJson = JSONObject().apply {
-      put("url", request.url.toString())
+      put("url", url)
       put("method", request.method)
-      put("headers", JSONObject(request.requestHeaders as Map<*, *>))
+      put("headers", reqHeaders)
       put("body", JSONObject.NULL)
     }.toString()
 
-    val res = try {
-      JSONObject(runBlocking { engine.handle(reqJson) })
+    val resStr = try {
+      runBlocking { engine.handle(reqJson) }
     } catch (e: Exception) {
       return WebResourceResponse("text/html", "utf-8", 500, "Server Error", emptyMap(),
         ByteArrayInputStream("<h1>Apex engine error</h1><pre>${e.message}</pre>".toByteArray()))
     }
+    ApexBridge.persistSetCookie(url, resStr)
+    val res = JSONObject(resStr)
 
     val headers = res.optJSONObject("headers") ?: JSONObject()
     val contentType = headers.optString("content-type", "text/html")

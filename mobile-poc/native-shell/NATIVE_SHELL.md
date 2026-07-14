@@ -23,6 +23,23 @@ needs a device/emulator.)
 Because the handler is a **function call**, there is no listener and no port — so there is
 nothing for iOS to suspend when the app backgrounds. That's the whole point.
 
+## Dynamic requests (POST bodies + cookies)
+
+`shouldInterceptRequest` **cannot read a request body**, so `fetch()` POSTs from the page (add a
+guestbook message, log in) can't deliver their JSON through the interceptor. So the Android shell
+adds a second path:
+
+- **`ApexBridge`** (`@JavascriptInterface __ApexNative.handle`) receives `fetch()` requests **with
+  the body** and forwards them to the engine. A document-start `fetch` patch (installed via
+  `WebViewCompat.addDocumentStartJavaScript`) reroutes same-origin `fetch()` to it.
+- **Cookies**: the session is an **HttpOnly** cookie, so the page can't read/write it. `ApexBridge`
+  and `ApexInterceptor` manage it via `CookieManager` — injecting the stored `Cookie` on the way in
+  and persisting `Set-Cookie` on the way out — so a login via `fetch()` is visible to the next full
+  page load (navigations still go through the interceptor).
+
+Navigations/static stay on `shouldInterceptRequest`; only body-bearing `fetch()` uses the bridge.
+(An RN/Hermes shell wouldn't need this — RN's `fetch` reaches the engine directly with the body.)
+
 ## Recommended host: React Native (Hermes)
 
 Hermes is the same engine class we proved on. RN also polyfills most of what a bare engine
