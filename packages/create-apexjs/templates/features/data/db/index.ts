@@ -1,28 +1,29 @@
-import { createDb } from '@apex-stack/data'
+import { lazyDb } from '@apex-stack/data'
 import { Message } from '../models/Message.js'
 
-// Use a hosted Postgres (Supabase / Neon / any Postgres) when DATABASE_URL is
-// set — otherwise an in-memory libSQL for zero-setup local dev. createDb
-// auto-tunes Postgres for a transaction pooler (e.g. Supabase's, on port 6543):
-// it disables prepared statements and enables SSL. Requires the `postgres` driver
-// (already a dependency of this app).
+// Open the database lazily — no top-level `await`, so this module also bundles into the
+// classic-script `apex build --mobile` output (a bare on-device engine can't do top-level
+// await). On-device, `createDb`'s libSQL driver transparently becomes an in-memory sql.js
+// database; a hosted Postgres is used when DATABASE_URL is set (server/dev only). The real
+// connection opens + migrates + seeds on first use.
 const url = process.env.DATABASE_URL
-export const handle = url
-  ? await createDb({ driver: 'postgres', url })
-  : await createDb({ driver: 'libsql', url: ':memory:' })
+export const handle = lazyDb(
+  () => (url ? { driver: 'postgres', url } : { driver: 'libsql', url: ':memory:' }),
+  {
+    init: async (h) => {
+      // Create the schema — dialect-aware (SQLite vs Postgres) and idempotent, from the model.
+      await h.exec(Message.migrationSql(h.dialect))
 
-// Create the schema — dialect-aware (SQLite vs Postgres) and idempotent, straight
-// from the model. For a long-lived Postgres you'd normally run `apex migrate`
-// once and drop this; keeping it makes the showcase zero-setup on either backend.
-await handle.exec(Message.migrationSql(handle.dialect))
-
-// Seed a couple of rows if the table is empty.
-const now = handle.dialect === 'postgres' ? 'now()' : "datetime('now')"
-const seeded = await handle.query('SELECT COUNT(*) AS n FROM messages')
-if (Number(seeded[0]?.n ?? 0) === 0) {
-  await handle.exec(
-    `INSERT INTO messages (author, body, created_at, updated_at) VALUES
-      ('Ada Lovelace', 'Apex feels like HTML with superpowers.', ${now}, ${now}),
-      ('Alan Turing', 'One route — and my AI assistant can call it too.', ${now}, ${now})`,
-  )
-}
+      // Seed a couple of rows if the table is empty.
+      const now = h.dialect === 'postgres' ? 'now()' : "datetime('now')"
+      const seeded = await h.query('SELECT COUNT(*) AS n FROM messages')
+      if (Number(seeded[0]?.n ?? 0) === 0) {
+        await h.exec(
+          `INSERT INTO messages (author, body, created_at, updated_at) VALUES
+            ('Ada Lovelace', 'Apex feels like HTML with superpowers.', ${now}, ${now}),
+            ('Alan Turing', 'One route — and my AI assistant can call it too.', ${now}, ${now})`,
+        )
+      }
+    },
+  },
+)

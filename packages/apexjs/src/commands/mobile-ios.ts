@@ -13,7 +13,7 @@ export const mobileIosCommand = defineCommand({
     description: 'Package the app as an offline iOS app (WKWebView + on-device Apex engine)',
   },
   args: {
-    appId: { type: 'string', description: 'iOS bundle identifier, e.g. com.acme.app' },
+    appId: { type: 'string', alias: 'app-id', description: 'iOS bundle identifier, e.g. com.acme.app' },
     name: { type: 'string', description: 'App display name' },
     generate: { type: 'boolean', description: 'Run `xcodegen generate` to emit the .xcodeproj (needs XcodeGen + a Mac)' },
     force: { type: 'boolean', description: 'Re-scaffold mobile/ios even if it exists' },

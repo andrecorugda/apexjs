@@ -20,7 +20,7 @@ export const mobileAndroidCommand = defineCommand({
     description: 'Package the app as an offline Android app (WebView + on-device Apex engine)',
   },
   args: {
-    appId: { type: 'string', description: 'Android applicationId, e.g. com.acme.app' },
+    appId: { type: 'string', alias: 'app-id', description: 'Android applicationId, e.g. com.acme.app' },
     name: { type: 'string', description: 'App display name' },
     icon: { type: 'string', description: 'Source icon (PNG/SVG) to generate launcher icons from' },
     assemble: { type: 'boolean', description: 'Run gradle assembleDebug to produce an APK' },
@@ -50,10 +50,11 @@ export const mobileAndroidCommand = defineCommand({
     if (args.appId || args.name) {
       const gradle = join(proj, 'app', 'build.gradle.kts')
       if (args.appId && existsSync(gradle)) {
-        let g = readFileSync(gradle, 'utf8')
-        g = setKotlinAssign(g, 'namespace', args.appId)
-        g = setKotlinAssign(g, 'applicationId', args.appId)
-        writeFileSync(gradle, g)
+        // Only the applicationId (install identity) becomes the custom id. `namespace` stays
+        // `site.apexjs.shell` to match the Kotlin package, so the manifest's relative
+        // `android:name=".MainActivity"` still resolves to a real class — otherwise a custom id
+        // yields `<appId>.MainActivity` and the app crashes with ClassNotFoundException at launch.
+        writeFileSync(gradle, setKotlinAssign(readFileSync(gradle, 'utf8'), 'applicationId', args.appId))
         log(`applicationId → ${args.appId}`)
       }
       const strings = join(proj, 'app', 'src', 'main', 'res', 'values', 'strings.xml')
