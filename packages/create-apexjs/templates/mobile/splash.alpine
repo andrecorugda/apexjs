@@ -1,0 +1,48 @@
+<!-- Example animated splash — copy to your app's pages/splash.alpine.
+     The native shell loads /splash first; icon pops in, then "APEX JS" types out with a
+     blinking cursor (CSS-only — flash-free), then it advances to /.
+
+     Auto-advance is on the root template's x-init (a CLIENT attribute Alpine runs on
+     hydration) — NOT <script client>, whose top-level code would run during SSR and crash a
+     bare on-device engine. Responsive + reduced-motion aware. -->
+<script server>
+  export function head() { return { title: 'Loading…' } }
+</script>
+
+<template x-data="{}" x-init="setTimeout(() => { window.location.href = '/' }, 2600)">
+  <div class="splash">
+    <!-- The app's icon (served from /favicon.svg — swap for your own brand mark). -->
+    <img class="mark" src="/favicon.svg" alt="Apex" width="96" height="96" />
+    <div class="typed">APEX JS</div>
+  </div>
+</template>
+
+<style scoped>
+  .splash {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: clamp(1rem, 5vw, 1.75rem);
+    background: #0b1120; color: #38bdf8;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .mark {
+    width: clamp(4.5rem, 24vw, 6.5rem); height: auto; aspect-ratio: 1;
+    display: block; object-fit: contain;
+    animation: pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  }
+  .typed {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-weight: 600; font-size: clamp(1.1rem, 5.5vw, 1.6rem);
+    white-space: nowrap; overflow: hidden;
+    width: 0; max-width: 7ch;
+    border-right: 0.09em solid currentColor;
+    animation: type 1.3s steps(7, end) 0.55s forwards, blink 0.85s step-end 0.55s infinite;
+  }
+  @keyframes pop { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
+  @keyframes type { to { width: 7ch; } }
+  @keyframes blink { 50% { border-color: transparent; } }
+  @media (prefers-reduced-motion: reduce) {
+    .mark { animation: none; }
+    .typed { width: 7ch; animation: blink 0.85s step-end infinite; }
+  }
+</style>

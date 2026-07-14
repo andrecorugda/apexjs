@@ -43,6 +43,7 @@ export const FEATURES: Record<string, Feature> = {
       '@libsql/client': '^0.17.4', // local dev (in-memory)
       postgres: '^3.4.5', // production: Supabase/Neon via DATABASE_URL
       'drizzle-orm': '^0.45.2',
+      'sql.js': '^1.13.0', // on-device SQLite for `apex build --mobile` (pure-JS/asm.js)
     },
     navLinks: [{ href: '/guestbook', label: 'Guestbook' }],
   },
