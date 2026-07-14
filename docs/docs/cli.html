@@ -93,6 +93,7 @@
               <li><a href="#dev">apex dev</a></li>
               <li><a href="#build">apex build</a></li>
               <li><a href="#start">apex start</a></li>
+              <li><a href="#mobile">apex mobile</a></li>
               <li><a href="#upgrade">apex upgrade</a></li>
               <li><a href="#make">apex make</a></li>
               <li><a href="#add">apex add</a></li>
@@ -107,6 +108,7 @@
             </ul>
           </li>
           <li><a href="./deploy.html">Build &amp; Deploy</a></li>
+          <li><a href="./mobile.html">Mobile</a></li>
           <li><a href="./versioning.html">Stability &amp; Versioning</a></li>
         </ul>
       </div>
@@ -127,6 +129,7 @@
             <tr><td><a href="#dev"><code>apex dev</code></a></td><td>Start the development server (SSR + hydrate, API + MCP, hot reload).</td></tr>
             <tr><td><a href="#build"><code>apex build</code></a></td><td>Prerender pages to deployable HTML + client bundles.</td></tr>
             <tr><td><a href="#start"><code>apex start</code></a></td><td>Run a production build made with <code>apex build --server</code>.</td></tr>
+            <tr><td><a href="#mobile"><code>apex mobile</code></a></td><td>Scaffold a native shell around an <code>apex build --mobile</code> bundle and (optionally) build an installable APK.</td></tr>
             <tr><td><a href="#make"><code>apex make</code></a></td><td>Generate a page, component, API route, store, layout, service, test, middleware, model, migration, or auth.</td></tr>
             <tr><td><a href="#add"><code>apex add</code></a></td><td>Copy a themeable UI-kit component into your project.</td></tr>
             <tr><td><a href="#extend"><code>apex extend</code></a></td><td>Add an optional feature (data, auth, i18n) — files + wiring.</td></tr>
@@ -180,7 +183,7 @@ apex dev --islands</code></pre>
 
       <h2 id="build">apex build <a class="anchor" href="#build">#</a></h2>
       <p>Prerender pages to deployable HTML plus per-page client bundles.</p>
-      <pre><code>apex build [root] [--outDir &lt;dir&gt;] [--islands] [--server] [--preset &lt;vercel|netlify|docker&gt;]</code></pre>
+      <pre><code>apex build [root] [--outDir &lt;dir&gt;] [--islands] [--server] [--mobile] [--preset &lt;vercel|netlify|docker&gt;]</code></pre>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
@@ -189,12 +192,14 @@ apex dev --islands</code></pre>
             <tr><td><code>--outDir</code></td><td><code>dist</code></td><td>Output directory.</td></tr>
             <tr><td><code>--islands</code></td><td><code>false</code></td><td>Static-first islands mode (zero-JS static site).</td></tr>
             <tr><td><code>--server</code></td><td><code>false</code></td><td>Build a Node server (dynamic routes + API/MCP). Pair with <code>apex start</code>.</td></tr>
+            <tr><td><code>--mobile</code></td><td><code>false</code></td><td>Bundle the whole app (SSR + API + DB + auth) into a self-contained <code>dist/mobile/server.mjs</code> for on-device use. Pair with <a href="#mobile"><code>apex mobile android</code></a>.</td></tr>
           </tbody>
         </table>
       </div>
       <pre><code>apex build            <span class="c"># prerender + hydrate → static dist/</span>
 apex build --islands  <span class="c"># zero-JS static site (SSG)</span>
 apex build --server   <span class="c"># deployable Node server target</span>
+apex build --mobile   <span class="c"># self-contained on-device bundle → dist/mobile/server.mjs</span>
 apex build --preset vercel   <span class="c"># server target + Vercel config (also: netlify, docker)</span></code></pre>
       <p class="muted">Deploy presets generate the host config (function/Dockerfile) for a one-command deploy — see <a href="./deploy.html#presets">Deploy → One-command deploys</a>.</p>
       <p class="muted">The three modes are explained in full on <a href="./deploy.html">Build &amp; deploy</a>.</p>
@@ -212,6 +217,32 @@ apex build --preset vercel   <span class="c"># server target + Vercel config (al
         </table>
       </div>
       <pre><code>apex build --server &amp;&amp; apex start</code></pre>
+
+      <h2 id="mobile">apex mobile <a class="anchor" href="#mobile">#</a></h2>
+      <p>
+        Wrap an <a href="#build"><code>apex build --mobile</code></a> bundle in a native shell that runs your
+        app's full SSR + API + on-device SQLite + auth on a bare on-device JS engine — offline, no server, no
+        port. <code>apex mobile android</code> scaffolds <code>mobile/android</code> and syncs the bundle as an
+        asset; <code>--assemble</code> also runs Gradle to produce an installable APK. See <a href="./mobile.html">Mobile</a>.
+      </p>
+      <pre><code>apex mobile android [--app-id &lt;id&gt;] [--name &lt;name&gt;] [--icon &lt;file&gt;] [--assemble] [--root &lt;dir&gt;]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>android</code> (positional)</td><td>—</td><td>Target platform. Android is turnkey today; the iOS shell needs a Mac to build/sign (see <a href="./mobile.html#ios">Mobile → iOS status</a>).</td></tr>
+            <tr><td><code>--app-id</code></td><td><code>com.apex.app</code></td><td>Android application id / package name, e.g. <code>com.you.app</code>.</td></tr>
+            <tr><td><code>--name</code></td><td>project name</td><td>Display name of the app.</td></tr>
+            <tr><td><code>--icon</code></td><td>—</td><td>Path to a source icon (e.g. <code>icon.png</code>) to generate launcher icons from.</td></tr>
+            <tr><td><code>--assemble</code></td><td><code>false</code></td><td>After scaffolding, run <code>gradle assembleDebug</code> to build the APK. Requires the Android SDK.</td></tr>
+            <tr><td><code>--root</code></td><td><code>.</code></td><td>Project root.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>apex build --mobile     <span class="c"># first, produce dist/mobile/server.mjs</span>
+apex mobile android     <span class="c"># scaffold mobile/android + sync the bundle</span>
+apex mobile android --app-id com.you.app --name "My App" --assemble   <span class="c"># build an installable APK</span></code></pre>
+      <p class="muted">Without <code>--assemble</code> it only scaffolds and syncs — open <code>mobile/android</code> in Android Studio to build. Full story on <a href="./mobile.html">Mobile</a>.</p>
 
       <h2 id="upgrade">apex upgrade <a class="anchor" href="#upgrade">#</a></h2>
       <p>

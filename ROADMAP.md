@@ -89,17 +89,22 @@ exposes app **data**); this is **dev-time** codebase + framework awareness. Incl
   / `.cursor/rules` with Apex conventions + a live map of the project.
 Package `@apex-stack/compass`, CLI `apex compass`.
 
-### ▢ Phase E — Reach: PWA + app packaging
-*Planned.* Turn Apex apps into installable, offline-capable, and app-store-shippable
-targets — leaning on Apex's Vite base rather than rebuilding.
-- **PWA (foundation):** integrate `vite-plugin-pwa` — `apex build`/`--islands` emit a web
-  manifest + Workbox service worker (precache built assets → offline + installable); a
-  `pwa` config block (name, icons, theme, caching). Nuxt-parity (its PWA module is the
-  same engine). Static/islands get full offline; the server build caches shell + assets.
-- **Mobile/desktop wrap:** a preset + guide to package the static build via **Capacitor**
-  (iOS/Android) or **Tauri 2** (desktop + mobile) — a native WebView shell with device
-  APIs. Mostly integration + docs; depends on the PWA/offline build. *Honest scope: this
-  is web-in-a-native-shell, not native-widget UI (Apex is Alpine/HTML, not React Native).*
+### ◑ Phase E — Reach: on-device mobile + PWA
+*On-device mobile: **shipped**. PWA: planned.*
+- **On-device mobile (shipped — `@apex-stack/core@0.38.0`):** `apex build --mobile` packages an
+  app so its **full SSR + API pipeline runs on the device** in a bare JS engine (Android
+  `androidx.javascriptengine` / iOS JavaScriptCore) — offline, no server, no port: server-rendered
+  pages, typed API routes, on-device **SQLite** (sql.js as pure JS, persisted across cold starts),
+  and **sealed-cookie auth** — the same server code as the web build, unchanged. `apex mobile
+  android` scaffolds the native WebView shell + builds an APK in one command; an iOS shell exists
+  (engine CI-verified on the iOS Simulator). This went *beyond* a static Capacitor/Tauri wrap — it
+  runs your server on the device. See [mobile docs](https://apexjs.site/docs/mobile.html). *Honest
+  scope: a WebView app (not native-widget UI); the on-device DB is in-memory + snapshot-persisted;
+  native device APIs (camera, …) need shell wiring.*
+- **PWA (foundation, planned):** integrate `vite-plugin-pwa` — emit a web manifest + Workbox
+  service worker (precache built assets → offline + installable); a `pwa` config block (name,
+  icons, theme, caching). Nuxt-parity (same engine). Static/islands get full offline; the server
+  build caches shell + assets.
 
 ### ◑ Phase D — Model behaviors ("traits")
 *Status: shipped in `@apex-stack/data@0.5.0` (see `AUTH_DESIGN.md` §8).* The model is the

@@ -13,6 +13,7 @@ Apex JS is the full-stack meta-framework for Alpine.js: file-based routing, serv
 - [Data — Apex JS](https://apexjs.site/docs/data.html): defineResource turns one table into REST + MCP CRUD. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations.
 - [Auth — Apex JS](https://apexjs.site/docs/auth.html): One fail-closed policy across pages, REST, and MCP — defineAuth, route auth/can, resource access + row-level scope, sealed sessions, and CSRF. An AI can never exceed the logged-in user.
 - [Build & deploy — Apex JS](https://apexjs.site/docs/deploy.html): The three apex build modes, apex start, databases in production, and hosting targets.
+- [Mobile — Apex JS](https://apexjs.site/docs/mobile.html): apex build --mobile runs your app's full SSR + API + on-device SQLite + sealed-cookie auth on a bare on-device JS engine — offline, no server, no port. apex mobile android builds an installable APK from one TypeScript codebase.
 - [Getting started — Apex JS](https://apexjs.site/docs/getting-started.html): Install Apex JS, understand the project structure, run the dev server, and follow the dev → build → deploy lifecycle.
 - [Islands — Apex JS](https://apexjs.site/docs/islands.html): The four client:* island modes in Apex JS and the zero-JS-until-needed story.
 - [Internationalization — Apex JS](https://apexjs.site/docs/i18n.html): Locale-aware Apex apps — config + locales/*.json, per-request locale from URL prefix or Accept-Language, and t/locale in loaders, with SSR <html lang>.

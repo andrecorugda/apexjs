@@ -44,6 +44,7 @@
     <canvas id="hero-net" class="apex-net" aria-hidden="true"></canvas>
     <div class="wrap">
       <div class="hero-copy">
+        <a class="hero-badge" href="#mobile">✦ New — your full-stack app runs on the phone, offline <span>→</span></a>
         <h1>HTML-first apps.<br /><span class="ai">AI-native</span> APIs.</h1>
         <p class="lede">
           Apex is to Alpine what Next.js is to React — file routing, server rendering, and islands.
@@ -54,6 +55,50 @@
           <span class="terminal"><span class="prompt">$</span> npm i -g @apex-stack/core</span>
           <a class="btn" href="./docs/getting-started.html">Get started →</a>
           <a class="btn ghost" href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section mobile-keynote" aria-label="On-device mobile" id="mobile">
+    <div class="wrap">
+      <div class="mk-grid">
+        <div class="mk-copy">
+          <p class="eyebrow">New · runs on the phone</p>
+          <h2>Your full-stack app.<br />Now on the <span class="grad">phone</span>. Offline.</h2>
+          <p class="mk-lede">
+            One command ships your Apex app as a native app that runs the <strong>whole thing on the
+            device</strong> — server rendering, API routes, a real SQLite database, and auth — with
+            <strong>no server and no network</strong>. Not a static export: the same server code you
+            wrote for the web, running on the phone.
+          </p>
+          <div class="mk-chips">
+            <span class="mk-chip">SSR on-device</span>
+            <span class="mk-chip">Typed API routes</span>
+            <span class="mk-chip">SQLite, local</span>
+            <span class="mk-chip">Sealed-cookie auth</span>
+            <span class="mk-chip">Fully offline</span>
+          </div>
+          <div class="mk-cmd"><span class="prompt">$</span> apex build --mobile<span class="prompt">  # then →  </span>apex mobile android</div>
+          <p style="margin-top: 0.9rem"><a class="btn ghost" href="./docs/mobile.html">How it works →</a></p>
+        </div>
+        <div class="mk-device" aria-hidden="true">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-bar"><span class="dot"></span> apexjs · airplane mode ✈</div>
+              <div class="webview-note">WebView — shows the SSR HTML, then hydrates</div>
+              <div class="engine">
+                <div class="engine-title"><span>Apex engine</span><span>server.mjs</span></div>
+                <ul>
+                  <li><span class="b">▸</span> pages — server-rendered</li>
+                  <li><span class="b">▸</span> /api — typed routes</li>
+                  <li><span class="b">▸</span> SQLite — on the device</li>
+                  <li><span class="b">▸</span> auth — sealed cookie</li>
+                </ul>
+              </div>
+              <div class="offline-badge">no server · no port · no network</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -163,7 +208,7 @@
   ██╔══██║██╔═══╝ ██╔══╝   ██╔██╗   ██   ██║╚════██║
   ██║  ██║██║     ███████╗██╔╝ ██╗  ╚█████╔╝███████║
   ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝   ╚════╝ ╚══════╝</span>
-  <span class="ver">v0.17.0</span>  <span class="sub">·  The full-stack, AI-native meta-framework for Alpine.js</span>
+  <span class="ver">v0.38.0</span>  <span class="sub">·  The full-stack, AI-native meta-framework for Alpine.js</span>
   <span class="ok">✓</span> Dev server ready
 
   <span class="arw">➜</span>  <span class="lbl">Local</span>   <span class="url">http://localhost:3000/</span>
