@@ -34,6 +34,17 @@ globalThis.fetch=globalThis.fetch||function(){return Promise.reject(new Error('n
 // bundle and reference them at eval — no-op so that never crashes SSR (the real timers fire
 // on the client, in the WebView, which has them). See #53.
 if(typeof globalThis.setTimeout==='undefined'){globalThis.setTimeout=function(){return 0;};globalThis.clearTimeout=function(){};globalThis.setInterval=function(){return 0;};globalThis.clearInterval=function(){};globalThis.queueMicrotask=globalThis.queueMicrotask||function(f){Promise.resolve().then(f);};}
+// Inert DOM/BOM stubs. Defense-in-depth ONLY: the compiler already strips <script client>
+// side-effect STATEMENTS from the SSR module (#53), but a client-only side-effectful
+// declaration initializer (e.g. \`const t = document.title\`) is kept (rootData may need the
+// symbol) and would eval here. These no-ops keep one stray line from bricking the whole app's
+// boot; the real behavior still runs client-side in the WebView, which has the real globals.
+if(typeof globalThis.document==='undefined'){var __n=function(){};var __cl={add:__n,remove:__n,toggle:__n,contains:function(){return false;}};var __el={setAttribute:__n,getAttribute:function(){return null;},removeAttribute:__n,appendChild:__n,removeChild:__n,insertBefore:__n,querySelector:function(){return null;},querySelectorAll:function(){return [];},addEventListener:__n,removeEventListener:__n,getAttributeNames:function(){return [];},classList:__cl,style:{setProperty:__n},dataset:{},focus:__n,blur:__n,click:__n,textContent:'',innerHTML:''};globalThis.document={documentElement:__el,body:__el,head:__el,createElement:function(){return __el;},createTextNode:function(){return __el;},createComment:function(){return __el;},querySelector:function(){return null;},querySelectorAll:function(){return [];},getElementById:function(){return null;},getElementsByTagName:function(){return [];},getElementsByClassName:function(){return [];},addEventListener:__n,removeEventListener:__n,cookie:'',title:'',readyState:'complete'};}
+globalThis.navigator=globalThis.navigator||{userAgent:'ApexMobile',language:'en',languages:['en']};
+if(typeof globalThis.localStorage==='undefined')globalThis.localStorage={getItem:function(){return null;},setItem:function(){},removeItem:function(){},clear:function(){},key:function(){return null;},length:0};
+globalThis.sessionStorage=globalThis.sessionStorage||globalThis.localStorage;
+if(typeof globalThis.location==='undefined')globalThis.location={href:'',pathname:'/',search:'',hash:'',host:'',hostname:'',protocol:'https:',origin:'',assign:function(){},replace:function(){},reload:function(){}};
+if(typeof globalThis.window==='undefined'){globalThis.window=globalThis;globalThis.matchMedia=globalThis.matchMedia||function(){return {matches:false,media:'',addEventListener:function(){},removeEventListener:function(){},addListener:function(){},removeListener:function(){}};};globalThis.addEventListener=globalThis.addEventListener||function(){};globalThis.removeEventListener=globalThis.removeEventListener||function(){};globalThis.scrollTo=globalThis.scrollTo||function(){};globalThis.requestAnimationFrame=globalThis.requestAnimationFrame||function(f){return globalThis.setTimeout(f,0);};globalThis.cancelAnimationFrame=globalThis.cancelAnimationFrame||function(){};}
 })();
 `
 
