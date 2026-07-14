@@ -193,7 +193,7 @@ export const buildCommand = defineCommand({
       )
       if (r.deviceModules.length)
         console.log(
-          `  Needs on-device drivers (crypto.subtle / @libsql/client/web): ${r.deviceModules.join(', ')}`,
+          `  Excluded (network-only driver, can't run offline): ${r.deviceModules.join(', ')}`,
         )
       console.log(
         `\n  Load it in a WebView/RN shell and call \x1b[36mAPEX.run(request)\x1b[0m — see the native-shell guide.\n`,
