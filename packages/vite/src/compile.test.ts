@@ -84,4 +84,36 @@ describe('compileAlpine', () => {
     expect(code).toContain('export function rootData()')
     expect(code).toContain('globalThis.Alpine&&globalThis.Alpine.$persist')
   })
+
+  // #53 — the plugin passes a declarations-only version of the client body as
+  // `ssrClientCode` so client-only side effects (setTimeout, window.*) never run
+  // during server eval. compileAlpine must emit THAT, not the raw client body.
+  it('SSR module uses ssrClientCode instead of the raw client body when provided', () => {
+    const d = parseAlpineFile(
+      [
+        '<script client>',
+        '  const START = 7',
+        "  setTimeout(() => { window.location.href = '/' }, 100)",
+        '</script>',
+        '<template x-data="{ n: START }"><p x-text="n"></p></template>',
+      ].join('\n'),
+    )
+    const { code } = compileAlpine(d, '/pages/p.alpine', {
+      ssr: true,
+      ssrClientCode: 'const START = 7',
+    })
+    expect(code).toContain('const START = 7') // declaration kept (rootData resolves n)
+    expect(code).not.toContain('setTimeout') // client-only side effect dropped from SSR
+  })
+
+  it('SSR module falls back to the full client body when no ssrClientCode is given', () => {
+    const d = parseAlpineFile(
+      [
+        '<script client>const START = 7</script>',
+        '<template x-data="{ n: START }"></template>',
+      ].join('\n'),
+    )
+    const { code } = compileAlpine(d, '/pages/p.alpine', { ssr: true })
+    expect(code).toContain('const START = 7')
+  })
 })

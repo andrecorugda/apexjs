@@ -18,6 +18,9 @@ export {
 export type { Factory, FactoryOptions } from './factory.js'
 // Schema-inferred test-data factories.
 export { factory } from './factory.js'
+export type { LazyDbOptions } from './lazy.js'
+// Top-level-await-free database handle (for the mobile bundle / classic-script engines).
+export { lazyDb } from './lazy.js'
 export type {
   ApexModel,
   DefineModelOptions,
@@ -123,6 +126,12 @@ export async function createDb(config: CreateDbConfig): Promise<ApexDbHandle> {
   const cfg = typeof config === 'string' ? ({ driver: 'libsql', url: config } as const) : config
 
   if (cfg.driver === 'sqlite' || cfg.driver === 'libsql') {
+    // On-device (mobile bundle): the native @libsql/client driver can't run on a bare
+    // engine, so transparently use the WASM sql.js backend. App code is unchanged.
+    if ((globalThis as { __APEX_DEVICE__?: boolean }).__APEX_DEVICE__) {
+      const { createDeviceSqlite } = await import('./device.js')
+      return createDeviceSqlite()
+    }
     const { createClient } = (await loadDriver('@libsql/client')) as LibsqlMod
     const { drizzle } = await import('drizzle-orm/libsql')
     const client = createClient({ url: libsqlUrl(cfg.url) })

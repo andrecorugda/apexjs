@@ -25,6 +25,9 @@ export interface RenderComponentInput {
    * When provided, used instead of sandbox-evaluating the `rootXData` string —
    * this is how composables/imports in x-data resolve during SSR. */
   authoredDefaults?: Record<string, unknown>
+  /** Root `<template>`'s directive attributes other than x-data (x-init, x-effect, @events,
+   * …), carried onto the emitted root `<div>` so Alpine runs them on hydration. */
+  rootAttrs?: Record<string, string>
 }
 
 export interface RenderComponentResult {
@@ -64,6 +67,11 @@ export async function renderComponent(input: RenderComponentInput): Promise<Rend
   const root = document.createElement('div')
   root.setAttribute('x-data', `apex_${componentId}`)
   root.setAttribute('data-apex-root', componentId)
+  // Carry the root template's other directives (x-init, x-effect, @events, …) so Alpine
+  // runs them on hydration — x-data is handled separately above.
+  for (const [k, v] of Object.entries(input.rootAttrs ?? {})) {
+    if (k !== 'x-data') root.setAttribute(k, v)
+  }
   while (body.firstChild) root.appendChild(body.firstChild)
 
   // Merge authored x-data defaults under the loader data. Prefer defaults from a

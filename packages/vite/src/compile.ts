@@ -68,7 +68,7 @@ const ROOT_MAGIC = '__apexRootMagic'
 export function compileAlpine(
   descriptor: AlpineDescriptor,
   filePath: string,
-  opts: { ssr: boolean; clientRuntime?: string },
+  opts: { ssr: boolean; clientRuntime?: string; ssrClientCode?: string },
 ): CompileResult {
   const { componentId, scopeId } = computeIds(filePath)
 
@@ -94,6 +94,10 @@ export function compileAlpine(
       : `${scriptContent}\nexport const loader = () => ({})`
 
     const rootXData = descriptor.template?.attrs['x-data'] ?? null
+    // Other root-<template> directives (x-init, x-effect, @events, …) — carried to the
+    // emitted root <div> so Alpine runs them on hydration (only x-data is handled specially).
+    const rootAttrs = { ...(descriptor.template?.attrs ?? {}) }
+    delete rootAttrs['x-data']
     // When a client script exists, compile x-data into a real factory so its
     // imports (composables) resolve during SSR — instead of the sandboxed
     // string evaluator, which can't import. Backward compatible: without a
@@ -103,10 +107,14 @@ export function compileAlpine(
       : ''
 
     const code = [
-      clientCode,
+      // For SSR, use the declarations-only client code (imports + const/fn/class) so
+      // `rootData()` can resolve composables WITHOUT running client top-level side effects
+      // (setTimeout, window.*, …) on the server. The full body stays in the client module. #53
+      opts.ssrClientCode ?? clientCode,
       loaderExport,
       `export const template = ${JSON.stringify(descriptor.template?.content ?? '')}`,
       `export const rootXData = ${JSON.stringify(rootXData)}`,
+      `export const rootAttrs = ${JSON.stringify(rootAttrs)}`,
       rootDataExport,
       `export const componentId = ${JSON.stringify(componentId)}`,
       `export const scopeId = ${JSON.stringify(scopeId)}`,

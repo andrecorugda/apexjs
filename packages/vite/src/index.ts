@@ -1,7 +1,56 @@
+import { createRequire } from 'node:module'
 import { type AlpineDescriptor, parseAlpineFile, scopeCss } from '@apex-stack/kit'
 import { type Plugin, transformWithEsbuild } from 'vite'
 import { compileAlpine } from './compile.js'
 import { computeIds } from './ids.js'
+
+// acorn ships with Vite (via rollup) — resolve it from Vite's location so it needn't be a
+// direct dep. Null if unavailable → we fall back to the full client body (current behavior).
+let acornCache:
+  | {
+      parse: (
+        src: string,
+        opts: unknown,
+      ) => { body: Array<{ type: string; start: number; end: number }> }
+    }
+  | null
+  | undefined
+function getAcorn() {
+  if (acornCache !== undefined) return acornCache
+  try {
+    acornCache = createRequire(import.meta.resolve('vite'))('acorn')
+  } catch {
+    acornCache = null
+  }
+  return acornCache
+}
+
+// The top-level statement kinds a page's `<script client>` may contribute to SSR: imports and
+// declarations `rootData()` might reference. Everything else (expression statements, timers,
+// event wiring) is a client-only side effect and must NOT run during server-side eval (#53).
+const SSR_KEEP = new Set([
+  'ImportDeclaration',
+  'VariableDeclaration',
+  'FunctionDeclaration',
+  'ClassDeclaration',
+])
+
+/** Strip client-only side effects from a `<script client>` body for the SSR module, keeping
+ * only imports + declarations. Falls back to the full body if TS transpile or parse fails. */
+async function hoistClientDeclarations(ts: string, filePath: string): Promise<string> {
+  try {
+    const acorn = getAcorn()
+    if (!acorn) return ts
+    const js = (await transformWithEsbuild(ts, filePath, { loader: 'ts' })).code
+    const ast = acorn.parse(js, { ecmaVersion: 'latest', sourceType: 'module' })
+    return ast.body
+      .filter((n) => SSR_KEEP.has(n.type))
+      .map((n) => js.slice(n.start, n.end))
+      .join('\n')
+  } catch {
+    return ts
+  }
+}
 
 // Match `.alpine`, tolerating Vite's query suffixes (?import, ?v=, ?t=, …).
 export interface ApexPluginOptions {
@@ -64,9 +113,16 @@ export function apex(options: ApexPluginOptions = {}): Plugin {
 
       const descriptor = parseAlpineFile(code, filePath)
       structure.set(filePath, structuralKey(descriptor))
+      const ssr = transformOptions?.ssr === true
+      // For SSR, hand compileAlpine a declarations-only client body so client-only side
+      // effects don't run during server eval (they still ship in the client module). #53
+      const clientBody = descriptor.clientScript?.content?.trim()
+      const ssrClientCode =
+        ssr && clientBody ? await hoistClientDeclarations(clientBody, filePath) : undefined
       const { code: generated } = compileAlpine(descriptor, filePath, {
-        ssr: transformOptions?.ssr === true,
+        ssr,
         clientRuntime,
+        ssrClientCode,
       })
       // Transpile any TS (loader body / authored x-data) to JS. Use the clean
       // file path as the esbuild filename — a queried id can carry null bytes.

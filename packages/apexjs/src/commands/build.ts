@@ -149,6 +149,12 @@ export const buildCommand = defineCommand({
       description: 'Build a Node server (dynamic routes + API/MCP)',
       default: false,
     },
+    mobile: {
+      type: 'boolean',
+      description:
+        'Bundle a self-contained server for a bare on-device engine (Hermes/QuickJS) → dist/mobile/server.mjs',
+      default: false,
+    },
     base: {
       type: 'string',
       description: 'Public base path for a subpath deploy (e.g. /demo/)',
@@ -173,6 +179,25 @@ export const buildCommand = defineCommand({
     // Docker preset just scaffolds a Dockerfile — the container runs the build.
     if (args.preset === 'docker') {
       emitDockerPreset(root)
+      return
+    }
+
+    if (args.mobile) {
+      // The mobile bundle is a flattened variant of the server target — build that first.
+      await buildServerTarget(root, outDir, args.outDir, routes)
+      const { buildMobile } = await import('../prod/buildMobile.js')
+      const r = await buildMobile(outDir)
+      console.log(
+        `\n  Mobile bundle → ${args.outDir}/mobile/server.mjs  (${r.sizeKB} KB, self-contained)\n` +
+          `  ${r.routes} route(s) + ${r.api} API run on-engine (bare JS engine, no Node).`,
+      )
+      if (r.deviceModules.length)
+        console.log(
+          `  Excluded (network-only driver, can't run offline): ${r.deviceModules.join(', ')}`,
+        )
+      console.log(
+        `\n  Load it in a WebView/RN shell and call \x1b[36mAPEX.run(request)\x1b[0m — see the native-shell guide.\n`,
+      )
       return
     }
 

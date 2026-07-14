@@ -34,6 +34,8 @@ export interface PageModule {
   }) => HeadInput | Promise<HeadInput>
   template: string
   rootXData: string | null
+  /** Root template's directives other than x-data (x-init, …), carried onto the root div. */
+  rootAttrs?: Record<string, string>
   /** Compiled x-data factory (present when the page has a `<script client>`) — resolves imports at SSR. */
   rootData?: () => Record<string, unknown>
   /** Layout name to wrap this page in; `false` opts out. Defaults to `default` if it exists. */
@@ -164,6 +166,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
   const { html } = await renderComponent({
     template: mod.template,
     rootXData: mod.rootXData,
+    rootAttrs: mod.rootAttrs,
     componentId: mod.componentId,
     scopeId: mod.scopeId,
     loaderData,

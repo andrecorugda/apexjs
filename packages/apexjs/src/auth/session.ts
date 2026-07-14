@@ -1,8 +1,9 @@
 // Sealed-cookie sessions — server-only helpers built on h3's encrypted+signed
 // session cookies (HttpOnly, SameSite=Lax by default). This is Apex's built-in
 // identity store for the "hybrid" auth scope; OAuth/JWT/2FA remain adapter territory.
-import { type H3Event, useSession } from 'h3'
+import { deleteCookie, getCookie, type H3Event, setCookie, useSession } from 'h3'
 import { type ApexUser, type AuthConfig, defineAuth } from './define.js'
+import { sealHmac, unsealHmac } from './hmac.js'
 
 export interface SessionOptions {
   /**
@@ -23,16 +24,65 @@ const NAME = 'apex-session'
 // ctx.event is intentionally loosely typed — can pass it with no cast. It is an
 // h3 event at runtime.
 
+/** A minimal session object — the subset of h3's `useSession` return that Apex's helpers use. */
+interface ApexSession<T> {
+  readonly id: string | undefined
+  readonly data: T
+  update(patch: Partial<T>): Promise<unknown>
+  clear(): Promise<unknown>
+}
+
+/**
+ * Sealed cookie sessions for the bare on-device engine (`apex build --mobile`), which has no
+ * WebCrypto — so h3's iron-sealed (encrypted) session can't run. The cookie is HMAC-SIGNED
+ * (tamper-proof) rather than encrypted; on-device that's a sound tradeoff (the payload is the
+ * user's own session, on their own device). See {@link file://./hmac.ts}.
+ */
+function deviceSession<T extends Record<string, unknown>>(
+  event: unknown,
+  opts: SessionOptions,
+): ApexSession<T> {
+  const ev = event as H3Event
+  const name = opts.name ?? NAME
+  let data = unsealHmac(getCookie(ev, name), opts.password) as T
+  const cookie = {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    path: '/',
+    ...(opts.maxAge ? { maxAge: opts.maxAge } : {}),
+  }
+  return {
+    id: undefined,
+    get data() {
+      return data
+    },
+    async update(patch: Partial<T>) {
+      data = { ...data, ...patch }
+      setCookie(ev, name, sealHmac(data, opts.password), cookie)
+      return this
+    },
+    async clear() {
+      data = {} as T
+      deleteCookie(ev, name, { path: '/' })
+      return this
+    },
+  }
+}
+
 /** Open (or create) the sealed session for this request. Sets a `SameSite=Lax` cookie. */
 export async function getSession<T extends Record<string, unknown> = Record<string, unknown>>(
   event: unknown,
   opts: SessionOptions,
-) {
+): Promise<ApexSession<T>> {
+  // On a bare engine (mobile bundle) there's no crypto.subtle → use the pure-JS signed cookie.
+  if ((globalThis as { __APEX_DEVICE__?: boolean }).__APEX_DEVICE__) {
+    return deviceSession<T>(event, opts)
+  }
   return useSession<T>(event as H3Event, {
     password: opts.password,
     name: opts.name ?? NAME,
     cookie: { sameSite: 'lax', ...(opts.maxAge ? { maxAge: opts.maxAge } : {}) },
-  })
+  }) as unknown as ApexSession<T>
 }
 
 /** Log a caller in: merge `data` (e.g. `{ user }`) into the sealed session cookie. */
