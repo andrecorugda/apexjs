@@ -1,5 +1,26 @@
 # @apex-stack/core
 
+## 0.38.0
+
+### Minor Changes
+
+- 99403d6: New `apex mobile android` command — package an app as an offline native Android app in one step.
+  It builds the mobile bundle (`apex build --mobile` if needed), scaffolds the native WebView shell
+  (the on-device Apex engine, fetch/cookie bridge, and DB persistence) into `mobile/android`, applies
+  `--app-id` / `--name`, and syncs the server bundle + client assets into the APK. Pass `--assemble`
+  to run `gradle assembleDebug`, or `--icon <file>` to generate launcher icons. The Android shell now
+  ships as a template with the package.
+
+### Patch Changes
+
+- 7cd82a9: Mobile: pluggable SSR `fetch` seam for external HTTP (Supabase/Turso/any REST). The mobile
+  runtime's server-side `fetch` now uses `globalThis.__APEX_FETCH__` when a network-capable host
+  (iOS `JSContext`, RN/Hermes) provides one, and otherwise rejects with guidance instead of an
+  opaque error. Client-side `fetch` (from `<script client>`, in the WebView) already reaches the
+  network directly — the WebView fetch-patch passes cross-origin requests straight through — so
+  `@supabase/supabase-js` and Turso-over-HTTP work today from client code. See the native-shell
+  guide's "External APIs & Supabase" section.
+
 ## 0.37.0
 
 ### Minor Changes
