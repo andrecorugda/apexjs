@@ -143,6 +143,20 @@ describe('renderComponent', async () => {
     const html = await render('<template x-data><div x-cloak>hi</div></template>', {})
     expect(html).not.toContain('x-cloak')
   })
+
+  it('carries root-template directives other than x-data onto the root div (#51)', async () => {
+    const { html } = await renderComponent({
+      template: '<p></p>',
+      rootXData: '{}',
+      rootAttrs: { 'x-init': "location.href='/next'", '@click': 'go()' },
+      componentId: 'c0',
+      scopeId: 'data-apex-test',
+      loaderData: {},
+    })
+    expect(html).toContain(`x-init="location.href='/next'"`)
+    expect(html).toContain('@click="go()"')
+    expect(html).toContain('x-data="apex_c0"') // x-data stays the component ref
+  })
 })
 
 describe('component slots', async () => {
