@@ -40,6 +40,34 @@ adds a second path:
 Navigations/static stay on `shouldInterceptRequest`; only body-bearing `fetch()` uses the bridge.
 (An RN/Hermes shell wouldn't need this — RN's `fetch` reaches the engine directly with the body.)
 
+## Persistence (survive cold starts)
+
+The on-device SQLite lives in the JS engine as **in-memory** bytes — great, but lost when the app
+process dies. The framework exposes a storage-agnostic **snapshot seam** on the engine:
+
+- at boot, if `globalThis.__APEX_DB_SNAPSHOT__` (base64 of a prior `db.export()`) is set, the DB
+  opens from it instead of empty;
+- `globalThis.__APEX_DB_EXPORT__()` returns the current DB bytes (base64) to save.
+
+Two ways to wire storage onto that seam:
+
+**A — native file bridge (shipped here, recommended).** `ApexEngine` reads `apex-db.b64` from the
+app's private dir and injects `__APEX_DB_SNAPSHOT__` before the bundle boots; `ApexBridge` calls
+`engine.snapshot()` after every mutating request and writes the file (atomic rename). Fits the
+current architecture exactly (DB stays in the engine, where SSR reads it), no extra deps, and ports
+to iOS 1:1 (a `WKScriptMessageHandler` + a file in the app container). Files: `ApexDbStore.kt`,
+`ApexEngine.kt`, `ApexBridge.kt`.
+
+**B — WebView OPFS/IndexedDB (alternative).** Persist the snapshot from the Chromium/WKWebView side
+via OPFS (see `webview-opfs-persist.js`). OPFS is a *WebView* API, but the DB runs in the *engine*,
+so the WebView still has to broker the bytes to/from the engine over the same bridge — i.e. B is
+strictly more moving parts than A for this architecture. It only becomes the better choice if you
+move the DB **into** the WebView (client-side, giving up SSR-of-DB-data). Recommendation: use A for
+the SSR-on-engine model; keep B for a future client-DB variant.
+
+Trigger/limits: snapshots are written after body-bearing mutations (all writes go through the
+bridge); single-DB apps (one `createDb`) — the seam persists the most-recently-opened database.
+
 ## Recommended host: React Native (Hermes)
 
 Hermes is the same engine class we proved on. RN also polyfills most of what a bare engine

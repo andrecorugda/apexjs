@@ -2,11 +2,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createDb } from './index.js'
 
 // Exercise the on-device sql.js backend the way the mobile bundle does: flip the
-// __APEX_DEVICE__ flag so `createDb({ driver: 'libsql' })` routes to sql.js (WASM),
-// with no @libsql/client and no filesystem. The wasm is loaded from the installed
-// package here (off-device path); on device the bundler injects it.
+// __APEX_DEVICE__ flag so `createDb({ driver: 'libsql' })` routes to sql.js (asm.js),
+// with no @libsql/client and no filesystem.
 declare global {
   var __APEX_DEVICE__: boolean | undefined
+  var __APEX_DB_SNAPSHOT__: string | undefined
+  var __APEX_DB_EXPORT__: (() => string) | undefined
 }
 
 describe('on-device sql.js backend', () => {
@@ -15,6 +16,25 @@ describe('on-device sql.js backend', () => {
   })
   afterEach(() => {
     globalThis.__APEX_DEVICE__ = undefined
+    globalThis.__APEX_DB_SNAPSHOT__ = undefined
+    globalThis.__APEX_DB_EXPORT__ = undefined
+  })
+
+  it('persists across a restart via export/restore snapshot', async () => {
+    // First "session": create, seed, then export the DB bytes the host would save.
+    const first = await createDb({ driver: 'libsql', url: ':memory:' })
+    await first.exec('CREATE TABLE messages (id INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT)')
+    await first.exec("INSERT INTO messages (author) VALUES ('Ada'), ('Alan')")
+    const snapshot = globalThis.__APEX_DB_EXPORT__?.()
+    expect(typeof snapshot).toBe('string')
+    await first.close()
+
+    // Cold start: the host injects the saved snapshot before the engine boots.
+    globalThis.__APEX_DB_SNAPSHOT__ = snapshot
+    const second = await createDb({ driver: 'libsql', url: ':memory:' })
+    const rows = await second.query('SELECT author FROM messages ORDER BY id')
+    expect(rows.map((r) => r.author)).toEqual(['Ada', 'Alan']) // data survived the "restart"
+    await second.close()
   })
 
   it('runs the guestbook lifecycle SQL (exec + query) on a bare WASM SQLite', async () => {

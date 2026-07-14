@@ -1,5 +1,6 @@
 package site.apexjs.shell
 
+import android.content.Context
 import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
 import kotlinx.coroutines.runBlocking
@@ -20,11 +21,12 @@ import org.json.JSONObject
  * @JavascriptInterface methods run on a WebView binder thread (not the UI thread), so blocking
  * on the engine coroutine here is fine. NOTE: avoid a slash-star sequence in KDoc.
  */
-class ApexBridge(private val engine: ApexEngine) {
+class ApexBridge(private val engine: ApexEngine, private val context: Context) {
   @JavascriptInterface
   fun handle(requestJson: String): String {
     val req = JSONObject(requestJson)
     val url = req.optString("url")
+    val method = req.optString("method", "GET").uppercase()
     val headers = req.optJSONObject("headers") ?: JSONObject()
 
     // Attach the stored session cookie (the page can't read HttpOnly cookies).
@@ -34,6 +36,12 @@ class ApexBridge(private val engine: ApexEngine) {
 
     val resStr = runBlocking { engine.handle(req.toString()) }
     persistSetCookie(url, resStr)
+
+    // A mutating request may have changed the DB — persist a fresh snapshot so it survives a
+    // cold start. (All body-bearing writes come through this bridge; navigations are GET.)
+    if (method != "GET" && method != "HEAD" && method != "OPTIONS") {
+      runBlocking { ApexDbStore.write(context, engine.snapshot()) }
+    }
     return resStr
   }
 

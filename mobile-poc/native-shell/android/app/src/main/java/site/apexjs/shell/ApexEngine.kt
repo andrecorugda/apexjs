@@ -26,12 +26,25 @@ class ApexEngine private constructor(
     suspend fun create(context: Context): ApexEngine {
       val sandbox = JavaScriptSandbox.createConnectedInstanceAsync(context).await()
       val isolate = sandbox.createIsolate()
+      // Restore a persisted DB snapshot (if any) BEFORE the bundle boots, so the on-device
+      // database opens from it instead of empty. See ApexDbStore + ApexBridge.
+      ApexDbStore.read(context)?.let { snap ->
+        isolate.evaluateJavaScriptAsync(
+          "globalThis.__APEX_DB_SNAPSHOT__=" + org.json.JSONObject.quote(snap),
+        ).await()
+      }
       // Load the self-contained server bundle (sets globalThis.APEX) then the bridge.
       isolate.evaluateJavaScriptAsync(context.assets.readText("server.mjs")).await()
       isolate.evaluateJavaScriptAsync(context.assets.readText("apex-bridge.js")).await()
       return ApexEngine(sandbox, isolate)
     }
   }
+
+  /** Current DB bytes (base64) for persistence, or "" if the app has no on-device DB. */
+  suspend fun snapshot(): String =
+    isolate.evaluateJavaScriptAsync(
+      "(typeof __APEX_DB_EXPORT__==='function')?__APEX_DB_EXPORT__():''",
+    ).await()
 
   /**
    * Handle one request. `requestJson` = {"url","method","headers","body"}.

@@ -17,14 +17,22 @@ import type { ApexDbHandle } from './index.js'
 interface SqlJsDatabase {
   run(sql: string): void
   exec(sql: string): Array<{ columns: string[]; values: unknown[][] }>
+  export(): Uint8Array
   close(): void
 }
 interface SqlJsStatic {
-  Database: new () => SqlJsDatabase
+  Database: new (data?: Uint8Array) => SqlJsDatabase
 }
 type InitSqlJs = (config?: Record<string, unknown>) => Promise<SqlJsStatic>
 
-/** Open an in-memory sql.js (asm.js) database wrapped as an {@link ApexDbHandle}. */
+/**
+ * Open an in-memory sql.js (asm.js) database wrapped as an {@link ApexDbHandle}.
+ *
+ * Persistence seam (used by the mobile shell to survive cold starts): if the host set
+ * `globalThis.__APEX_DB_SNAPSHOT__` (base64 of a prior `db.export()`), the database is restored
+ * from it instead of starting empty; and `globalThis.__APEX_DB_EXPORT__()` is exposed so the
+ * host can read the current bytes back out (base64) and persist them. Both are no-ops off-device.
+ */
 export async function createDeviceSqlite(): Promise<ApexDbHandle> {
   let initSqlJs: InitSqlJs
   try {
@@ -39,7 +47,17 @@ export async function createDeviceSqlite(): Promise<ApexDbHandle> {
   }
 
   const SQL = await initSqlJs({})
-  const database = new SQL.Database()
+  const g = globalThis as {
+    __APEX_DB_SNAPSHOT__?: string
+    __APEX_DB_EXPORT__?: () => string
+  }
+  // Restore a persisted snapshot (base64) if the host provided one, else start empty.
+  const snapshot = typeof g.__APEX_DB_SNAPSHOT__ === 'string' ? g.__APEX_DB_SNAPSHOT__ : undefined
+  const database = snapshot
+    ? new SQL.Database(Uint8Array.from(Buffer.from(snapshot, 'base64')))
+    : new SQL.Database()
+  // Let the host read the current DB bytes back out to persist them.
+  g.__APEX_DB_EXPORT__ = () => Buffer.from(database.export()).toString('base64')
   const { drizzle } = await import('drizzle-orm/sql-js')
 
   return {

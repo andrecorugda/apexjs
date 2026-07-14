@@ -75,7 +75,7 @@ class MainActivity : ComponentActivity() {
 
       // 3) Bridge dynamic fetch() (with bodies) → engine. shouldInterceptRequest can't read a
       //    request body, so POST/login go through this JS interface + a document-start patch.
-      webView.addJavascriptInterface(ApexBridge(engine), "__ApexNative")
+      webView.addJavascriptInterface(ApexBridge(engine, applicationContext), "__ApexNative")
       if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
         WebViewCompat.addDocumentStartJavaScript(webView, FETCH_PATCH, setOf("*"))
       }
