@@ -8,6 +8,7 @@ import type { ProdManifest } from './server.js'
 // runtime already provides most of these — this is the belt-and-suspenders baseline.
 const SHIM = `
 globalThis.console=globalThis.console||{log(){},error(){},warn(){},info(){},debug(){}};
+globalThis.__APEX_DEVICE__=true;
 (function(){var C='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 function b64(s){s=String(s);var o=[],bits=0,val=0;for(var i=0;i<s.length;i++){var c=s.charAt(i);if(c==='=')break;var idx=C.indexOf(c);if(idx<0)continue;val=(val<<6)|idx;bits+=6;if(bits>=8){bits-=8;o.push((val>>bits)&255);}}return new Uint8Array(o);}
 if(typeof globalThis.TextEncoder==='undefined')globalThis.TextEncoder=class{encode(s){s=String(s);var b=[];for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);if(c>=0xd800&&c<=0xdbff&&i+1<s.length){var c2=s.charCodeAt(i+1);if(c2>=0xdc00&&c2<=0xdfff){c=0x10000+((c-0xd800)<<10)+(c2-0xdc00);i++;}}if(c<128)b.push(c);else if(c<2048)b.push(192|(c>>6),128|(c&63));else if(c<65536)b.push(224|(c>>12),128|((c>>6)&63),128|(c&63));else b.push(240|(c>>18),128|((c>>12)&63),128|((c>>6)&63),128|(c&63));}return new Uint8Array(b);}};
@@ -17,7 +18,9 @@ if(typeof globalThis.atob==='undefined')globalThis.atob=function(s){var u=b64(s)
 if(typeof globalThis.btoa==='undefined')globalThis.btoa=function(s){s=String(s);var u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i)&255;var r='';for(var i=0;i<u.length;i+=3){var a=u[i],b=i+1<u.length?u[i+1]:0,c=i+2<u.length?u[i+2]:0;r+=C[a>>2]+C[((a&3)<<4)|(b>>4)]+(i+1<u.length?C[((b&15)<<2)|(c>>6)]:'=')+(i+2<u.length?C[c&63]:'=');}return r;};
 if(typeof globalThis.process==='undefined')globalThis.process={env:{},argv:[],platform:'',version:'v0',versions:{},cwd:function(){return '/';},nextTick:function(f){Promise.resolve().then(f);},stdout:{write:function(){}},stderr:{write:function(){}}};
 if(typeof globalThis.crypto==='undefined')globalThis.crypto={subtle:{},getRandomValues:function(a){for(var i=0;i<a.length;i++)a[i]=(Math.imul(i+1,2654435761)>>>0)&255;return a;}};
-if(typeof globalThis.URL==='undefined')globalThis.URL=class{constructor(u){this.href=String(u);var h=this.href;var q=h.indexOf('?');this.search=q>=0?h.slice(q):'';var pathPart=q>=0?h.slice(0,q):h;var si=pathPart.indexOf('://');var rest=si>=0?pathPart.slice(si+3):pathPart;var sl=rest.indexOf('/');this.host=sl>=0?rest.slice(0,sl):rest;this.pathname=sl>=0?rest.slice(sl):'/';this.searchParams={get:function(){return null;},has:function(){return false;}};}};
+if(typeof globalThis.URLSearchParams==='undefined')globalThis.URLSearchParams=class{constructor(init){this._p=[];var self=this;if(typeof init==='string'){var s=init.charAt(0)==='?'?init.slice(1):init;if(s)s.split('&').forEach(function(pair){if(!pair)return;var i=pair.indexOf('=');var k=i<0?pair:pair.slice(0,i);var v=i<0?'':pair.slice(i+1);self._p.push([decodeURIComponent(k.replace(/\\+/g,' ')),decodeURIComponent(v.replace(/\\+/g,' '))]);});}else if(init&&typeof init.forEach==='function'){init.forEach(function(v,k){self._p.push([k,String(v)]);});}else if(init){for(var k in init)self._p.push([k,String(init[k])]);}}get(k){for(var i=0;i<this._p.length;i++)if(this._p[i][0]===k)return this._p[i][1];return null;}getAll(k){return this._p.filter(function(e){return e[0]===k;}).map(function(e){return e[1];});}has(k){return this.get(k)!==null;}set(k,v){this.delete(k);this._p.push([k,String(v)]);}append(k,v){this._p.push([k,String(v)]);}delete(k){this._p=this._p.filter(function(e){return e[0]!==k;});}forEach(f){this._p.forEach(function(e){f(e[1],e[0]);});}keys(){return this._p.map(function(e){return e[0];})[Symbol.iterator]();}values(){return this._p.map(function(e){return e[1];})[Symbol.iterator]();}entries(){return this._p.slice()[Symbol.iterator]();}toString(){return this._p.map(function(e){return encodeURIComponent(e[0])+'='+encodeURIComponent(e[1]);}).join('&');}[Symbol.iterator](){return this.entries();}};
+if(typeof globalThis.FormData==='undefined')globalThis.FormData=class{constructor(){this._d=[];}append(k,v){this._d.push([k,v]);}get(k){for(var i=0;i<this._d.length;i++)if(this._d[i][0]===k)return this._d[i][1];return null;}getAll(k){return this._d.filter(function(e){return e[0]===k;}).map(function(e){return e[1];});}has(k){return this.get(k)!==null;}set(k,v){this.delete(k);this._d.push([k,v]);}delete(k){this._d=this._d.filter(function(e){return e[0]!==k;});}forEach(f){this._d.forEach(function(e){f(e[1],e[0]);});}entries(){return this._d.slice()[Symbol.iterator]();}[Symbol.iterator](){return this.entries();}};
+if(typeof globalThis.URL==='undefined')globalThis.URL=class{constructor(u){this.href=String(u);var h=this.href;var q=h.indexOf('?');this.search=q>=0?h.slice(q):'';var pathPart=q>=0?h.slice(0,q):h;var si=pathPart.indexOf('://');var rest=si>=0?pathPart.slice(si+3):pathPart;var sl=rest.indexOf('/');this.host=sl>=0?rest.slice(0,sl):rest;this.hostname=this.host;this.pathname=sl>=0?rest.slice(sl):'/';this.searchParams=new globalThis.URLSearchParams(this.search);}};
 globalThis.require=function(n){
 if(n==='path')return {join:function(){return Array.prototype.join.call(arguments,'/');},resolve:function(){return '/'+Array.prototype.join.call(arguments,'/');},dirname:function(p){p=String(p);var i=p.lastIndexOf('/');return i>0?p.slice(0,i):'/';},basename:function(p){p=String(p);return p.slice(p.lastIndexOf('/')+1);},extname:function(p){p=String(p);var i=p.lastIndexOf('.');return i>=0?p.slice(i):'';},sep:'/'};
 if(n==='url')return {pathToFileURL:function(p){return {href:'file://'+p};},fileURLToPath:function(u){u=String(u);return u.indexOf('file://')===0?u.slice(7):u;},URL:globalThis.URL};
@@ -26,7 +29,7 @@ if(n==='canvas')throw new Error('canvas not needed');
 throw new Error('require('+n+') not available on the mobile runtime');
 };
 class Headers{constructor(i){this._m={};if(i){if(typeof i.forEach==='function')i.forEach((v,k)=>this.set(k,v));else for(var k in i)this.set(k,i[k]);}}get(k){var v=this._m[String(k).toLowerCase()];return v===undefined?null:v;}set(k,v){this._m[String(k).toLowerCase()]=String(v);}has(k){return String(k).toLowerCase() in this._m;}append(k,v){this.set(k,v);}delete(k){delete this._m[String(k).toLowerCase()];}forEach(f){for(var k in this._m)f(this._m[k],k);}entries(){return Object.entries(this._m);}[Symbol.iterator](){return Object.entries(this._m)[Symbol.iterator]();}}
-class Request{constructor(u,o){o=o||{};this.url=String(u);this.method=(o.method||'GET').toUpperCase();this.headers=new Headers(o.headers);this._b=o.body;}async text(){return this._b==null?'':String(this._b);}async json(){return JSON.parse(await this.text());}async arrayBuffer(){return new TextEncoder().encode(await this.text()).buffer;}clone(){return this;}}
+class Request{constructor(u,o){o=o||{};this.url=String(u);this.method=(o.method||'GET').toUpperCase();this.headers=new Headers(o.headers);this._b=o.body;this.body=o.body==null?null:o.body;}async text(){return this._b==null?'':String(this._b);}async json(){return JSON.parse(await this.text());}async arrayBuffer(){return new TextEncoder().encode(await this.text()).buffer;}clone(){return this;}}
 class Response{constructor(b,o){o=o||{};this._b=b==null?'':b;this.status=o.status||200;this.statusText=o.statusText||'';this.headers=new Headers(o.headers);this.ok=this.status>=200&&this.status<400;}async text(){return typeof this._b==='string'?this._b:new TextDecoder().decode(this._b);}async json(){return JSON.parse(await this.text());}}
 globalThis.Headers=Headers;globalThis.Request=Request;globalThis.Response=Response;
 globalThis.fetch=globalThis.fetch||function(){return Promise.reject(new Error('no network in mobile runtime'));};
@@ -57,6 +60,13 @@ export const readdirSync=function(){return []}
 export default {readFileSync,existsSync,statSync,readdirSync}
 `
 
+// `fs/promises` shim. sql.js's (dead-on-device) Node branch imports it, so esbuild must
+// resolve it at build time; it's never called at runtime (the engine isn't Node).
+const FSP_SHIM = `const nope=async function(){throw new Error('fs/promises not available on the mobile runtime')}
+export const readFile=nope,writeFile=nope,readdir=nope,stat=nope,mkdir=nope
+export default {readFile,writeFile,readdir,stat,mkdir}
+`
+
 const NODE_BUILTINS = [
   'assert',
   'buffer',
@@ -82,12 +92,18 @@ const NODE_BUILTINS = [
   'perf_hooks',
 ]
 
-// A route/module needs on-device capabilities we can't run on a bare engine: the DB layer
-// (@apex-stack/data / @libsql → device WASM driver) or sessions (crypto.subtle).
+// A module we still can't run on a bare engine offline: a NETWORK-only database/cache
+// driver imported directly (postgres/mysql/redis) — there's no server to reach offline.
+// DB via @apex-stack/data (libsql → on-device sql.js WASM) and sealed-cookie sessions
+// (pure-JS HMAC, no crypto.subtle) now run on-device, so they are NOT flagged.
 function needsDeviceDriver(src: string): boolean {
-  return /@apex-stack\/data|@libsql|useSession|sessionAuth|\blogin\(|\blogout\(|getSession/.test(
-    src,
-  )
+  return /\bfrom\s+['"](postgres|pg|mysql|mysql2|ioredis|redis)['"]/.test(src)
+}
+
+// Does any included server module use the data layer? Only then do we pay the ~900 KB
+// to bundle the sql.js WASM (base64) into the app — DB-less apps stay lean.
+function usesDataLayer(src: string): boolean {
+  return /@apex-stack\/data|\bcreateDb\b/.test(src)
 }
 
 export interface BuildMobileResult {
@@ -127,6 +143,12 @@ export async function buildMobile(dir: string): Promise<BuildMobileResult> {
   const included = allServer.filter((f) => !deviceModules.includes(f))
   const apiKeep = manifest.api.filter((a) => included.includes(a.serverFile))
   const routesKeep = manifest.routes.filter((r) => included.includes(r.serverFile))
+  // Sessions run on-device now, so keep middleware + auth (dropping only entries whose
+  // module was excluded above).
+  const middlewareKeep = (manifest.middleware ?? []).filter((m) => included.includes(m.serverFile))
+  const authKeep =
+    manifest.auth && included.includes(manifest.auth.serverFile) ? manifest.auth : undefined
+  const usesDb = included.some((f) => usesDataLayer(readSrc(f)))
 
   const gen = join(dir, 'mobile', '_gen')
   mkdirSync(gen, { recursive: true })
@@ -136,8 +158,8 @@ export async function buildMobile(dir: string): Promise<BuildMobileResult> {
       ...manifest,
       api: apiKeep,
       routes: routesKeep,
-      middleware: [],
-      auth: undefined,
+      middleware: middlewareKeep,
+      auth: authKeep,
     }),
   }
   for (const loc of manifest.i18n?.locales ?? []) {
@@ -146,6 +168,35 @@ export async function buildMobile(dir: string): Promise<BuildMobileResult> {
   }
   writeFileSync(join(gen, 'vfs.mjs'), `export const VFS=${JSON.stringify(vfs)}\n`)
   writeFileSync(join(gen, 'fs.mjs'), FS_SHIM)
+  writeFileSync(join(gen, 'fsp.mjs'), FSP_SHIM)
+
+  // On-device DB: bundle the sql.js WASM (base64) and hand it to the data layer via a
+  // global the device backend reads (`__APEX_SQLJS_WASM__`). Only when the app uses DB.
+  let devicePrelude = ''
+  if (usesDb) {
+    // Resolve the wasm from the app's install first, else from the CLI's (monorepo/global).
+    let wasmPath: string | undefined
+    for (const base of [join(serverDir, '_.js'), import.meta.resolve('vite')]) {
+      try {
+        wasmPath = createRequire(base).resolve('sql.js/dist/sql-wasm.wasm')
+        break
+      } catch {
+        /* try next base */
+      }
+    }
+    if (!wasmPath) {
+      throw new Error(
+        'apex build --mobile: this app uses the data layer but "sql.js" is not installed. Add it (`npm i sql.js`) — it powers the on-device SQLite backend.',
+      )
+    }
+    const wasmB64 = readFileSync(wasmPath).toString('base64')
+    writeFileSync(
+      join(gen, 'sqljs-wasm.mjs'),
+      `export const SQLJS_WASM_B64=${JSON.stringify(wasmB64)}\n`,
+    )
+    devicePrelude =
+      "import { SQLJS_WASM_B64 } from './sqljs-wasm.mjs'\nglobalThis.__APEX_SQLJS_WASM__ = SQLJS_WASM_B64\n"
+  }
 
   const imports = included
     .map((f, i) => `import * as m${i} from ${JSON.stringify(join(serverDir, f))}`)
@@ -153,7 +204,7 @@ export async function buildMobile(dir: string): Promise<BuildMobileResult> {
   const reg = included.map((f, i) => `  ${JSON.stringify(f)}: m${i},`).join('\n')
   writeFileSync(
     join(gen, 'entry.mjs'),
-    `${imports}
+    `${devicePrelude}${imports}
 import { createProdWebHandler } from '@apex-stack/core/server'
 const registry = {
 ${reg}
@@ -180,7 +231,12 @@ export async function run(input) {
     platform: 'neutral',
     mainFields: ['module', 'browser', 'main'],
     conditions: ['import', 'module', 'browser', 'default'],
-    alias: { 'node:fs': join(gen, 'fs.mjs'), fs: join(gen, 'fs.mjs') },
+    alias: {
+      'node:fs/promises': join(gen, 'fsp.mjs'),
+      'fs/promises': join(gen, 'fsp.mjs'),
+      'node:fs': join(gen, 'fs.mjs'),
+      fs: join(gen, 'fs.mjs'),
+    },
     external: ['node:*', ...NODE_BUILTINS, '@libsql/client'],
     banner: { js: SHIM },
     outfile: out,

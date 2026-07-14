@@ -46,7 +46,8 @@
   "peerDependencies": {
     "@electric-sql/pglite": "^0.5.0",
     "@libsql/client": "^0.17.0",
-    "postgres": "^3.4.0"
+    "postgres": "^3.4.0",
+    "sql.js": "^1.13.0"
   },
   "peerDependenciesMeta": {
     "@libsql/client": {
@@ -57,6 +58,9 @@
     },
     "@electric-sql/pglite": {
       "optional": true
+    },
+    "sql.js": {
+      "optional": true
     }
   },
   "engines": {
@@ -65,6 +69,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.4",
     "@libsql/client": "^0.17.4",
-    "postgres": "^3.4.9"
+    "postgres": "^3.4.9",
+    "sql.js": "^1.13.0"
   }
 }
