@@ -25,6 +25,7 @@ export const mobileAndroidCommand = defineCommand({
     icon: { type: 'string', description: 'Source icon (PNG/SVG) to generate launcher icons from' },
     assemble: { type: 'boolean', description: 'Run gradle assembleDebug to produce an APK' },
     force: { type: 'boolean', description: 'Re-scaffold mobile/android even if it exists' },
+    build: { type: 'boolean', default: true, description: 'Rebuild the mobile bundle first (--no-build reuses dist/mobile)' },
   },
   async run({ args }) {
     const root = process.cwd()
@@ -32,8 +33,18 @@ export const mobileAndroidCommand = defineCommand({
     const proj = join(root, 'mobile', 'android')
     const log = (m: string) => console.log(`  ${m}`)
 
-    // 1) Ensure the self-contained mobile bundle exists (build it if not).
-    if (!existsSync(join(outDir, 'mobile', 'server.mjs'))) {
+    // 1) Ensure a /splash route exists (the shell loads /splash first) — add the branded default
+    //    if the app has none, BEFORE building so it lands in the bundle. Delete it to opt out.
+    const splashDst = join(root, 'pages', 'splash.alpine')
+    if (!existsSync(splashDst) && existsSync(join(TEMPLATE, 'splash.alpine'))) {
+      mkdirSync(dirname(splashDst), { recursive: true })
+      cpSync(join(TEMPLATE, 'splash.alpine'), splashDst)
+      log('Added a default pages/splash.alpine (delete it to opt out)')
+    }
+
+    // 2) Build the self-contained bundle from current source (never stale), unless --no-build
+    //    (then reuse an existing one, building only if none exists yet).
+    if (args.build || !existsSync(join(outDir, 'mobile', 'server.mjs'))) {
       log('Building mobile bundle (apex build --mobile)…')
       execFileSync(process.execPath, [CLI, 'build', '--mobile'], { cwd: root, stdio: 'inherit' })
     }
