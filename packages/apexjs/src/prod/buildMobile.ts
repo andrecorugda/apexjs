@@ -32,7 +32,13 @@ class Headers{constructor(i){this._m={};var self=this;if(i){if(Array.isArray(i))
 class Request{constructor(u,o){o=o||{};this.url=String(u);this.method=(o.method||'GET').toUpperCase();this.headers=new Headers(o.headers);this._b=o.body;this.body=o.body==null?null:o.body;}async text(){return this._b==null?'':String(this._b);}async json(){return JSON.parse(await this.text());}async arrayBuffer(){return new TextEncoder().encode(await this.text()).buffer;}clone(){return this;}}
 class Response{constructor(b,o){o=o||{};this._b=b==null?'':b;this.status=o.status||200;this.statusText=o.statusText||'';this.headers=new Headers(o.headers);this.ok=this.status>=200&&this.status<400;}async text(){return typeof this._b==='string'?this._b:new TextDecoder().decode(this._b);}async json(){return JSON.parse(await this.text());}}
 globalThis.Headers=Headers;globalThis.Request=Request;globalThis.Response=Response;
-globalThis.fetch=globalThis.fetch||function(){return Promise.reject(new Error('no network in mobile runtime'));};
+// SSR-side fetch. A bare/isolated engine (androidx.javascriptengine) has no network, so this
+// rejects with guidance. A network-capable host (iOS JSContext, RN/Hermes) can inject a real
+// fetch as globalThis.__APEX_FETCH__ (e.g. backed by URLSession) to enable server-side external
+// HTTP — Supabase/Turso REST from a loader. Client-side fetch (from <script client>, in the
+// WebView) already reaches the network directly; the WebView fetch-patch passes cross-origin
+// requests straight through to the real fetch.
+globalThis.fetch=globalThis.fetch||function(){var f=globalThis.__APEX_FETCH__;if(typeof f==='function')return f.apply(null,arguments);return Promise.reject(new Error('fetch: no network in the on-device SSR engine. Call external APIs (Supabase/Turso/…) from client code (<script client>) — it runs in the WebView with real network — or run on a host that provides globalThis.__APEX_FETCH__.'));};
 // Timers: a bare engine has none. Client code (<script client>) can end up in the server
 // bundle and reference them at eval — no-op so that never crashes SSR (the real timers fire
 // on the client, in the WebView, which has them). See #53.
