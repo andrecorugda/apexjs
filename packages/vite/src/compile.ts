@@ -68,7 +68,7 @@ const ROOT_MAGIC = '__apexRootMagic'
 export function compileAlpine(
   descriptor: AlpineDescriptor,
   filePath: string,
-  opts: { ssr: boolean; clientRuntime?: string },
+  opts: { ssr: boolean; clientRuntime?: string; ssrClientCode?: string },
 ): CompileResult {
   const { componentId, scopeId } = computeIds(filePath)
 
@@ -107,7 +107,10 @@ export function compileAlpine(
       : ''
 
     const code = [
-      clientCode,
+      // For SSR, use the declarations-only client code (imports + const/fn/class) so
+      // `rootData()` can resolve composables WITHOUT running client top-level side effects
+      // (setTimeout, window.*, …) on the server. The full body stays in the client module. #53
+      opts.ssrClientCode ?? clientCode,
       loaderExport,
       `export const template = ${JSON.stringify(descriptor.template?.content ?? '')}`,
       `export const rootXData = ${JSON.stringify(rootXData)}`,
