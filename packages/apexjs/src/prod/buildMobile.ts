@@ -220,7 +220,20 @@ export async function run(input) {
       'node:fs': join(gen, 'fs.mjs'),
       fs: join(gen, 'fs.mjs'),
     },
-    external: ['node:*', ...NODE_BUILTINS, '@libsql/client'],
+    // Externalize the DB drivers the on-device path never uses (it uses sql.js via
+    // drizzle-orm/sql-js). Otherwise esbuild follows createDb's literal dynamic imports and
+    // tries to bundle e.g. drizzle-orm/pglite → @electric-sql/pglite, which a libsql/sqlite app
+    // hasn't installed → "Could not resolve" at build time. These are never reached on-device.
+    external: [
+      'node:*',
+      ...NODE_BUILTINS,
+      '@libsql/client',
+      'postgres',
+      '@electric-sql/pglite',
+      'drizzle-orm/libsql',
+      'drizzle-orm/postgres-js',
+      'drizzle-orm/pglite',
+    ],
     banner: { js: SHIM },
     // Minify: the asm.js SQLite build is large; the engine loads server.mjs as one
     // evaluateJavaScript string, so keep it small. asm.js still runs correctly minified
