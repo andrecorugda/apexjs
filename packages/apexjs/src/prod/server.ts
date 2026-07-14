@@ -75,7 +75,15 @@ export interface ProdServerOptions {
  * (or `createProdNodeHandler`) for a serverless target, or use `startProdServer`
  * to run it as a standalone Node server.
  */
-export async function createProdApp(options: { dir: string }): Promise<App> {
+export async function createProdApp(options: {
+  dir: string
+  /**
+   * Override how built server modules are loaded. Defaults to dynamic `import()` of the
+   * file on disk. On runtimes without a filesystem module loader (mobile/embedded engines),
+   * pass a static registry: `(relFile) => Promise.resolve(registry[relFile])`. The mobile seam.
+   */
+  loadModule?: (relFile: string) => Promise<Record<string, unknown>>
+}): Promise<App> {
   const dir = options.dir
   const manifest = JSON.parse(readFileSync(join(dir, 'apex-manifest.json'), 'utf8')) as ProdManifest
 
@@ -88,7 +96,9 @@ export async function createProdApp(options: { dir: string }): Promise<App> {
   )
   const publicConfig = (runtimeConfig.public ?? {}) as Record<string, unknown>
 
-  const importServer = (relFile: string) => import(pathToFileURL(join(dir, 'server', relFile)).href)
+  const importServer =
+    options.loadModule ??
+    ((relFile: string) => import(pathToFileURL(join(dir, 'server', relFile)).href))
 
   // Build the component registry from the built component modules.
   const registry: ComponentRegistry = {}
@@ -237,15 +247,20 @@ export async function createProdApp(options: { dir: string }): Promise<App> {
   return app
 }
 
+/** Options shared by the prod handlers. `loadModule` is the mobile/embedded seam — see
+ * {@link createProdApp}. */
+export type ProdHandlerOptions = Parameters<typeof createProdApp>[0]
+
 /** A Node request handler `(req, res) => void` for the built app — for serverless
  * targets (Vercel, etc.). */
-export async function createProdNodeHandler(options: { dir: string }) {
+export async function createProdNodeHandler(options: ProdHandlerOptions) {
   return toNodeListener(await createProdApp(options))
 }
 
 /** A Web fetch handler `(Request) => Promise<Response>` for the built app — for
- * fetch-style serverless targets (Netlify Functions v2, edge runtimes, etc.). */
-export async function createProdWebHandler(options: { dir: string }) {
+ * fetch-style serverless targets (Netlify Functions v2, edge runtimes) and embedded/mobile
+ * engines (pass `loadModule` with a static module registry — no filesystem import needed). */
+export async function createProdWebHandler(options: ProdHandlerOptions) {
   return toWebHandler(await createProdApp(options))
 }
 
