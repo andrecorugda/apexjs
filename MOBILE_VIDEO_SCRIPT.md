@@ -1,63 +1,81 @@
-# Apex JS — Mobile launch video script (~60s)
+# Apex JS — Mobile launch video script (~55s)
 
-Voiceover: **female narrator** — warm, confident, unhurried; a touch of wonder at the reveal, never
-hypey. Grounded in what actually ships. A 30-second cut is marked at the end.
+Voiceover: **female narrator** — genuinely excited, warm, like a team sharing something they're
+proud of. Not corporate, not hypey — real enthusiasm. The narrator **never speaks a URL** (it only
+appears on screen), so nothing reads "dot site" in the subtitles.
 
-**VO tone notes:** conversational, like showing a friend something genuinely cool. Land the pauses
-(the "…" beats). Emphasis on the **bold** words. Total VO ≈ 130 words (~55s at a relaxed pace).
-
----
-
-### Scene 1 — Hook (0:00–0:07)
-- **Visual:** a phone in a hand, screen on, an app running. Camera pushes in; a small "✈ Airplane mode" badge sits in the status bar.
-- **On-screen text:** `a full-stack app`
-- **VO (female):** "You built a full-stack app. Server rendering. A real database. Auth."
-
-### Scene 2 — The reveal (0:07–0:15)
-- **Visual:** finger swipes down Control Center → airplane mode toggles **on**. The app keeps working — a page loads instantly.
-- **On-screen text:** `now watch this` → `✈ no signal`
-- **VO (female):** "Now watch this. It's running **on the phone**… in airplane mode. No server. No network."
-
-### Scene 3 — One command (0:15–0:24)
-- **Visual:** clean terminal. Type `apex build --mobile`, then `apex mobile android`. A green check; an app icon lands on the home screen.
-- **On-screen text:** `apex build --mobile`
-- **VO (female):** "One command. Apex compiles your **whole app** — pages, API, database — into a single bundle, and installs it as a native app."
-
-### Scene 4 — How it works (0:24–0:38)
-- **Visual:** simple animated diagram: WebView on top, an arrow down into a box labeled **Apex engine · server.mjs**, with `pages · /api · SQLite · auth` inside. Small caption: `no server · no port`.
-- **On-screen text:** `your server runs on the device`
-- **VO (female):** "Because Apex runs your **server** on the device — in the phone's own JavaScript engine. Every tap is just a function call. Your code answers it… right there. Offline."
-
-### Scene 5 — Demo (0:38–0:48)
-- **Visual:** on-device, airplane mode still on: type a guestbook message → **Post** → it appears. Then log in → "Signed in as Ada." Snappy, real.
-- **On-screen text:** `post · login · all offline`
-- **VO (female):** "Post a message. Log in. It all just works — with no signal — because your database is on the device too."
-
-### Scene 6 — The kicker + CTA (0:48–1:00)
-- **Visual:** split screen — the same app in a desktop browser (web) and on the phone — then both collapse into one file: `pages/index.alpine`. End card: Apex logo + `apexjs.site`.
-- **On-screen text:** `one codebase → web + phone` → `apexjs.site`
-- **VO (female):** "And it's the **same code** you deploy to the web. One TypeScript codebase — the web, and now the phone. That's Apex."
+**Pace:** relaxed but energetic. Let the offline reveal (Scene 3) breathe. VO ≈ 135 words.
 
 ---
 
-## 30-second cut (trim to Scenes 1, 2, 3, 5, 6)
+### Scene 1 — We're excited (0:00–0:09)
+- **Visual:** Apex logo. The word `web` sits under it, then `+ mobile` slides in beside it.
+- **On-screen text:** `web` → `web + mobile`
+- **VO:** "Okay — we're genuinely excited about this one. Until now, Apex was how you build web apps. From today, you can build mobile apps too. Android **and** iOS."
 
-- **VO (female):** "You built a full-stack app — server rendering, a database, auth. Now watch: it's
-  running on the phone, in airplane mode. One command — `apex build --mobile` — and your **whole
-  server** runs on the device. Post a message, log in, all offline. Same code you ship to the web.
-  One codebase — web, and now the phone. That's Apex. **apexjs.site**."
+### Scene 2 — One command (0:09–0:18)
+- **Visual:** clean terminal. `apex build --mobile`, then `apex mobile android`. An app icon lands on a phone's home screen. Small Android + Apple glyphs.
+- **On-screen text:** `one command → a real mobile app`
+- **VO:** "And you don't rewrite a thing. One command, and Apex scaffolds a complete mobile app — from the code you already have."
+
+### Scene 3 — It runs offline (0:18–0:27)
+- **Visual:** the phone; a thumb flicks airplane mode **on** (✈). The app keeps going — a page loads instantly.
+- **On-screen text:** `✈ fully offline`
+- **VO:** "And here's the part we love… it runs completely offline. No internet. No server in the cloud. Nothing."
+
+### Scene 4 — How we did it (0:27–0:40)
+- **Visual:** dead-simple animation. Left: a phone with only a "front-end" box, an arrow reaching out to a far-away "server ☁️". Right: the Apex way — the *whole* app (front **and** back) sits inside the phone; the arrow to the cloud fades away.
+- **On-screen text:** `the whole app lives on the phone`
+- **VO:** "So how does that work? Normally, the app on your phone is just the front — it still calls a server for everything. Apex flips that. Your whole app — front **and** back — lives right on the device. Nothing to call. Nothing to wait for."
+
+### Scene 5 — See it (0:40–0:49)
+- **Visual:** on-device, still in airplane mode: type a message → **Post** → it shows up. Then sign in → "Signed in as Ada." Real, snappy.
+- **On-screen text:** `post · sign in · no signal`
+- **VO:** "It just works — anywhere. Post something. Sign in. All with no signal at all."
+
+### Scene 6 — One codebase (0:49–0:55)
+- **Visual:** the same app side by side — desktop browser and phone — then both fold into one file, `pages/index.alpine`. End card: Apex logo + `apexjs.site`.
+- **On-screen text:** `one codebase — web + mobile` → `apexjs.site`
+- **VO:** "The same codebase. The web… and now the phone. This is Apex."
 
 ---
 
-## Recording notes (assets to capture)
-- **Terminal:** a real `apex build --mobile` then `apex mobile android` (clean prompt, large font).
-- **Emulator/device, airplane mode ON:** the guestbook post + the `/account` login → "Signed in as
-  Ada." (This is the money shot — capture it in one take.)
-- **Web side-by-side:** the same app in a browser for Scene 6.
-- **Diagram (Scene 4):** animate the one in `MOBILE_LAUNCH.md` / the landing "how it works" section.
-- Keep captions short and lowercase; let the VO carry it. Background: soft, building slightly at the
-  reveal (Scene 2) and the kicker (Scene 6).
+## Clean subtitle / VO lines (no URLs, no odd punctuation — safe for TTS + captions)
 
-## Honest guardrails (so the video stays true)
-- Show it as a **WebView app running your server offline** — don't imply native-widget UI.
-- The airplane-mode demo is real and reproducible; that's the whole pitch. Don't fake data.
+```
+Okay — we're genuinely excited about this one.
+Until now, Apex was how you build web apps.
+From today, you can build mobile apps too — Android and iOS.
+And you don't rewrite a thing.
+One command, and Apex scaffolds a complete mobile app from the code you already have.
+And here's the part we love — it runs completely offline.
+No internet. No server in the cloud. Nothing.
+So how does that work?
+Normally, the app on your phone is just the front — it still calls a server for everything.
+Apex flips that. Your whole app, front and back, lives right on the device.
+Nothing to call, nothing to wait for.
+It just works, anywhere. Post something, sign in — all with no signal at all.
+The same codebase. The web, and now the phone.
+This is Apex.
+```
+
+---
+
+## 20-second social cut
+```
+We're excited — Apex builds mobile apps now. Android and iOS.
+One command scaffolds a real app… that runs completely offline.
+How? Your whole app — even the backend — lives right on the phone.
+Post, sign in, browse — with no signal at all.
+One codebase. Web, and now mobile. This is Apex.
+```
+(Show `apexjs.site` on the final frame — don't say it.)
+
+---
+
+## Recording + direction notes
+- **Money shot:** the airplane-mode demo (Scene 5) — post + sign-in offline, in one real take. Don't fake it.
+- **Terminal (Scene 2):** real `apex build --mobile` → `apex mobile android`, big clean font.
+- **Diagram (Scene 4):** keep it childlike-simple — "phone calls a faraway server" vs "everything's on the phone." No jargon on screen.
+- **Never speak a URL.** `apexjs.site` appears on the end card only.
+- **Honest guardrail:** it's a real app running your server offline in a WebView — don't imply native-widget UI; keep the demo genuine.
