@@ -68,6 +68,28 @@ the SSR-on-engine model; keep B for a future client-DB variant.
 Trigger/limits: snapshots are written after body-bearing mutations (all writes go through the
 bridge); single-DB apps (one `createDb`) — the seam persists the most-recently-opened database.
 
+## External APIs & Supabase (online / offline-first)
+
+You can absolutely talk to Supabase, Turso, or any HTTP API from a mobile Apex app — the question
+is *where* the call runs:
+
+- **Client-side (recommended, works today).** From `<script client>` (or any browser code), a
+  `fetch()` / `@supabase/supabase-js` / Turso `@libsql/client/web` call runs in the **WebView**,
+  which has real network. The WebView fetch-patch only reroutes *same-origin* requests to the
+  on-device engine; **cross-origin requests (your `*.supabase.co`) pass straight through to the
+  real network.** This is the normal mobile pattern (anon key + Row-Level Security). Nothing to
+  wire — it just works when the device is online.
+- **Server-side (SSR loader).** A `fetch()` in `<script server>` runs in the bare engine. On an
+  **isolated** engine (androidx.javascriptengine) there's no network, so it rejects with guidance
+  (call it client-side). On a **host-capable** engine (iOS `JSContext`, RN/Hermes) the shell can
+  inject `globalThis.__APEX_FETCH__` (e.g. backed by `URLSession`/`OkHttp`) and server-side external
+  HTTP works too — the shim uses it automatically.
+
+**Offline-first pattern:** keep the local persistent sql.js DB as the source of truth offline (it
+survives cold starts), and sync to Supabase client-side when online. Raw Postgres/TCP (`postgres`
+driver, direct pooler connection) is **not** possible on-device — no sockets — so use Supabase's
+HTTP/REST client, not a direct DB connection.
+
 ## Recommended host: React Native (Hermes)
 
 Hermes is the same engine class we proved on. RN also polyfills most of what a bare engine
