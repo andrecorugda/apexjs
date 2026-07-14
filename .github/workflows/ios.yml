@@ -14,7 +14,8 @@ on:
 
 jobs:
   ios:
-    runs-on: macos-14
+    # macos-15 ships Xcode 16, which reads the project format XcodeGen (latest) emits.
+    runs-on: macos-15
     steps:
       - name: Checkout
         uses: actions/checkout@v7
