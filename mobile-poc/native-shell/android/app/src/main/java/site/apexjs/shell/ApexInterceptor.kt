@@ -11,9 +11,10 @@ import java.io.ByteArrayInputStream
 
 /**
  * Serves every WebView request from the on-device Apex engine — offline, no network.
- * Static client assets (dist/assets/**, favicon) are served straight from the APK; everything
- * else goes to `__apexHandle` (SSR pages + /api). shouldInterceptRequest runs off the UI
- * thread, so blocking on the engine coroutine here is fine.
+ * Static client assets (the built client bundle under assets, favicon) are served straight from
+ * the APK; everything else goes to `__apexHandle` (SSR pages + /api). shouldInterceptRequest runs
+ * off the UI thread, so blocking on the engine coroutine here is fine.
+ * NOTE: avoid a slash-star sequence in KDoc — Kotlin block comments nest and it won't close.
  */
 class ApexInterceptor(
   private val context: Context,

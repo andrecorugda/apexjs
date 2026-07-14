@@ -5,8 +5,24 @@
 // STATIC native assets only (icons + cold-start splash). The ANIMATED splash is a
 // `pages/splash.alpine` route the shell renders first — no generation, it's just a page.
 import { mkdirSync, writeFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
-import sharp from 'sharp'
+import { pathToFileURL } from 'node:url'
+
+// Resolve `sharp` from wherever the command RUNS (the app root), not this script's dir — ESM
+// `import 'sharp'` (and NODE_PATH) resolve relative to the file, so a `sharp` installed in the
+// app wouldn't be found. `npm i -D sharp` in your app, then run the assembler from the app root.
+let sharp
+try {
+  sharp = (await import('sharp')).default
+} catch {
+  try {
+    sharp = createRequire(pathToFileURL(join(process.cwd(), 'x.js')).href)('sharp')
+  } catch {
+    console.error('  ✗ `sharp` not found — run `npm i -D sharp` in your app, then re-run.')
+    process.exit(1)
+  }
+}
 
 const args = process.argv.slice(2)
 const srcIcon = args[0]
