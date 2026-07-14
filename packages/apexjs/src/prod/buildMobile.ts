@@ -20,7 +20,7 @@ if(typeof globalThis.process==='undefined')globalThis.process={env:{},argv:[],pl
 if(typeof globalThis.crypto==='undefined')globalThis.crypto={subtle:{},getRandomValues:function(a){for(var i=0;i<a.length;i++)a[i]=(Math.imul(i+1,2654435761)>>>0)&255;return a;}};
 if(typeof globalThis.URLSearchParams==='undefined')globalThis.URLSearchParams=class{constructor(init){this._p=[];var self=this;if(typeof init==='string'){var s=init.charAt(0)==='?'?init.slice(1):init;if(s)s.split('&').forEach(function(pair){if(!pair)return;var i=pair.indexOf('=');var k=i<0?pair:pair.slice(0,i);var v=i<0?'':pair.slice(i+1);self._p.push([decodeURIComponent(k.replace(/\\+/g,' ')),decodeURIComponent(v.replace(/\\+/g,' '))]);});}else if(init&&typeof init.forEach==='function'){init.forEach(function(v,k){self._p.push([k,String(v)]);});}else if(init){for(var k in init)self._p.push([k,String(init[k])]);}}get(k){for(var i=0;i<this._p.length;i++)if(this._p[i][0]===k)return this._p[i][1];return null;}getAll(k){return this._p.filter(function(e){return e[0]===k;}).map(function(e){return e[1];});}has(k){return this.get(k)!==null;}set(k,v){this.delete(k);this._p.push([k,String(v)]);}append(k,v){this._p.push([k,String(v)]);}delete(k){this._p=this._p.filter(function(e){return e[0]!==k;});}forEach(f){this._p.forEach(function(e){f(e[1],e[0]);});}keys(){return this._p.map(function(e){return e[0];})[Symbol.iterator]();}values(){return this._p.map(function(e){return e[1];})[Symbol.iterator]();}entries(){return this._p.slice()[Symbol.iterator]();}toString(){return this._p.map(function(e){return encodeURIComponent(e[0])+'='+encodeURIComponent(e[1]);}).join('&');}[Symbol.iterator](){return this.entries();}};
 if(typeof globalThis.FormData==='undefined')globalThis.FormData=class{constructor(){this._d=[];}append(k,v){this._d.push([k,v]);}get(k){for(var i=0;i<this._d.length;i++)if(this._d[i][0]===k)return this._d[i][1];return null;}getAll(k){return this._d.filter(function(e){return e[0]===k;}).map(function(e){return e[1];});}has(k){return this.get(k)!==null;}set(k,v){this.delete(k);this._d.push([k,v]);}delete(k){this._d=this._d.filter(function(e){return e[0]!==k;});}forEach(f){this._d.forEach(function(e){f(e[1],e[0]);});}entries(){return this._d.slice()[Symbol.iterator]();}[Symbol.iterator](){return this.entries();}};
-if(typeof globalThis.URL==='undefined')globalThis.URL=class{constructor(u){this.href=String(u);var h=this.href;var q=h.indexOf('?');this.search=q>=0?h.slice(q):'';var pathPart=q>=0?h.slice(0,q):h;var si=pathPart.indexOf('://');var rest=si>=0?pathPart.slice(si+3):pathPart;var sl=rest.indexOf('/');this.host=sl>=0?rest.slice(0,sl):rest;this.hostname=this.host;this.pathname=sl>=0?rest.slice(sl):'/';this.searchParams=new globalThis.URLSearchParams(this.search);}};
+if(typeof globalThis.URL==='undefined')globalThis.URL=class{constructor(u,base){u=String(u);if(base!==undefined&&u.indexOf('://')<0){base=String(base);var bsi=base.indexOf('://');var bproto=bsi>=0?base.slice(0,bsi+3):'https://';var brest=bsi>=0?base.slice(bsi+3):base;var bsl=brest.indexOf('/');var bhost=bsl>=0?brest.slice(0,bsl):brest;u=bproto+bhost+(u.charAt(0)==='/'?u:'/'+u);}this.href=u;var si=u.indexOf('://');this.protocol=si>=0?u.slice(0,u.indexOf(':')+1):'https:';var afterProto=si>=0?u.slice(si+3):u;var q=afterProto.indexOf('?');this.search=q>=0?afterProto.slice(q):'';var hostAndPath=q>=0?afterProto.slice(0,q):afterProto;var hsh=hostAndPath.indexOf('#');if(hsh>=0)hostAndPath=hostAndPath.slice(0,hsh);var sl=hostAndPath.indexOf('/');this.host=sl>=0?hostAndPath.slice(0,sl):hostAndPath;this.hostname=this.host.split(':')[0];this.port=this.host.indexOf(':')>=0?this.host.split(':')[1]:'';this.pathname=sl>=0?hostAndPath.slice(sl):'/';this.origin=this.protocol+'//'+this.host;this.searchParams=new globalThis.URLSearchParams(this.search);}toString(){return this.href;}};
 globalThis.require=function(n){
 if(n==='path')return {join:function(){return Array.prototype.join.call(arguments,'/');},resolve:function(){return '/'+Array.prototype.join.call(arguments,'/');},dirname:function(p){p=String(p);var i=p.lastIndexOf('/');return i>0?p.slice(0,i):'/';},basename:function(p){p=String(p);return p.slice(p.lastIndexOf('/')+1);},extname:function(p){p=String(p);var i=p.lastIndexOf('.');return i>=0?p.slice(i):'';},sep:'/'};
 if(n==='url')return {pathToFileURL:function(p){return {href:'file://'+p};},fileURLToPath:function(u){u=String(u);return u.indexOf('file://')===0?u.slice(7):u;},URL:globalThis.URL};
@@ -170,33 +170,10 @@ export async function buildMobile(dir: string): Promise<BuildMobileResult> {
   writeFileSync(join(gen, 'fs.mjs'), FS_SHIM)
   writeFileSync(join(gen, 'fsp.mjs'), FSP_SHIM)
 
-  // On-device DB: bundle the sql.js WASM (base64) and hand it to the data layer via a
-  // global the device backend reads (`__APEX_SQLJS_WASM__`). Only when the app uses DB.
-  let devicePrelude = ''
-  if (usesDb) {
-    // Resolve the wasm from the app's install first, else from the CLI's (monorepo/global).
-    let wasmPath: string | undefined
-    for (const base of [join(serverDir, '_.js'), import.meta.resolve('vite')]) {
-      try {
-        wasmPath = createRequire(base).resolve('sql.js/dist/sql-wasm.wasm')
-        break
-      } catch {
-        /* try next base */
-      }
-    }
-    if (!wasmPath) {
-      throw new Error(
-        'apex build --mobile: this app uses the data layer but "sql.js" is not installed. Add it (`npm i sql.js`) — it powers the on-device SQLite backend.',
-      )
-    }
-    const wasmB64 = readFileSync(wasmPath).toString('base64')
-    writeFileSync(
-      join(gen, 'sqljs-wasm.mjs'),
-      `export const SQLJS_WASM_B64=${JSON.stringify(wasmB64)}\n`,
-    )
-    devicePrelude =
-      "import { SQLJS_WASM_B64 } from './sqljs-wasm.mjs'\nglobalThis.__APEX_SQLJS_WASM__ = SQLJS_WASM_B64\n"
-  }
+  // On-device DB (@apex-stack/data) uses sql.js's asm.js build — pure JS, no WASM (the sandboxed
+  // V8 in androidx.javascriptengine can't compile WebAssembly). esbuild bundles it directly from
+  // the dynamic import in the data layer; nothing to inject here. `usesDb` only informs the log.
+  void usesDb
 
   const imports = included
     .map((f, i) => `import * as m${i} from ${JSON.stringify(join(serverDir, f))}`)
@@ -204,7 +181,7 @@ export async function buildMobile(dir: string): Promise<BuildMobileResult> {
   const reg = included.map((f, i) => `  ${JSON.stringify(f)}: m${i},`).join('\n')
   writeFileSync(
     join(gen, 'entry.mjs'),
-    `${devicePrelude}${imports}
+    `${imports}
 import { createProdWebHandler } from '@apex-stack/core/server'
 const registry = {
 ${reg}
@@ -239,6 +216,10 @@ export async function run(input) {
     },
     external: ['node:*', ...NODE_BUILTINS, '@libsql/client'],
     banner: { js: SHIM },
+    // Minify: the asm.js SQLite build is large; the engine loads server.mjs as one
+    // evaluateJavaScript string, so keep it small. asm.js still runs correctly minified
+    // (the bare engine executes it as ordinary JS, not via the "use asm" fast path).
+    minify: true,
     outfile: out,
     logLevel: 'error',
   })

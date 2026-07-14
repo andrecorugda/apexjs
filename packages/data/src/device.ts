@@ -1,8 +1,13 @@
-// On-device SQLite backend — a pure-WASM SQLite (sql.js) that runs inside a bare
-// JS engine (androidx.javascriptengine / a WebView isolate) with no native driver,
-// no filesystem, and no host callout. This is what powers DB-backed pages/APIs in an
-// `apex build --mobile` bundle: the same app code (`createDb({ driver: 'libsql', … })`)
-// transparently uses this backend when the mobile runtime sets `globalThis.__APEX_DEVICE__`.
+// On-device SQLite backend — an in-memory SQLite (sql.js) that runs inside a bare JS engine
+// (androidx.javascriptengine / a WebView isolate) with no native driver, no filesystem, and no
+// host callout. This powers DB-backed pages/APIs in an `apex build --mobile` bundle: the same
+// app code (`createDb({ driver: 'libsql', … })`) transparently uses this backend when the mobile
+// runtime sets `globalThis.__APEX_DEVICE__`.
+//
+// It uses sql.js's **asm.js** build (pure JS), NOT the WASM build: androidx.javascriptengine's
+// sandboxed V8 can't compile WebAssembly (it SIGSEGVs), and QuickJS/Hermes lack WASM entirely.
+// asm.js is plain JavaScript, so it runs on every engine — and it never instantiates WASM even
+// when a (possibly broken) `WebAssembly` global is present.
 //
 // Constraint: in-memory only (seeded at boot, reset on cold start) — the engine has no
 // persistent store to attach to. True persistence is a later native/WebView-storage step.
@@ -17,33 +22,15 @@ interface SqlJsDatabase {
 interface SqlJsStatic {
   Database: new () => SqlJsDatabase
 }
-type InitSqlJs = (config: { wasmBinary: Uint8Array }) => Promise<SqlJsStatic>
+type InitSqlJs = (config?: Record<string, unknown>) => Promise<SqlJsStatic>
 
-/**
- * Resolve the sql.js wasm bytes. On device the mobile bundler injects them as
- * `globalThis.__APEX_SQLJS_WASM__` (base64 string, decoded with the runtime's Buffer
- * shim); off device (Node — tests, `apex dev`) we read them from the installed package.
- */
-async function loadWasmBinary(): Promise<Uint8Array> {
-  const injected = (globalThis as { __APEX_SQLJS_WASM__?: string | Uint8Array }).__APEX_SQLJS_WASM__
-  if (injected) {
-    return typeof injected === 'string'
-      ? Uint8Array.from(Buffer.from(injected, 'base64'))
-      : injected
-  }
-  // Node path — never reached in the mobile bundle (injected is always set there).
-  const { createRequire } = await import('node:module')
-  const require = createRequire(import.meta.url)
-  const { readFileSync } = await import('node:fs')
-  return new Uint8Array(readFileSync(require.resolve('sql.js/dist/sql-wasm.wasm')))
-}
-
-/** Open an in-memory sql.js database wrapped as an {@link ApexDbHandle}. */
+/** Open an in-memory sql.js (asm.js) database wrapped as an {@link ApexDbHandle}. */
 export async function createDeviceSqlite(): Promise<ApexDbHandle> {
   let initSqlJs: InitSqlJs
   try {
-    // @ts-expect-error — sql.js is an optional peer with no bundled type declarations.
-    const mod = (await import('sql.js')) as { default?: InitSqlJs } & InitSqlJs
+    // The asm.js build is self-contained JS (no .wasm) and works on any engine.
+    // @ts-expect-error — sql.js subpath has no bundled type declarations.
+    const mod = (await import('sql.js/dist/sql-asm.js')) as { default?: InitSqlJs } & InitSqlJs
     initSqlJs = (mod.default ?? mod) as InitSqlJs
   } catch {
     throw new Error(
@@ -51,7 +38,7 @@ export async function createDeviceSqlite(): Promise<ApexDbHandle> {
     )
   }
 
-  const SQL = await initSqlJs({ wasmBinary: await loadWasmBinary() })
+  const SQL = await initSqlJs({})
   const database = new SQL.Database()
   const { drizzle } = await import('drizzle-orm/sql-js')
 
