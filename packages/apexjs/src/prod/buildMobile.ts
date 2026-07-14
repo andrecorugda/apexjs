@@ -30,6 +30,10 @@ class Request{constructor(u,o){o=o||{};this.url=String(u);this.method=(o.method|
 class Response{constructor(b,o){o=o||{};this._b=b==null?'':b;this.status=o.status||200;this.statusText=o.statusText||'';this.headers=new Headers(o.headers);this.ok=this.status>=200&&this.status<400;}async text(){return typeof this._b==='string'?this._b:new TextDecoder().decode(this._b);}async json(){return JSON.parse(await this.text());}}
 globalThis.Headers=Headers;globalThis.Request=Request;globalThis.Response=Response;
 globalThis.fetch=globalThis.fetch||function(){return Promise.reject(new Error('no network in mobile runtime'));};
+// Timers: a bare engine has none. Client code (<script client>) can end up in the server
+// bundle and reference them at eval — no-op so that never crashes SSR (the real timers fire
+// on the client, in the WebView, which has them). See #53.
+if(typeof globalThis.setTimeout==='undefined'){globalThis.setTimeout=function(){return 0;};globalThis.clearTimeout=function(){};globalThis.setInterval=function(){return 0;};globalThis.clearInterval=function(){};globalThis.queueMicrotask=globalThis.queueMicrotask||function(f){Promise.resolve().then(f);};}
 })();
 `
 
