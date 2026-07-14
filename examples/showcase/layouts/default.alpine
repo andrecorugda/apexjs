@@ -7,6 +7,7 @@
       <div
         x-data="{ dark: false, open: false }"
         x-init="dark = localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches); document.documentElement.classList.toggle('dark', dark)"
+        @resize.window="open = false"
         client:load
       >
         <nav class="mx-auto flex max-w-5xl items-center gap-2 px-6 py-4">
