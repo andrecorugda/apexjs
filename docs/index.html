@@ -60,50 +60,6 @@
     </div>
   </section>
 
-  <section class="section mobile-keynote" aria-label="On-device mobile" id="mobile">
-    <div class="wrap">
-      <div class="mk-grid">
-        <div class="mk-copy">
-          <p class="eyebrow">New · runs on the phone</p>
-          <h2>Your full-stack app.<br />Now on the <span class="grad">phone</span>. Offline.</h2>
-          <p class="mk-lede">
-            One command ships your Apex app as a native app that runs the <strong>whole thing on the
-            device</strong> — server rendering, API routes, a real SQLite database, and auth — with
-            <strong>no server and no network</strong>. Not a static export: the same server code you
-            wrote for the web, running on the phone.
-          </p>
-          <div class="mk-chips">
-            <span class="mk-chip">SSR on-device</span>
-            <span class="mk-chip">Typed API routes</span>
-            <span class="mk-chip">SQLite, local</span>
-            <span class="mk-chip">Sealed-cookie auth</span>
-            <span class="mk-chip">Fully offline</span>
-          </div>
-          <div class="mk-cmd"><span class="prompt">$</span> apex build --mobile<span class="prompt">  # then →  </span>apex mobile android</div>
-          <p style="margin-top: 0.9rem"><a class="btn ghost" href="./docs/mobile.html">How it works →</a></p>
-        </div>
-        <div class="mk-device" aria-hidden="true">
-          <div class="phone">
-            <div class="phone-screen">
-              <div class="phone-bar"><span class="dot"></span> apexjs · airplane mode ✈</div>
-              <div class="webview-note">WebView — shows the SSR HTML, then hydrates</div>
-              <div class="engine">
-                <div class="engine-title"><span>Apex engine</span><span>server.mjs</span></div>
-                <ul>
-                  <li><span class="b">▸</span> pages — server-rendered</li>
-                  <li><span class="b">▸</span> /api — typed routes</li>
-                  <li><span class="b">▸</span> SQLite — on the device</li>
-                  <li><span class="b">▸</span> auth — sealed cookie</li>
-                </ul>
-              </div>
-              <div class="offline-badge">no server · no port · no network</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section class="section" aria-label="Project showcase" id="showcase">
     <div class="wrap">
       <div class="section-head">
@@ -239,6 +195,70 @@
     </div>
   </section>
 
+
+  <section class="section mobile-keynote" aria-label="On-device mobile" id="mobile">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">New · runs on the phone</p>
+        <h2>Your full-stack app. On the <span class="grad">phone</span>. Offline.</h2>
+        <p>Swipe the phone — it boots offline, runs your app with no network, then shows how the whole server fits inside. One command: <code>apex build --mobile</code>, then <code>apex mobile android</code> or <code>apex mobile ios</code>.</p>
+      </div>
+      <div class="mk-phone" id="apexPhone">
+        <div class="device">
+          <div class="frame">
+            <span class="btn-side btn-mute"></span><span class="btn-side btn-vup"></span><span class="btn-side btn-vdn"></span><span class="btn-side btn-pwr"></span>
+            <div class="screen">
+              <div class="island"></div>
+              <div class="statusbar">
+                <span>9:41</span>
+                <span class="sb-right">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+                  <svg width="24" height="12" viewBox="0 0 24 12" aria-hidden="true"><rect x="0.5" y="0.5" width="20" height="11" rx="3" fill="none" stroke="#fff" stroke-opacity="0.6"/><rect x="2" y="2" width="15" height="8" rx="1.5" fill="#fff"/><rect x="21.5" y="4" width="2" height="4" rx="1" fill="#fff" fill-opacity="0.6"/></svg>
+                </span>
+              </div>
+              <div class="track" data-phone-track>
+                <div class="pg">
+                  <div class="scr-splash" data-phone-splash>
+                    <svg class="mark" viewBox="0 0 64 64" aria-label="Apex"><defs><linearGradient id="axm" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs><path d="M32 7 L32 35 L20 56 L4 56 Z" fill="url(#axm)"/><path d="M32 7 L60 56 L44 56 L32 35 Z" fill="#6366f1"/></svg>
+                    <div class="typed">APEX JS</div>
+                    <small>cold-start · airplane mode ✈</small>
+                  </div>
+                </div>
+                <div class="pg">
+                  <div class="scr-app">
+                    <div class="ap-head"><h3>Guestbook</h3><p>server-rendered on the device · offline</p></div>
+                    <div class="ap-list">
+                      <div class="ap-msg"><div class="who"><span class="av"></span>Ada Lovelace</div><div class="txt">Apex feels like HTML with superpowers.</div></div>
+                      <div class="ap-msg"><div class="who"><span class="av"></span>Alan Turing</div><div class="txt">One route — and my AI assistant can call it too.</div></div>
+                      <div class="ap-msg mine"><div class="who"><span class="av"></span>You</div><div class="txt">Posted with no signal. It just saved. ✈</div></div>
+                    </div>
+                    <div class="ap-composer"><span class="fld">Say something…</span><span class="send">Post</span></div>
+                  </div>
+                </div>
+                <div class="pg">
+                  <div class="scr-how">
+                    <span class="cap">Inside the app · offline</span>
+                    <div class="layer"><h4>WebView</h4><p>shows the server-rendered HTML, then hydrates</p></div>
+                    <div class="arrow">▲&nbsp;&nbsp;request&nbsp;&nbsp;▼</div>
+                    <div class="layer engine"><h4>Apex engine · <span class="mono">server.mjs</span></h4><div class="rows"><span>pages · SSR</span><span>/api routes</span><span>SQLite, local</span><span>sealed auth</span></div></div>
+                    <div class="tag">no server · no port · no network</div>
+                  </div>
+                </div>
+              </div>
+              <div class="home-ind"></div>
+            </div>
+          </div>
+        </div>
+        <div class="mk-cap" data-phone-cap aria-live="polite"></div>
+        <div class="mk-ctrls">
+          <button class="mk-nav" data-phone-prev aria-label="Previous screen" type="button">‹</button>
+          <div class="mk-dots" data-phone-dots role="tablist" aria-label="Phone screens"></div>
+          <button class="mk-nav" data-phone-next aria-label="Next screen" type="button">›</button>
+        </div>
+        <p class="mk-more"><a class="btn ghost" href="./docs/mobile.html">How it works →</a></p>
+      </div>
+    </div>
+  </section>
 
   <section class="section" aria-label="Features">
     <div class="wrap">

@@ -133,11 +133,19 @@
 apex mobile android     <span class="c"># scaffold mobile/android + sync the bundle as an asset</span>
 apex mobile android --assemble   <span class="c"># also run gradle assembleDebug → an installable APK</span></code></pre>
       <p>Name the app and set its package id when you scaffold:</p>
-      <pre><code>apex mobile android --app-id com.you.app --name "My App" --icon icon.png --assemble</code></pre>
+      <pre><code>apex mobile android --appId com.you.app --name "My App" --icon icon.png --assemble</code></pre>
       <p class="muted">
         <code>--assemble</code> shells out to Gradle, so it needs the Android SDK installed. Without it, the
         command still scaffolds <code>mobile/android</code> and syncs assets — open it in Android Studio to
         build. Full flag reference on <a href="./cli.html#mobile">CLI → apex mobile</a>.
+      </p>
+      <p>Targeting iOS? The same bundle drives a WKWebView shell:</p>
+      <pre><code>apex mobile ios         <span class="c"># scaffold mobile/ios + sync the bundle &amp; client assets</span>
+apex mobile ios --appId com.you.app --name "My App" --generate   <span class="c"># + run xcodegen generate</span></code></pre>
+      <p class="muted">
+        <code>apex mobile ios</code> scaffolds on any OS; <code>--generate</code> runs
+        <code>xcodegen generate</code> to produce the Xcode project. Building and signing needs a Mac + Xcode —
+        see <a href="#ios">iOS status</a> below.
       </p>
 
       <h2 id="how">How it works <a class="anchor" href="#how">#</a></h2>
@@ -201,19 +209,30 @@ apex mobile android --assemble   <span class="c"># also run gradle assembleDebug
 
       <h2 id="ios">iOS status <a class="anchor" href="#ios">#</a></h2>
       <p>
-        The iOS shell exists — a <code>WKWebView</code> paired with <code>JavaScriptCore</code> running the same
-        bundle — and the engine is <strong>CI-verified on the iOS Simulator</strong>. Building and signing for
-        a <strong>physical iPhone needs a Mac</strong> (Xcode toolchain), so there's no one-command
-        <code>apex mobile ios</code> equivalent to the Android <code>--assemble</code> flow yet. Android is the
-        turnkey target today.
+        <code>apex mobile ios</code> scaffolds a <code>WKWebView</code> + <code>JavaScriptCore</code> shell into
+        <code>mobile/ios</code> and syncs the same <code>apex build --mobile</code> bundle plus client assets into
+        <code>mobile/ios/Generated/</code> — running the identical SSR + API pipeline as Android. The engine is
+        <strong>CI-verified on the iOS Simulator</strong> (JavaScriptCore), with the same on-device story as
+        Android: SSR + API + on-device SQLite + auth, offline.
+      </p>
+      <pre><code>apex mobile ios --appId com.you.app --name "My App"   <span class="c"># scaffold + sync assets</span>
+apex mobile ios --generate                             <span class="c"># run xcodegen generate (no committed .xcodeproj)</span>
+open mobile/ios/ApexShell.xcodeproj                    <span class="c"># on a Mac: add a free Apple ID team, run on a device or the Simulator</span></code></pre>
+      <p>
+        The Xcode project is generated with <strong>XcodeGen</strong>, so there's no <code>.xcodeproj</code>
+        committed to the repo; <code>--generate</code> runs <code>xcodegen generate</code> for you. The command
+        scaffolds fully on <strong>any OS</strong>, but the <strong>compile and sign step is Mac-only</strong>
+        (the Xcode toolchain) — so iOS isn't yet the one-command <code>--assemble</code> story Android is. What
+        still needs a real Mac / iPhone is the device build &amp; sign and the
+        <code>WKURLSchemeHandler</code> POST-body path. Android is the turnkey target today.
       </p>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Platform</th><th>Engine</th><th>Status</th></tr></thead>
           <tbody>
             <tr><td>Android</td><td><code>androidx.javascriptengine</code></td><td>Turnkey — <code>apex mobile android --assemble</code> builds an installable APK.</td></tr>
-            <tr><td>iOS Simulator</td><td><code>JavaScriptCore</code> (WKWebView)</td><td>Shell exists; engine CI-verified on the Simulator.</td></tr>
-            <tr><td>iOS device</td><td><code>JavaScriptCore</code> (WKWebView)</td><td>Needs a Mac to build/sign; no one-command flow yet.</td></tr>
+            <tr><td>iOS Simulator</td><td><code>JavaScriptCore</code> (WKWebView)</td><td><code>apex mobile ios</code> scaffolds the shell; engine CI-verified on the Simulator.</td></tr>
+            <tr><td>iOS device</td><td><code>JavaScriptCore</code> (WKWebView)</td><td>Command scaffolds on any OS; <code>xcodegen generate</code> + build/sign need a Mac.</td></tr>
           </tbody>
         </table>
       </div>
