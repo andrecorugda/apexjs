@@ -234,7 +234,7 @@ final class ApexEngineThread: NSObject {
     init(_ block: @escaping () -> Void) { self.block = block }
   }
 
-  @objc private func run(_ work: Work) { work.block() }
+  @objc private func run(_ box: Any) { (box as? Work)?.block() }
 
   /// Run asynchronously on the engine thread.
   func async(_ block: @escaping () -> Void) {
