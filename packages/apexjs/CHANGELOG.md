@@ -1,5 +1,88 @@
 # @apex-stack/core
 
+## 0.37.0
+
+### Minor Changes
+
+- 3b344ad: Mobile runtime (beta). Run Apex's full SSR + API pipeline on a phone.
+
+  - **`apex dev --mobile`** — the primary mobile dev loop: prints the LAN URL and wires
+    `adb reverse` so an emulator/device WebView hits the dev server with live HMR (SSR + API run
+    on your machine, like Metro).
+  - **`apex build --mobile`** — the offline release bundle: manifest → static module registry +
+    a VFS + a pure-JS runtime shim → one self-contained `dist/mobile/server.mjs` that runs on a
+    bare on-device engine (Hermes/QuickJS), no Node. Auto-detects + reports routes that need
+    on-device drivers (`crypto.subtle` / `@libsql/client/web`).
+  - **`createProdApp` / `createProdWebHandler`** accept an optional `loadModule` — the mobile
+    seam (a static registry instead of dynamic `import()`). Backward-compatible.
+
+### Patch Changes
+
+- 4c4e830: Fix #51: a page's root `<template>` now carries directives other than `x-data` (`x-init`,
+  `x-effect`, `@events`, …) onto the emitted root element, so Alpine runs them on hydration.
+  Previously they were silently dropped.
+
+  Fix #52 (mobile): the `apex build --mobile` runtime shim now provides `atob`/`btoa`, a correct
+  `Buffer.toString('binary'|'base64')`, and a 4-byte-safe `TextEncoder`/`TextDecoder`, so HTML
+  entities (`&nbsp;`, …) decode correctly on a bare on-device engine (they were over-escaped).
+
+- 8901599: Fix #53: a page's `<script client>` top-level side effects (`setTimeout`, `window.*`, event
+  wiring) no longer run during server-side rendering. The SSR module now receives a
+  declarations-only view of the client body — imports and `const`/`function`/`class`
+  declarations are kept so the root `x-data` can still resolve composables, while side-effect
+  statements are stripped (they still ship in the client module and run on hydration).
+  Previously the full body executed at SSR eval time, which was semantically wrong on the web
+  and crashed bare on-device engines (QuickJS/androidx.javascriptengine) with
+  `setTimeout is not defined`.
+
+  As defense-in-depth, the `apex build --mobile` runtime shim also stubs the common browser
+  globals (`document`, `window`, `localStorage`, `navigator`, `location`, `matchMedia`,
+  `requestAnimationFrame`) with inert no-ops, so a rare side-effectful _declaration_ initializer
+  that the compiler keeps (e.g. `const t = document.title`, needed as a symbol by `rootData`)
+  can't brick the whole app's boot on a bare engine — the real behavior still runs client-side
+  in the WebView.
+
+- 9872625: On-device sessions for `apex build --mobile`. Sealed-cookie auth (`login`/`logout`/`sessionAuth`,
+  gated routes, `locals.user`) now works offline on a bare engine, which has no WebCrypto:
+
+  - A dependency-free HMAC-SHA256 (verified against `node:crypto`) signs the session cookie when
+    `globalThis.__APEX_DEVICE__` is set — the cookie is tamper-proof (signed) rather than encrypted,
+    a sound tradeoff on-device where the payload is the user's own session on their own device. On
+    a server, the encrypted h3/iron session is unchanged.
+  - The mobile bundler no longer drops session/auth modules and restores `middleware` + `auth` in
+    the mobile manifest.
+  - Runtime-shim fix: the bundle's `Headers` now accepts an array of `[key, value]` pairs (how h3
+    emits response headers), so `Set-Cookie` and `Content-Type` reach the client correctly — this
+    fixes cookies **and** content-type on the real device, not just sessions.
+
+  Verified E2E on a bare-V8 vm: gated `/api/whoami` returns 401 anonymous / 200 with the user
+  after `POST /api/login`, `/account` renders the signed-in name server-side, and `logout` clears
+  the session.
+
+- 525d629: On-device database for `apex build --mobile`. DB-backed pages and API routes now run offline on
+  a bare engine instead of being dropped from the bundle:
+
+  - **`@apex-stack/data`**: a new `lazyDb(config, { init })` opens a database without top-level
+    await (required by the classic-script mobile bundle) — `dialect` is known synchronously and
+    the connection opens + seeds on first use, with a deferred Drizzle proxy so `defineResource`
+    works unchanged. On-device, `createDb`'s `libsql`/`sqlite` driver transparently uses an
+    in-memory **sql.js** SQLite (new optional peer `sql.js`), using its **asm.js** build (pure JS,
+    no WebAssembly) so it runs on engines that can't compile WASM — androidx.javascriptengine's
+    sandboxed V8 SIGSEGVs on WASM, and QuickJS/Hermes lack it entirely. App code is unchanged.
+  - **`@apex-stack/core`** (`apex build --mobile`): the bundler now includes `@apex-stack/data`
+    modules (bundling the asm.js SQLite; output is minified); the runtime shim gained
+    `URLSearchParams`, `FormData`, a `Request.body` accessor, and `new URL(path, base)`
+    base-resolution — so h3 body parsing, query parsing, and host/CSRF resolution work on the
+    bare engine.
+
+  Limitation: the on-device database is in-memory (seeded at boot, reset on cold start);
+  persistence is a later step.
+
+- Updated dependencies [4c4e830]
+- Updated dependencies [8901599]
+  - @apex-stack/kit@0.9.1
+  - @apex-stack/vite@0.4.1
+
 ## 0.36.0
 
 ### Minor Changes

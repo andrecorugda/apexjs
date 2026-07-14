@@ -1,5 +1,36 @@
 # @apex-stack/vite
 
+## 0.4.1
+
+### Patch Changes
+
+- 4c4e830: Fix #51: a page's root `<template>` now carries directives other than `x-data` (`x-init`,
+  `x-effect`, `@events`, …) onto the emitted root element, so Alpine runs them on hydration.
+  Previously they were silently dropped.
+
+  Fix #52 (mobile): the `apex build --mobile` runtime shim now provides `atob`/`btoa`, a correct
+  `Buffer.toString('binary'|'base64')`, and a 4-byte-safe `TextEncoder`/`TextDecoder`, so HTML
+  entities (`&nbsp;`, …) decode correctly on a bare on-device engine (they were over-escaped).
+
+- 8901599: Fix #53: a page's `<script client>` top-level side effects (`setTimeout`, `window.*`, event
+  wiring) no longer run during server-side rendering. The SSR module now receives a
+  declarations-only view of the client body — imports and `const`/`function`/`class`
+  declarations are kept so the root `x-data` can still resolve composables, while side-effect
+  statements are stripped (they still ship in the client module and run on hydration).
+  Previously the full body executed at SSR eval time, which was semantically wrong on the web
+  and crashed bare on-device engines (QuickJS/androidx.javascriptengine) with
+  `setTimeout is not defined`.
+
+  As defense-in-depth, the `apex build --mobile` runtime shim also stubs the common browser
+  globals (`document`, `window`, `localStorage`, `navigator`, `location`, `matchMedia`,
+  `requestAnimationFrame`) with inert no-ops, so a rare side-effectful _declaration_ initializer
+  that the compiler keeps (e.g. `const t = document.title`, needed as a symbol by `rootData`)
+  can't brick the whole app's boot on a bare engine — the real behavior still runs client-side
+  in the WebView.
+
+- Updated dependencies [4c4e830]
+  - @apex-stack/kit@0.9.1
+
 ## 0.4.0
 
 ### Minor Changes
