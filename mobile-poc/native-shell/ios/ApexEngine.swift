@@ -26,9 +26,12 @@ import JavaScriptCore
 
 final class ApexEngine {
 
-  /// `JSContext` and every JSValue derived from it are NOT thread-safe. All engine work is
-  /// funnelled through this serial queue so the context is only ever touched from one thread.
-  private let queue = DispatchQueue(label: "site.apexjs.shell.engine")
+  /// `JSContext` and every JSValue derived from it are NOT thread-safe, so all engine work is
+  /// funnelled through one dedicated thread. That thread has a LARGE stack on purpose:
+  /// JavaScriptCore ties its JS-recursion limit to the native stack, and a normal DispatchQueue
+  /// worker's ~512 KB stack overflows heavy JS ("Maximum call stack size exceeded") — notably the
+  /// asm.js SQLite. 16 MB is plenty and matches what a WKWebView's JS thread gets.
+  private let worker: ApexEngineThread
   private let context: JSContext
 
   // MARK: - Boot
@@ -37,42 +40,45 @@ final class ApexEngine {
   /// snapshot, then evaluate the server bundle + bridge. Synchronous (see file header for why
   /// this is not async like the Kotlin version). Throws if the bundle resources are missing.
   init(snapshot: String?, bundle: Bundle = .main) throws {
-    guard let context = JSContext() else { throw ApexEngineError.contextCreationFailed }
-    self.context = context
+    self.worker = ApexEngineThread(stackSize: 16 * 1024 * 1024)
 
-    // Surface JS errors instead of failing silently. JSCore has no default exception handler;
-    // without this a throw inside the bundle would vanish. (Android relies on the sandbox log.)
-    context.exceptionHandler = { _, exception in
-      let message = exception?.toString() ?? "unknown"
-      let stack = exception?.objectForKeyedSubscript("stack")?.toString() ?? ""
-      print("[ApexJS] uncaught JS exception: \(message)\n\(stack)")
-    }
-
-    // `console`: the mobile SHIM (buildMobile.ts banner) installs a NO-OP console via
-    // `globalThis.console = globalThis.console || {…}`. JSCore has no console at all, so we set a
-    // REAL one first; the `|| {…}` in the shim then keeps ours. This is a genuine JSCore gap and
-    // the only extra global we add — everything else (Buffer/TextEncoder/URL/Request/Response/
-    // Headers/fetch/timers/etc.) is already provided by the bundle's own shim, so we do NOT
-    // re-shim it here (mirrors the guidance in NATIVE_SHELL.md).
-    installConsole(into: context)
-
-    // 1) Restore a persisted DB snapshot (base64 of a prior db.export()) BEFORE the bundle boots,
-    //    so the on-device database opens from it instead of empty. Passed as a JS string value —
-    //    no escaping needed (contrast Android's JSONObject.quote string concatenation).
-    if let snapshot, !snapshot.isEmpty {
-      context.setObject(snapshot, forKeyedSubscript: "__APEX_DB_SNAPSHOT__" as NSString)
-    }
-
-    // 2) + 3) Evaluate the self-contained server bundle (sets globalThis.APEX = { run }) then the
-    //    bridge (defines globalThis.__apexHandle). Read from the app bundle Resources.
+    // Read the bundle resources on the calling thread (plain file I/O).
     let serverJS = try ApexEngine.bundledSource(resource: "server", ext: "mjs", bundle: bundle)
     let bridgeJS = try ApexEngine.bundledSource(resource: "apex-bridge", ext: "js", bundle: bundle)
-    context.evaluateScript(serverJS, withSourceURL: URL(string: "apex-internal://server.mjs"))
-    context.evaluateScript(bridgeJS, withSourceURL: URL(string: "apex-internal://apex-bridge.js"))
 
-    // Sanity check that the contract is satisfied (helps a Mac tester diagnose a bad bundle).
-    let ready = context.evaluateScript("typeof globalThis.__apexHandle === 'function'")?.toBool() ?? false
-    if !ready { print("[ApexJS] WARNING: __apexHandle not defined after loading bundle — check server.mjs/apex-bridge.js") }
+    // Everything that touches the context happens on the high-stack worker thread.
+    let created: JSContext? = worker.sync {
+      guard let context = JSContext() else { return nil }
+
+      // Surface JS errors instead of failing silently. JSCore has no default exception handler.
+      context.exceptionHandler = { _, exception in
+        let message = exception?.toString() ?? "unknown"
+        let stack = exception?.objectForKeyedSubscript("stack")?.toString() ?? ""
+        print("[ApexJS] uncaught JS exception: \(message)\n\(stack)")
+      }
+
+      // `console`: the mobile SHIM installs a NO-OP console via `globalThis.console || {…}`; JSCore
+      // has none, so we set a REAL one first and the shim keeps ours. The only extra global we add
+      // — everything else (Buffer/TextEncoder/URL/Request/Response/Headers/fetch/timers) is in the
+      // bundle's own shim, so we do NOT re-shim it (see NATIVE_SHELL.md).
+      ApexEngine.installConsole(into: context)
+
+      // 1) Restore a persisted DB snapshot (base64 of a prior db.export()) BEFORE the bundle boots.
+      if let snapshot, !snapshot.isEmpty {
+        context.setObject(snapshot, forKeyedSubscript: "__APEX_DB_SNAPSHOT__" as NSString)
+      }
+
+      // 2) + 3) Evaluate the self-contained server bundle (sets globalThis.APEX) then the bridge.
+      context.evaluateScript(serverJS, withSourceURL: URL(string: "apex-internal://server.mjs"))
+      context.evaluateScript(bridgeJS, withSourceURL: URL(string: "apex-internal://apex-bridge.js"))
+
+      let ready = context.evaluateScript("typeof globalThis.__apexHandle === 'function'")?.toBool() ?? false
+      if !ready { print("[ApexJS] WARNING: __apexHandle not defined after loading bundle") }
+      return context
+    }
+
+    guard let context = created else { throw ApexEngineError.contextCreationFailed }
+    self.context = context
   }
 
   // MARK: - Request handling
@@ -86,7 +92,7 @@ final class ApexEngine {
   /// Android's sandbox lacks. The continuation is resumed exactly once.
   func handle(_ requestJSON: String) async -> String {
     await withCheckedContinuation { (continuation: CheckedContinuation<String, Never>) in
-      queue.async { [context] in
+      worker.async { [context] in
         guard
           let handleFn = context.objectForKeyedSubscript("__apexHandle"),
           !handleFn.isUndefined, !handleFn.isNull
@@ -100,8 +106,8 @@ final class ApexEngine {
           return
         }
 
-        // Guard single resumption. Safe as a plain var: every access happens on `queue` (the
-        // .then callbacks fire during microtask drain on this same serial queue).
+        // Guard single resumption. Safe as a plain var: every access happens on the worker thread
+        // (the .then callbacks fire during microtask drain on that same thread).
         var resumed = false
         let finish: (String) -> Void = { value in
           if resumed { return }
@@ -136,7 +142,7 @@ final class ApexEngine {
   /// Mirrors `ApexEngine.snapshot()` on Android — evaluated synchronously (the export function is
   /// synchronous; if it were a Promise this would return "[object Promise]", same as Android).
   func snapshot() -> String {
-    queue.sync {
+    worker.sync {
       let result = context.evaluateScript(
         "(typeof __APEX_DB_EXPORT__==='function')?__APEX_DB_EXPORT__():''"
       )
@@ -146,7 +152,7 @@ final class ApexEngine {
 
   // MARK: - Helpers
 
-  private func installConsole(into context: JSContext) {
+  private static func installConsole(into context: JSContext) {
     // Uses JSContext.currentArguments() so variadic console.log(a, b, c) is captured, not just
     // the first arg. A debug aid only; production can leave the shim's no-op console in place.
     let log: @convention(block) () -> Void = {
@@ -195,5 +201,53 @@ enum ApexEngineError: Error, CustomStringConvertible {
     case .contextCreationFailed: return "Failed to create JSContext"
     case .missingResource(let name): return "Missing bundle resource: \(name)"
     }
+  }
+}
+
+/// A single long-lived thread with a LARGE stack that runs a run loop, so all JSContext work has
+/// enough native stack for heavy JS. JavaScriptCore derives its JS call-stack limit from the
+/// native thread stack; the default GCD worker stack (~512 KB) overflows the asm.js SQLite with
+/// "Maximum call stack size exceeded". Work is marshalled on with `perform(_:on:...)`.
+final class ApexEngineThread: NSObject {
+  private let thread: Thread
+
+  init(stackSize: Int) {
+    let ready = DispatchSemaphore(value: 0)
+    let t = Thread {
+      // Keep the run loop alive with a dummy port source, then run it forever.
+      let runLoop = RunLoop.current
+      runLoop.add(NSMachPort(), forMode: .default)
+      ready.signal()
+      runLoop.run()
+    }
+    t.stackSize = stackSize
+    t.name = "site.apexjs.shell.engine"
+    self.thread = t
+    super.init()
+    t.start()
+    ready.wait() // ensure the run loop is up before we schedule work
+  }
+
+  /// Boxes a closure so it can ride across `perform(_:on:with:)` (which takes an object).
+  private final class Work {
+    let block: () -> Void
+    init(_ block: @escaping () -> Void) { self.block = block }
+  }
+
+  @objc private func run(_ work: Work) { work.block() }
+
+  /// Run asynchronously on the engine thread.
+  func async(_ block: @escaping () -> Void) {
+    perform(#selector(run(_:)), on: thread, with: Work(block), waitUntilDone: false)
+  }
+
+  /// Run synchronously on the engine thread and return its result. `waitUntilDone: true` executes
+  /// the block before returning, so the non-escaping closure is safe via `withoutActuallyEscaping`.
+  func sync<T>(_ block: () -> T) -> T {
+    var result: T!
+    withoutActuallyEscaping(block) { escapable in
+      perform(#selector(run(_:)), on: thread, with: Work({ result = escapable() }), waitUntilDone: true)
+    }
+    return result
   }
 }
