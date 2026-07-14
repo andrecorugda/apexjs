@@ -5,6 +5,7 @@
   <div class="flex min-h-svh flex-col bg-surface text-on-surface dark:bg-surface-dark dark:text-on-surface-dark">
     <header class="border-b border-outline dark:border-outline-dark">
       <div
+        class="relative"
         x-data="{ dark: false, open: false }"
         x-init="dark = localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches); document.documentElement.classList.toggle('dark', dark)"
         @resize.window="open = false"
@@ -42,13 +43,17 @@
             <svg x-cloak x-show="open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
         </nav>
-        <!-- Mobile dropdown menu. -->
-        <div x-cloak x-show="open" x-transition class="mx-auto max-w-5xl px-6 pb-3 sm:hidden">
-          <div class="flex flex-col gap-1 border-t border-outline pt-2 dark:border-outline-dark">
-            <a href="/" @click="open = false" class="rounded-radius px-3 py-2 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt">Home</a>
-            <a href="/blog" @click="open = false" class="rounded-radius px-3 py-2 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt">Blog</a>
-            <a href="/about" @click="open = false" class="rounded-radius px-3 py-2 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt">About</a>
-          </div>
+        <!-- Floating mobile menu — overlays the page (doesn't push content down). -->
+        <div x-cloak x-show="open" @click="open = false" class="fixed inset-0 z-40 sm:hidden" aria-hidden="true"></div>
+        <div
+          x-cloak x-show="open"
+          x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+          x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+          class="absolute right-4 top-full z-50 mt-1 w-52 rounded-radius border border-outline bg-surface p-1.5 shadow-lg sm:hidden dark:border-outline-dark dark:bg-surface-dark"
+        >
+          <a href="/" @click="open = false" class="block rounded-radius px-3 py-2 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt">Home</a>
+          <a href="/blog" @click="open = false" class="block rounded-radius px-3 py-2 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt">Blog</a>
+          <a href="/about" @click="open = false" class="block rounded-radius px-3 py-2 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt">About</a>
         </div>
       </div>
     </header>
