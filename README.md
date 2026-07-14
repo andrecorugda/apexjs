@@ -46,16 +46,31 @@ Every major reactive library has a meta-framework — React has Next, Vue has Nu
 - **Node-native.** No PHP required — bring Alpine's DX to the entire JavaScript ecosystem.
 - **TypeScript by default.** Strict types end to end.
 - **AI-native, safely.** Every typed route is also an MCP tool — and one auth policy (`defineAuth` + `auth`/`can` + resource `access`/`scope`) governs pages, REST, **and** the MCP surface, so an AI can never exceed the logged-in user. See [AUTH_DESIGN.md](./AUTH_DESIGN.md).
+- **Runs on the phone.** `apex build --mobile` packages your app into an installable native shell that runs the *same* SSR, API routes, on-device SQLite, and auth on the device — fully offline, no server, no port. Same code as the web.
 
 ## Packages
 
 | Package | Description |
 | --- | --- |
-| [`@apex-stack/core`](./packages/apexjs) | The CLI and runtime (`apex dev`, `apex build`, `apex start`, `apex mcp`) |
+| [`@apex-stack/core`](./packages/apexjs) | The CLI and runtime (`apex dev`, `apex build`, `apex start`, `apex mcp`, `apex mobile`) |
 | [`create-apexjs`](./packages/create-apexjs) | Project scaffolder (`npm create apexjs@latest`) |
 | [`@apex-stack/kit`](./packages/kit) | SFC parser, SSR renderer, and client runtime |
 | [`@apex-stack/vite`](./packages/vite) | Vite plugin for `.alpine` files |
 | [`@apex-stack/data`](./packages/data) | Drizzle-backed data layer — `defineResource` (REST + MCP) |
+
+## Run on the device (mobile)
+
+`apex build --mobile` packages an Apex app into a self-contained bundle that runs its **full SSR + API pipeline on a bare on-device JS engine** — Android's `androidx.javascriptengine`, iOS's JavaScriptCore. Offline, no server, no port: server-rendered pages, `/api` routes, an on-device SQLite (sql.js compiled to pure JS, seeded at boot and persisted across cold starts), and sealed-cookie auth — the same `<script server>` loaders, routes, and auth you wrote for the web, unchanged.
+
+It's a WebView app (like Capacitor or Ionic), but unlike them it runs your **actual server** — SSR + API + DB + auth — on the device, from one TypeScript codebase. Not React-Native native widgets. External APIs (Supabase, Turso over HTTP) still work from client code.
+
+```bash
+apex build --mobile                          # self-contained on-device bundle
+apex mobile android --app-id com.you.app \
+  --name "My App" --assemble                 # scaffold native shell, sync assets → APK
+```
+
+`apex mobile android` scaffolds the native shell and syncs your assets; `--assemble` runs gradle to produce an installable APK (needs the Android SDK). An iOS shell (WKWebView + JavaScriptCore) exists and its engine is CI-verified on the iOS Simulator; shipping to a physical iPhone needs a Mac. See the [mobile docs](https://apexjs.site/docs/mobile.html).
 
 ## Status
 
