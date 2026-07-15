@@ -87,6 +87,25 @@ export const FEATURES: Record<string, Feature> = {
             "\n\n  // Internationalization — catalogs in locales/<locale>.json; a /<locale>\n  // path prefix (or Accept-Language) selects the active locale.\n  i18n: {\n    defaultLocale: 'en',\n    locales: ['en', 'fr'],\n  },\n})\n",
           ),
   },
+
+  pwa: {
+    key: 'pwa',
+    title: 'PWA',
+    summary:
+      'installable + offline (🟡): apex build emits manifest.webmanifest + a precache service worker, with default icons',
+    detect: (root) =>
+      read(join(root, 'apex.config.ts')).includes('pwa:') ||
+      existsSync(join(root, 'public/icons/pwa-192.png')),
+    // Copies public/icons/pwa-{192,512,maskable-512}.png from the feature template.
+    navLinks: [],
+    patchConfig: (s) =>
+      s.includes('pwa:')
+        ? s
+        : s.replace(
+            /\n\}\)\s*$/,
+            "\n\n  // Progressive Web App (🟡 Experimental) — `apex build` emits a web manifest +\n  // a precache service worker: installable, works offline. Icons: public/icons/.\n  pwa: {\n    name: 'My Apex App',\n  },\n})\n",
+          ),
+  },
 }
 
 export function isFeature(key: string): boolean {

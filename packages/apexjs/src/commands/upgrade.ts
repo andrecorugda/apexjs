@@ -123,6 +123,7 @@ export const upgradeCommand = defineCommand({
     data: { type: 'boolean', description: 'Add the data/models feature (skips the prompt)' },
     auth: { type: 'boolean', description: 'Add the auth feature (skips the prompt)' },
     i18n: { type: 'boolean', description: 'Add the i18n feature (skips the prompt)' },
+    pwa: { type: 'boolean', description: 'Add the PWA feature (skips the prompt)' },
   },
   async run({ args }) {
     const root = resolve(process.cwd(), String(args.root))

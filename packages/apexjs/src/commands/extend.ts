@@ -13,13 +13,13 @@ import { banner, color } from '../ui.js'
 export const extendCommand = defineCommand({
   meta: {
     name: 'extend',
-    description: 'Add an optional feature (data, auth, i18n) to your app',
+    description: 'Add an optional feature (data, auth, i18n, pwa) to your app',
   },
   args: {
     name: {
       type: 'positional',
       required: false,
-      description: 'Feature(s) to add, space-separated: data | auth | i18n',
+      description: 'Feature(s) to add, space-separated: data | auth | i18n | pwa',
     },
     root: { type: 'string', description: 'Project root', default: '.' },
   },

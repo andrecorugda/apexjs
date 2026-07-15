@@ -4,7 +4,8 @@ import {
   renderFragment,
   stateIsland,
 } from '@apex-stack/kit'
-import { clientConfigScript, type RuntimeConfig } from '../config/runtime.js'
+import { pwaHeadTags, pwaRegisterScript } from '../build/pwa.js'
+import { clientConfigScript, type PwaConfig, type RuntimeConfig } from '../config/runtime.js'
 import { type LoadedStore, storesInitialState } from '../stores/loader.js'
 
 /** The shape a compiled `.alpine` SSR module exports (see @apex-stack/vite). */
@@ -120,6 +121,8 @@ export interface RenderPageOptions {
   loadingHtml?: string
   /** Active locale (i18n) — sets `<html lang>` and is seeded to the client. Default `en`. */
   locale?: string
+  /** PWA config — links the manifest/theme-color + registers the service worker (🟡). */
+  pwa?: PwaConfig
 }
 
 /**
@@ -226,7 +229,8 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     storeIds: stores.map((s) => s.id),
     appCss: opts.appCss,
     clientCss: opts.clientCss,
-    headTags: renderHead(head),
+    headTags:
+      renderHead(head) + (opts.pwa ? `\n  ${pwaHeadTags(opts.pwa)}\n  ${pwaRegisterScript()}` : ''),
     configScript: clientConfigScript(opts.publicConfig ?? {}),
     // dev imports the page module by path; prod imports its hashed bundle.
     moduleUrl: opts.clientHref ?? opts.pageId,
