@@ -79,6 +79,20 @@ write(join(out, 'mipmap-anydpi-v26', 'ic_launcher_round.xml'), adaptiveXml)
 // ── Play Store icon (512) ─────────────────────────────────────────────────────────
 write('./native-shell/android/play_store_512.png', await sharp(srcIcon).resize(512, 512).png().toBuffer())
 
+// PWA icons (public/icons/) — the manifest set `apex build` links when `pwa` is configured.
+// Maskable: the safe zone is the inner ~80% circle, so the mark sits at ~55% with padding.
+const pwaOut = './public/icons'
+for (const px of [192, 512]) {
+  write(join(pwaOut, `pwa-${px}.png`), await sharp(srcIcon).resize(px, px, { fit: 'contain', background: bg }).png().toBuffer())
+}
+{
+  const inner = Math.round(512 * 0.55)
+  const mark = await sharp(srcIcon).resize(inner, inner, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer()
+  write(join(pwaOut, 'pwa-maskable-512.png'),
+    await sharp({ create: { width: 512, height: 512, channels: 4, background: bg } }).composite([{ input: mark, gravity: 'centre' }]).png().toBuffer())
+}
+console.log('✓ PWA icons → public/icons/pwa-{192,512,maskable-512}.png')
+
 // ── Static cold-start splash (Android 12+ theme uses a centered icon on bg) ─────────
 if (splash) {
   for (const [d, px] of Object.entries({ mdpi: 288, hdpi: 432, xhdpi: 576, xxhdpi: 864, xxxhdpi: 1152 })) {

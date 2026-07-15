@@ -19,7 +19,7 @@ import type { AuthConfig } from '../auth/define.js'
 import { getRequestUser } from '../auth/run.js'
 import { toComponentEntry } from '../components/registry.js'
 import { applyEnvToRuntimeConfig } from '../config/resolve.js'
-import type { RuntimeConfig } from '../config/runtime.js'
+import type { PwaConfig, RuntimeConfig } from '../config/runtime.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
 import { createI18n, resolveLocale } from '../i18n/index.js'
 import { loadMessages } from '../i18n/run.js'
@@ -50,6 +50,8 @@ export interface ProdManifest {
   clientNav?: boolean
   /** Pre-rendered `loading.alpine` HTML for the slow-nav boundary. */
   loadingHtml?: string
+  /** PWA config baked at build — the runtime SSR shell links the manifest + worker. */
+  pwa?: PwaConfig
 }
 
 const MIME: Record<string, string> = {
@@ -58,6 +60,7 @@ const MIME: Record<string, string> = {
   '.css': 'text/css',
   '.html': 'text/html',
   '.json': 'application/json',
+  '.webmanifest': 'application/manifest+json',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
@@ -166,6 +169,9 @@ export async function createProdApp(options: {
       setResponseHeader(event, 'Content-Type', MIME[ext] ?? 'application/octet-stream')
       if (path.startsWith('/assets/'))
         setResponseHeader(event, 'Cache-Control', 'public, max-age=31536000, immutable')
+      // The service worker must revalidate on every load so a new deploy's precache
+      // list (and cache name) propagates — never let it be cached long-term.
+      if (path === '/sw.js') setResponseHeader(event, 'Cache-Control', 'no-cache')
       return readFileSync(file)
     }),
   )
@@ -250,6 +256,7 @@ export async function createProdApp(options: {
         publicConfig,
         clientNav: manifest.clientNav !== false,
         loadingHtml: manifest.loadingHtml,
+        pwa: manifest.pwa,
         locale,
         locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
         errorPageId,

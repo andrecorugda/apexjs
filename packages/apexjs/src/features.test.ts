@@ -16,8 +16,8 @@ export default defineConfig({
 `
 
 describe('feature recipes', () => {
-  it('exposes exactly data / auth / i18n', () => {
-    expect(featureKeys().sort()).toEqual(['auth', 'data', 'i18n'])
+  it('exposes exactly data / auth / i18n / pwa', () => {
+    expect(featureKeys().sort()).toEqual(['auth', 'data', 'i18n', 'pwa'])
     expect(isFeature('auth')).toBe(true)
     expect(isFeature('nope')).toBe(false)
   })

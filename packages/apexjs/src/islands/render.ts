@@ -1,5 +1,11 @@
 import { type ComponentRegistry, renderIslands } from '@apex-stack/kit'
-import { clientConfigScript, type RuntimeConfig } from '../config/runtime.js'
+import {
+  clientConfigScript,
+  type PwaConfig,
+  pwaHeadTags,
+  pwaRegisterScript,
+  type RuntimeConfig,
+} from '../config/runtime.js'
 import { type PageModule, renderHead } from '../dev/renderPage.js'
 
 const SLOT_RE = /<slot\b[^>]*>[\s\S]*?<\/slot>/
@@ -72,6 +78,8 @@ export interface RenderIslandsPageOptions {
   appCss?: string
   /** Built stylesheet hrefs (production) to link in <head>. */
   cssHrefs?: string[]
+  /** PWA config — links the manifest/theme-color + registers the service worker (🟡). */
+  pwa?: PwaConfig
   /**
    * Production: href of the built islands runtime bundle. When set, pages with
    * hydrating islands reference it instead of inlining the dev loader — whose
@@ -151,6 +159,7 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
         : `\n<script type="module">${islandLoader(opts.clientEntry)}</script>`
       : ''
   const configScript = hydratingCount > 0 ? `\n${clientConfigScript(opts.publicConfig ?? {})}` : ''
+  const pwaTags = opts.pwa ? `\n  ${pwaHeadTags(opts.pwa)}\n  ${pwaRegisterScript()}` : ''
   const appCssLink = [...(opts.appCss ? [opts.appCss] : []), ...(opts.cssHrefs ?? [])]
     .map((href) => `\n  <link rel="stylesheet" href="${href}" />`)
     .join('')
@@ -161,7 +170,7 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  ${renderHead(head)}${appCssLink}
+  ${renderHead(head)}${pwaTags}${appCssLink}
   <style>${mod.css}${layoutCss}${opts.componentCss ?? ''}</style>
 </head>
 <body>

@@ -7,9 +7,10 @@ import { createServer as createViteServer } from 'vite'
 import { buildClient, type ClientAssets } from '../build/buildClient.js'
 import { buildIslandsRuntime } from '../build/buildIslands.js'
 import { buildServer } from '../build/buildServer.js'
+import { emitPwaAssets } from '../build/pwa.js'
 import { loadComponents, scanComponents } from '../components/registry.js'
 import { resolveApexConfig } from '../config/resolve.js'
-import type { RuntimeConfig } from '../config/runtime.js'
+import type { PwaConfig, RuntimeConfig } from '../config/runtime.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { type RouteDef, scanPages } from '../routing/router.js'
@@ -237,6 +238,7 @@ export const buildCommand = defineCommand({
         (id) => vite.ssrLoadModule(id) as never,
       )
       const clientNav = config.clientNav !== false
+      const pwa = config.pwa as PwaConfig | undefined
       const layoutsDir = join(root, 'layouts')
       const layouts = existsSync(layoutsDir)
         ? readdirSync(layoutsDir)
@@ -262,6 +264,7 @@ export const buildCommand = defineCommand({
           layouts,
           runtimeConfig,
           publicConfig,
+          pwa,
         }
         const assets = hrefs.get(route.pageId)
         const html = args.islands
@@ -286,6 +289,13 @@ export const buildCommand = defineCommand({
 
       const pub = join(root, 'public')
       if (existsSync(pub)) cpSync(pub, outDir, { recursive: true })
+
+      // PWA (🟡): emit manifest.webmanifest + a precache service worker AFTER every page,
+      // asset, and public file is on disk — the worker's precache list is the dist tree.
+      if (pwa) {
+        const precached = emitPwaAssets(outDir, pwa)
+        console.log(`  ✓ PWA — manifest.webmanifest + sw.js (${precached} file(s) precached)`)
+      }
 
       console.log(
         `\n  Built ${staticRoutes.length} page(s) → ${args.outDir}/${args.islands ? ' (islands / static-first)' : ' (prerendered + hydrated)'}`,
@@ -320,6 +330,7 @@ async function buildServerTarget(
   let clientNav = true
   let loadingHtml: string | undefined
   let i18n: { defaultLocale: string; locales: string[] } | undefined
+  let pwa: PwaConfig | undefined
   const cfgVite = await createViteServer({
     root,
     appType: 'custom',
@@ -332,6 +343,7 @@ async function buildServerTarget(
     if (!runtimeConfig.public) runtimeConfig.public = {}
     clientNav = resolved.config.clientNav !== false
     i18n = resolved.config.i18n as typeof i18n
+    pwa = resolved.config.pwa as PwaConfig | undefined
     // Prerender the slow-nav boundary once for the client-nav runtime to embed.
     if (clientNav && existsSync(join(root, 'pages', 'loading.alpine'))) {
       const { registry } = await loadComponents(root, (id) => cfgVite.ssrLoadModule(id) as never)
@@ -403,6 +415,7 @@ async function buildServerTarget(
     clientNav,
     loadingHtml,
     i18n,
+    pwa,
   }
   writeFileSync(join(outDir, 'apex-manifest.json'), JSON.stringify(manifest, null, 2))
   // Copy message catalogs so the prod server can load them.
@@ -412,6 +425,14 @@ async function buildServerTarget(
 
   const pub = join(root, 'public')
   if (existsSync(pub)) cpSync(pub, outDir, { recursive: true })
+
+  // PWA (🟡): the server target precaches hashed assets + public files (pages are dynamic,
+  // served network-first with a cache fallback by the worker). Emitted after the public copy
+  // so the precache list sees the full dist tree (server/ + mobile/ are skipped).
+  if (pwa) {
+    const precached = emitPwaAssets(outDir, pwa)
+    console.log(`  ✓ PWA — manifest.webmanifest + sw.js (${precached} file(s) precached)`)
+  }
 
   console.log(
     `\n  Built server target → ${outLabel}/  (${routes.length} route(s), ${api.length} API module(s))\n  Run it:  apex start\n`,

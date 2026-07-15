@@ -30,7 +30,46 @@ export interface ApexConfig {
    * the active locale, and `t` is available in loaders, templates, and the client.
    */
   i18n?: { defaultLocale: string; locales: string[] }
+  /**
+   * Progressive Web App (🟡 Experimental). When set, `apex build` emits a
+   * `manifest.webmanifest` + a service worker (`sw.js`) that precaches the built
+   * pages/assets — the app becomes installable and works offline — and the HTML
+   * shells link the manifest, theme color, and worker registration automatically.
+   * Icons default to `/icons/pwa-192.png` / `/icons/pwa-512.png` (+ a maskable
+   * 512) — `apex extend pwa` scaffolds them.
+   */
+  pwa?: PwaConfig
   [key: string]: unknown
+}
+
+/** The `pwa` block of `apex.config.ts` (🟡 Experimental). */
+export interface PwaConfig {
+  /** Full app name (install prompts, splash). */
+  name: string
+  /** Short name for the home screen (defaults to `name`). */
+  shortName?: string
+  /** Browser-chrome theme color (defaults to `#0a0e1a`). */
+  themeColor?: string
+  /** Splash background color (defaults to `themeColor`). */
+  backgroundColor?: string
+  description?: string
+  /** Manifest icons; defaults to the `apex extend pwa` set under `/icons/`. */
+  icons?: Array<{ src: string; sizes: string; type?: string; purpose?: string }>
+}
+
+/**
+ * The `<head>` fragments the HTML shells inject when `pwa` is configured. Lives here (not in
+ * build/pwa.ts) so the RENDERERS — which also run inside the mobile bundle on a bare engine —
+ * never import node:fs/node:crypto at module level.
+ */
+export function pwaHeadTags(pwa: PwaConfig): string {
+  const theme = pwa.themeColor ?? '#0a0e1a'
+  return `<link rel="manifest" href="/manifest.webmanifest" />\n  <meta name="theme-color" content="${theme}" />`
+}
+
+/** The service-worker registration snippet the shells embed when `pwa` is configured. */
+export function pwaRegisterScript(): string {
+  return `<script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js'))</script>`
 }
 
 /** Author an `apex.config.ts`. Identity function — exists for types + discoverability. */

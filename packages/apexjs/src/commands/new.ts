@@ -75,6 +75,7 @@ export const newCommand = defineCommand({
     data: { type: 'boolean', description: 'Include the data/models feature (skips the prompt)' },
     auth: { type: 'boolean', description: 'Include the auth feature (skips the prompt)' },
     i18n: { type: 'boolean', description: 'Include the i18n feature (skips the prompt)' },
+    pwa: { type: 'boolean', description: 'Include the PWA feature (skips the prompt)' },
   },
   async run({ args }) {
     const dir = String(args.dir)
