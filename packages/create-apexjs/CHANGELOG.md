@@ -1,5 +1,12 @@
 # create-apexjs
 
+## 0.6.11
+
+### Patch Changes
+
+- c59dba1: Offer the PWA feature during scaffolding — `npm create apexjs@latest my-app --pwa` (or answer the
+  new prompt) applies `apex extend pwa` after install, like the other features.
+
 ## 0.6.10
 
 ### Patch Changes

@@ -12,10 +12,11 @@ const TEMPLATE_DIR = fileURLToPath(new URL('../templates/default', import.meta.u
  * tiny local list (key + title) so this scaffolder stays dependency-light — it
  * must NOT import @apex-stack/core's features.ts. The keys mirror it exactly.
  */
-const FEATURES: { key: 'data' | 'auth' | 'i18n'; title: string }[] = [
+const FEATURES: { key: 'data' | 'auth' | 'i18n' | 'pwa'; title: string }[] = [
   { key: 'data', title: 'Data & models' },
   { key: 'auth', title: 'Auth' },
   { key: 'i18n', title: 'i18n' },
+  { key: 'pwa', title: 'PWA (installable + offline)' },
 ]
 
 /** Replace the `{{name}}` placeholder in every scaffolded file. */
@@ -102,6 +103,10 @@ const main = defineCommand({
     i18n: {
       type: 'boolean',
       description: 'Include the i18n feature (skips the prompt)',
+    },
+    pwa: {
+      type: 'boolean',
+      description: 'Include the PWA feature (skips the prompt)',
     },
   },
   async run({ args }) {
