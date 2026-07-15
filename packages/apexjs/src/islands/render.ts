@@ -80,6 +80,8 @@ export interface RenderIslandsPageOptions {
   cssHrefs?: string[]
   /** PWA config — links the manifest/theme-color + registers the service worker (🟡). */
   pwa?: PwaConfig
+  /** Active locale (i18n) — sets `<html lang>`. Default `en`. */
+  locale?: string
   /**
    * Production: href of the built islands runtime bundle. When set, pages with
    * hydrating islands reference it instead of inlining the dev loader — whose
@@ -165,7 +167,7 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
     .join('')
 
   const doc = `<!DOCTYPE html>
-<html lang="en">
+<html lang="${opts.locale ?? 'en'}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />

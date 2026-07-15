@@ -12,6 +12,8 @@ import { loadComponents, scanComponents } from '../components/registry.js'
 import { resolveApexConfig } from '../config/resolve.js'
 import type { PwaConfig, RuntimeConfig } from '../config/runtime.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
+import { createI18n } from '../i18n/index.js'
+import { loadMessages } from '../i18n/run.js'
 import { renderIslandsPage } from '../islands/render.js'
 import { type RouteDef, scanPages } from '../routing/router.js'
 import { loadStores } from '../stores/loader.js'
@@ -239,6 +241,11 @@ export const buildCommand = defineCommand({
       )
       const clientNav = config.clientNav !== false
       const pwa = config.pwa as PwaConfig | undefined
+      // i18n (#54): the servers seed locals.t/locale per request — the prerender loop must
+      // do the same, and bake one HTML per locale (default at the plain path, others under
+      // their /<locale> prefix, matching how the servers resolve a /<locale> URL).
+      const i18nCfg = config.i18n as { defaultLocale: string; locales: string[] } | undefined
+      const messages = i18nCfg ? loadMessages(root, i18nCfg.locales) : {}
       const layoutsDir = join(root, 'layouts')
       const layouts = existsSync(layoutsDir)
         ? readdirSync(layoutsDir)
@@ -253,38 +260,65 @@ export const buildCommand = defineCommand({
         loadingHtml = await renderFragment(l.template, {}, l.scopeId, registry)
       }
 
-      for (const route of staticRoutes) {
-        const common = {
-          loadModule: (id: string) => vite.ssrLoadModule(id) as Promise<PageModule>,
-          pageId: route.pageId,
-          url: route.pattern,
-          registry,
-          componentCss,
-          stores,
-          layouts,
-          runtimeConfig,
-          publicConfig,
-          pwa,
-        }
-        const assets = hrefs.get(route.pageId)
-        const html = args.islands
-          ? await renderIslandsPage({
-              ...common,
-              loaderHref: islandsRuntime?.js,
-              cssHrefs: islandsRuntime?.css,
-            })
-          : await renderPage({
-              ...common,
-              clientHref: assets?.js,
-              clientCss: assets?.css,
-              clientNav,
-              loadingHtml,
-            })
+      // Default locale renders at the plain path; other locales under their prefix.
+      const localeVariants: Array<{ locale?: string; prefix: string }> = i18nCfg
+        ? [
+            { locale: i18nCfg.defaultLocale, prefix: '' },
+            ...i18nCfg.locales
+              .filter((l) => l !== i18nCfg.defaultLocale)
+              .map((l) => ({ locale: l, prefix: `/${l}` })),
+          ]
+        : [{ prefix: '' }]
 
-        const dest = join(outDir, outFile(route.pattern))
-        mkdirSync(dirname(dest), { recursive: true })
-        writeFileSync(dest, html)
-        console.log(`  ✓ ${route.pattern}  →  ${outFile(route.pattern)}`)
+      for (const route of staticRoutes) {
+        for (const variant of localeVariants) {
+          // Seed the same locals the servers do (prod/server.ts) — loaders use locals.t.
+          const locals: Record<string, unknown> = {}
+          if (i18nCfg && variant.locale) {
+            locals.locale = variant.locale
+            locals.t = createI18n({
+              messages,
+              locale: variant.locale,
+              defaultLocale: i18nCfg.defaultLocale,
+            }).t
+          }
+          const common = {
+            loadModule: (id: string) => vite.ssrLoadModule(id) as Promise<PageModule>,
+            pageId: route.pageId,
+            // Loaders see the locale-STRIPPED path, like the servers route on.
+            url: route.pattern,
+            registry,
+            componentCss,
+            stores,
+            layouts,
+            runtimeConfig,
+            publicConfig,
+            locals,
+            locale: variant.locale,
+            pwa,
+          }
+          const assets = hrefs.get(route.pageId)
+          const html = args.islands
+            ? await renderIslandsPage({
+                ...common,
+                loaderHref: islandsRuntime?.js,
+                cssHrefs: islandsRuntime?.css,
+              })
+            : await renderPage({
+                ...common,
+                clientHref: assets?.js,
+                clientCss: assets?.css,
+                clientNav,
+                loadingHtml,
+              })
+
+          const publicPattern =
+            route.pattern === '/' ? variant.prefix || '/' : `${variant.prefix}${route.pattern}`
+          const dest = join(outDir, outFile(publicPattern))
+          mkdirSync(dirname(dest), { recursive: true })
+          writeFileSync(dest, html)
+          console.log(`  ✓ ${publicPattern}  →  ${outFile(publicPattern)}`)
+        }
       }
 
       const pub = join(root, 'public')

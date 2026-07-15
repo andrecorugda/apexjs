@@ -132,6 +132,12 @@
 
       <h2 id="resolution">Locale resolution <a class="anchor" href="#resolution">#</a></h2>
       <p>Every request picks exactly one locale, in this order:</p>
+      <p>
+        Static builds bake this in: <code>apex build</code> / <code>--islands</code> prerender the
+        default locale at the plain path and every other locale under its
+        <code>/&lt;locale&gt;</code> prefix (<code>/hello</code> + <code>/fr/hello</code>), each
+        with the right <code>&lt;html lang&gt;</code> and translated HTML.
+      </p>
       <div class="table-scroll">
         <table>
           <thead><tr><th>#</th><th>Source</th><th>Example</th></tr></thead>
