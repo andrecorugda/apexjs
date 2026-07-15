@@ -49,9 +49,9 @@ Everything **not in this file is internal** — import it and you're on your own
 | `sessionAuth`, `login`, `logout`, `getSession` | 🟢 Stable |
 | `defineAuth`, `setStatus` | 🟢 Stable |
 | `checkCsrf`, `isCsrfSafe`, `applySecurityHeaders`, `securityHeaders` | 🟢 Stable |
-| `createRateLimiter`, `rateLimitKey` | 🟡 Experimental |
+| `createRateLimiter`, `rateLimitKey`, `createMemoryStore` | 🟡 Experimental |
 | `createProdApp`, `createProdNodeHandler`, `createProdWebHandler`, `startProdServer` | 🟡 Experimental (serverless building blocks — new; shape may evolve) |
-| Types: `SessionOptions` | 🟢 Stable · `RateLimiter`, `RateLimitOptions` | 🟡 Experimental |
+| Types: `SessionOptions` | 🟢 Stable · `RateLimiter`, `RateLimitOptions`, `AsyncRateLimiter`, `KvStore` | 🟡 Experimental |
 
 ## `@apex-stack/core/client` — browser runtime
 
@@ -108,6 +108,7 @@ These are contracts too — changing them breaks apps silently:
 - **Data**: `models/*.ts`, `db/migrations/*.sql`, `locales/*.json`.
 - **Components in folders**: `components/**/*.alpine`; nested files are folder-namespaced (`components/ui/Card.alpine` → `<UiCard/>`).
 - **Client hook** (🟡 Experimental): `app.client.ts` default-exports `(Alpine) => void`, run before `Alpine.start()` — register Alpine plugins, directives, magics.
+- **`/api` idempotency** (🟡 Experimental): send `Idempotency-Key` on a POST/PUT/PATCH/DELETE — the pipeline runs the handler once and replays the cached `{status, body}` for 24h (replays carry `x-idempotent-replay: true`); a concurrent duplicate gets 409; 5xx outcomes are not cached, so a retry re-executes. Keys are scoped per route + user. Pass a shared `KvStore` (`createProdApp({ idempotencyStore })`) for multi-instance deployments.
 
 ---
 

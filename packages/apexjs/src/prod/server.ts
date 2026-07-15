@@ -28,6 +28,7 @@ import { createMcpHandler, hasMcpRoutes } from '../mcp/server.js'
 import type { Middleware } from '../middleware/define.js'
 import { runMiddleware } from '../middleware/run.js'
 import { matchRoute, type RouteDef } from '../routing/router.js'
+import type { KvStore } from '../security/kvStore.js'
 
 /** The build manifest written by `apex build --server` to `<dist>/apex-manifest.json`. */
 export interface ProdManifest {
@@ -83,6 +84,11 @@ export async function createProdApp(options: {
    * pass a static registry: `(relFile) => Promise.resolve(registry[relFile])`. The mobile seam.
    */
   loadModule?: (relFile: string) => Promise<Record<string, unknown>>
+  /**
+   * Shared KV store for API idempotency (`Idempotency-Key` de-duplication) across
+   * instances — e.g. Redis-backed. Default: in-memory (correct for a single process).
+   */
+  idempotencyStore?: KvStore
 }): Promise<App> {
   const dir = options.dir
   const manifest = JSON.parse(readFileSync(join(dir, 'apex-manifest.json'), 'utf8')) as ProdManifest
@@ -205,7 +211,16 @@ export async function createProdApp(options: {
     }),
   )
 
-  if (apiEntries.length) app.use('/api', createApiHandler(apiEntries, runtimeConfig, auth))
+  if (apiEntries.length)
+    app.use(
+      '/api',
+      createApiHandler(
+        apiEntries,
+        runtimeConfig,
+        auth,
+        options.idempotencyStore ? { idempotency: { store: options.idempotencyStore } } : undefined,
+      ),
+    )
   if (hasMcpRoutes(apiEntries)) app.use('/mcp', createMcpHandler(apiEntries, runtimeConfig, auth))
 
   app.use(
