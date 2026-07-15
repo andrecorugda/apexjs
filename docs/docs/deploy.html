@@ -96,6 +96,7 @@
               <li><a href="#server">3 · Server target</a></li>
               <li><a href="#presets">One-command deploys</a></li>
               <li><a href="#db">Databases in production</a></li>
+              <li><a href="#reliability">Production reliability</a></li>
               <li><a href="#hosting">Hosting targets</a></li>
             </ul>
           </li>
@@ -196,6 +197,46 @@ netlify deploy</code></pre>
       <p class="muted">
         Run <code>apex migrate</code> as a deploy step (with the matching <code>--driver</code>/<code>--url</code>).
         See <a href="./data.html#drivers">Data → Drivers</a>.
+      </p>
+
+      <h2 id="reliability">Production reliability <a class="anchor" href="#reliability">#</a> <span class="pill">🟡 Experimental</span></h2>
+      <p>The server target ships the reliability basics a real deploy needs — no configuration required:</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Concern</th><th>What you get</th></tr></thead>
+          <tbody>
+            <tr><td>Health checks</td><td><code>GET /health</code> and <code>/healthz</code> return <code>200 {"status":"ok","uptime":…}</code> — liveness only (no DB ping), served before auth/middleware. Point your platform's probe at it.</td></tr>
+            <tr><td>Graceful shutdown</td><td>On <code>SIGTERM</code>/<code>SIGINT</code>, <code>apex start</code> stops accepting connections, drains in-flight requests (10s window, then force-close), and closes database pools — <code>@apex-stack/data</code> handles register their own <code>close()</code>. A second Ctrl+C force-exits.</td></tr>
+            <tr><td>Safe 500s</td><td>Clients never see error messages or stack traces in production — a thrown API handler or page loader returns a generic <code>Internal server error</code>; the full detail goes to your <code>onError</code> hook (or the server log). Dev keeps the rich errors.</td></tr>
+            <tr><td>Request logging</td><td>One JSON line per request: <code>{"time","method","path","status","ms"}</code> (health probes are skipped). Silence with <code>apex start --quiet</code> or <code>APEX_LOG=off</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Wire your own observability with <code>server/hooks.ts</code> — discovered like
+        <code>server/auth.ts</code>, baked into the build:
+      </p>
+      <pre><code><span class="c">// server/hooks.ts — e.g. Sentry + your log shipper</span>
+<span class="k">import</span> { defineHooks } <span class="k">from</span> <span class="s">'@apex-stack/core/server'</span>
+
+<span class="k">export default</span> defineHooks({
+  onError(error, ctx) {
+    <span class="c">// ctx.kind: 'api' | 'page' | 'mcp' | 'http' (+ path, method)</span>
+    Sentry.captureException(error, { tags: ctx })
+  },
+  onRequest(entry) {
+    <span class="c">// replaces the default JSON line — entry: {time, method, path, status, ms}</span>
+    myLogger.info(entry)
+  },
+  <span class="k">async</span> onShutdown() {
+    <span class="c">// runs after in-flight requests drain (flush queues, telemetry, …)</span>
+    <span class="k">await</span> Sentry.close(<span class="s">2000</span>)
+  },
+})</code></pre>
+      <p>
+        Embedders (serverless / custom servers) get the same pieces programmatically:
+        <code>createProdApp({ hooks, requestLog })</code>, <code>gracefulShutdown(server)</code>, and
+        <code>onShutdown(fn)</code> from <code>@apex-stack/core/server</code>.
       </p>
 
       <h2 id="hosting">Hosting targets <a class="anchor" href="#hosting">#</a></h2>

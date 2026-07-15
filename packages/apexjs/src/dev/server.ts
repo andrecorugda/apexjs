@@ -219,13 +219,17 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   app.use(
     '/api',
     defineEventHandler(async (event) =>
-      createApiHandler(await loadEntries(), runtimeConfig, await loadAuthCfg())(event),
+      createApiHandler(await loadEntries(), runtimeConfig, await loadAuthCfg(), {
+        exposeErrors: true, // dev DX: real messages + the migrate hint
+      })(event),
     ),
   )
   app.use(
     '/mcp',
     defineEventHandler(async (event) =>
-      createMcpHandler(await loadEntries(), runtimeConfig, await loadAuthCfg())(event),
+      createMcpHandler(await loadEntries(), runtimeConfig, await loadAuthCfg(), {
+        exposeErrors: true,
+      })(event),
     ),
   )
 

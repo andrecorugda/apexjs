@@ -154,6 +154,14 @@ export function matchApi(entries: ApiEntry[], path: string, method: string): Mat
 export interface ApiHandlerOptions {
   /** Idempotency tuning — pass a shared `store` for multi-instance deployments. */
   idempotency?: IdempotencyOptions
+  /**
+   * Include the real error message (+ the migrate hint) in 500 bodies. The dev server and
+   * test harness turn this ON; production leaves it off — clients get a generic
+   * `Internal server error` and the detail goes to `onError` (fail-safe default).
+   */
+  exposeErrors?: boolean
+  /** Receives the FULL error wherever the client got a safe generic response. */
+  onError?: (error: unknown, ctx: { kind: 'api'; path: string; method: string }) => void
 }
 
 /** A single h3 handler that routes, validates, and dispatches all `/api/*` requests. */
@@ -244,8 +252,15 @@ export function createApiHandler(
       const e = err as { message?: string; cause?: { message?: string } }
       const causeMsg = e?.cause?.message ?? ''
       const message = [e?.message, causeMsg].filter(Boolean).join(' — ') || 'Handler error'
+      // The FULL detail always goes server-side (the hook, or the console).
+      if (opts?.onError)
+        opts.onError(err, { kind: 'api', path: url.pathname, method: event.method })
+      else console.error(`[apex] api ${event.method} ${url.pathname} failed:`, message)
       setResponseStatus(event, 500)
       setResponseHeader(event, 'Content-Type', 'application/json')
+      // Clients only see the real message in dev/tests — production gets a generic body
+      // so driver/internal details never leak (#25).
+      if (!opts?.exposeErrors) return { error: 'Internal server error' }
       const missingTable = /no such table|does not exist|relation .* does not exist/i.test(message)
       return {
         error: message,

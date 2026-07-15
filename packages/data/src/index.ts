@@ -123,6 +123,35 @@ async function loadDriver(spec: string): Promise<unknown> {
  * the one your database uses (`@libsql/client`, `postgres`, or `@electric-sql/pglite`).
  */
 export async function createDb(config: CreateDbConfig): Promise<ApexDbHandle> {
+  return withShutdownHook(await openDb(config))
+}
+
+/**
+ * Register the handle's `close` as a server shutdown hook (the `apex start` SIGTERM drain runs
+ * it — see @apex-stack/core/server `onShutdown`), via the shared globalThis registry so no core
+ * import (and no two-copies-of-core skew) is needed. Closing the handle yourself deregisters the
+ * hook first, so a manual close (e.g. a test harness) never double-closes the pool. No-op
+ * on-device (a mobile app has no process signals).
+ */
+function withShutdownHook(handle: ApexDbHandle): ApexDbHandle {
+  const g = globalThis as {
+    __APEX_DEVICE__?: boolean
+    __APEX_SHUTDOWN_HOOKS__?: Set<() => unknown>
+  }
+  if (g.__APEX_DEVICE__) return handle
+  g.__APEX_SHUTDOWN_HOOKS__ ??= new Set()
+  const hooks = g.__APEX_SHUTDOWN_HOOKS__
+  const realClose = handle.close.bind(handle)
+  const hook = () => realClose()
+  hooks.add(hook)
+  handle.close = async () => {
+    hooks.delete(hook)
+    await realClose()
+  }
+  return handle
+}
+
+async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
   const cfg = typeof config === 'string' ? ({ driver: 'libsql', url: config } as const) : config
 
   if (cfg.driver === 'sqlite' || cfg.driver === 'libsql') {

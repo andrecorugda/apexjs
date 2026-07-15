@@ -37,10 +37,18 @@ function safeInputSchema(shape: ZodRawShape | undefined): ZodRawShape {
  * tools. Each tool re-checks authorization at call time with the real arguments —
  * defense-in-depth, never relying on list-time omission alone (§3.4).
  */
+export interface McpHandlerOptions {
+  /** Include real error messages in tool failures (dev/tests). Production: generic text. */
+  exposeErrors?: boolean
+  /** Receives the FULL error when a tool call throws. */
+  onError?: (error: unknown, ctx: { kind: 'mcp'; path: string }) => void
+}
+
 function buildServer(
   entries: ApiEntry[],
   config?: RuntimeConfig,
   user?: ApexUser | null,
+  opts?: McpHandlerOptions,
 ): McpServer {
   const server = new McpServer({ name: 'apexjs', version: '0.0.0' })
   for (const entry of entries) {
@@ -58,13 +66,23 @@ function buildServer(
             isError: true,
           }
         }
-        const result = await entry.route.handler({
-          input: args ?? {},
-          url: `mcp://${entry.mcpName}`,
-          config: config ?? { public: {} },
-          user: user ?? null,
-        })
-        return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+        try {
+          const result = await entry.route.handler({
+            input: args ?? {},
+            url: `mcp://${entry.mcpName}`,
+            config: config ?? { public: {} },
+            user: user ?? null,
+          })
+          return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+        } catch (err) {
+          // Full detail server-side; the client only sees the real message in dev/tests (#25).
+          if (opts?.onError) opts.onError(err, { kind: 'mcp', path: entry.mcpName })
+          else console.error(`[apex] mcp tool ${entry.mcpName} failed:`, err)
+          const text = opts?.exposeErrors
+            ? `Tool failed: ${err instanceof Error ? err.message : String(err)}`
+            : 'Tool execution failed'
+          return { content: [{ type: 'text' as const, text }], isError: true }
+        }
       },
     )
   }
@@ -81,6 +99,7 @@ export function createMcpHandler(
   entries: ApiEntry[],
   config?: RuntimeConfig,
   auth?: AuthConfig,
+  opts?: McpHandlerOptions,
 ): EventHandler {
   const mcpEntries = entries.filter((e) => e.route.mcp)
 
@@ -91,7 +110,7 @@ export function createMcpHandler(
       const decision = await checkRouteAccess(entry.route, user, undefined, { listTime: true })
       if (decision.ok) visible.push(entry)
     }
-    const server = buildServer(visible, config, user)
+    const server = buildServer(visible, config, user, opts)
     const transport = new WebStandardStreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,

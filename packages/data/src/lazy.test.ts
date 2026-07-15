@@ -34,7 +34,9 @@ describe('lazyDb (top-level-await-free handle)', () => {
     const handle = lazyDb(() => ({ driver: 'libsql', url: ':memory:' }), {
       init: async (h) => {
         inits++
-        await h.exec('CREATE TABLE messages (id INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, body TEXT)')
+        await h.exec(
+          'CREATE TABLE messages (id INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, body TEXT)',
+        )
         await h.exec("INSERT INTO messages (author, body) VALUES ('Ada', 'hi')")
       },
     })
@@ -47,13 +49,12 @@ describe('lazyDb (top-level-await-free handle)', () => {
   })
 
   it('drives Drizzle via the deferred proxy: insert().returning() + select().from().where()', async () => {
-    const handle = lazyDb(
-      () => ({ driver: 'libsql', url: ':memory:' }),
-      {
-        init: (h) =>
-          h.exec('CREATE TABLE messages (id INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT NOT NULL, body TEXT NOT NULL)'),
-      },
-    )
+    const handle = lazyDb(() => ({ driver: 'libsql', url: ':memory:' }), {
+      init: (h) =>
+        h.exec(
+          'CREATE TABLE messages (id INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT NOT NULL, body TEXT NOT NULL)',
+        ),
+    })
     const db = handle.db
 
     // insert().values().returning() — the /api/messages POST path
@@ -71,6 +72,44 @@ describe('lazyDb (top-level-await-free handle)', () => {
     expect(one).toHaveLength(1)
     expect(one[0]?.body).toBe('first')
 
+    await handle.close()
+  })
+})
+
+describe('shutdown-hook self-registration (#25)', () => {
+  const KEY = '__APEX_SHUTDOWN_HOOKS__'
+  const hooks = () => {
+    const g = globalThis as Record<string, unknown>
+    g[KEY] ??= new Set()
+    return g[KEY] as Set<() => unknown>
+  }
+
+  beforeEach(() => {
+    globalThis.__APEX_DEVICE__ = true // sql.js backend, no native driver needed
+    hooks().clear()
+  })
+  afterEach(() => {
+    globalThis.__APEX_DEVICE__ = undefined
+    hooks().clear()
+  })
+
+  it('lazyDb registers a close hook on FIRST OPEN, not at construction', async () => {
+    // NOTE: on-device registration is skipped by design — so run this bit off-device
+    // with a libsql :memory: handle instead? sql.js needs no driver: temporarily
+    // clear the device flag around createDb to exercise the registration path.
+    globalThis.__APEX_DEVICE__ = undefined
+    const handle = lazyDb(() => ({ driver: 'libsql', url: ':memory:' }))
+    expect(hooks().size).toBe(0) // constructing a lazy handle opens nothing
+    await handle.exec('CREATE TABLE t (id INTEGER)') // first use → opens → registers
+    expect(hooks().size).toBe(1)
+    await handle.close() // manual close deregisters (no double-close via hooks)
+    expect(hooks().size).toBe(0)
+  })
+
+  it('on-device handles do NOT register (no process signals on mobile)', async () => {
+    const handle = lazyDb(() => ({ driver: 'libsql', url: ':memory:' }))
+    await handle.exec('CREATE TABLE t (id INTEGER)')
+    expect(hooks().size).toBe(0)
     await handle.close()
   })
 })
