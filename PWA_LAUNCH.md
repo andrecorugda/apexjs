@@ -20,8 +20,10 @@ export default defineConfig({
 ```
 
 That's the whole feature. One config block — or just `apex extend pwa` — and `apex build` makes
-your app **installable** (home screen, dock, taskbar — a real app window, no browser chrome) and
-**offline-capable** (open it in airplane mode; it renders).
+your app **installable** and **offline-capable** — and not just on phones: it installs on the
+**desktop** too (Chrome/Edge on Windows, macOS, Linux → its own window, a taskbar/dock icon) and on
+**Android** (home screen). iOS installs via Safari's "Add to Home Screen" (no automatic prompt —
+Apple's rule, not ours). Open any of them in airplane mode; they render.
 
 No plugin. No workbox config. No new dependencies. Zero.
 

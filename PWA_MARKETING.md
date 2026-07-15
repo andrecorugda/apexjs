@@ -17,6 +17,7 @@ codebase → web, PWA, native mobile.**
 
 **Taglines:**
 - Installs like an app. Works offline. One config block.
+- Desktop, Android, iOS — one build installs everywhere.
 - `pwa: { name: 'My App' }` — that's the whole setup.
 - Zero-dependency PWA.
 - One codebase. Web, PWA, and the phone.
@@ -138,6 +139,10 @@ codebase → web, PWA, native mobile.**
 
 ## 6. FAQ / talking points
 
+- **"Phone only?"** No — desktop is PWA's sweet spot: Chrome/Edge on Windows/macOS/Linux install it
+  as a real windowed app (taskbar/dock/Start menu). Android gets a home-screen install prompt; iOS
+  installs via Safari's Share → "Add to Home Screen" (no automatic prompt on iOS — platform rule).
+  One build covers all of them.
 - **"Why not vite-plugin-pwa?"** Apex has no `index.html` for a Vite plugin to transform (shells
   are framework-built), and the precache list is fully known at build time — a generated worker is
   smaller and dependency-free. Deliberate, documented choice.
