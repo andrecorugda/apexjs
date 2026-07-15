@@ -164,14 +164,12 @@ export async function createTestApp(opts: CreateTestAppOptions): Promise<TestApp
   }
   app.use(
     '/api',
-    createApiHandler(
-      entries,
-      config,
-      auth,
-      idempotencyStore ? { idempotency: { store: idempotencyStore } } : undefined,
-    ),
+    createApiHandler(entries, config, auth, {
+      exposeErrors: true, // tests assert real messages
+      ...(idempotencyStore ? { idempotency: { store: idempotencyStore } } : {}),
+    }),
   )
-  app.use('/mcp', createMcpHandler(entries, config, auth))
+  app.use('/mcp', createMcpHandler(entries, config, auth, { exposeErrors: true }))
 
   const server: Server = createServer(toNodeListener(app))
   await new Promise<void>((r) => server.listen(0, r))

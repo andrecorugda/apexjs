@@ -21,6 +21,7 @@ import { toComponentEntry } from '../components/registry.js'
 import { applyEnvToRuntimeConfig } from '../config/resolve.js'
 import type { PwaConfig, RuntimeConfig } from '../config/runtime.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
+import type { ApexServerHooks, ErrorContext, RequestLogEntry } from '../hooks/define.js'
 import { createI18n, resolveLocale } from '../i18n/index.js'
 import { loadMessages } from '../i18n/run.js'
 import { renderIslandsPage } from '../islands/render.js'
@@ -29,6 +30,7 @@ import type { Middleware } from '../middleware/define.js'
 import { runMiddleware } from '../middleware/run.js'
 import { matchRoute, type RouteDef } from '../routing/router.js'
 import type { KvStore } from '../security/kvStore.js'
+import { gracefulShutdown, onShutdown } from './shutdown.js'
 
 /** The build manifest written by `apex build --server` to `<dist>/apex-manifest.json`. */
 export interface ProdManifest {
@@ -52,6 +54,8 @@ export interface ProdManifest {
   loadingHtml?: string
   /** PWA config baked at build — the runtime SSR shell links the manifest + worker. */
   pwa?: PwaConfig
+  /** Observability hooks module (server/hooks.ts), if the app defined one. */
+  hooks?: { serverFile: string }
 }
 
 const MIME: Record<string, string> = {
@@ -71,6 +75,8 @@ const MIME: Record<string, string> = {
 export interface ProdServerOptions {
   dir: string
   port?: number
+  /** Emit one JSON log line per request (default true for `apex start`; APEX_LOG=off silences). */
+  requestLog?: boolean
 }
 
 /**
@@ -92,6 +98,13 @@ export async function createProdApp(options: {
    * instances — e.g. Redis-backed. Default: in-memory (correct for a single process).
    */
   idempotencyStore?: KvStore
+  /**
+   * Emit one JSON line per request (`{time, method, path, status, ms}`) to stdout.
+   * Default false — `apex start` turns it on; serverless embedders opt in.
+   */
+  requestLog?: boolean
+  /** Programmatic observability hooks — merged OVER the app's server/hooks.ts exports. */
+  hooks?: ApexServerHooks
 }): Promise<App> {
   const dir = options.dir
   const manifest = JSON.parse(readFileSync(join(dir, 'apex-manifest.json'), 'utf8')) as ProdManifest
@@ -140,6 +153,19 @@ export async function createProdApp(options: {
     if (mod.default && typeof mod.default.resolve === 'function') auth = mod.default
   }
 
+  // Observability hooks (server/hooks.ts) + programmatic overrides (#25).
+  let fileHooks: ApexServerHooks = {}
+  if (manifest.hooks) {
+    const mod = await importServer(manifest.hooks.serverFile)
+    fileHooks = (mod.default ?? mod) as ApexServerHooks
+  }
+  const hooks: ApexServerHooks = { ...fileHooks, ...options.hooks }
+  if (hooks.onShutdown) onShutdown(hooks.onShutdown)
+  const reportError = (error: unknown, ctx: ErrorContext) => {
+    if (hooks.onError) hooks.onError(error, ctx)
+    else console.error(`[apex] ${ctx.kind}${ctx.path ? ` ${ctx.path}` : ''} error:`, error)
+  }
+
   // i18n: message catalogs were copied to <dir>/locales by the build.
   const i18nCfg = manifest.i18n
   const messages = i18nCfg ? loadMessages(dir, i18nCfg.locales) : {}
@@ -155,7 +181,50 @@ export async function createProdApp(options: {
   const loadModule = (id: string) =>
     importServer(serverFileFor.get(id) as string) as Promise<PageModule>
 
-  const app = createApp()
+  const app = createApp({
+    // Route h3-boundary errors (anything not caught below) to the hooks. h3's default
+    // response is already stack-free; this adds the server-side reporting.
+    onError: (error, event) => {
+      reportError(error, { kind: 'http', path: event.path, method: event.method })
+    },
+  })
+
+  // Liveness probe — first, before static/auth/middleware (must never touch DB or auth).
+  // Liveness only (no readiness/DB ping); an app page at /health is shadowed (exact match).
+  app.use(
+    defineEventHandler((event) => {
+      const path = getRequestURL(event).pathname
+      if (event.method === 'GET' && (path === '/health' || path === '/healthz')) {
+        setResponseHeader(event, 'Content-Type', 'application/json')
+        return JSON.stringify({ status: 'ok', uptime: process.uptime() })
+      }
+    }),
+  )
+
+  // Request log: one JSON line per completed request (skips the health probes' noise).
+  // hooks.onRequest replaces the default stdout line.
+  if (options.requestLog || hooks.onRequest) {
+    app.use(
+      defineEventHandler((event) => {
+        const res = event.node?.res
+        if (!res) return // toWebHandler/mobile mode — no Node response to observe
+        const path = getRequestURL(event).pathname
+        if (path === '/health' || path === '/healthz') return
+        const startedAt = Date.now()
+        res.on('finish', () => {
+          const entry: RequestLogEntry = {
+            time: new Date().toISOString(),
+            method: event.method,
+            path,
+            status: res.statusCode,
+            ms: Date.now() - startedAt,
+          }
+          if (hooks.onRequest) hooks.onRequest(entry)
+          else process.stdout.write(`${JSON.stringify(entry)}\n`)
+        })
+      }),
+    )
+  }
 
   // Static assets (client bundles + public files) under <dir>.
   app.use(
@@ -220,14 +289,21 @@ export async function createProdApp(options: {
   if (apiEntries.length)
     app.use(
       '/api',
-      createApiHandler(
-        apiEntries,
-        runtimeConfig,
-        auth,
-        options.idempotencyStore ? { idempotency: { store: options.idempotencyStore } } : undefined,
-      ),
+      createApiHandler(apiEntries, runtimeConfig, auth, {
+        // Production default: clients get a generic 500; the detail goes to the hooks.
+        exposeErrors: false,
+        onError: reportError,
+        ...(options.idempotencyStore ? { idempotency: { store: options.idempotencyStore } } : {}),
+      }),
     )
-  if (hasMcpRoutes(apiEntries)) app.use('/mcp', createMcpHandler(apiEntries, runtimeConfig, auth))
+  if (hasMcpRoutes(apiEntries))
+    app.use(
+      '/mcp',
+      createMcpHandler(apiEntries, runtimeConfig, auth, {
+        exposeErrors: false,
+        onError: reportError,
+      }),
+    )
 
   app.use(
     defineEventHandler(async (event) => {
@@ -242,25 +318,33 @@ export async function createProdApp(options: {
       }
       const route = manifest.routes.find((r) => r.pageId === matched.pageId)
       const render = manifest.islands ? renderIslandsPage : renderPage
-      const html = await render({
-        loadModule,
-        pageId: matched.pageId,
-        params: matched.params,
-        url,
-        registry,
-        componentCss,
-        clientHref: route?.clientHref,
-        clientCss: route?.clientCss,
-        layouts: layoutNames,
-        runtimeConfig,
-        publicConfig,
-        clientNav: manifest.clientNav !== false,
-        loadingHtml: manifest.loadingHtml,
-        pwa: manifest.pwa,
-        locale,
-        locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
-        errorPageId,
-      })
+      let html: string
+      try {
+        html = await render({
+          loadModule,
+          pageId: matched.pageId,
+          params: matched.params,
+          url,
+          registry,
+          componentCss,
+          clientHref: route?.clientHref,
+          clientCss: route?.clientCss,
+          layouts: layoutNames,
+          runtimeConfig,
+          publicConfig,
+          clientNav: manifest.clientNav !== false,
+          loadingHtml: manifest.loadingHtml,
+          pwa: manifest.pwa,
+          locale,
+          locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
+          errorPageId,
+        })
+      } catch (err) {
+        // Report the real failure (Sentry hook); the h3 boundary then answers safely
+        // (its production body carries no message or stack).
+        reportError(err, { kind: 'page', path: url, method: event.method })
+        throw err
+      }
       setResponseHeader(event, 'Content-Type', 'text/html')
       return html
     }),
@@ -289,10 +373,11 @@ export async function createProdWebHandler(options: ProdHandlerOptions) {
 /** Run the built app as a standalone Node HTTP server (used by `apex start`). */
 export async function startProdServer(
   options: ProdServerOptions,
-): Promise<{ server: Server; port: number }> {
+): Promise<{ server: Server; port: number; close: () => Promise<void> }> {
   const port = options.port ?? 3000
-  const app = await createProdApp({ dir: options.dir })
+  const app = await createProdApp({ dir: options.dir, requestLog: options.requestLog ?? true })
   const server = createHttpServer(toNodeListener(app))
   await new Promise<void>((resolve) => server.listen(port, resolve))
-  return { server, port }
+  // `close` drains in-flight requests, then runs shutdown hooks (DB pools close there).
+  return { server, port, close: () => gracefulShutdown(server) }
 }

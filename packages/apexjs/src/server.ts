@@ -11,6 +11,12 @@ export {
   type SessionOptions,
   sessionAuth,
 } from './auth/session.js'
+export {
+  type ApexServerHooks,
+  defineHooks,
+  type ErrorContext,
+  type RequestLogEntry,
+} from './hooks/define.js'
 // Production server building blocks — run the built app as a standalone server
 // or wrap it for a serverless target (Vercel, etc.).
 export {
@@ -19,6 +25,7 @@ export {
   createProdWebHandler,
   startProdServer,
 } from './prod/server.js'
+export { gracefulShutdown, onShutdown } from './prod/shutdown.js'
 export { checkCsrf, isCsrfSafe } from './security/csrf.js'
 export { applySecurityHeaders, securityHeaders } from './security/headers.js'
 export { createMemoryStore, type KvStore } from './security/kvStore.js'

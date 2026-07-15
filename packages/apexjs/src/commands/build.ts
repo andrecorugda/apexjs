@@ -433,6 +433,13 @@ async function buildServerTarget(
   const authServerFile = authSrc ? server.modules[`/${authSrc}`] : undefined
   const auth = authServerFile ? { serverFile: authServerFile } : undefined
 
+  // Observability hooks (server/hooks.ts), if the app defined one.
+  const hooksSrc = ['server/hooks.ts', 'server/hooks.js', 'server/hooks.mjs'].find((f) =>
+    existsSync(join(root, f)),
+  )
+  const hooksServerFile = hooksSrc ? server.modules[`/${hooksSrc}`] : undefined
+  const hooks = hooksServerFile ? { serverFile: hooksServerFile } : undefined
+
   const manifest = {
     islands: false,
     routes: routes.map((r) => ({
@@ -451,6 +458,7 @@ async function buildServerTarget(
     loadingHtml,
     i18n,
     pwa,
+    hooks,
   }
   writeFileSync(join(outDir, 'apex-manifest.json'), JSON.stringify(manifest, null, 2))
   // Copy message catalogs so the prod server can load them.

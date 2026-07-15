@@ -50,6 +50,11 @@ export async function buildServer(
     existsSync(join(root, f)),
   )
   if (authFile) ids.push(`/${authFile}`)
+  // Observability hooks (server/hooks.ts), if present — onRequest/onError/onShutdown.
+  const hooksFile = ['server/hooks.ts', 'server/hooks.js', 'server/hooks.mjs'].find((f) =>
+    existsSync(join(root, f)),
+  )
+  if (hooksFile) ids.push(`/${hooksFile}`)
 
   const input: Record<string, string> = {}
   for (const id of ids) input[entryName(id)] = join(root, id.slice(1))
