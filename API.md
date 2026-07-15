@@ -100,7 +100,7 @@ The command names + documented flags are part of the contract.
 
 These are contracts too — changing them breaks apps silently:
 
-- **`apex.config.ts`**: `runtimeConfig` (+ `public`), `i18n: { defaultLocale, locales }`.
+- **`apex.config.ts`**: `runtimeConfig` (+ `public`), `i18n: { defaultLocale, locales }`, `pwa: { name, … }` (🟡 Experimental — emits manifest.webmanifest + a precache service worker at build).
 - **File routing**: `pages/**/*.alpine`; `[param]` dynamic segments; `index.alpine` → parent path.
 - **`.alpine` SFC**: `<script server>` (`loader()` / `head()`), `<script client>`, `<template>`, `<style scoped>`. Scripts are **TypeScript-only** — `lang` is optional and defaults to `ts`; `lang="js"` is a parse error.
 - **Islands**: `client:load` / `client:visible` / `client:idle`.

@@ -89,8 +89,8 @@ exposes app **data**); this is **dev-time** codebase + framework awareness. Incl
   / `.cursor/rules` with Apex conventions + a live map of the project.
 Package `@apex-stack/compass`, CLI `apex compass`.
 
-### ◑ Phase E — Reach: on-device mobile + PWA
-*On-device mobile: **shipped**. PWA: planned.*
+### ● Phase E — Reach: on-device mobile + PWA
+*Both **shipped**.*
 - **On-device mobile (shipped — `@apex-stack/core@0.38.0`):** `apex build --mobile` packages an
   app so its **full SSR + API pipeline runs on the device** in a bare JS engine (Android
   `androidx.javascriptengine` / iOS JavaScriptCore) — offline, no server, no port: server-rendered
@@ -101,10 +101,13 @@ Package `@apex-stack/compass`, CLI `apex compass`.
   runs your server on the device. See [mobile docs](https://apexjs.site/docs/mobile.html). *Honest
   scope: a WebView app (not native-widget UI); the on-device DB is in-memory + snapshot-persisted;
   native device APIs (camera, …) need shell wiring.*
-- **PWA (foundation, planned):** integrate `vite-plugin-pwa` — emit a web manifest + Workbox
-  service worker (precache built assets → offline + installable); a `pwa` config block (name,
-  icons, theme, caching). Nuxt-parity (same engine). Static/islands get full offline; the server
-  build caches shell + assets.
+- **PWA (shipped — `@apex-stack/core@0.40.0`, 🟡):** a `pwa: { name, … }` config block makes
+  `apex build` emit `manifest.webmanifest` + a generated precache service worker; the HTML shells
+  link the manifest/theme-color and register the worker automatically. Static/islands precache the
+  whole dist (full offline); the server build precaches assets and serves pages network-first with
+  a cache fallback. `apex extend pwa` scaffolds default icons + the config block. *Design note:
+  hand-rolled ~60-line worker instead of `vite-plugin-pwa` — Apex has no index.html for a plugin
+  to transform (shells are string-built) and the precache list is known at build time; zero deps.*
 
 ### ◑ Phase D — Model behaviors ("traits")
 *Status: shipped in `@apex-stack/data@0.5.0` (see `AUTH_DESIGN.md` §8).* The model is the

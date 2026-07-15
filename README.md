@@ -47,6 +47,7 @@ Every major reactive library has a meta-framework — React has Next, Vue has Nu
 - **TypeScript by default.** Strict types end to end.
 - **AI-native, safely.** Every typed route is also an MCP tool — and one auth policy (`defineAuth` + `auth`/`can` + resource `access`/`scope`) governs pages, REST, **and** the MCP surface, so an AI can never exceed the logged-in user. See [AUTH_DESIGN.md](./AUTH_DESIGN.md).
 - **Runs on the phone.** `apex build --mobile` packages your app into an installable native shell that runs the *same* SSR, API routes, on-device SQLite, and auth on the device — fully offline, no server, no port. Same code as the web.
+- **Installable + offline on the web too (🟡).** A `pwa: { name }` config block makes `apex build` emit a web manifest + a precache service worker — `apex extend pwa` sets it up, icons included.
 
 ## Packages
 
