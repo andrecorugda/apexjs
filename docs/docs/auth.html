@@ -229,12 +229,29 @@
           <tbody>
             <tr><td>CSRF</td><td>Origin/Referer check on cookie-authenticated mutations (bearer/tokenless clients are exempt). Automatic in <code>/api</code>.</td></tr>
             <tr><td>Sessions</td><td>Sealed cookies — <code>HttpOnly</code>, <code>Secure</code>, <code>SameSite=Lax</code>; no cookie for anonymous callers.</td></tr>
-            <tr><td>Rate limiting</td><td><code>createRateLimiter({ limit, windowMs })</code> — pure, clock-injectable; key by IP with <code>rateLimitKey(event)</code>.</td></tr>
+            <tr><td>Rate limiting</td><td><code>createRateLimiter({ limit, windowMs })</code> — pure, clock-injectable; key by IP with <code>rateLimitKey(event)</code>. Pass a shared <code>store</code> (any <code>KvStore</code>) for one global counter across instances. <span class="pill">🟡 Experimental</span></td></tr>
+            <tr><td>Idempotency</td><td>Send <code>Idempotency-Key</code> on a POST/PUT/PATCH/DELETE — automatic in <code>/api</code>: the handler runs once and retries replay the cached response (<code>x-idempotent-replay: true</code>); a concurrent duplicate gets <code>409</code>; 5xx isn't cached, so retries re-execute. Keys are scoped per route + user. <span class="pill">🟡 Experimental</span></td></tr>
             <tr><td>Headers</td><td><code>securityHeaders()</code> / <code>applySecurityHeaders(event)</code> — conservative defaults, add your own CSP.</td></tr>
             <tr><td>SSR island</td><td>Loaders decide what serializes; never bake secrets into the hydration state.</td></tr>
           </tbody>
         </table>
       </div>
+
+      <p>
+        Both are backed by one pluggable primitive — <code>KvStore</code>, a tiny async key/value
+        store with TTL. The built-in <code>createMemoryStore()</code> is correct for a single
+        process; on serverless / multi-instance, implement <code>KvStore</code> over Redis (or any
+        shared store) and pass it in:
+      </p>
+      <pre><code>import { createProdApp, createRateLimiter, type KvStore } from '@apex-stack/core/server'
+
+const redisStore: KvStore = { /* get / set / incr(ttl on create) / delete */ }
+
+// One global rate-limit counter across every instance:
+const limiter = createRateLimiter({ limit: 100, windowMs: 60_000, store: redisStore })
+
+// Idempotency replay shared across instances:
+const app = await createProdApp({ dir: 'dist', idempotencyStore: redisStore })</code></pre>
 
       <h2 id="adapters">Adapters <a class="anchor" href="#adapters">#</a></h2>
       <p>

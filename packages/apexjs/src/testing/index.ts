@@ -18,6 +18,7 @@ import { loadAuth } from '../auth/run.js'
 import type { RuntimeConfig } from '../config/runtime.js'
 import { createMcpHandler } from '../mcp/server.js'
 import { loadMiddleware, runMiddleware } from '../middleware/run.js'
+import type { KvStore } from '../security/kvStore.js'
 
 /** Header the harness uses to inject a session — read by its test auth resolver. */
 const TEST_USER_HEADER = 'x-apex-test-user'
@@ -72,7 +73,13 @@ export type CreateTestAppOptions =
        */
       lenientRoutes?: boolean
     }
-  | { entries: ApiEntry[]; auth?: AuthConfig; config?: RuntimeConfig }
+  | {
+      entries: ApiEntry[]
+      auth?: AuthConfig
+      config?: RuntimeConfig
+      /** Isolated idempotency store for this app (default: the process-wide memory store). */
+      idempotencyStore?: KvStore
+    }
 
 const MCP_INIT = {
   protocolVersion: '2025-06-18',
@@ -96,10 +103,12 @@ export async function createTestApp(opts: CreateTestAppOptions): Promise<TestApp
   let appAuth: AuthConfig | undefined
   let middleware: Awaited<ReturnType<typeof loadMiddleware>> = []
   let vite: ViteDevServer | undefined
+  let idempotencyStore: KvStore | undefined
 
   if ('entries' in opts) {
     entries = opts.entries
     appAuth = opts.auth
+    idempotencyStore = opts.idempotencyStore
   } else {
     const root = opts.root
     // Load the app's modules through Vite's SSR loader (like `apex dev`) so
@@ -153,7 +162,15 @@ export async function createTestApp(opts: CreateTestAppOptions): Promise<TestApp
       }),
     )
   }
-  app.use('/api', createApiHandler(entries, config, auth))
+  app.use(
+    '/api',
+    createApiHandler(
+      entries,
+      config,
+      auth,
+      idempotencyStore ? { idempotency: { store: idempotencyStore } } : undefined,
+    ),
+  )
   app.use('/mcp', createMcpHandler(entries, config, auth))
 
   const server: Server = createServer(toNodeListener(app))

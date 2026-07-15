@@ -21,7 +21,9 @@ export {
 } from './prod/server.js'
 export { checkCsrf, isCsrfSafe } from './security/csrf.js'
 export { applySecurityHeaders, securityHeaders } from './security/headers.js'
+export { createMemoryStore, type KvStore } from './security/kvStore.js'
 export {
+  type AsyncRateLimiter,
   createRateLimiter,
   type RateLimiter,
   type RateLimitOptions,

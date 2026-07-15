@@ -17,6 +17,7 @@ import { getRequestUser } from '../auth/run.js'
 import type { RuntimeConfig } from '../config/runtime.js'
 import { checkCsrf } from '../security/csrf.js'
 import type { ApexRoute, HttpMethod } from './defineRoute.js'
+import { beginIdempotency, type IdempotencyOptions } from './idempotency.js'
 import { type ApexResource, isApexResource } from './resource.js'
 
 interface Segment {
@@ -150,11 +151,17 @@ export function matchApi(entries: ApiEntry[], path: string, method: string): Mat
   return null
 }
 
+export interface ApiHandlerOptions {
+  /** Idempotency tuning — pass a shared `store` for multi-instance deployments. */
+  idempotency?: IdempotencyOptions
+}
+
 /** A single h3 handler that routes, validates, and dispatches all `/api/*` requests. */
 export function createApiHandler(
   entries: ApiEntry[],
   config?: RuntimeConfig,
   auth?: AuthConfig,
+  opts?: ApiHandlerOptions,
 ): EventHandler {
   return defineEventHandler(async (event) => {
     const url = getRequestURL(event)
@@ -196,6 +203,26 @@ export function createApiHandler(
       return { error: decision.message }
     }
 
+    // Idempotency (#49): a mutation carrying an `Idempotency-Key` header runs once and its
+    // outcome is replayed for retries. Deliberately AFTER auth — keys are user-scoped, so a
+    // caller must authenticate before it can see (or probe) a cached response.
+    const idem = await beginIdempotency(
+      event,
+      { method: entry.method, path: url.pathname },
+      user,
+      opts?.idempotency,
+    )
+    if (idem?.kind === 'replay') {
+      setResponseHeader(event, 'x-idempotent-replay', 'true')
+      setResponseHeader(event, 'Content-Type', 'application/json')
+      setResponseStatus(event, idem.status)
+      return JSON.stringify(idem.body ?? null)
+    }
+    if (idem?.kind === 'conflict') {
+      setResponseStatus(event, 409)
+      return { error: 'request in progress' }
+    }
+
     let result: unknown
     try {
       result = await entry.route.handler({
@@ -207,6 +234,9 @@ export function createApiHandler(
         event,
       })
     } catch (err) {
+      // A thrown handler is a transient failure — release the idempotency lock so the
+      // client's retry re-executes instead of being replayed a cached error.
+      if (idem?.kind === 'proceed') await idem.release()
       // Surface the underlying error (esp. the common "table doesn't exist yet")
       // instead of an opaque 500 with an empty stack. The driver's real reason
       // (e.g. "no such table: event") is usually on `.cause`, not the top-level
@@ -228,6 +258,13 @@ export function createApiHandler(
     // default to 200 when the handler left a success status.
     setResponseHeader(event, 'Content-Type', 'application/json')
     if (getResponseStatus(event) < 400) setResponseStatus(event, 200)
+    if (idem?.kind === 'proceed') {
+      const status = getResponseStatus(event)
+      // Cache deterministic outcomes (2xx–4xx); a handler-set 5xx is transient — release so
+      // a retry re-executes.
+      if (status < 500) await idem.commit(status, result ?? null)
+      else await idem.release()
+    }
     return JSON.stringify(result ?? null)
   })
 }
