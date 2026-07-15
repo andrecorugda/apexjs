@@ -185,6 +185,17 @@ const main = defineCommand({
               `\n  ${c.yellow('⚠')}  Could not add ${key} — run ${c.cyan(`npx apex extend ${key}`)} yourself.\n`,
             )
         }
+        // Features merge new deps into package.json (e.g. @apex-stack/data) — install them
+        // NOW, or the first `apex dev` crashes with ERR_MODULE_NOT_FOUND.
+        if (applied.length) {
+          console.log(`  Installing feature dependencies with ${c.cyan(pm)}…\n`)
+          const installArgs = pm === 'npm' ? ['install', '--no-audit', '--no-fund'] : ['install']
+          if (!run(pm, installArgs, target)) {
+            console.log(
+              `\n  ${c.yellow('⚠')}  Feature dependency install failed — run ${c.cyan(`${pm} install`)} in the app.\n`,
+            )
+          }
+        }
       } else {
         // No deps on disk (--no-install or a failed install) → extend can't run.
         console.log(
