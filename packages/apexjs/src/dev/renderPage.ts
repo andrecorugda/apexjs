@@ -4,8 +4,13 @@ import {
   renderFragment,
   stateIsland,
 } from '@apex-stack/kit'
-import { pwaHeadTags, pwaRegisterScript } from '../build/pwa.js'
-import { clientConfigScript, type PwaConfig, type RuntimeConfig } from '../config/runtime.js'
+import {
+  clientConfigScript,
+  type PwaConfig,
+  pwaHeadTags,
+  pwaRegisterScript,
+  type RuntimeConfig,
+} from '../config/runtime.js'
 import { type LoadedStore, storesInitialState } from '../stores/loader.js'
 
 /** The shape a compiled `.alpine` SSR module exports (see @apex-stack/vite). */

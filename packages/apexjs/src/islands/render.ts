@@ -1,6 +1,11 @@
 import { type ComponentRegistry, renderIslands } from '@apex-stack/kit'
-import { pwaHeadTags, pwaRegisterScript } from '../build/pwa.js'
-import { clientConfigScript, type PwaConfig, type RuntimeConfig } from '../config/runtime.js'
+import {
+  clientConfigScript,
+  type PwaConfig,
+  pwaHeadTags,
+  pwaRegisterScript,
+  type RuntimeConfig,
+} from '../config/runtime.js'
 import { type PageModule, renderHead } from '../dev/renderPage.js'
 
 const SLOT_RE = /<slot\b[^>]*>[\s\S]*?<\/slot>/

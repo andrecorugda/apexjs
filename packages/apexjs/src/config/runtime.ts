@@ -57,6 +57,21 @@ export interface PwaConfig {
   icons?: Array<{ src: string; sizes: string; type?: string; purpose?: string }>
 }
 
+/**
+ * The `<head>` fragments the HTML shells inject when `pwa` is configured. Lives here (not in
+ * build/pwa.ts) so the RENDERERS — which also run inside the mobile bundle on a bare engine —
+ * never import node:fs/node:crypto at module level.
+ */
+export function pwaHeadTags(pwa: PwaConfig): string {
+  const theme = pwa.themeColor ?? '#0a0e1a'
+  return `<link rel="manifest" href="/manifest.webmanifest" />\n  <meta name="theme-color" content="${theme}" />`
+}
+
+/** The service-worker registration snippet the shells embed when `pwa` is configured. */
+export function pwaRegisterScript(): string {
+  return `<script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js'))</script>`
+}
+
 /** Author an `apex.config.ts`. Identity function — exists for types + discoverability. */
 export function defineConfig(config: ApexConfig): ApexConfig {
   return config

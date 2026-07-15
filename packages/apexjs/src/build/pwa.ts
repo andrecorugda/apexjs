@@ -8,6 +8,10 @@ import { readdirSync, statSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import type { PwaConfig } from '../config/runtime.js'
 
+// Re-exported for convenience — defined in config/runtime.ts (dependency-light) so the
+// renderers can import them without dragging node:fs/crypto into the mobile bundle.
+export { pwaHeadTags, pwaRegisterScript } from '../config/runtime.js'
+
 /** The default icon set `apex extend pwa` scaffolds into `public/icons/`. */
 const DEFAULT_ICONS = [
   { src: '/icons/pwa-192.png', sizes: '192x192', type: 'image/png' },
@@ -127,16 +131,6 @@ self.addEventListener('fetch', (e) => {
   )
 })
 `
-}
-
-/** The HTML fragments the shells inject when `pwa` is configured. */
-export function pwaHeadTags(pwa: PwaConfig): string {
-  const theme = pwa.themeColor ?? '#0a0e1a'
-  return `<link rel="manifest" href="/manifest.webmanifest" />\n  <meta name="theme-color" content="${theme}" />`
-}
-
-export function pwaRegisterScript(): string {
-  return `<script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js'))</script>`
 }
 
 /** Write `manifest.webmanifest` + `sw.js` into a built `dist` dir. Returns the file count precached. */
