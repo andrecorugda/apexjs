@@ -1,5 +1,12 @@
 # @apex-stack/core
 
+## 0.40.2
+
+### Patch Changes
+
+- 845800c: `apex build`: retry clearing `dist/` on Windows `EBUSY` (transient file locks right after a
+  serve/build no longer fail the first build attempt).
+
 ## 0.40.1
 
 ### Patch Changes
