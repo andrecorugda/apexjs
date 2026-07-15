@@ -173,7 +173,8 @@ export const buildCommand = defineCommand({
   async run({ args }) {
     const root = resolve(process.cwd(), args.root)
     const outDir = resolve(root, args.outDir)
-    rmSync(outDir, { recursive: true, force: true })
+    // maxRetries/retryDelay: Windows can transiently hold dist (EBUSY) right after a serve/build.
+    rmSync(outDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
 
     const routes = scanPages(root)
     const staticRoutes = routes.filter((r: RouteDef) => !r.isDynamic)
