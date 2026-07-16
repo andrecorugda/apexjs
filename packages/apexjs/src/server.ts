@@ -49,6 +49,27 @@ export {
 } from './security/rateLimit.js'
 // Cache subsystem (memory + file drivers, TTL, tags).
 export * from './cache/index.js'
+// Background job queue (memory + database drivers, retries/backoff, scheduling).
+export {
+  buildMigrationSql as buildQueueMigrationSql,
+  createDatabaseDriver as createQueueDatabaseDriver,
+  createMemoryDriver as createQueueMemoryDriver,
+  createQueue,
+  defineJob,
+  type EnqueueOptions,
+  type JobContext,
+  type JobDefinition,
+  type JobRecord,
+  type JobStatus,
+  type ProcessResult,
+  type Queue,
+  type QueueConfig,
+  type QueueDbHandle,
+  type QueueDriver,
+  type SqlValue,
+  type WorkHandle,
+  type WorkOptions,
+} from './queue/index.js'
 // File/object storage (local + S3, signed URLs).
 export {
   createLocalStorage,

@@ -16,9 +16,9 @@ describe('query-power escape hatch (tableFor + handle.db)', () => {
       { region: 'NA', amount: 5 },
       { region: 'EU', amount: 7 },
     ])
-    const t = Sale.tableFor(h) as { region: unknown }
+    const t = Sale.tableFor(h) as { region: unknown; amount: unknown }
     const rows = (await h.db
-      .select({ region: t.region, total: sql<number>`sum(${(t as { amount: unknown }).amount})` })
+      .select({ region: t.region, total: sql<number>`sum(${t.amount})` })
       .from(t)
       .groupBy(t.region)
       .orderBy(t.region)) as Array<{ region: string; total: number }>

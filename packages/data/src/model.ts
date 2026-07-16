@@ -136,6 +136,9 @@ export interface DefineModelOptions {
   casts?: Record<string, Cast>
   /** Relationships for eager loading — `{ author: belongsTo(() => User, 'authorId'), comments: hasMany(() => Comment, 'postId') }`. */
   relations?: Record<string, RelationDef>
+  /** Enable optimistic locking on this integer column (declare it, e.g. `version: { type: 'int', default: 0 }`);
+   * `instance.save()` then guards on the loaded value and bumps it, throwing `StaleModelException` on conflict. */
+  optimisticLock?: string
 }
 
 /** A model: its schema derivations + a factory for its REST/MCP resource. */
@@ -427,5 +430,6 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
     hidden: opts.hidden ? new Set(opts.hidden) : undefined,
     casts: resolveCasts(opts.casts),
     relations: opts.relations,
+    versionColumn: opts.optimisticLock,
   }) as ApexModel
 }

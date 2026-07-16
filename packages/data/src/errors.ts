@@ -30,6 +30,19 @@ export class ModelNotFoundException extends ApexDataError {
   }
 }
 
+/** Thrown when an optimistic-lock `save()` loses (the row's version changed). Maps to HTTP 409. */
+export class StaleModelException extends ApexDataError {
+  override httpStatus = 409
+  constructor(
+    readonly model: string,
+    readonly id?: unknown,
+  ) {
+    super(
+      `Stale ${model}${id !== undefined ? ` #${String(id)}` : ''}: it was modified by someone else — reload and retry.`,
+    )
+  }
+}
+
 /** Wraps a driver error from a query/write, with model + op context. Maps to HTTP 500. */
 export class QueryException extends ApexDataError {
   constructor(

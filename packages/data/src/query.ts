@@ -33,7 +33,7 @@ import {
 import { z } from 'zod'
 import type { BehaviorHooks, FilterFn } from './behavior.js'
 import { Collection, collect } from './collection.js'
-import { guard, ModelNotFoundException } from './errors.js'
+import { guard, ModelNotFoundException, StaleModelException } from './errors.js'
 import type { ApexDbHandle, Dialect, ScopeFn } from './index.js'
 import type { FieldDef, ResolvedCast } from './model.js'
 import type { RelationDef } from './relations.js'
@@ -110,6 +110,8 @@ export interface ModelArConfig {
   casts?: Record<string, ResolvedCast>
   /** Relationships for eager loading via `.with(...)`. */
   relations?: Record<string, RelationDef>
+  /** Optimistic-lock column — `save()` guards on it and bumps it, throwing StaleModelException on conflict. */
+  versionColumn?: string
 }
 
 /** Eager-load named relations onto already-loaded parent rows — one batched query per relation. */
@@ -186,8 +188,16 @@ function makeInstance(cfg: ModelArConfig, handle: ApexDbHandle, attrs: Row): Mod
       if (k !== pk && this[k] !== state.original[k]) dirty[k] = this[k] as never
     }
     if (Object.keys(dirty).length) {
+      // Optimistic lock: guard on the loaded version and bump it; 0 rows updated ⇒ someone else won.
+      const vcol = cfg.versionColumn
+      let extra = eq(b.table[pk], this[pk])
+      if (vcol) {
+        extra = and(eq(b.table[pk], this[pk]), eq(b.table[vcol], state.original[vcol])) as typeof extra
+        dirty[vcol] = raw(`"${vcol}" + 1`)
+      }
       const data = prepareWrite(dirty, b.cols, cfg.insertShape, true, cfg.casts)
-      const row = await b.repo.update(eq(b.table[pk], this[pk]), data, null, this[pk] as number)
+      const row = await b.repo.update(extra, data, null, this[pk] as number)
+      if (!row && vcol) throw new StaleModelException(cfg.name, this[pk])
       if (row) Object.assign(this, row)
     }
     state.original = { ...this }

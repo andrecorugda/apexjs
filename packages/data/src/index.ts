@@ -47,7 +47,12 @@ export type {
 // Fluent result collection returned by model reads.
 export { Collection, collect } from './collection.js'
 // Typed data errors (Eloquent-style) — thrown by *OrFail + wrapped driver failures.
-export { ApexDataError, ModelNotFoundException, QueryException } from './errors.js'
+export {
+  ApexDataError,
+  ModelNotFoundException,
+  QueryException,
+  StaleModelException,
+} from './errors.js'
 // Relationships + eager loading (`.with(...)`).
 export { belongsTo, hasMany, hasOne, type RelationDef } from './relations.js'
 
