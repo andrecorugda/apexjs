@@ -70,6 +70,33 @@ export {
   type WorkHandle,
   type WorkOptions,
 } from './queue/index.js'
+// Mail (memory/http/smtp transports + presets + template helper).
+export * from './mail/index.js'
+// Real-time SSE broadcasting (pub/sub hub + h3 handler + browser client).
+export * from './realtime/index.js'
+// Authorization: roles+permissions (Spatie-style), opaque API tokens (Sanctum-style), auth flows.
+export * from './authz/index.js'
+// Multi-channel notifications (database channel + pluggable mail/custom channels).
+export {
+  buildMigrationSql as buildNotificationsMigrationSql,
+  createNotifier,
+  databaseChannel,
+  defineNotification,
+  type BoundNotification,
+  type Channel,
+  type ChannelInput,
+  type DatabaseChannel,
+  type DatabaseChannelConfig,
+  type Notifiable,
+  type NotificationContext,
+  type NotificationDbHandle,
+  type NotificationDescriptor,
+  type NotificationFactory,
+  type Notifier,
+  type NotifierChannels,
+  type NotifierConfig,
+  type StoredNotification,
+} from './notifications/index.js'
 // File/object storage (local + S3, signed URLs).
 export {
   createLocalStorage,
