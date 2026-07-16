@@ -323,6 +323,9 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           transformHtml: (u, doc) => vite.transformIndexHtml(u, doc),
         })
         setResponseHeader(event, 'Content-Type', 'text/html')
+        // Dynamic SSR HTML embeds per-request/session data — never serve a stale cached document
+        // (an edit would look un-saved until a hard refresh). Matches the prod handler.
+        setResponseHeader(event, 'Cache-Control', 'no-store')
         return html
       } catch (err) {
         const error = err as Error
