@@ -1,9 +1,10 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { type ApexResource, type ApexUser, defineApexRoute } from '@apex-stack/core'
-import { and, eq, type SQL } from 'drizzle-orm'
+import { and, asc, desc, eq, type SQL, sql } from 'drizzle-orm'
 import { type ZodRawShape, z } from 'zod'
-import type { BehaviorHooks, FilterFn, HookCtx } from './behavior.js'
+import type { BehaviorHooks, FilterFn } from './behavior.js'
+import { repository } from './repository.js'
 
 export type { Behavior, BehaviorHooks, FilterFn, HookCtx } from './behavior.js'
 // Model behaviors ("traits") — composable fields/access/scope/hooks. AUTH_DESIGN.md §8.
@@ -31,6 +32,29 @@ export type {
 } from './model.js'
 // defineModel — single source of truth: fields → table + zod + migration + resource.
 export { defineModel } from './model.js'
+// Active-record query layer (P1): raw() escape hatch + the chainable QueryBuilder.
+export { QueryBuilder, raw, Raw } from './query.js'
+export type {
+  Cond,
+  ModelInstance,
+  Op,
+  QueryOpts,
+  Row,
+  UpsertOptions,
+  Values,
+  WhereConds,
+} from './query.js'
+// Fluent result collection returned by model reads.
+export { Collection, collect } from './collection.js'
+// Typed data errors (Eloquent-style) — thrown by *OrFail + wrapped driver failures.
+export {
+  ApexDataError,
+  ModelNotFoundException,
+  QueryException,
+  StaleModelException,
+} from './errors.js'
+// Relationships + eager loading (`.with(...)`).
+export { belongsTo, hasMany, hasOne, type RelationDef } from './relations.js'
 
 export type Dialect = 'sqlite' | 'postgres'
 
@@ -52,7 +76,48 @@ export interface ApexDbHandle {
    * (portable across SQLite/Postgres) instead of interpolating into the SQL string.
    */
   query(sql: string, params?: readonly SqlParam[]): Promise<Array<Record<string, unknown>>>
+  /**
+   * Run `fn` inside a database transaction: auto-commits when `fn` resolves, auto-rolls-back
+   * if it throws. `fn` receives a handle bound to the transaction — use it for AR / `db`
+   * writes (`await Order.create(tx, …)`) so a multi-step unit is atomic.
+   */
+  transaction<T>(fn: (tx: ApexDbHandle) => Promise<T> | T): Promise<T>
   close(): Promise<void>
+}
+
+/** Build a bound Drizzle statement from a `?`-placeholder string (for exec/query inside a tx). */
+function rawStmt(text: string, params?: readonly SqlParam[]): SQL {
+  if (!params || params.length === 0) return sql.raw(text)
+  const chunks: SQL[] = []
+  for (const [i, p] of text.split('?').entries()) {
+    if (p) chunks.push(sql.raw(p))
+    if (i < params.length) chunks.push(sql`${params[i]}`)
+  }
+  return sql.join(chunks)
+}
+
+/** Wrap a Drizzle transaction db as an ApexDbHandle so AR/repo + raw exec run inside the tx. */
+function txHandle(txDb: any, dialect: Dialect): ApexDbHandle {
+  return {
+    db: txDb,
+    dialect,
+    exec: async (s, params) => {
+      const stmt = rawStmt(s, params)
+      if (typeof txDb.run === 'function') await txDb.run(stmt)
+      else await txDb.execute(stmt)
+    },
+    query: async (s, params) => {
+      const stmt = rawStmt(s, params)
+      if (typeof txDb.all === 'function')
+        return (await txDb.all(stmt)) as Array<Record<string, unknown>>
+      const r = (await txDb.execute(stmt)) as unknown
+      return (Array.isArray(r) ? r : ((r as { rows?: unknown })?.rows ?? [])) as Array<
+        Record<string, unknown>
+      >
+    },
+    transaction: (fn) => txDb.transaction(async (inner: unknown) => fn(txHandle(inner, dialect))),
+    close: async () => {},
+  }
 }
 
 /**
@@ -197,8 +262,9 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
     const { createClient } = (await loadDriver('@libsql/client')) as LibsqlMod
     const { drizzle } = await import('drizzle-orm/libsql')
     const client = createClient({ url: libsqlUrl(cfg.url) })
+    const db = drizzle(client)
     return {
-      db: drizzle(client),
+      db,
       dialect: 'sqlite',
       exec: async (sql, params) => {
         if (params) await client.execute({ sql, args: params as never })
@@ -208,6 +274,7 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
         (await client.execute(params ? { sql, args: params as never } : sql)).rows as Array<
           Record<string, unknown>
         >,
+      transaction: (fn) => db.transaction(async (tx) => fn(txHandle(tx, 'sqlite'))),
       close: async () => {
         client.close()
       },
@@ -218,8 +285,9 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
     const postgres = ((await loadDriver('postgres')) as PostgresMod).default
     const { drizzle } = await import('drizzle-orm/postgres-js')
     const client = postgres(cfg.url, postgresOptions(cfg.url, cfg.options))
+    const db = drizzle(client)
     return {
-      db: drizzle(client),
+      db,
       dialect: 'postgres',
       exec: async (sql, params) => {
         if (params) await client.unsafe(toPgPlaceholders(sql), params as never)
@@ -229,6 +297,7 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
         (await (params
           ? client.unsafe(toPgPlaceholders(sql), params as never)
           : client.unsafe(sql))) as unknown as Array<Record<string, unknown>>,
+      transaction: (fn) => db.transaction(async (tx) => fn(txHandle(tx, 'postgres'))),
       close: async () => {
         await client.end()
       },
@@ -240,8 +309,9 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
   const { drizzle } = await import('drizzle-orm/pglite')
   // No dir → in-memory (memory://); a dir persists to disk.
   const client = new PGlite((cfg as { dir?: string }).dir ?? 'memory://')
+  const db = drizzle(client)
   return {
-    db: drizzle(client),
+    db,
     dialect: 'postgres',
     exec: async (sql, params) => {
       if (params) await client.query(toPgPlaceholders(sql), params as never[])
@@ -250,6 +320,7 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
     query: async (sql, params) =>
       (await (params ? client.query(toPgPlaceholders(sql), params as never[]) : client.query(sql)))
         .rows as Array<Record<string, unknown>>,
+    transaction: (fn) => db.transaction(async (tx) => fn(txHandle(tx, 'postgres'))),
     close: async () => {
       await client.close()
     },
@@ -379,6 +450,8 @@ export interface DefineResourceOptions {
   filters?: FilterFn[]
   /** If set, DELETE soft-deletes by stamping this column instead of removing the row. */
   softDelete?: string
+  /** Columns stripped from every response (list/get/create/update) — e.g. `password`, `secret`. */
+  hidden?: string[]
   /** The full db handle — passed to hooks (e.g. `auditable` writes a companion table). */
   handle?: ApexDbHandle
 }
@@ -394,39 +467,30 @@ const isRule = (x: unknown): x is AccessRule => typeof x === 'string' || typeof 
  * per caller — both enforced identically over REST and MCP.
  */
 export function defineResource(name: string, opts: DefineResourceOptions): ApexResource {
-  const { db, table, insert, pk = 'id', scope, softDelete } = opts
-  const hooks = opts.hooks ?? []
-  const filters = opts.filters ?? []
-  const pkCol = table[pk]
+  const { db, table, insert, pk = 'id' } = opts
+  // One shared write/read pipeline (hooks, scope, filters, softDelete) — the same
+  // instance the model's active-record layer uses, so REST/MCP and Model.* behave
+  // identically. See repository.ts.
+  const repo = repository({
+    name,
+    db,
+    table,
+    pk,
+    scope: opts.scope,
+    filters: opts.filters ?? [],
+    softDelete: opts.softDelete,
+    hooks: opts.hooks ?? [],
+    handle: opts.handle,
+  })
+  const pkCol = repo.pkCol
 
-  // Build a hook context. The db/table/handle internals are attached NON-enumerably so
-  // `JSON.stringify(ctx)` / `console.log(ctx)` in a user hook don't choke on Drizzle's
-  // circular refs — they're still reachable as `ctx.db` etc. for behaviors like auditable.
-  type CtxBase = Omit<HookCtx, 'db' | 'table' | 'handle' | 'name'>
-  const mkCtx = (base: CtxBase): HookCtx => {
-    const ctx = { ...base, name } as HookCtx
-    Object.defineProperties(ctx, {
-      db: { value: db, enumerable: false, configurable: true },
-      table: { value: table, enumerable: false, configurable: true },
-      handle: { value: opts.handle, enumerable: false, configurable: true },
-    })
-    return ctx
-  }
-  // after* hooks are best-effort side-effects: the write already committed, so a throw is
-  // logged and swallowed rather than 500-ing a successful op. (before* hooks still veto.)
-  const runAfter = async (
-    key: 'afterCreate' | 'afterUpdate' | 'afterDelete' | 'afterList' | 'afterGet',
-    ctx: HookCtx,
-  ): Promise<void> => {
-    for (const h of hooks) {
-      try {
-        await h[key]?.(ctx)
-      } catch (e) {
-        console.warn(
-          `[apex] ${key} failed (the ${ctx.op} already succeeded): ${(e as Error)?.message ?? e}`,
-        )
-      }
-    }
+  // Strip `hidden` columns (password/secret) from every response — REST + MCP.
+  const hiddenCols = new Set(opts.hidden ?? [])
+  const strip = <T extends Record<string, unknown> | null>(r: T): T => {
+    if (!r || !hiddenCols.size) return r
+    const o = { ...r }
+    for (const k of hiddenCols) delete o[k]
+    return o as T
   }
 
   // Gating posture: declaring `access` or `scope` opts the whole resource in;
@@ -449,25 +513,26 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
     return { auth: true, can: rule }
   }
 
-  /** All row conditions for a caller: equality scope + behavior filters (e.g. IS NULL). */
-  function whereConds(user: ApexUser | null): SQL[] {
-    const c: SQL[] = scope ? Object.entries(scope({ user })).map(([k, v]) => eq(table[k], v)) : []
-    for (const f of filters) {
-      const r = f({ user, table })
-      if (r) c.push(...(Array.isArray(r) ? r : [r]))
-    }
-    return c
-  }
-  /** Combine the pk match with the row conditions (so id-guessing can't cross scopes). */
-  function whereId(id: number, user: ApexUser | null) {
-    return and(eq(pkCol, id), ...whereConds(user))
-  }
-
   const updateShape: Record<string, unknown> = { id: z.coerce.number() }
   for (const [key, schema] of Object.entries(
     insert as unknown as Record<string, { optional(): unknown }>,
   )) {
     updateShape[key] = schema.optional()
+  }
+
+  // List query params: pagination + sort + per-column equality filters — also exposed on the
+  // `_list` MCP tool, so an AI can page/filter too. Backward-compatible: with no page/perPage,
+  // list returns a plain array; with either, a `{ data, total, page, perPage, lastPage }` envelope.
+  const MAX_PER_PAGE = 100
+  const listInput: Record<string, unknown> = {
+    page: z.coerce.number().int().min(1).optional(),
+    perPage: z.coerce.number().int().min(1).max(MAX_PER_PAGE).optional(),
+    sort: z.string().optional(),
+  }
+  for (const [key, schema] of Object.entries(
+    insert as unknown as Record<string, { optional(): unknown }>,
+  )) {
+    listInput[key] = schema.optional()
   }
 
   return {
@@ -479,17 +544,55 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
         mcpName: `${name}_list`,
         route: defineApexRoute({
           method: 'GET',
-          description: `List ${name}`,
+          description: `List ${name} — supports ?page & ?perPage (→ {data,total,…}), ?sort=-col, and ?<col>=value filters`,
+          input: listInput as ZodRawShape,
           mcp: true,
           ...gate('list'),
-          handler: async ({ user }) => {
-            const c = whereConds(user ?? null)
-            const q = db.select().from(table)
-            const rows = c.length ? await q.where(and(...c)) : await q
-            if (hooks.length) {
-              await runAfter('afterList', mkCtx({ op: 'list', user: user ?? null, data: {}, rows }))
+          handler: async ({ input, user }) => {
+            const q = (input ?? {}) as Record<string, unknown>
+            const conds = repo.scopeConds(user ?? null)
+            // Per-column equality filters (only over the model's own columns).
+            for (const key of Object.keys(insert)) {
+              const v = q[key]
+              if (v !== undefined && v !== '') conds.push(eq(table[key], v))
             }
-            return rows
+            const where = conds.length ? and(...conds) : undefined
+            // Sort: `?sort=-createdAt,name` (leading `-` = desc). Columns validated via the table.
+            const orders: SQL[] = []
+            if (typeof q.sort === 'string' && q.sort) {
+              for (const part of q.sort.split(',')) {
+                const dir = part.startsWith('-')
+                const col = part.replace(/^[-+]/, '').trim()
+                const c = table[col]
+                if (c && typeof c === 'object') orders.push(dir ? desc(c) : asc(c))
+              }
+            }
+            const build = () => {
+              let sel = db.select().from(table)
+              if (where) sel = sel.where(where)
+              if (orders.length) sel = sel.orderBy(...orders)
+              return sel
+            }
+            // No pagination requested → a plain array (backward-compatible).
+            if (q.page === undefined && q.perPage === undefined) {
+              const rows = await build()
+              await repo.runAfterList(rows, user ?? null)
+              return rows.map(strip)
+            }
+            const page = Number(q.page ?? 1)
+            const perPage = Number(q.perPage ?? 25)
+            const data = await build().limit(perPage).offset((page - 1) * perPage)
+            const totalQ = db.select({ n: sql<number>`count(*)` }).from(table)
+            const totalRows = where ? await totalQ.where(where) : await totalQ
+            const total = Number((totalRows[0] as { n: unknown } | undefined)?.n ?? 0)
+            await repo.runAfterList(data, user ?? null)
+            return {
+              data: data.map(strip),
+              total,
+              page,
+              perPage,
+              lastPage: Math.max(1, Math.ceil(total / perPage)),
+            }
           },
         }),
       },
@@ -509,15 +612,10 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
                 await db
                   .select()
                   .from(table)
-                  .where(whereId(id, user ?? null))
+                  .where(and(eq(pkCol, id), ...repo.scopeConds(user ?? null)))
               )[0] ?? null
-            if (row && hooks.length) {
-              await runAfter(
-                'afterGet',
-                mkCtx({ op: 'get', user: user ?? null, data: {}, row, id }),
-              )
-            }
-            return row
+            await repo.runAfterGet(row, id, user ?? null)
+            return strip(row)
           },
         }),
       },
@@ -530,24 +628,8 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           input: insert,
           mcp: true,
           ...gate('create'),
-          handler: async ({ input, user }) => {
-            // Stamp the caller's scope onto the row (owner can't be spoofed via input).
-            const data = {
-              ...(input as Record<string, unknown>),
-              ...(scope?.({ user: user ?? null }) ?? {}),
-            }
-            const ctx = mkCtx({ op: 'create', user: user ?? null, data })
-            for (const h of hooks) await h.beforeCreate?.(ctx)
-            const row = (
-              await db
-                .insert(table)
-                .values(ctx.data as never)
-                .returning()
-            )[0]
-            ctx.row = row
-            await runAfter('afterCreate', ctx)
-            return row
-          },
+          handler: async ({ input, user }) =>
+            strip(await repo.create(input as Record<string, unknown>, user ?? null)),
         }),
       },
       {
@@ -561,23 +643,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           ...gate('update'),
           handler: async ({ input, user }) => {
             const { id, ...fields } = input as { id: number } & Record<string, unknown>
-            // Never let a caller reassign a scoped column (e.g. change ownerId).
-            for (const k of Object.keys(scope?.({ user: user ?? null }) ?? {})) delete fields[k]
-            const ctx = mkCtx({ op: 'update', user: user ?? null, data: fields, id })
-            for (const h of hooks) await h.beforeUpdate?.(ctx)
-            const row =
-              (
-                await db
-                  .update(table)
-                  .set(ctx.data)
-                  .where(whereId(id, user ?? null))
-                  .returning()
-              )[0] ?? null
-            if (row) {
-              ctx.row = row
-              await runAfter('afterUpdate', ctx)
-            }
-            return row
+            return strip(await repo.update(eq(pkCol, id), fields, user ?? null, id))
           },
         }),
       },
@@ -592,24 +658,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           ...gate('delete'),
           handler: async ({ input, user }) => {
             const id = (input as { id: number }).id
-            const ctx = mkCtx({ op: 'delete', user: user ?? null, data: {}, id })
-            for (const h of hooks) await h.beforeDelete?.(ctx)
-            const where = whereId(id, user ?? null)
-            // Soft delete stamps a column; hard delete removes the row.
-            const row = softDelete
-              ? ((
-                  await db
-                    .update(table)
-                    .set({ [softDelete]: new Date().toISOString() })
-                    .where(where)
-                    .returning()
-                )[0] ?? null)
-              : ((await db.delete(table).where(where).returning())[0] ?? null)
-            if (row) {
-              ctx.row = row
-              await runAfter('afterDelete', ctx)
-            }
-            return row
+            return strip(await repo.remove(eq(pkCol, id), user ?? null, id))
           },
         }),
       },

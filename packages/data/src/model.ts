@@ -26,14 +26,77 @@ import {
   defineResource,
   type ScopeFn,
 } from './index.js'
+import type { Collection } from './collection.js'
+import type { RelationDef } from './relations.js'
+import {
+  attachActiveRecord,
+  type ModelInstance,
+  type QueryBuilder,
+  type QueryOpts,
+  type Row,
+  type UpsertOptions,
+  type Values,
+  type WhereConds,
+} from './query.js'
 
 export type FieldType = 'string' | 'text' | 'int' | 'float' | 'boolean' | 'timestamp' | 'json'
+
+/** A per-column value cast: a built-in name, or a custom get (on read) / set (on write) pair. */
+export type Cast =
+  | 'date'
+  | 'number'
+  | 'boolean'
+  | 'json'
+  | { get?: (v: unknown) => unknown; set?: (v: unknown) => unknown }
+
+/** Resolved cast — get applied when hydrating an instance, set applied before a write. */
+export interface ResolvedCast {
+  get?: (v: unknown) => unknown
+  set?: (v: unknown) => unknown
+}
+
+const BUILTIN_CASTS: Record<string, ResolvedCast> = {
+  date: {
+    get: (v) => (v == null ? v : new Date(v as string)),
+    set: (v) => (v instanceof Date ? v.toISOString() : v),
+  },
+  number: { get: (v) => (v == null ? v : Number(v)) },
+  boolean: { get: (v) => (v == null ? v : Boolean(typeof v === 'number' ? v : Number(v))) },
+  json: {
+    get: (v) => {
+      if (typeof v !== 'string') return v
+      try {
+        return JSON.parse(v)
+      } catch {
+        return v
+      }
+    },
+    set: (v) => (v != null && typeof v === 'object' ? JSON.stringify(v) : v),
+  },
+}
+
+function resolveCasts(casts?: Record<string, Cast>): Record<string, ResolvedCast> | undefined {
+  if (!casts) return undefined
+  const out: Record<string, ResolvedCast> = {}
+  for (const [k, spec] of Object.entries(casts)) {
+    out[k] = typeof spec === 'string' ? (BUILTIN_CASTS[spec] ?? {}) : spec
+  }
+  return out
+}
 
 export interface FieldDef {
   type: FieldType
   notNull?: boolean
   unique?: boolean
   default?: unknown
+  /** Create a single-column index on this column (real apps need FKs/filters indexed). */
+  index?: boolean
+  /** Foreign key: this column references `table`(`column`, default the pk `id`). */
+  references?: {
+    table: string
+    column?: string
+    onDelete?: 'cascade' | 'restrict' | 'set null' | 'no action'
+  }
 }
 
 /** A field is either a shorthand type string or a full definition. */
@@ -44,6 +107,9 @@ export interface DefineModelOptions {
   fields: Fields
   /** Primary key column name (auto-increment integer). Default `id`. */
   pk?: string
+  /** Composite / named indexes emitted after the table (e.g. `{ on: ['teamId','createdAt'] }`). */
+  indexes?: Array<{ on: string[]; unique?: boolean; name?: string }>
+
   /**
    * Per-operation authorization for the derived resource (reuses the route gate).
    * Declaring it (or `scope`) gates the whole resource — unlisted ops default to
@@ -58,6 +124,21 @@ export interface DefineModelOptions {
    * behaviors and AUTH_DESIGN.md §8.
    */
   use?: Behavior[]
+  /**
+   * Named, reusable query scopes — `Model.scope('published').all(h)`. Each receives a fresh
+   * QueryBuilder (+ any args) and returns it chained: `{ published: (q) => q.where({ status: 'published' }) }`.
+   */
+  scopes?: Record<string, (qb: QueryBuilder, ...args: any[]) => QueryBuilder>
+  /** Columns hidden from serialization — omitted by `instance.toJSON()` AND the REST/MCP resource
+   * responses (e.g. `password`, `secret`). */
+  hidden?: string[]
+  /** Per-column value casts applied on model reads/writes — `{ publishedAt: 'date', prefs: 'json' }`. */
+  casts?: Record<string, Cast>
+  /** Relationships for eager loading — `{ author: belongsTo(() => User, 'authorId'), comments: hasMany(() => Comment, 'postId') }`. */
+  relations?: Record<string, RelationDef>
+  /** Enable optimistic locking on this integer column (declare it, e.g. `version: { type: 'int', default: 0 }`);
+   * `instance.save()` then guards on the loaded value and bumps it, throwing `StaleModelException` on conflict. */
+  optimisticLock?: string
 }
 
 /** A model: its schema derivations + a factory for its REST/MCP resource. */
@@ -73,6 +154,79 @@ export interface ApexModel {
   migrationSql(dialect: Dialect): string
   /** Bind the model to a db handle → a REST + MCP resource (list/get/create/update/delete). */
   resource(handle: ApexDbHandle): ApexResource
+
+  // ── Active-record query API (P1) ────────────────────────────────────────
+  // Server code queries its own models without hand-writing SQL. Reads run through
+  // Drizzle (operators/ordering/pagination; bool+JSON hydrate); writes run through the
+  // SAME pipeline as REST/MCP — hooks (timestamps/observers/audit), row-level `scope`,
+  // soft-delete, and validation all fire. Column names are validated against `fields`
+  // (typo → throw, never an injection vector). `raw('plays + 1')` = a SQL expression.
+  // `opts.user` drives row-level `scope` isolation (omitted = trusted/admin).
+
+  /** All rows, as hydrated instances in a Collection. */
+  all(handle: ApexDbHandle, opts?: QueryOpts): Promise<Collection<ModelInstance>>
+  /** First row ordered by primary key, or `null`. */
+  first(handle: ApexDbHandle, opts?: QueryOpts): Promise<ModelInstance | null>
+  /** Row by primary key, or `null`. */
+  find(handle: ApexDbHandle, id: unknown, opts?: QueryOpts): Promise<ModelInstance | null>
+  /** First row, or throw `ModelNotFoundException` (HTTP 404). */
+  firstOrFail(handle: ApexDbHandle, opts?: QueryOpts): Promise<ModelInstance>
+  /** Row by primary key, or throw `ModelNotFoundException` (HTTP 404). */
+  findOrFail(handle: ApexDbHandle, id: unknown, opts?: QueryOpts): Promise<ModelInstance>
+  /** Start a filtered query: `Model.where({ team: 'A', plays: { gt: 5 } }).orderBy('plays','desc').all(h)`. */
+  where(conds: WhereConds): QueryBuilder
+  /** Start an ordered query. */
+  orderBy(col: string, dir?: 'asc' | 'desc'): QueryBuilder
+  /** Start a query from a named scope: `Model.scope('published').all(h)`. */
+  scope(name: string, ...args: unknown[]): QueryBuilder
+  /** Start a query eager-loading relations: `Model.with('author', 'comments').all(h)`. */
+  with(...names: string[]): QueryBuilder
+  /** The model's Drizzle table for this handle's dialect — escape hatch for joins/GROUP BY/
+   * subqueries via `handle.db` when the AR API can't express the query. */
+  tableFor(handle: ApexDbHandle): unknown
+  /** Count rows (optionally matching `conds`). */
+  count(handle: ApexDbHandle, conds?: WhereConds, opts?: QueryOpts): Promise<number>
+  /** Whether any row matches. */
+  exists(handle: ApexDbHandle, conds?: WhereConds, opts?: QueryOpts): Promise<boolean>
+  /** Delete rows matching `conds` (soft-delete aware); returns the number removed. */
+  delete(handle: ApexDbHandle, conds: WhereConds, opts?: QueryOpts): Promise<number>
+  /** Insert a row through the write pipeline (hooks/timestamps/scope/validation); returns it. */
+  create(handle: ApexDbHandle, values: Values, opts?: QueryOpts): Promise<ModelInstance>
+  /** Bulk-insert rows in one statement; scope-stamped, returns them. Fast — bypasses per-row hooks. */
+  insertMany(handle: ApexDbHandle, rows: Values[], opts?: QueryOpts): Promise<Row[]>
+  /** Bulk-update all rows matching `conds`; returns the count. Fast — bypasses per-row hooks. */
+  updateMany(
+    handle: ApexDbHandle,
+    conds: WhereConds,
+    values: Values,
+    opts?: QueryOpts,
+  ): Promise<number>
+  /** Update the row with the given primary key; returns it, or `null` if absent. */
+  update(
+    handle: ApexDbHandle,
+    id: unknown,
+    values: Values,
+    opts?: QueryOpts,
+  ): Promise<ModelInstance | null>
+  /** Update the first row matching `match`, else create `{ ...match, ...values }`. */
+  updateOrCreate(
+    handle: ApexDbHandle,
+    match: WhereConds,
+    values: Values,
+    opts?: QueryOpts,
+  ): Promise<ModelInstance>
+  /**
+   * Insert; on conflict with `conflictKeys`, update the other columns. `opts.keep`
+   * picks `max`/`min` per column instead of overwriting (e.g. a high-score row).
+   * Fast bulk primitive — bypasses per-row hooks (like Eloquent `upsert`). Use
+   * `updateOrCreate` when you need timestamps/observers.
+   */
+  upsert(
+    handle: ApexDbHandle,
+    conflictKeys: string[],
+    values: Values,
+    opts?: UpsertOptions,
+  ): Promise<ModelInstance | null>
 }
 
 function normalize(field: Field): FieldDef {
@@ -206,17 +360,41 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
     return dialect === 'sqlite' ? sqliteTable(name, cols as never) : pgTable(name, cols as never)
   }
 
+  // Quote identifiers so the DB column names match Drizzle's quoted names exactly — otherwise
+  // Postgres lower-cases unquoted camelCase (teamId → teamid) and every camelCase column (ownerId,
+  // createdAt, …) breaks. SQLite accepts double-quoted identifiers too.
+  const q = (id: string) => `"${id}"`
   const migrationSql = (dialect: Dialect): string => {
     const pkSql = dialect === 'sqlite' ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'SERIAL PRIMARY KEY'
-    const lines = [`  ${pk} ${pkSql}`]
+    const lines = [`  ${q(pk)} ${pkSql}`]
     for (const [key, def] of Object.entries(fields)) {
-      let line = `  ${key} ${sqlType(def, dialect)}`
+      let line = `  ${q(key)} ${sqlType(def, dialect)}`
       if (def.notNull) line += ' NOT NULL'
       if (def.unique) line += ' UNIQUE'
       if (def.default !== undefined) line += ` DEFAULT ${sqlDefault(def.default)}`
+      if (def.references) {
+        line += ` REFERENCES ${q(def.references.table)}(${q(def.references.column ?? 'id')})`
+        if (def.references.onDelete) line += ` ON DELETE ${def.references.onDelete.toUpperCase()}`
+      }
       lines.push(line)
     }
-    return `CREATE TABLE IF NOT EXISTS ${name} (\n${lines.join(',\n')}\n);`
+    let sql = `CREATE TABLE IF NOT EXISTS ${q(name)} (\n${lines.join(',\n')}\n);`
+    // Indexes — single-column (`field.index`) + composite (`opts.indexes`). FK columns and
+    // frequent filters need these or every query table-scans at scale.
+    const idx: string[] = []
+    for (const [key, def] of Object.entries(fields)) {
+      if (def.index)
+        idx.push(`CREATE INDEX IF NOT EXISTS idx_${name}_${key} ON ${q(name)} (${q(key)});`)
+    }
+    for (const i of opts.indexes ?? []) {
+      const cols = i.on.map(q).join(', ')
+      const iname = i.name ?? `idx_${name}_${i.on.join('_')}`
+      idx.push(
+        `CREATE ${i.unique ? 'UNIQUE ' : ''}INDEX IF NOT EXISTS ${iname} ON ${q(name)} (${cols});`,
+      )
+    }
+    if (idx.length) sql += `\n${idx.join('\n')}`
+    return sql
   }
 
   const resource = (handle: ApexDbHandle): ApexResource =>
@@ -230,8 +408,28 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
       filters: composed.filters,
       softDelete: composed.softDelete,
       hooks: composed.hooks,
+      hidden: opts.hidden,
       handle,
     })
 
-  return { name, pk, fields, insert, table, migrationSql, resource }
+  const model = { name, pk, fields, insert, table, migrationSql, resource }
+  // Attach the active-record statics (first/where/create/upsert/…). They share the
+  // model's composed behaviors — so Model.* writes fire the SAME hooks/scope/soft-delete
+  // pipeline as the REST/MCP resource (see repository.ts).
+  return attachActiveRecord(model, {
+    name,
+    pk,
+    fields,
+    table,
+    scope: composed.scope,
+    filters: composed.filters,
+    softDelete: composed.softDelete,
+    hooks: composed.hooks,
+    insertShape: insert,
+    scopes: opts.scopes,
+    hidden: opts.hidden ? new Set(opts.hidden) : undefined,
+    casts: resolveCasts(opts.casts),
+    relations: opts.relations,
+    versionColumn: opts.optimisticLock,
+  }) as ApexModel
 }

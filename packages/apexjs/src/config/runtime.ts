@@ -4,10 +4,19 @@
 // browser. The server-only loader (reads apex.config.ts + .env) lives in
 // ./resolve.ts and is never bundled to the client.
 
+// Type-only import (erased at build) — keeps this browser-safe module free of any node/h3 code.
+import type { SecurityConfig } from '../security/config.js'
+
 /** A runtime-config object. Top-level keys are private (server-only); `public` is exposed to the client. */
 export interface RuntimeConfig {
   /** Values under `public` are serialized into the page and readable in the browser. */
   public?: Record<string, unknown>
+  /**
+   * Production-server hardening knobs (security headers/CSP/HSTS, rate limiting, CORS, body-size
+   * cap, server timeouts). Server-only — never serialized to the client. Every layer is on by
+   * default; see {@link SecurityConfig}. Env-overridable via `APEX_SECURITY_*`.
+   */
+  security?: SecurityConfig
   [key: string]: unknown
 }
 

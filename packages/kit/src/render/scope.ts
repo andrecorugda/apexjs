@@ -50,6 +50,33 @@ export function createScopeProxy(layers: ScopeLayer[]): Record<PropertyKey, unkn
         if (typeof key === 'symbol') return false
         return findOwner(key) !== undefined
       },
+      // Enumeration traps mirror Alpine's `mergeProxies`, so `{...state}`,
+      // `Object.keys(state)` and `for (k in state)` see the merged layers during
+      // SSR expression evaluation (without them the underlying empty target is
+      // enumerated → nothing). Own enumerable string keys only, matching Alpine's
+      // `Object.keys(i)`-based union.
+      ownKeys() {
+        const keys = new Set<string>()
+        for (const layer of ordered) {
+          if (!layer) continue
+          for (const k of Object.keys(layer)) keys.add(k)
+        }
+        return Array.from(keys)
+      },
+      getOwnPropertyDescriptor(_t, key) {
+        // Search top-down so the descriptor matches what `get` returns.
+        for (let i = ordered.length - 1; i >= 0; i--) {
+          const layer = ordered[i]
+          if (layer && Object.prototype.hasOwnProperty.call(layer, key)) {
+            const desc = Object.getOwnPropertyDescriptor(layer, key)
+            // The proxy target is an empty `{}` that lacks this key, so the
+            // descriptor MUST be configurable or the invariant check throws.
+            if (desc) desc.configurable = true
+            return desc
+          }
+        }
+        return undefined
+      },
     },
   )
 }

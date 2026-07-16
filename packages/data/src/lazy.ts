@@ -104,6 +104,7 @@ export function lazyDb(
       await (await ensure()).exec(sql, params)
     },
     query: async (sql, params) => (await ensure()).query(sql, params),
+    transaction: async (fn) => (await ensure()).transaction(fn),
     close: async () => {
       if (ready) await (await ready).close()
     },

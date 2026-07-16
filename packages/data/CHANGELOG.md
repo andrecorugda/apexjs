@@ -1,5 +1,136 @@
 # @apex-stack/data
 
+## 0.11.0
+
+### Minor Changes
+
+- 1abe29e: Active-record query API on `defineModel` (P1), built on Drizzle + the shared write
+  pipeline. A model is now its own query builder AND its writes fire the same behaviors
+  as REST/MCP — no hand-written SQL, no bypass.
+
+  Reads (through the Drizzle builder, typed columns hydrate bool/JSON automatically):
+
+  - `Model.first(handle)` / `find(handle, id)` / `all(handle)`
+  - `Model.where({ team: 'A', plays: { gt: 5, lte: 100 }, tag: { in: [...] } }).orderBy(col, dir).limit(n).offset(m)`
+    with terminals `.all() | .first() | .count() | .exists() | .pluck(col) | .sum/avg/min/max(col) | .delete()`
+  - operators: eq/ne/gt/gte/lt/lte/like/in/notIn/isNull, plus `.orWhere(...)`
+
+  Writes (through the shared `repository()` pipeline — the SAME one `defineResource` uses):
+
+  - `Model.create/update/updateOrCreate(handle, …)` fire lifecycle hooks (timestamps,
+    observers, audit), apply row-level `scope` (owner stamped, tenant-isolated), respect
+    soft-delete, and validate the payload against the model's shape (mass-assignment safe).
+  - `Model.delete(handle, conds)` is soft-delete aware and hides trashed rows from reads.
+  - `Model.upsert(handle, conflictKeys, values, { keep: { col: 'max' } })` — portable
+    cross-dialect ON CONFLICT via Drizzle (fast bulk primitive; bypasses per-row hooks,
+    like Eloquent `upsert`).
+  - `opts.user` drives row-level scope isolation; `raw('plays + 1')` for a trusted expr.
+
+  Internally, `defineResource`'s write/read path was extracted into `repository()` and is
+  now shared with the active-record layer, so the two can't diverge. Verified identical on
+  sqlite (incl. on-device sql.js) and Postgres (pglite). Also exported: `raw`, `Raw`,
+  `QueryBuilder`, and the `Row` / `Values` / `WhereConds` / `Op` / `Cond` / `QueryOpts` /
+  `UpsertOptions` types.
+
+- 5b8006d: Bulk operations on models for imports/ETL: `Model.insertMany(handle, rows[])` inserts in
+  one statement (scope-stamped, returns the rows) and `Model.updateMany(handle, conds, values)`
+  updates every row matching `conds` (returns the count). Both are fast bulk primitives that
+  bypass per-row hooks (like Eloquent's bulk `insert`/`update`) — use `create`/`update` when you
+  need timestamps/observers.
+- 6d48a5f: Attribute casts: `defineModel('events', { fields: {...}, casts: { publishedAt: 'date', prefs: 'json' } })`.
+  Built-ins `date` / `number` / `boolean` / `json`, or a custom `{ get, set }` pair — `get` runs when
+  hydrating an instance (e.g. stored ISO string → `Date`), `set` runs before a write (e.g. `Date` →
+  ISO string, object → JSON). Applies to `Model.*` reads/writes on top of the column's storage type.
+- a179d4f: Model instances + Collections + serialization. Reads now return hydrated **instances**
+  (`Model.first/find`, `create/update/updateOrCreate`) and a **Collection** (`Model.all`,
+  `.where().all()`), matching Eloquent's feel:
+
+  - Instance methods: `save()` (persists only dirty attributes through the write pipeline —
+    hooks/timestamps/scope), `delete()` (soft-delete aware), `refresh()`, `isDirty(col?)`,
+    `changes()`, and `toJSON()`.
+  - `Collection<T>` extends Array (length/iteration/spread work) with `pluck`, `keyBy`,
+    `groupBy`, `sum`, `isEmpty`, `toArray`, `toJSON`; `.map`/`.filter` return plain arrays.
+  - **Serialization**: model `hidden: ['password', …]` omits those columns from
+    `instance.toJSON()`/`JSON.stringify` AND from every REST/MCP resource response
+    (list/get/create/update) — so secrets never leak over the API.
+
+  Exported: `Collection`, `collect`, and the `ModelInstance` type.
+
+- 7133e03: Concurrency + large-table helpers on the query builder: `.lockForUpdate()` emits
+  `SELECT … FOR UPDATE` on Postgres (use inside `handle.transaction` for pessimistic
+  locking; no-op on sqlite, which locks the whole db in a tx), and `.chunk(handle, size, fn)`
+  streams matching rows in batches so you can process big tables without loading them all.
+- 0686f5b: Named query scopes: define reusable, chainable query fragments on a model via
+  `scopes: { published: (q) => q.where({ status: 'published' }), top: (q, n) => q.orderBy('score','desc').limit(n) }`
+  and call them with `Model.scope('published').all(h)` or `Model.scope('top', 5).all(h)`.
+  An unknown scope name throws.
+- 5553ff5: Optimistic locking. Set `optimisticLock: 'version'` on a model (declare an int `version` column)
+  and `instance.save()` guards the UPDATE on the loaded version and bumps it — a concurrent write
+  that changed the row makes the save lose, throwing `StaleModelException` (HTTP 409) instead of
+  silently clobbering. Exported alongside the other typed errors.
+- 28b7a94: Query-power escape hatch: `Model.tableFor(handle)` returns the model's Drizzle table for the
+  handle's dialect, so joins / `GROUP BY` / aggregation / subqueries / window functions the
+  active-record API can't express are one `handle.db.select(...).from(Model.tableFor(handle))...`
+  away — with the full typed Drizzle builder.
+- b3725df: Relationships + eager loading (the biggest Eloquent gap). Declare relations on a model with
+  thunk refs, then eager-load them without N+1:
+
+  ```ts
+  const Post = defineModel("posts", {
+    fields: { title: "string", authorId: "int" },
+    relations: {
+      author: belongsTo(() => User, "authorId"),
+      comments: hasMany(() => Comment, "postId"),
+    },
+  });
+  const posts = await Post.with("author", "comments")
+    .orderBy("id", "asc")
+    .all(handle);
+  posts[0].author; // a User instance
+  posts[0].comments; // a Collection of Comment instances
+  ```
+
+  `hasMany` / `hasOne` / `belongsTo` supported; `.with(...)` batch-loads each relation in ONE
+  query keyed by the parent keys (N parents ⇒ 1 extra query, not N). Loaded relations attach as
+  instance properties and serialize with `toJSON`/`JSON.stringify`. (belongsToMany/pivot deferred.)
+
+- b7dfacb: Schema depth for real apps: field `index: true` (single-column index), field `references:
+{ table, column?, onDelete? }` (foreign keys with cascade/set-null/restrict), and a model-level
+  `indexes: [{ on: [...], unique?, name? }]` for composite/named indexes — all emitted by
+  `migrationSql`. Without indexes on FKs and hot filter columns, real queries table-scan.
+
+  Also fixes a latent Postgres bug: `migrationSql` now **quotes identifiers**, so camelCase
+  columns (`ownerId`, `teamId`, `createdAt`) match Drizzle's quoted names. Previously Postgres
+  lower-cased unquoted camelCase columns (`teamId` → `teamid`) and every camelCase column —
+  including the one `owned()` stamps — broke on Postgres.
+
+- b9acc88: Database transactions: `handle.transaction(async (tx) => { … })` — auto-commits when the
+  callback resolves, auto-rolls-back if it throws. The callback gets a handle bound to the
+  transaction, so AR/`db` writes inside it are atomic (`await Order.create(tx, …)`; a throw
+  undoes the whole unit). Works on libSQL/Postgres/PGlite via Drizzle, and on the on-device
+  sql.js backend via a manual BEGIN/COMMIT/ROLLBACK path (Drizzle's synchronous sql-js
+  transaction can't roll back an async callback body). Nested transactions use savepoints on
+  the server backends. Also threaded through `lazyDb`.
+- 5bc5c06: Eloquent-style error handling. Data operations no longer swallow errors or leak raw driver
+  failures: every query/write is wrapped so a driver error is rethrown as a `QueryException`
+  carrying the model + op and the original error as `.cause` (the server's `onError` hook logs
+  the full detail; the API masks it from clients). Missing rows throw `ModelNotFoundException`
+  via new `Model.findOrFail(handle, id)` / `Model.firstOrFail(handle)` / `builder.firstOrFail()`.
+  Both extend `ApexDataError` and carry an `httpStatus` (404 / 500) so the request layer can map
+  them. Exported: `ApexDataError`, `ModelNotFoundException`, `QueryException`.
+- 8176ac4: Resource list endpoints (REST + MCP `_list`) now support pagination, filtering, and
+  sorting via query params: `?page` & `?perPage` return a `{ data, total, page, perPage,
+lastPage }` envelope (perPage capped at 100), `?sort=-col,other` sorts (leading `-` =
+  desc), and `?<col>=value` filters by any of the model's columns. Backward-compatible —
+  with no `page`/`perPage`, list still returns a plain array. The params are also exposed
+  on the `_list` MCP tool, so an AI client can page and filter too.
+
+### Patch Changes
+
+- Updated dependencies [5553ff5]
+- Updated dependencies [43e5ac1]
+  - @apex-stack/core@0.42.0
+
 ## 0.10.0
 
 ### Minor Changes

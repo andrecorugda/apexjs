@@ -84,11 +84,12 @@ export async function renderComponent(input: RenderComponentInput): Promise<Rend
   const rootData: Record<string, unknown> = { ...authoredDefaults, ...loaderData }
 
   const idCounter = { n: 0 }
-  const magics = createMagics(root, idCounter, input.stores)
+  const stores = input.stores ?? {}
+  const magics = createMagics(root, idCounter, stores)
   const layers: ScopeLayer[] = [magics, rootData]
 
   stampScope(root, scopeId)
-  await walkChildren(root, layers, scopeId, document, registry)
+  await walkChildren(root, layers, scopeId, document, registry, stores)
 
   return { html: root.outerHTML, rootData }
 }
@@ -104,9 +105,16 @@ export async function renderFragment(
   data: Record<string, unknown>,
   scopeId: string,
   registry: ComponentRegistry = {},
+  stores: Record<string, unknown> = {},
 ): Promise<string> {
   const idCounter = { n: 0 }
-  return renderFragmentInternal(templateHtml, [createMagicsFor(idCounter), data], scopeId, registry)
+  return renderFragmentInternal(
+    templateHtml,
+    [createMagicsFor(idCounter, stores), data],
+    scopeId,
+    registry,
+    stores,
+  )
 }
 
 export type ClientDirective = 'load' | 'idle' | 'visible' | 'none'
@@ -135,13 +143,14 @@ export async function renderIslands(
   data: Record<string, unknown>,
   scopeId: string,
   registry: ComponentRegistry = {},
+  stores: Record<string, unknown> = {},
 ): Promise<RenderIslandsResult> {
   const prepared = rewriteComponentTags(templateHtml, Object.keys(registry))
   const { document } = parseHTML(`<!DOCTYPE html><html><body>${prepared}</body></html>`)
   const body = document.body
   const idCounter = { n: 0 }
-  const layers: ScopeLayer[] = [createMagics(body, idCounter), data]
-  await walkChildren(body, layers, scopeId, document, registry)
+  const layers: ScopeLayer[] = [createMagics(body, idCounter, stores), data]
+  await walkChildren(body, layers, scopeId, document, registry, stores)
 
   let hydratingCount = 0
   let nextId = 0
@@ -169,16 +178,20 @@ async function renderFragmentInternal(
   layers: ScopeLayer[],
   scopeId: string,
   registry: ComponentRegistry,
+  stores: Record<string, unknown> = {},
 ): Promise<string> {
   const prepared = rewriteComponentTags(templateHtml, Object.keys(registry))
   const { document } = parseHTML(`<!DOCTYPE html><html><body>${prepared}</body></html>`)
   const body = document.body
-  await walkChildren(body, layers, scopeId, document, registry)
+  await walkChildren(body, layers, scopeId, document, registry, stores)
   return body.innerHTML
 }
 
-function createMagicsFor(idCounter: { n: number }): ScopeLayer {
-  return createMagics(null, idCounter)
+function createMagicsFor(
+  idCounter: { n: number },
+  stores: Record<string, unknown> = {},
+): ScopeLayer {
+  return createMagics(null, idCounter, stores)
 }
 
 async function walkChildren(
@@ -187,13 +200,14 @@ async function walkChildren(
   scopeId: string,
   document: AnyEl,
   registry: ComponentRegistry,
+  stores: Record<string, unknown>,
 ): Promise<void> {
   // Snapshot children first — the walk mutates the tree (x-for/x-if insert clones,
   // components get replaced by their rendered output).
   const children = Array.from(parent.childNodes) as AnyEl[]
   for (const node of children) {
     if (node.nodeType !== ELEMENT_NODE) continue
-    await walkElement(node, layers, scopeId, document, registry)
+    await walkElement(node, layers, scopeId, document, registry, stores)
   }
 }
 
@@ -203,12 +217,13 @@ async function walkElement(
   scopeId: string,
   document: AnyEl,
   registry: ComponentRegistry,
+  stores: Record<string, unknown>,
 ): Promise<void> {
   const tag = String(el.tagName).toLowerCase()
 
   // Component usage (`<Counter/>` was rewritten to <apex-component data-apex-name>).
   if (tag === 'apex-component') {
-    await renderComponentInstance(el, layers, scopeId, document, registry)
+    await renderComponentInstance(el, layers, scopeId, document, registry, stores)
     return
   }
 
@@ -216,12 +231,12 @@ async function walkElement(
   if (tag === 'template') {
     const xFor = el.getAttribute('x-for')
     if (xFor != null) {
-      await renderFor(el, xFor, layers, scopeId, document, registry)
+      await renderFor(el, xFor, layers, scopeId, document, registry, stores)
       return
     }
     const xIf = el.getAttribute('x-if')
     if (xIf != null) {
-      await renderIf(el, xIf, layers, scopeId, document, registry)
+      await renderIf(el, xIf, layers, scopeId, document, registry, stores)
       return
     }
     // A plain <template> (no structural directive) is left untouched.
@@ -249,6 +264,11 @@ async function walkElement(
     if (target) applyBinding(el, target, attr.value, scoped)
   }
 
+  // x-model → emit the field's initial state server-side (Alpine binds the same
+  // value on the client). The x-model attribute is left in place for rebinding.
+  const xModel = el.getAttribute('x-model')
+  if (xModel != null) applyModel(el, tag, xModel, scoped)
+
   // x-show → inline display:none when falsy.
   const xShow = el.getAttribute('x-show')
   if (xShow != null && !evaluate(xShow, scoped)) {
@@ -265,8 +285,68 @@ async function walkElement(
   } else if (xText != null) {
     el.textContent = String(evaluate(xText, scoped) ?? '')
   } else {
-    await walkChildren(el, scoped, scopeId, document, registry)
+    await walkChildren(el, scoped, scopeId, document, registry, stores)
   }
+}
+
+/**
+ * Emit the SSR initial state for an `x-model` field, matching Alpine's own client
+ * `x-model` binding so controlled inputs don't flash empty before hydration.
+ * Only writes when the bound value is defined; the `x-model` attribute itself is
+ * preserved by the caller for client rebinding.
+ */
+function applyModel(el: AnyEl, tag: string, expr: string, scoped: ScopeLayer[]): void {
+  const value = evaluate(expr, scoped)
+  if (value === undefined) return
+
+  if (tag === 'textarea') {
+    el.textContent = stringifyModel(value)
+    return
+  }
+
+  if (tag === 'select') {
+    const multiple = el.hasAttribute('multiple')
+    for (const opt of Array.from(el.querySelectorAll('option')) as AnyEl[]) {
+      const optVal = opt.hasAttribute('value')
+        ? (opt.getAttribute('value') ?? '')
+        : (opt.textContent ?? '').trim()
+      const selected =
+        multiple && Array.isArray(value)
+          ? value.some((v) => String(v) === optVal)
+          : String(value) === optVal
+      if (selected) opt.setAttribute('selected', '')
+      else opt.removeAttribute('selected')
+    }
+    return
+  }
+
+  const type = (el.getAttribute('type') ?? 'text').toLowerCase()
+
+  if (tag === 'input' && type === 'checkbox') {
+    // Bound to an array → membership on the checkbox's `value`; else boolean.
+    const checked = Array.isArray(value)
+      ? value.some((v) => String(v) === (el.getAttribute('value') ?? 'on'))
+      : Boolean(value)
+    if (checked) el.setAttribute('checked', '')
+    else el.removeAttribute('checked')
+    return
+  }
+
+  if (tag === 'input' && type === 'radio') {
+    const checked = String(value) === (el.getAttribute('value') ?? '')
+    if (checked) el.setAttribute('checked', '')
+    else el.removeAttribute('checked')
+    return
+  }
+
+  // Text/number/email/…/other inputs → the `value` attribute.
+  el.setAttribute('value', stringifyModel(value))
+}
+
+/** Serialize an x-model value to its attribute/text form (Alpine coerces to string). */
+function stringifyModel(value: unknown): string {
+  if (value == null) return ''
+  return String(value)
 }
 
 /**
@@ -283,6 +363,7 @@ async function renderComponentInstance(
   scopeId: string,
   document: AnyEl,
   registry: ComponentRegistry,
+  stores: Record<string, unknown>,
 ): Promise<void> {
   const name = el.getAttribute('data-apex-name') as string
   const entry = registry[name]
@@ -295,7 +376,7 @@ async function renderComponentInstance(
   // (authored where the component is used, styled by the parent's scope).
   const slotSource = String(el.innerHTML ?? '')
   const slotHtml = slotSource.trim()
-    ? await renderFragmentInternal(slotSource, layers, scopeId, registry)
+    ? await renderFragmentInternal(slotSource, layers, scopeId, registry, stores)
     : ''
 
   const props: Record<string, unknown> = {}
@@ -328,12 +409,13 @@ async function renderComponentInstance(
   const merged = { ...props, ...loaderData, ...dataObj }
 
   const idCounter = { n: 0 }
-  const innerLayers: ScopeLayer[] = [createMagics(el, idCounter), merged]
+  const innerLayers: ScopeLayer[] = [createMagics(el, idCounter, stores), merged]
   const innerHtml = await renderFragmentInternal(
     entry.template,
     innerLayers,
     entry.scopeId,
     registry,
+    stores,
   )
 
   const root = document.createElement('div')
@@ -538,6 +620,7 @@ async function renderFor(
   scopeId: string,
   document: AnyEl,
   registry: ComponentRegistry,
+  stores: Record<string, unknown>,
 ): Promise<void> {
   // Expand components in the template ONCE so both the SSR clones (walked below)
   // and the kept <template> (cloned by Alpine on the client) get real markup.
@@ -574,7 +657,7 @@ async function renderFor(
     for (const clone of clones) {
       if (clone.nodeType !== ELEMENT_NODE) continue
       clone.setAttribute('data-apex-ssr', '')
-      await walkElement(clone, scoped, scopeId, document, registry)
+      await walkElement(clone, scoped, scopeId, document, registry, stores)
       anchor = clone
     }
   }
@@ -587,6 +670,7 @@ async function renderIf(
   scopeId: string,
   document: AnyEl,
   registry: ComponentRegistry,
+  stores: Record<string, unknown>,
 ): Promise<void> {
   expandTemplateComponents(template, document, registry)
   if (!evaluate(expr, layers)) return
@@ -598,7 +682,7 @@ async function renderIf(
   for (const clone of clones) {
     if (clone.nodeType !== ELEMENT_NODE) continue
     clone.setAttribute('data-apex-ssr', '')
-    await walkElement(clone, layers, scopeId, document, registry)
+    await walkElement(clone, layers, scopeId, document, registry, stores)
   }
 }
 

@@ -29,7 +29,16 @@ import { createMcpHandler, hasMcpRoutes } from '../mcp/server.js'
 import type { Middleware } from '../middleware/define.js'
 import { runMiddleware } from '../middleware/run.js'
 import { matchRoute, type RouteDef } from '../routing/router.js'
+import { resolveSecurityConfig } from '../security/config.js'
 import type { KvStore } from '../security/kvStore.js'
+import {
+  corsHandler,
+  escapeHtml,
+  rateLimitHandler,
+  requestIdHandler,
+  safeDecode,
+  securityHeadersHandler,
+} from '../security/middleware.js'
 import { gracefulShutdown, onShutdown } from './shutdown.js'
 
 /** The build manifest written by `apex build --server` to `<dist>/apex-manifest.json`. */
@@ -99,6 +108,12 @@ export async function createProdApp(options: {
    */
   idempotencyStore?: KvStore
   /**
+   * Shared KV store backing the `/api` + `/mcp` rate limiter — pass one (Redis, Cloudflare KV,
+   * …) for a GLOBAL counter across instances. Default: in-memory per-process (a warning is
+   * logged at boot, since that under-counts behind a load balancer / on serverless).
+   */
+  rateLimitStore?: KvStore
+  /**
    * Emit one JSON line per request (`{time, method, path, status, ms}`) to stdout.
    * Default false — `apex start` turns it on; serverless embedders opt in.
    */
@@ -117,6 +132,10 @@ export async function createProdApp(options: {
     process.cwd(),
   )
   const publicConfig = (runtimeConfig.public ?? {}) as Record<string, unknown>
+
+  // Resolve the server-hardening knobs (headers/CSP/HSTS, rate limit, CORS, body cap, timeouts).
+  const security = resolveSecurityConfig(runtimeConfig.security)
+  const isProd = process.env.NODE_ENV === 'production'
 
   const importServer =
     options.loadModule ??
@@ -161,9 +180,15 @@ export async function createProdApp(options: {
   }
   const hooks: ApexServerHooks = { ...fileHooks, ...options.hooks }
   if (hooks.onShutdown) onShutdown(hooks.onShutdown)
-  const reportError = (error: unknown, ctx: ErrorContext) => {
+  // ErrorContext + a per-request id (echoed as `x-request-id`) — additive; hook consumers that
+  // want it read `ctx.requestId` (present at runtime; the base type stays source-compatible).
+  const reportError = (error: unknown, ctx: ErrorContext & { requestId?: string }) => {
     if (hooks.onError) hooks.onError(error, ctx)
-    else console.error(`[apex] ${ctx.kind}${ctx.path ? ` ${ctx.path}` : ''} error:`, error)
+    else
+      console.error(
+        `[apex] ${ctx.kind}${ctx.path ? ` ${ctx.path}` : ''}${ctx.requestId ? ` [${ctx.requestId}]` : ''} error:`,
+        error,
+      )
   }
 
   // i18n: message catalogs were copied to <dir>/locales by the build.
@@ -185,9 +210,32 @@ export async function createProdApp(options: {
     // Route h3-boundary errors (anything not caught below) to the hooks. h3's default
     // response is already stack-free; this adds the server-side reporting.
     onError: (error, event) => {
-      reportError(error, { kind: 'http', path: event.path, method: event.method })
+      reportError(error, {
+        kind: 'http',
+        path: event.path,
+        method: event.method,
+        requestId: event.context.apexRequestId as string | undefined,
+      })
     },
   })
+
+  // Per-request id + security headers run FIRST, so every response — health, static, API,
+  // pages, errors — carries `x-request-id` and the hardening headers (opt-out via config).
+  if (security.enabled) {
+    app.use(requestIdHandler())
+    if (security.headers.enabled) app.use(securityHeadersHandler(security, isProd))
+    if (security.cors.enabled) app.use(corsHandler(security))
+    if (security.rateLimit.enabled) {
+      if (!options.rateLimitStore) {
+        console.warn(
+          '[apex] rate limiter is using the in-memory single-process store — counters are ' +
+            'NOT shared across instances (under-counts behind a load balancer / on serverless). ' +
+            'Pass `rateLimitStore` (Redis/KV) for a global limit.',
+        )
+      }
+      app.use(rateLimitHandler(security, options.rateLimitStore))
+    }
+  }
 
   // Liveness probe — first, before static/auth/middleware (must never touch DB or auth).
   // Liveness only (no readiness/DB ping); an app page at /health is shadowed (exact match).
@@ -212,12 +260,13 @@ export async function createProdApp(options: {
         if (path === '/health' || path === '/healthz') return
         const startedAt = Date.now()
         res.on('finish', () => {
-          const entry: RequestLogEntry = {
+          const entry: RequestLogEntry & { requestId?: string } = {
             time: new Date().toISOString(),
             method: event.method,
             path,
             status: res.statusCode,
             ms: Date.now() - startedAt,
+            requestId: event.context.apexRequestId as string | undefined,
           }
           if (hooks.onRequest) hooks.onRequest(entry)
           else process.stdout.write(`${JSON.stringify(entry)}\n`)
@@ -293,6 +342,7 @@ export async function createProdApp(options: {
         // Production default: clients get a generic 500; the detail goes to the hooks.
         exposeErrors: false,
         onError: reportError,
+        bodyLimitBytes: security.bodyLimitBytes,
         ...(options.idempotencyStore ? { idempotency: { store: options.idempotencyStore } } : {}),
       }),
     )
@@ -302,6 +352,7 @@ export async function createProdApp(options: {
       createMcpHandler(apiEntries, runtimeConfig, auth, {
         exposeErrors: false,
         onError: reportError,
+        bodyLimitBytes: security.bodyLimitBytes,
       }),
     )
 
@@ -315,7 +366,8 @@ export async function createProdApp(options: {
         setResponseStatus(event, 404)
         setResponseHeader(event, 'Content-Type', 'text/html')
         setResponseHeader(event, 'Cache-Control', 'no-store')
-        return `<!DOCTYPE html><h1>404 — ${url}</h1>`
+        // HTML-escape the reflected path — a raw echo is a reflected-XSS sink.
+        return `<!DOCTYPE html><h1>404 — ${escapeHtml(safeDecode(url))}</h1>`
       }
       const route = manifest.routes.find((r) => r.pageId === matched.pageId)
       const render = manifest.islands ? renderIslandsPage : renderPage
@@ -343,7 +395,12 @@ export async function createProdApp(options: {
       } catch (err) {
         // Report the real failure (Sentry hook); the h3 boundary then answers safely
         // (its production body carries no message or stack).
-        reportError(err, { kind: 'page', path: url, method: event.method })
+        reportError(err, {
+          kind: 'page',
+          path: url,
+          method: event.method,
+          requestId: event.context.apexRequestId as string | undefined,
+        })
         throw err
       }
       setResponseHeader(event, 'Content-Type', 'text/html')
@@ -382,6 +439,22 @@ export async function startProdServer(
   const port = options.port ?? 3000
   const app = await createProdApp({ dir: options.dir, requestLog: options.requestLog ?? true })
   const server = createHttpServer(toNodeListener(app))
+
+  // Server-level timeouts + connection caps (Slowloris / socket-exhaustion guards). Read the
+  // same resolved security config the app used (from the baked manifest + deploy-time env).
+  const manifest = JSON.parse(
+    readFileSync(join(options.dir, 'apex-manifest.json'), 'utf8'),
+  ) as ProdManifest
+  const runtimeConfig = applyEnvToRuntimeConfig(
+    manifest.runtimeConfig ?? { public: {} },
+    process.cwd(),
+  )
+  const security = resolveSecurityConfig(runtimeConfig.security)
+  server.requestTimeout = security.requestTimeoutMs
+  server.headersTimeout = security.headersTimeoutMs
+  server.keepAliveTimeout = security.keepAliveTimeoutMs
+  if (security.maxConnections > 0) server.maxConnections = security.maxConnections
+
   await new Promise<void>((resolve) => server.listen(port, resolve))
   // `close` drains in-flight requests, then runs shutdown hooks (DB pools close there).
   return { server, port, close: () => gracefulShutdown(server) }

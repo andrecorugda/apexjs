@@ -1,13 +1,13 @@
 <script server>
   import { handle } from '../db/index.js'
+  import { Message } from '../models/Message.js'
 
   // Runs on the server: reads straight from the database, so the message list is
   // real, indexable HTML before any JS loads. The data comes from the SAME model
-  // (models/Message.ts) that powers /api/messages and the messages_* MCP tools.
+  // (models/Message.ts) that powers /api/messages and the messages_* MCP tools —
+  // via its active-record query API, so there's no hand-written SQL to drift.
   export async function loader() {
-    const messages = await handle.query(
-      'SELECT id, author, body, created_at FROM messages ORDER BY id DESC LIMIT 20',
-    )
+    const messages = await Message.where({}).orderBy('id', 'desc').limit(20).all(handle)
     return { messages }
   }
 

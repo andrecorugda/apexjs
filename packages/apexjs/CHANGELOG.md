@@ -1,5 +1,17 @@
 # @apex-stack/core
 
+## 0.42.0
+
+### Minor Changes
+
+- 5553ff5: Background job queue exported from `@apex-stack/core/server` (`createQueue`, `defineJob`, memory
+  - database drivers with retries/backoff, delayed jobs, and a poll `work()` loop).
+- 43e5ac1: Wire the new subsystems into the server: the API error path now honors a thrown error's
+  `httpStatus` (so `@apex-stack/data`'s `ModelNotFoundException` → 404 with its domain message,
+  while plain failures stay a masked 500 and only 5xx are logged as failures). The Cache and
+  Storage subsystems are exported from `@apex-stack/core/server` (`createCache`, `createStorage`
+  - local/S3 drivers, signed URLs).
+
 ## 0.41.2
 
 ### Patch Changes

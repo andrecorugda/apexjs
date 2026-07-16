@@ -16,6 +16,7 @@ import type { AuthConfig } from '../auth/define.js'
 import { getRequestUser } from '../auth/run.js'
 import type { RuntimeConfig } from '../config/runtime.js'
 import { checkCsrf } from '../security/csrf.js'
+import { bodyExceedsLimit } from '../security/middleware.js'
 import type { ApexRoute, HttpMethod } from './defineRoute.js'
 import { beginIdempotency, type IdempotencyOptions } from './idempotency.js'
 import { type ApexResource, isApexResource } from './resource.js'
@@ -168,7 +169,12 @@ export interface ApiHandlerOptions {
    */
   exposeErrors?: boolean
   /** Receives the FULL error wherever the client got a safe generic response. */
-  onError?: (error: unknown, ctx: { kind: 'api'; path: string; method: string }) => void
+  onError?: (
+    error: unknown,
+    ctx: { kind: 'api'; path: string; method: string; requestId?: string },
+  ) => void
+  /** Reject a request body larger than this many bytes with `413` (before parsing). */
+  bodyLimitBytes?: number
 }
 
 /** A single h3 handler that routes, validates, and dispatches all `/api/*` requests. */
@@ -193,6 +199,16 @@ export function createApiHandler(
     if (!checkCsrf(event)) {
       setResponseStatus(event, 403)
       return { error: 'CSRF check failed' }
+    }
+
+    // Body-size cap: reject an oversized payload before reading/parsing it (DoS guard).
+    if (
+      entry.method !== 'GET' &&
+      opts?.bodyLimitBytes &&
+      bodyExceedsLimit(event, opts.bodyLimitBytes)
+    ) {
+      setResponseStatus(event, 413)
+      return { error: 'Payload too large' }
     }
 
     const raw = {
@@ -256,16 +272,28 @@ export function createApiHandler(
       // instead of an opaque 500 with an empty stack. The driver's real reason
       // (e.g. "no such table: event") is usually on `.cause`, not the top-level
       // "Failed query: …" message — include both.
-      const e = err as { message?: string; cause?: { message?: string } }
+      const e = err as { message?: string; cause?: { message?: string }; httpStatus?: unknown }
       const causeMsg = e?.cause?.message ?? ''
       const message = [e?.message, causeMsg].filter(Boolean).join(' — ') || 'Handler error'
-      // The FULL detail always goes server-side (the hook, or the console).
-      if (opts?.onError)
-        opts.onError(err, { kind: 'api', path: url.pathname, method: event.method })
-      else console.error(`[apex] api ${event.method} ${url.pathname} failed:`, message)
-      setResponseStatus(event, 500)
+      // Typed data/domain errors carry an httpStatus (e.g. ModelNotFoundException → 404).
+      const status = typeof e.httpStatus === 'number' ? e.httpStatus : 500
+      // The FULL detail goes server-side for real failures (5xx) — the hook, or the console.
+      // Expected client errors (4xx) aren't logged as failures.
+      if (status >= 500) {
+        if (opts?.onError)
+          opts.onError(err, {
+            kind: 'api',
+            path: url.pathname,
+            method: event.method,
+            requestId: event.context.apexRequestId as string | undefined,
+          })
+        else console.error(`[apex] api ${event.method} ${url.pathname} failed:`, message)
+      }
+      setResponseStatus(event, status)
       setResponseHeader(event, 'Content-Type', 'application/json')
-      // Clients only see the real message in dev/tests — production gets a generic body
+      // A 4xx is a safe domain error (e.g. "No query results for model 'x'") — surface it.
+      if (status < 500) return { error: e?.message || 'Request error' }
+      // 5xx: clients only see the real message in dev/tests — production gets a generic body
       // so driver/internal details never leak (#25).
       if (!opts?.exposeErrors) return { error: 'Internal server error' }
       const missingTable = /no such table|does not exist|relation .* does not exist/i.test(message)
