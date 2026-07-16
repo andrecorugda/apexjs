@@ -101,10 +101,12 @@ describe('createProdApp — reliability (#25)', () => {
     }
   })
 
-  it('a page renders (fixture sanity)', async () => {
+  it('a page renders (fixture sanity) and is not browser-cacheable', async () => {
     const res = await fetch(`${base}/`)
     expect(res.status).toBe(200)
     expect(await res.text()).toContain('<p')
+    // SSR HTML embeds per-request/session data → must not be cached (else stale after edits).
+    expect(res.headers.get('cache-control')).toBe('no-store')
   })
 
   it('an API 500 is generic to the client; the hook gets the full detail', async () => {

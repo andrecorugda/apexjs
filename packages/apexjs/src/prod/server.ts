@@ -314,6 +314,7 @@ export async function createProdApp(options: {
       if (!matched) {
         setResponseStatus(event, 404)
         setResponseHeader(event, 'Content-Type', 'text/html')
+        setResponseHeader(event, 'Cache-Control', 'no-store')
         return `<!DOCTYPE html><h1>404 — ${url}</h1>`
       }
       const route = manifest.routes.find((r) => r.pageId === matched.pageId)
@@ -346,6 +347,10 @@ export async function createProdApp(options: {
         throw err
       }
       setResponseHeader(event, 'Content-Type', 'text/html')
+      // SSR pages embed per-request/session data (loader output, locals) — never let a browser
+      // serve a stale cached document (else edits look un-saved until a hard refresh). Static
+      // builds are served as files (with their own caching) and don't hit this path.
+      setResponseHeader(event, 'Cache-Control', 'no-store')
       return html
     }),
   )
