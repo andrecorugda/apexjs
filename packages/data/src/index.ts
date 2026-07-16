@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { type ApexResource, type ApexUser, defineApexRoute } from '@apex-stack/core'
-import { and, eq, type SQL } from 'drizzle-orm'
+import { and, eq, type SQL, sql } from 'drizzle-orm'
 import { type ZodRawShape, z } from 'zod'
 import type { BehaviorHooks, FilterFn } from './behavior.js'
 import { repository } from './repository.js'
@@ -56,7 +56,48 @@ export interface ApexDbHandle {
    * (portable across SQLite/Postgres) instead of interpolating into the SQL string.
    */
   query(sql: string, params?: readonly SqlParam[]): Promise<Array<Record<string, unknown>>>
+  /**
+   * Run `fn` inside a database transaction: auto-commits when `fn` resolves, auto-rolls-back
+   * if it throws. `fn` receives a handle bound to the transaction — use it for AR / `db`
+   * writes (`await Order.create(tx, …)`) so a multi-step unit is atomic.
+   */
+  transaction<T>(fn: (tx: ApexDbHandle) => Promise<T> | T): Promise<T>
   close(): Promise<void>
+}
+
+/** Build a bound Drizzle statement from a `?`-placeholder string (for exec/query inside a tx). */
+function rawStmt(text: string, params?: readonly SqlParam[]): SQL {
+  if (!params || params.length === 0) return sql.raw(text)
+  const chunks: SQL[] = []
+  for (const [i, p] of text.split('?').entries()) {
+    if (p) chunks.push(sql.raw(p))
+    if (i < params.length) chunks.push(sql`${params[i]}`)
+  }
+  return sql.join(chunks)
+}
+
+/** Wrap a Drizzle transaction db as an ApexDbHandle so AR/repo + raw exec run inside the tx. */
+function txHandle(txDb: any, dialect: Dialect): ApexDbHandle {
+  return {
+    db: txDb,
+    dialect,
+    exec: async (s, params) => {
+      const stmt = rawStmt(s, params)
+      if (typeof txDb.run === 'function') await txDb.run(stmt)
+      else await txDb.execute(stmt)
+    },
+    query: async (s, params) => {
+      const stmt = rawStmt(s, params)
+      if (typeof txDb.all === 'function')
+        return (await txDb.all(stmt)) as Array<Record<string, unknown>>
+      const r = (await txDb.execute(stmt)) as unknown
+      return (Array.isArray(r) ? r : ((r as { rows?: unknown })?.rows ?? [])) as Array<
+        Record<string, unknown>
+      >
+    },
+    transaction: (fn) => txDb.transaction(async (inner: unknown) => fn(txHandle(inner, dialect))),
+    close: async () => {},
+  }
 }
 
 /**
@@ -201,8 +242,9 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
     const { createClient } = (await loadDriver('@libsql/client')) as LibsqlMod
     const { drizzle } = await import('drizzle-orm/libsql')
     const client = createClient({ url: libsqlUrl(cfg.url) })
+    const db = drizzle(client)
     return {
-      db: drizzle(client),
+      db,
       dialect: 'sqlite',
       exec: async (sql, params) => {
         if (params) await client.execute({ sql, args: params as never })
@@ -212,6 +254,7 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
         (await client.execute(params ? { sql, args: params as never } : sql)).rows as Array<
           Record<string, unknown>
         >,
+      transaction: (fn) => db.transaction(async (tx) => fn(txHandle(tx, 'sqlite'))),
       close: async () => {
         client.close()
       },
@@ -222,8 +265,9 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
     const postgres = ((await loadDriver('postgres')) as PostgresMod).default
     const { drizzle } = await import('drizzle-orm/postgres-js')
     const client = postgres(cfg.url, postgresOptions(cfg.url, cfg.options))
+    const db = drizzle(client)
     return {
-      db: drizzle(client),
+      db,
       dialect: 'postgres',
       exec: async (sql, params) => {
         if (params) await client.unsafe(toPgPlaceholders(sql), params as never)
@@ -233,6 +277,7 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
         (await (params
           ? client.unsafe(toPgPlaceholders(sql), params as never)
           : client.unsafe(sql))) as unknown as Array<Record<string, unknown>>,
+      transaction: (fn) => db.transaction(async (tx) => fn(txHandle(tx, 'postgres'))),
       close: async () => {
         await client.end()
       },
@@ -244,8 +289,9 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
   const { drizzle } = await import('drizzle-orm/pglite')
   // No dir → in-memory (memory://); a dir persists to disk.
   const client = new PGlite((cfg as { dir?: string }).dir ?? 'memory://')
+  const db = drizzle(client)
   return {
-    db: drizzle(client),
+    db,
     dialect: 'postgres',
     exec: async (sql, params) => {
       if (params) await client.query(toPgPlaceholders(sql), params as never[])
@@ -254,6 +300,7 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
     query: async (sql, params) =>
       (await (params ? client.query(toPgPlaceholders(sql), params as never[]) : client.query(sql)))
         .rows as Array<Record<string, unknown>>,
+    transaction: (fn) => db.transaction(async (tx) => fn(txHandle(tx, 'postgres'))),
     close: async () => {
       await client.close()
     },

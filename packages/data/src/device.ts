@@ -60,7 +60,7 @@ export async function createDeviceSqlite(): Promise<ApexDbHandle> {
   g.__APEX_DB_EXPORT__ = () => Buffer.from(database.export()).toString('base64')
   const { drizzle } = await import('drizzle-orm/sql-js')
 
-  return {
+  const handle: ApexDbHandle = {
     db: drizzle(database as never),
     dialect: 'sqlite',
     exec: async (sql, params) => {
@@ -73,8 +73,24 @@ export async function createDeviceSqlite(): Promise<ApexDbHandle> {
       const { columns, values } = res[0] as { columns: string[]; values: unknown[][] }
       return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
     },
+    // sql.js is synchronous and single-connection, and Drizzle's sql-js `.transaction()` runs
+    // COMMIT before an async callback settles (so it can't roll back on a later throw). Drive
+    // the transaction manually with BEGIN/COMMIT/ROLLBACK on the one connection instead — the
+    // same handle is the tx handle (AR/db writes on it run between BEGIN and COMMIT). No nesting.
+    transaction: async (fn) => {
+      database.run('BEGIN')
+      try {
+        const result = await fn(handle)
+        database.run('COMMIT')
+        return result
+      } catch (e) {
+        database.run('ROLLBACK')
+        throw e
+      }
+    },
     close: async () => {
       database.close()
     },
   }
+  return handle
 }
