@@ -161,8 +161,15 @@ export class QueryBuilder {
   private orders: Array<{ col: string; dir: 'asc' | 'desc' }> = []
   private lim?: number
   private off?: number
+  private locking = false
 
   constructor(private cfg: ModelArConfig) {}
+
+  /** Pessimistic lock (`SELECT … FOR UPDATE`, Postgres) — use inside a `handle.transaction`. No-op on sqlite. */
+  lockForUpdate(): this {
+    this.locking = true
+    return this
+  }
 
   where(conds: WhereConds): this {
     this.wheres.push(conds)
@@ -228,12 +235,35 @@ export class QueryBuilder {
     }
     if (this.lim !== undefined) q = q.limit(this.lim)
     if (this.off !== undefined) q = q.offset(this.off)
+    // Pessimistic lock — Postgres only (sqlite has no row locks; a tx locks the whole db).
+    if (this.locking && handle.dialect === 'postgres' && typeof q.for === 'function') {
+      q = q.for('update')
+    }
     return (await q) as Row[]
   }
 
   async first(handle: ApexDbHandle, opts?: QueryOpts): Promise<Row | null> {
     this.lim = 1
     return (await this.all(handle, opts))[0] ?? null
+  }
+
+  /** Stream rows in batches of `size` (keyset by limit/offset) — for large tables. */
+  async chunk(
+    handle: ApexDbHandle,
+    size: number,
+    fn: (rows: Row[]) => Promise<void> | void,
+    opts?: QueryOpts,
+  ): Promise<void> {
+    let off = 0
+    for (;;) {
+      this.off = off
+      this.lim = size
+      const page = await this.all(handle, opts)
+      if (!page.length) break
+      await fn(page)
+      if (page.length < size) break
+      off += size
+    }
   }
 
   async count(handle: ApexDbHandle, opts?: QueryOpts): Promise<number> {
