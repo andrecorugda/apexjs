@@ -47,3 +47,22 @@ export {
   type RateLimitOptions,
   rateLimitKey,
 } from './security/rateLimit.js'
+// Cache subsystem (memory + file drivers, TTL, tags).
+export * from './cache/index.js'
+// File/object storage (local + S3, signed URLs).
+export {
+  createLocalStorage,
+  createS3Storage,
+  createStorage,
+  type LocalStorageConfig,
+  presignGetUrl,
+  type PutOptions,
+  type S3StorageConfig,
+  signRequest,
+  type Storage,
+  type StorageConfig,
+  type StorageEntry,
+  StoragePathError,
+  type UrlOptions,
+  verifySignedUrl,
+} from './storage/index.js'
