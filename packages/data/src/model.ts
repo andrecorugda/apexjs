@@ -40,6 +40,49 @@ import {
 
 export type FieldType = 'string' | 'text' | 'int' | 'float' | 'boolean' | 'timestamp' | 'json'
 
+/** A per-column value cast: a built-in name, or a custom get (on read) / set (on write) pair. */
+export type Cast =
+  | 'date'
+  | 'number'
+  | 'boolean'
+  | 'json'
+  | { get?: (v: unknown) => unknown; set?: (v: unknown) => unknown }
+
+/** Resolved cast — get applied when hydrating an instance, set applied before a write. */
+export interface ResolvedCast {
+  get?: (v: unknown) => unknown
+  set?: (v: unknown) => unknown
+}
+
+const BUILTIN_CASTS: Record<string, ResolvedCast> = {
+  date: {
+    get: (v) => (v == null ? v : new Date(v as string)),
+    set: (v) => (v instanceof Date ? v.toISOString() : v),
+  },
+  number: { get: (v) => (v == null ? v : Number(v)) },
+  boolean: { get: (v) => (v == null ? v : Boolean(typeof v === 'number' ? v : Number(v))) },
+  json: {
+    get: (v) => {
+      if (typeof v !== 'string') return v
+      try {
+        return JSON.parse(v)
+      } catch {
+        return v
+      }
+    },
+    set: (v) => (v != null && typeof v === 'object' ? JSON.stringify(v) : v),
+  },
+}
+
+function resolveCasts(casts?: Record<string, Cast>): Record<string, ResolvedCast> | undefined {
+  if (!casts) return undefined
+  const out: Record<string, ResolvedCast> = {}
+  for (const [k, spec] of Object.entries(casts)) {
+    out[k] = typeof spec === 'string' ? (BUILTIN_CASTS[spec] ?? {}) : spec
+  }
+  return out
+}
+
 export interface FieldDef {
   type: FieldType
   notNull?: boolean
@@ -88,6 +131,8 @@ export interface DefineModelOptions {
   /** Columns hidden from serialization — omitted by `instance.toJSON()` AND the REST/MCP resource
    * responses (e.g. `password`, `secret`). */
   hidden?: string[]
+  /** Per-column value casts applied on model reads/writes — `{ publishedAt: 'date', prefs: 'json' }`. */
+  casts?: Record<string, Cast>
 }
 
 /** A model: its schema derivations + a factory for its REST/MCP resource. */
@@ -372,5 +417,6 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
     insertShape: insert,
     scopes: opts.scopes,
     hidden: opts.hidden ? new Set(opts.hidden) : undefined,
+    casts: resolveCasts(opts.casts),
   }) as ApexModel
 }

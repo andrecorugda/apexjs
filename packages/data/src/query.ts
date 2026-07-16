@@ -35,7 +35,7 @@ import type { BehaviorHooks, FilterFn } from './behavior.js'
 import { Collection, collect } from './collection.js'
 import { guard, ModelNotFoundException } from './errors.js'
 import type { ApexDbHandle, Dialect, ScopeFn } from './index.js'
-import type { FieldDef } from './model.js'
+import type { FieldDef, ResolvedCast } from './model.js'
 import { type Repo, repository } from './repository.js'
 
 export type Row = Record<string, unknown>
@@ -105,12 +105,20 @@ export interface ModelArConfig {
   scopes?: Record<string, (qb: QueryBuilder, ...args: any[]) => QueryBuilder>
   /** Columns omitted from `instance.toJSON()` (e.g. password/secret). */
   hidden?: Set<string>
+  /** Per-column casts (get on read, set on write). */
+  casts?: Record<string, ResolvedCast>
 }
 
 /** Wrap a DB row as a model instance: attributes as own props + non-enumerable methods. */
 function makeInstance(cfg: ModelArConfig, handle: ApexDbHandle, attrs: Row): ModelInstance {
   const inst = { ...attrs } as ModelInstance
-  const state = { original: { ...attrs } as Row }
+  // Apply read casts (e.g. string → Date) before snapshotting, so isDirty compares cast values.
+  if (cfg.casts) {
+    for (const [k, c] of Object.entries(cfg.casts)) {
+      if (c.get && k in inst) inst[k] = c.get(inst[k])
+    }
+  }
+  const state = { original: { ...inst } as Row }
   const hidden = cfg.hidden ?? new Set<string>()
   const pk = cfg.pk
   const def = (name: string, value: unknown) =>
@@ -132,7 +140,7 @@ function makeInstance(cfg: ModelArConfig, handle: ApexDbHandle, attrs: Row): Mod
       if (k !== pk && this[k] !== state.original[k]) dirty[k] = this[k] as never
     }
     if (Object.keys(dirty).length) {
-      const data = prepareWrite(dirty, b.cols, cfg.insertShape, true)
+      const data = prepareWrite(dirty, b.cols, cfg.insertShape, true, cfg.casts)
       const row = await b.repo.update(eq(b.table[pk], this[pk]), data, null, this[pk] as number)
       if (row) Object.assign(this, row)
     }
@@ -211,13 +219,14 @@ function prepareWrite(
   cols: Set<string>,
   shape: Record<string, z.ZodTypeAny>,
   partial: boolean,
+  casts?: Record<string, ResolvedCast>,
 ): Record<string, unknown> {
   const plain: Record<string, unknown> = {}
   const rawCols: Record<string, Raw> = {}
   for (const [k, v] of Object.entries(values)) {
     assertCol(cols, k)
     if (v instanceof Raw) rawCols[k] = v
-    else plain[k] = v
+    else plain[k] = casts?.[k]?.set ? casts[k].set?.(v) : v
   }
   // Validate the non-raw payload against the model's shape (mass-assignment safety:
   // unknown keys are stripped, invalid values throw — same guarantee as REST/MCP).
@@ -443,7 +452,7 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
     opts?: QueryOpts,
   ): Promise<ModelInstance> => {
     const b = bindModel(cfg, handle)
-    const data = prepareWrite(values, b.cols, cfg.insertShape, false)
+    const data = prepareWrite(values, b.cols, cfg.insertShape, false, cfg.casts)
     return makeInstance(cfg, handle, await b.repo.create(data, opts?.user ?? null))
   }
 
@@ -454,7 +463,7 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
     opts?: QueryOpts,
   ): Promise<ModelInstance | null> => {
     const b = bindModel(cfg, handle)
-    const data = prepareWrite(values, b.cols, cfg.insertShape, true)
+    const data = prepareWrite(values, b.cols, cfg.insertShape, true, cfg.casts)
     const row = await b.repo.update(eq(b.table[cfg.pk], id), data, opts?.user ?? null, id as number)
     return row ? makeInstance(cfg, handle, row) : null
   }
@@ -467,7 +476,7 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
     if (!rows.length) return []
     const b = bindModel(cfg, handle)
     const scope = cfg.scope?.({ user: opts?.user ?? null }) ?? {}
-    const data = rows.map((r) => ({ ...prepareWrite(r, b.cols, cfg.insertShape, false), ...scope }))
+    const data = rows.map((r) => ({ ...prepareWrite(r, b.cols, cfg.insertShape, false, cfg.casts), ...scope }))
     return guard(
       cfg.name,
       'insertMany',
@@ -489,7 +498,7 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
       const c = condFor(b.table[k], v)
       if (c) all.push(c)
     }
-    const data = prepareWrite(values, b.cols, cfg.insertShape, true)
+    const data = prepareWrite(values, b.cols, cfg.insertShape, true, cfg.casts)
     const rows = await guard(cfg.name, 'updateMany', async () =>
       handle.db
         .update(b.table)
@@ -547,7 +556,7 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
     ): Promise<Row | null> => {
       const b = bindModel(cfg, handle)
       for (const k of conflictKeys) assertCol(b.cols, k)
-      const data = prepareWrite(values, b.cols, cfg.insertShape, false)
+      const data = prepareWrite(values, b.cols, cfg.insertShape, false, cfg.casts)
       const keep = opts?.keep ?? {}
       const set: Record<string, unknown> = {}
       for (const col of Object.keys(values)) {
