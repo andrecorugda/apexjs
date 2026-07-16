@@ -10,6 +10,7 @@
 import type { ApexUser } from '@apex-stack/core'
 import { and, eq, type SQL } from 'drizzle-orm'
 import type { BehaviorHooks, FilterFn, HookCtx } from './behavior.js'
+import { guard } from './errors.js'
 import type { ApexDbHandle, ScopeFn } from './index.js'
 
 /** Everything the pipeline needs, composed once per model. */
@@ -109,62 +110,66 @@ export function repository(cfg: RepoConfig): Repo {
     where,
 
     async create(input, user) {
-      // Stamp the caller's scope onto the row (owner can't be spoofed via input).
-      const data = { ...input, ...(scope?.({ user }) ?? {}) }
-      const ctx = mkCtx({ op: 'create', user, data })
-      for (const h of hooks) await h.beforeCreate?.(ctx)
-      const row = (await db.insert(table).values(ctx.data as never).returning())[0]
-      ctx.row = row
-      await runAfter('afterCreate', ctx)
-      return row
+      return guard(name, 'create', async () => {
+        // Stamp the caller's scope onto the row (owner can't be spoofed via input).
+        const data = { ...input, ...(scope?.({ user }) ?? {}) }
+        const ctx = mkCtx({ op: 'create', user, data })
+        for (const h of hooks) await h.beforeCreate?.(ctx)
+        const row = (await db.insert(table).values(ctx.data as never).returning())[0]
+        ctx.row = row
+        await runAfter('afterCreate', ctx)
+        return row
+      })
     },
 
     async update(extra, fields, user, id) {
-      // Never let a caller reassign a scoped column (e.g. change ownerId).
-      for (const k of Object.keys(scope?.({ user }) ?? {})) delete fields[k]
-      const ctx = mkCtx({ op: 'update', user, data: fields, id })
-      for (const h of hooks) await h.beforeUpdate?.(ctx)
-      const row =
-        (await db
-          .update(table)
-          .set(ctx.data)
-          .where(where(extra, user))
-          .returning())[0] ?? null
-      if (row) {
-        ctx.row = row
-        await runAfter('afterUpdate', ctx)
-      }
-      return row
+      return guard(name, 'update', async () => {
+        // Never let a caller reassign a scoped column (e.g. change ownerId).
+        for (const k of Object.keys(scope?.({ user }) ?? {})) delete fields[k]
+        const ctx = mkCtx({ op: 'update', user, data: fields, id })
+        for (const h of hooks) await h.beforeUpdate?.(ctx)
+        const row =
+          (await db.update(table).set(ctx.data).where(where(extra, user)).returning())[0] ?? null
+        if (row) {
+          ctx.row = row
+          await runAfter('afterUpdate', ctx)
+        }
+        return row
+      })
     },
 
     async remove(extra, user, id) {
-      const ctx = mkCtx({ op: 'delete', user, data: {}, id })
-      for (const h of hooks) await h.beforeDelete?.(ctx)
-      const w = where(extra, user)
-      // Soft delete stamps a column; hard delete removes the row.
-      const row = softDelete
-        ? ((await db
-            .update(table)
-            .set({ [softDelete]: new Date().toISOString() })
-            .where(w)
-            .returning())[0] ?? null)
-        : ((await db.delete(table).where(w).returning())[0] ?? null)
-      if (row) {
-        ctx.row = row
-        await runAfter('afterDelete', ctx)
-      }
-      return row
+      return guard(name, 'delete', async () => {
+        const ctx = mkCtx({ op: 'delete', user, data: {}, id })
+        for (const h of hooks) await h.beforeDelete?.(ctx)
+        const w = where(extra, user)
+        // Soft delete stamps a column; hard delete removes the row.
+        const row = softDelete
+          ? ((await db
+              .update(table)
+              .set({ [softDelete]: new Date().toISOString() })
+              .where(w)
+              .returning())[0] ?? null)
+          : ((await db.delete(table).where(w).returning())[0] ?? null)
+        if (row) {
+          ctx.row = row
+          await runAfter('afterDelete', ctx)
+        }
+        return row
+      })
     },
 
     async bulkRemove(w) {
-      const rows = softDelete
-        ? await db
-            .update(table)
-            .set({ [softDelete]: new Date().toISOString() })
-            .where(w)
-            .returning()
-        : await db.delete(table).where(w).returning()
-      return (rows as unknown[]).length
+      return guard(name, 'delete', async () => {
+        const rows = softDelete
+          ? await db
+              .update(table)
+              .set({ [softDelete]: new Date().toISOString() })
+              .where(w)
+              .returning()
+          : await db.delete(table).where(w).returning()
+        return (rows as unknown[]).length
+      })
     },
 
     async runAfterList(rows, user) {

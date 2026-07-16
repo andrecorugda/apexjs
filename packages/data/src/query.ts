@@ -33,6 +33,7 @@ import {
 import { z } from 'zod'
 import type { BehaviorHooks, FilterFn } from './behavior.js'
 import { Collection, collect } from './collection.js'
+import { guard, ModelNotFoundException } from './errors.js'
 import type { ApexDbHandle, Dialect, ScopeFn } from './index.js'
 import type { FieldDef } from './model.js'
 import { type Repo, repository } from './repository.js'
@@ -312,13 +313,24 @@ export class QueryBuilder {
     if (this.locking && handle.dialect === 'postgres' && typeof q.for === 'function') {
       q = q.for('update')
     }
-    const rows = (await q) as Row[]
+    const rows = await guard(this.cfg.name, 'select', async () => (await q) as Row[])
     return collect(rows.map((r) => makeInstance(this.cfg, handle, r)))
   }
 
   async first(handle: ApexDbHandle, opts?: QueryOpts): Promise<ModelInstance | null> {
     this.lim = 1
     return (await this.all(handle, opts))[0] ?? null
+  }
+
+  /** Like `first`, but throws `ModelNotFoundException` when nothing matches. */
+  async firstOrFail(
+    handle: ApexDbHandle,
+    opts?: QueryOpts,
+    criteria?: unknown,
+  ): Promise<ModelInstance> {
+    const row = await this.first(handle, opts)
+    if (!row) throw new ModelNotFoundException(this.cfg.name, criteria)
+    return row
   }
 
   /** Stream rows in batches of `size` (keyset by limit/offset) — for large tables. */
@@ -345,7 +357,7 @@ export class QueryBuilder {
     const w = this.conds(b, opts?.user ?? null)
     let q = handle.db.select({ n: sql<number>`count(*)` }).from(b.table)
     if (w) q = q.where(w)
-    const r = (await q) as Array<{ n: unknown }>
+    const r = await guard(this.cfg.name, 'count', async () => (await q) as Array<{ n: unknown }>)
     return Number(r[0]?.n ?? 0)
   }
 
@@ -456,7 +468,11 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
     const b = bindModel(cfg, handle)
     const scope = cfg.scope?.({ user: opts?.user ?? null }) ?? {}
     const data = rows.map((r) => ({ ...prepareWrite(r, b.cols, cfg.insertShape, false), ...scope }))
-    return (await handle.db.insert(b.table).values(data).returning()) as Row[]
+    return guard(
+      cfg.name,
+      'insertMany',
+      async () => (await handle.db.insert(b.table).values(data).returning()) as Row[],
+    )
   }
 
   const updateMany = async (
@@ -474,11 +490,13 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
       if (c) all.push(c)
     }
     const data = prepareWrite(values, b.cols, cfg.insertShape, true)
-    const rows = await handle.db
-      .update(b.table)
-      .set(data)
-      .where(all.length ? and(...all) : undefined)
-      .returning()
+    const rows = await guard(cfg.name, 'updateMany', async () =>
+      handle.db
+        .update(b.table)
+        .set(data)
+        .where(all.length ? and(...all) : undefined)
+        .returning(),
+    )
     return (rows as unknown[]).length
   }
 
@@ -489,6 +507,10 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
     first: (handle: ApexDbHandle, opts?: QueryOpts) => qb().orderBy(cfg.pk, 'asc').first(handle, opts),
     find: (handle: ApexDbHandle, id: unknown, opts?: QueryOpts) =>
       qb().where({ [cfg.pk]: id }).first(handle, opts),
+    firstOrFail: (handle: ApexDbHandle, opts?: QueryOpts) =>
+      qb().orderBy(cfg.pk, 'asc').firstOrFail(handle, opts),
+    findOrFail: (handle: ApexDbHandle, id: unknown, opts?: QueryOpts) =>
+      qb().where({ [cfg.pk]: id }).firstOrFail(handle, opts, id),
     where: (conds: WhereConds) => qb().where(conds),
     orderBy: (col: string, dir?: 'asc' | 'desc') => qb().orderBy(col, dir),
     scope: (name: string, ...args: unknown[]): QueryBuilder => {
@@ -545,7 +567,7 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
         Object.keys(set).length > 0
           ? base.onConflictDoUpdate({ target, set })
           : base.onConflictDoNothing({ target })
-      const rows = (await stmt.returning()) as Row[]
+      const rows = await guard(cfg.name, 'upsert', async () => (await stmt.returning()) as Row[])
       return rows[0] ? makeInstance(cfg, handle, rows[0]) : null
     },
   }

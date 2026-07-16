@@ -118,6 +118,10 @@ export interface ApexModel {
   first(handle: ApexDbHandle, opts?: QueryOpts): Promise<ModelInstance | null>
   /** Row by primary key, or `null`. */
   find(handle: ApexDbHandle, id: unknown, opts?: QueryOpts): Promise<ModelInstance | null>
+  /** First row, or throw `ModelNotFoundException` (HTTP 404). */
+  firstOrFail(handle: ApexDbHandle, opts?: QueryOpts): Promise<ModelInstance>
+  /** Row by primary key, or throw `ModelNotFoundException` (HTTP 404). */
+  findOrFail(handle: ApexDbHandle, id: unknown, opts?: QueryOpts): Promise<ModelInstance>
   /** Start a filtered query: `Model.where({ team: 'A', plays: { gt: 5 } }).orderBy('plays','desc').all(h)`. */
   where(conds: WhereConds): QueryBuilder
   /** Start an ordered query. */

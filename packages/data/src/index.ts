@@ -46,6 +46,8 @@ export type {
 } from './query.js'
 // Fluent result collection returned by model reads.
 export { Collection, collect } from './collection.js'
+// Typed data errors (Eloquent-style) — thrown by *OrFail + wrapped driver failures.
+export { ApexDataError, ModelNotFoundException, QueryException } from './errors.js'
 
 export type Dialect = 'sqlite' | 'postgres'
 
