@@ -4,13 +4,15 @@
 
 Apex JS is the full-stack meta-framework for Alpine.js: file-based routing, server-side rendering, islands, and every typed API route is also an MCP tool your AI can call. HTML-first, near-zero JS by default, AI-native by construction.
 
+It ships batteries included: a full Eloquent-style ORM (`defineModel` → schema + migration + REST/MCP resource + active-record queries, relationships with eager loading, transactions, casts, named scopes, serialization, typed errors, and optimistic/pessimistic locking); platform pillars from `@apex-stack/core/server` (cache, file/object storage local + S3, background job queue, mail, multi-channel notifications, real-time SSE, and authorization — roles + permissions, opaque API tokens, password-reset/verify flows); and a server hardened by default (security headers + CSP, rate-limiting, body caps, timeouts, CORS, request IDs, password hashing, secure sealed cookies). Note: OAuth/SSO and 2FA are not yet shipped.
+
 ## Pages
 - [Apex JS — HTML-first apps, AI-native APIs](https://apexjs.site/): Apex JS is the full-stack meta-framework for Alpine.js: file routing, SSR, islands, and every typed API route is also an MCP tool your AI can call.
 - [Documentation — Apex JS](https://apexjs.site/docs/): The documentation home — routing, components, islands, data, AI-native APIs, auth, testing, the CLI, and deployment.
 - [AI-native APIs — Apex JS](https://apexjs.site/docs/ai-native.html): defineApexRoute serves REST and an MCP tool from one definition. The /mcp endpoint, the apex mcp inspector, and pointing Claude at your API.
 - [CLI reference — Apex JS](https://apexjs.site/docs/cli.html): Complete reference for the apex CLI: dev, build, start, make, migrate, and mcp with every flag.
 - [Components — Apex JS](https://apexjs.site/docs/components.html): The .alpine single-file component format: server loader, template x-data, scoped styles, and component embedding with props.
-- [Data — Apex JS](https://apexjs.site/docs/data.html): defineResource turns one table into REST + MCP CRUD. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations.
+- [Data — Apex JS](https://apexjs.site/docs/data.html): defineModel turns one field spec into schema + migration + a REST/MCP resource + an active-record ORM (`where`/`orderBy`/`paginate`, `findOrFail`, model instances + collections, relationships with eager loading, transactions, casts, scopes, `hidden` serialization, typed errors, locking). Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus up/down SQL migrations.
 - [Auth — Apex JS](https://apexjs.site/docs/auth.html): One fail-closed policy across pages, REST, and MCP — defineAuth, route auth/can, resource access + row-level scope, sealed sessions, and CSRF. An AI can never exceed the logged-in user.
 - [Build & deploy — Apex JS](https://apexjs.site/docs/deploy.html): The three apex build modes, apex start, databases in production, and hosting targets.
 - [Mobile — Apex JS](https://apexjs.site/docs/mobile.html): apex build --mobile runs your app's full SSR + API + on-device SQLite + sealed-cookie auth on a bare on-device JS engine — offline, no server, no port. apex mobile android builds an installable APK from one TypeScript codebase.

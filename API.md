@@ -52,7 +52,25 @@ Everything **not in this file is internal** — import it and you're on your own
 | `createRateLimiter`, `rateLimitKey`, `createMemoryStore` | 🟡 Experimental |
 | `gracefulShutdown`, `onShutdown`, `defineHooks` | 🟡 Experimental (production reliability — drain, shutdown hooks, `server/hooks.ts`) |
 | `createProdApp`, `createProdNodeHandler`, `createProdWebHandler`, `startProdServer` | 🟡 Experimental (serverless building blocks — new; shape may evolve) |
+| `hashPassword`, `verifyPassword` | 🟡 Experimental (scrypt password hashing — per-hash salt + constant-time verify) |
+| `resolveSecurityConfig`, `DEFAULT_CSP` (+ `SecurityConfig`, `CorsConfig`, `HstsConfig`, `HeadersConfig`, `RateLimitConfig`, `ResolvedSecurity`) | 🟡 Experimental (the hardening config the server resolves — headers/CSP, CORS, HSTS, rate-limit, body caps) |
 | Types: `SessionOptions` | 🟢 Stable · `RateLimiter`, `RateLimitOptions`, `AsyncRateLimiter`, `KvStore`, `ApexServerHooks`, `RequestLogEntry`, `ErrorContext` | 🟡 Experimental |
+
+## `@apex-stack/core/server` — platform subsystems (all 🟡 Experimental)
+
+New in 1.1 — the batteries-included platform pillars, exported from `@apex-stack/core/server`. All are 🟡 Experimental (shape may change in a minor).
+
+| Subsystem | Public exports |
+|---|---|
+| **Cache** | `createCache`, `createMemoryDriver`, `createFileDriver` (TTL + tags) |
+| **File / object storage** | `createStorage`, `createLocalStorage`, `createS3Storage`, `presignGetUrl`, `verifySignedUrl`, `signRequest`, `StoragePathError` (+ `Storage`, `StorageConfig`, `PutOptions`, `StorageEntry`, `UrlOptions`, `LocalStorageConfig`, `S3StorageConfig`) |
+| **Background job queue** | `createQueue`, `defineJob` (memory + database drivers, retries/backoff, delayed jobs, `work()` loop) (+ `Queue`, `JobDefinition`, `JobContext`, `EnqueueOptions`, `WorkOptions`, …) |
+| **Mail** | `createMailer`, `createMemoryMailer`, `createHttpMailer`, `createSmtpMailer`, `resend`, `postmark`, `renderTemplate`, `escapeHtml` (+ `SmtpMailConfig`, `TemplateVars`) |
+| **Real-time (SSE)** | `createBroadcaster`, `sseHandler`, `apexRealtimeClient`, `encodeSseFrame`, `encodeSseComment` |
+| **Notifications** | `defineNotification`, `createNotifier`, `databaseChannel` (+ `Channel`, `Notifier`, `StoredNotification`, `NotifierConfig`, …) |
+| **Authorization** | `createAccessControl`, `permissionGate` (roles + permissions), `createTokenStore`, `abilitiesGrant` (opaque API tokens), `createFlowTokens` (single-use password-reset / email-verify) |
+
+> **Not shipped (deferred):** OAuth / SSO and 2FA are on the roadmap but not yet in the public surface — don't document them as available.
 
 ## `@apex-stack/core/client` — browser runtime
 
@@ -82,6 +100,15 @@ Everything **not in this file is internal** — import it and you're on your own
 | `factory` (+ `Factory`, `FactoryOptions`) | 🟢 Stable |
 | `postgresOptions`, `PostgresConnectOptions` | 🟡 Experimental (new) |
 | `parseMigration` | 🟡 Experimental (low-level) |
+| **Active record on `defineModel`** — reads (`first`/`find`/`findOrFail`/`firstOrFail`/`all`/`where`/`orderBy`/`limit`/`offset`/`count`/`exists`/`pluck`/`sum`/`avg`/`min`/`max`/`chunk`/`lockForUpdate`) + writes (`create`/`update`/`updateOrCreate`/`upsert`/`insertMany`/`updateMany`/`delete`) + `scope`/`tableFor` | 🟡 Experimental (new; the ORM query surface — shape may still change) |
+| `QueryBuilder`, `raw`, `Raw` (+ `Row`, `Values`, `WhereConds`, `Op`, `Cond`, `QueryOpts`, `UpsertOptions`) | 🟡 Experimental |
+| Model **instances** + **collections**: `Collection`, `collect` (+ `ModelInstance`) — `save`/`delete`/`refresh`/`isDirty`/`changes`/`toJSON` | 🟡 Experimental |
+| **Relationships + eager loading**: `belongsTo`, `hasMany`, `hasOne` (+ `RelationDef`); model `relations` + `.with(...)` | 🟡 Experimental |
+| **Typed errors**: `ApexDataError`, `ModelNotFoundException`, `QueryException`, `StaleModelException` (carry `httpStatus`) | 🟡 Experimental |
+| `defineModel` options: `casts`, `scopes` (named scopes), `hidden` (serialization), `optimisticLock`, `indexes`, field `index` / `references` (FKs) | 🟡 Experimental |
+| **Transactions**: `ApexDbHandle.transaction(fn)` (atomic; auto commit/rollback) · `lazyDb` (+ `LazyDbOptions`, on-device) | 🟡 Experimental |
+| Bound-param SQL: `SqlParam`, `toPgPlaceholders` (`?` placeholders on `query`/`exec`) | 🟡 Experimental |
+| List-API params on resources: `?page`/`?perPage` (envelope), `?sort=-col`, `?<col>=` filters (REST + `_list` MCP tool) | 🟡 Experimental |
 
 ---
 

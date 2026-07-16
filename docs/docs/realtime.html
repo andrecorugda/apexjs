@@ -1,0 +1,229 @@
+<title>Real-time — Apex JS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="canonical" href="https://apexjs.site/docs/realtime.html" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <meta name="keywords" content="Apex JS, Alpine.js, realtime, server-sent events, SSE, createBroadcaster, sseHandler, apexRealtimeClient, EventSource, pub sub, TypeScript" />
+  <meta property="og:site_name" content="Apex JS" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://apexjs.site/docs/realtime.html" />
+  <meta property="og:title" content="Real-time — Apex JS" />
+  <meta property="og:description" content="Live updates over Server-Sent Events — a pub/sub broadcaster, an h3 sseHandler that streams channels to the browser, and a tiny EventSource client that auto-reconnects." />
+  <meta property="og:image" content="https://apexjs.site/assets/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Real-time — Apex JS" />
+  <meta name="twitter:description" content="Live updates over Server-Sent Events — a pub/sub broadcaster, an h3 sseHandler that streams channels to the browser, and a tiny EventSource client that auto-reconnects." />
+  <meta name="twitter:image" content="https://apexjs.site/assets/og-image.png" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"Real-time — Apex JS","description":"Live updates over Server-Sent Events — a pub/sub broadcaster, an h3 sseHandler that streams channels to the browser, and a tiny EventSource client that auto-reconnects.","url":"https://apexjs.site/docs/realtime.html","isPartOf":{"@type":"WebSite","name":"Apex JS","url":"https://apexjs.site"},"inLanguage":"en"}]}</script>
+<meta name="description" content="Live updates over Server-Sent Events — a pub/sub broadcaster, an h3 sseHandler that streams channels to the browser, and a tiny EventSource client that auto-reconnects." />
+<link rel="stylesheet" href="../style.css?v=20260711c" />
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="../index.html">
+      <img src="../assets/apex-mark.svg" alt="Apex JS" class="brand-mark" width="22" height="22" />
+      Apex&nbsp;JS
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="../index.html">Home</a>
+      <a href="./index.html">Docs</a>
+      <a href="../ui.html">UI Kit</a>
+      <a href="../theme.html">Theme</a>
+      <a href="https://github.com/andrecorugda/apexjs" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle light or dark theme" title="Toggle theme"><svg class="ic-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="ic-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">Real-time</p>
+      <h1>Live updates over Server-Sent Events.</h1>
+      <p class="lede">
+        A pub/sub <code>createBroadcaster</code> hub fans messages to per-channel subscribers; an h3
+        <code>sseHandler</code> streams a caller's channels to the browser with the correct SSE headers and
+        keep-alive; and <code>apexRealtimeClient</code> wraps the native <code>EventSource</code> so the
+        client is a few lines with automatic reconnect.
+      </p>
+    </div>
+  </section>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" aria-label="Docs sections">
+      <div class="group">
+        <p class="group-title">Introduction</p>
+        <ul>
+          <li><a href="./index.html">Overview</a></li>
+          <li><a href="./getting-started.html">Getting Started</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Core</p>
+        <ul>
+          <li><a href="./routing.html">Routing</a></li>
+          <li><a href="./components.html">Components</a></li>
+          <li><a href="./islands.html">Islands</a></li>
+          <li><a href="./i18n.html">Internationalization</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Backend &amp; Data</p>
+        <ul>
+          <li><a href="./data.html">Data</a></li>
+          <li><a href="./ai-native.html">AI-Native APIs</a></li>
+          <li><a href="./auth.html">Auth</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Platform</p>
+        <ul>
+          <li><a href="./cache.html">Cache</a></li>
+          <li><a href="./storage.html">Storage</a></li>
+          <li><a href="./queues.html">Queues</a></li>
+          <li><a href="./mail.html">Mail</a></li>
+          <li><a href="./notifications.html">Notifications</a></li>
+          <li><a href="./realtime.html" aria-current="page">Real-time</a>
+            <ul class="subnav">
+              <li><a href="#broadcaster">The broadcaster</a></li>
+              <li><a href="#endpoint">The SSE endpoint</a></li>
+              <li><a href="#client">The browser client</a></li>
+              <li><a href="#wire">The wire format</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Testing</p>
+        <ul>
+          <li><a href="./testing.html">Test Kit</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Ship</p>
+        <ul>
+          <li><a href="./cli.html">CLI</a></li>
+          <li><a href="./deploy.html">Build &amp; Deploy</a></li>
+          <li><a href="./mobile.html">Mobile</a></li>
+          <li><a href="./pwa.html">PWA</a></li>
+          <li><a href="./versioning.html">Stability &amp; Versioning</a></li>
+        </ul>
+      </div>
+    </aside>
+    <section class="doc">
+
+      <h2 id="broadcaster">The broadcaster <a class="anchor" href="#broadcaster">#</a></h2>
+      <p>
+        <code>createBroadcaster()</code> is an in-process pub/sub hub. <code>subscribe</code> returns an
+        unsubscribe function; <code>publish</code> fans an <code>(event, data)</code> pair to every
+        subscriber of that channel — and only that channel. A throwing listener is isolated from the rest
+        of the fan-out.
+      </p>
+      <pre><code><span class="k">import</span> { createBroadcaster } <span class="k">from</span> <span class="s">'@apex-stack/core/server'</span>
+
+<span class="k">const</span> hub = createBroadcaster()
+
+<span class="k">const</span> off = hub.subscribe(<span class="s">'room:1'</span>, (event, data) =&gt; console.log(event, data))
+hub.publish(<span class="s">'room:1'</span>, <span class="s">'msg'</span>, { text: <span class="s">'hi'</span> })   <span class="c">// listener sees ('msg', { text: 'hi' })</span>
+off()   <span class="c">// stop delivery (idempotent)</span></code></pre>
+
+      <h2 id="endpoint">The SSE endpoint <a class="anchor" href="#endpoint">#</a></h2>
+      <p>
+        <code>sseHandler(broadcaster, opts)</code> is an h3 handler. It sets
+        <code>Content-Type: text/event-stream</code> (plus <code>no-cache</code> and keep-alive), opens
+        with a comment frame, then streams every publish on the caller's channels as an
+        <code>event/data</code> frame. Cancelling the stream unsubscribes and closes — no leaks.
+      </p>
+      <pre><code><span class="k">import</span> { createApp } <span class="k">from</span> <span class="s">'h3'</span>
+<span class="k">import</span> { createBroadcaster, sseHandler } <span class="k">from</span> <span class="s">'@apex-stack/core/server'</span>
+
+<span class="k">const</span> hub = createBroadcaster()
+<span class="k">const</span> app = createApp()
+
+app.use(<span class="s">'/events'</span>, sseHandler(hub, {
+  channels: (event) =&gt; [<span class="s">'room:1'</span>],   <span class="c">// which channels this caller receives</span>
+  keepAliveMs: <span class="s">15000</span>,               <span class="c">// periodic comment to hold the connection open</span>
+}))
+
+<span class="c">// Anywhere on the server, push to open streams:</span>
+hub.publish(<span class="s">'room:1'</span>, <span class="s">'greet'</span>, { hi: <span class="k">true</span> })</code></pre>
+
+      <h2 id="client">The browser client <a class="anchor" href="#client">#</a></h2>
+      <p>
+        <code>apexRealtimeClient(url, { onEvent })</code> wraps the native <code>EventSource</code>. It
+        best-effort JSON-decodes each payload (falling back to the raw string), the browser reconnects
+        automatically on a transient drop, and <code>close()</code> tears the connection down.
+      </p>
+      <pre><code><span class="k">import</span> { apexRealtimeClient } <span class="k">from</span> <span class="s">'@apex-stack/core/server'</span>
+
+<span class="k">const</span> rt = apexRealtimeClient(<span class="s">'/events'</span>, {
+  onEvent: (event, data) =&gt; console.log(event, data),
+  events: [<span class="s">'greet'</span>],           <span class="c">// extra named events beyond the default 'message' stream</span>
+  onOpen: () =&gt; console.log(<span class="s">'connected'</span>),
+})
+<span class="c">// later:</span>
+rt.close()</code></pre>
+      <p class="muted">
+        The client is browser-only — it uses the DOM <code>EventSource</code> and is never imported by a
+        server module, so it can't pull DOM globals into the server bundle.
+      </p>
+
+      <h2 id="wire">The wire format <a class="anchor" href="#wire">#</a></h2>
+      <p>
+        Under the hood, frames are plain SSE text. <code>encodeSseFrame</code> emits
+        <code>id</code>/<code>event</code>/<code>retry</code> before <code>data</code>, splits multi-line
+        data into one <code>data:</code> line each, and strips CR/LF from single-line fields so a value can
+        never inject a new frame.
+      </p>
+      <pre><code><span class="k">import</span> { encodeSseFrame } <span class="k">from</span> <span class="s">'@apex-stack/core/server'</span>
+
+encodeSseFrame({ event: <span class="s">'x'</span>, data: JSON.stringify({ a: <span class="s">1</span> }) })
+<span class="c">// → 'event: x\ndata: {"a":1}\n\n'</span></code></pre>
+
+      <div class="card-grid cols-2">
+        <a class="card" href="./notifications.html"><span class="k">Platform</span><h3>Notifications</h3><p>Broadcast a new notification to the recipient's open stream.</p></a>
+        <a class="card" href="./auth.html"><span class="k">Backend</span><h3>Auth</h3><p>Resolve the caller in <code>channels()</code> to scope their stream.</p></a>
+      </div>
+
+  </section>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand-col">
+        <a class="brand" href="../index.html">
+          <img src="../assets/apex-mark.svg" alt="Apex JS" class="brand-mark" width="22" height="22" />
+          Apex&nbsp;JS
+        </a>
+        <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
+        <p class="kofi" style="margin-top:.75rem"><a href="https://ko-fi.com/G7S722N0L8" target="_blank" rel="noopener"><img height="36" style="border:0;height:36px;" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" alt="Buy Me a Coffee at ko-fi.com" /></a></p>
+      </div>
+      <div class="links">
+        <a href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        <a href="./getting-started.html">Get started</a>
+        <a href="./ai-native.html">AI-native</a>
+        <a href="./cli.html">CLI</a>
+      </div>
+    </div>
+    <p class="foot-note">Apex&nbsp;JS · MIT · built by Andre Corugda · npm create apexjs@latest</p>
+  </div>
+</footer>
+
+<script src="../enhance.js" defer></script>
+<script>
+  document.documentElement.classList.add("js");
+  (() => {
+    var root = document.documentElement;
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
+      root.setAttribute("data-theme", dark ? "light" : "dark");
+    });
+  })();
+</script>

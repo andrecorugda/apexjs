@@ -83,11 +83,25 @@
               <li><a href="#routes">Gate a route</a></li>
               <li><a href="#resources">Resource access &amp; scope</a></li>
               <li><a href="#sessions">Sessions</a></li>
+              <li><a href="#rbac">Roles &amp; permissions</a></li>
+              <li><a href="#tokens">API tokens</a></li>
+              <li><a href="#flows">Auth flow tokens</a></li>
               <li><a href="#mcp">The AI surface</a></li>
               <li><a href="#hardening">Hardening</a></li>
               <li><a href="#adapters">Adapters</a></li>
             </ul>
           </li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Platform</p>
+        <ul>
+          <li><a href="./cache.html">Cache</a></li>
+          <li><a href="./storage.html">Storage</a></li>
+          <li><a href="./queues.html">Queues</a></li>
+          <li><a href="./mail.html">Mail</a></li>
+          <li><a href="./notifications.html">Notifications</a></li>
+          <li><a href="./realtime.html">Real-time</a></li>
         </ul>
       </div>
       <div class="group">
@@ -155,7 +169,7 @@
 
       <h2 id="resources">Resource access &amp; scope <a class="anchor" href="#resources">#</a></h2>
       <p>
-        For <code>defineResource</code>/<code>defineModel</code>, gate each operation with
+        For <code>defineModel</code> resources, gate each operation with
         <code>access</code> and filter rows per-caller with <code>scope</code>. <code>scope</code> is
         applied to <strong>every</strong> op — a <code>WHERE</code> on list/get/update/delete and a
         stamp on create — so a caller only ever sees or touches their own rows.
@@ -203,6 +217,98 @@
       <p class="muted">
         <code>logout(event, { password })</code> clears the cookie. Prefer an adapter (below) for real
         credential storage, OAuth, or 2FA.
+      </p>
+
+      <h2 id="rbac">Roles &amp; permissions <a class="anchor" href="#rbac">#</a></h2>
+      <p>
+        When a flat <code>user.roles</code> array isn't enough, <code>createAccessControl</code> gives you
+        a persisted, Spatie-style RBAC: roles hold permissions, users hold roles, and a user can also be
+        granted a permission directly. It runs against a DB handle you pass, and its effective-permission
+        check is the <strong>union</strong> of role-granted and direct grants.
+      </p>
+      <p class="code-label">server side — @apex-stack/core/server</p>
+      <pre><code><span class="k">import</span> { createAccessControl } <span class="k">from</span> <span class="s">'@apex-stack/core/server'</span>
+
+<span class="k">const</span> ac = createAccessControl({ handle })   <span class="c">// handle = your DB adapter</span>
+<span class="k">await</span> handle.exec(ac.migrationSql())          <span class="c">// roles, permissions, role_permissions, user_roles</span>
+
+<span class="k">await</span> ac.grantPermissionToRole(<span class="s">'editor'</span>, <span class="s">'posts.edit'</span>)
+<span class="k">await</span> ac.assignRole(<span class="s">'u1'</span>, <span class="s">'editor'</span>)
+<span class="k">await</span> ac.giveDirectPermission(<span class="s">'u1'</span>, <span class="s">'billing.view'</span>)
+
+<span class="k">await</span> ac.permissionsOf(<span class="s">'u1'</span>)               <span class="c">// → ['billing.view', 'posts.edit']</span>
+<span class="k">await</span> ac.hasPermission(<span class="s">'u1'</span>, <span class="s">'posts.edit'</span>)   <span class="c">// → true</span>
+<span class="k">await</span> ac.hasRole(<span class="s">'u1'</span>, <span class="s">'editor'</span>)            <span class="c">// → true</span>
+
+<span class="k">await</span> ac.revokeRole(<span class="s">'u1'</span>, <span class="s">'editor'</span>)          <span class="c">// grants &amp; assignments are revocable + idempotent</span></code></pre>
+      <p>
+        <code>permissionGate(ac, 'posts.edit')</code> adapts a permission into a route/resource
+        <code>can</code> — it reads the user's id, checks the store, and is <strong>fail-closed</strong> for
+        anonymous callers:
+      </p>
+      <pre><code><span class="k">import</span> { defineApexRoute } <span class="k">from</span> <span class="s">'@apex-stack/core'</span>
+<span class="k">import</span> { permissionGate } <span class="k">from</span> <span class="s">'@apex-stack/core/server'</span>
+
+<span class="k">export default</span> defineApexRoute({
+  method: <span class="s">'POST'</span>,
+  auth: <span class="k">true</span>,
+  can: permissionGate(ac, <span class="s">'posts.edit'</span>),   <span class="c">// no user / no permission → refused</span>
+  handler: ({ user }) =&gt; publishPost(user),
+})</code></pre>
+      <div class="callout warm">
+        <span class="h">Injection-safe by construction</span>
+        <p>
+          The table prefix is validated as a SQL identifier (<code>createAccessControl</code> throws on a
+          bad prefix), and every value is a bound <code>?</code> parameter — nothing is string-concatenated
+          into SQL. A user with no roles or grants simply has no permissions (no empty-<code>IN&nbsp;()</code>
+          crash).
+        </p>
+      </div>
+
+      <h2 id="tokens">API tokens <a class="anchor" href="#tokens">#</a></h2>
+      <p>
+        For non-cookie clients — a CLI, a mobile app, a CI job — <code>createTokenStore</code> issues
+        opaque, Sanctum-style bearer tokens with per-token abilities. <code>issue</code> returns the
+        plaintext <strong>once</strong>; the store persists only a SHA-256 hash, never the secret.
+      </p>
+      <pre><code><span class="k">import</span> { createTokenStore } <span class="k">from</span> <span class="s">'@apex-stack/core/server'</span>
+
+<span class="k">const</span> tokens = createTokenStore({ handle })
+<span class="k">await</span> handle.exec(tokens.migrationSql())
+
+<span class="k">const</span> { id, token } = <span class="k">await</span> tokens.issue(<span class="s">'u1'</span>, <span class="s">'cli'</span>, [<span class="s">'posts.read'</span>, <span class="s">'posts.write'</span>])
+<span class="c">// `token` is shown to the user once — only its hash is stored.</span>
+
+<span class="k">await</span> tokens.verify(token)              <span class="c">// → { id, userId: 'u1', abilities: [...] } | null</span>
+<span class="k">await</span> tokens.can(token, <span class="s">'posts.read'</span>)    <span class="c">// → true  (the '*' ability matches anything)</span>
+<span class="k">await</span> tokens.list(<span class="s">'u1'</span>)                 <span class="c">// summaries only — never the hash</span>
+<span class="k">await</span> tokens.revoke(id)                 <span class="c">// or tokens.revokeAll('u1')</span></code></pre>
+      <p class="muted">
+        <code>verify</code> returns <code>null</code> — never throws — for an unknown id, a wrong secret,
+        a malformed string, or an expired token (pass <code>{ expiresInSeconds }</code> to
+        <code>issue</code>); a successful verify stamps <code>last_used_at</code>.
+      </p>
+
+      <h2 id="flows">Auth flow tokens <a class="anchor" href="#flows">#</a></h2>
+      <p>
+        Password-reset and email-verification links need single-use, expiring tokens.
+        <code>createFlowTokens</code> issues one bound to a <em>kind</em> and a <em>subject</em> (usually an
+        email); <code>consume</code> succeeds exactly once and then can never be replayed.
+      </p>
+      <pre><code><span class="k">import</span> { createFlowTokens } <span class="k">from</span> <span class="s">'@apex-stack/core/server'</span>
+
+<span class="k">const</span> flows = createFlowTokens({ handle, ttlSeconds: <span class="s">3600</span> })
+<span class="k">await</span> handle.exec(flows.migrationSql())
+
+<span class="k">const</span> token = <span class="k">await</span> flows.issue(<span class="s">'password_reset'</span>, <span class="s">'user@example.com'</span>)
+<span class="c">// …email the link containing `token`…</span>
+
+<span class="k">await</span> flows.consume(<span class="s">'password_reset'</span>, <span class="s">'user@example.com'</span>, token)   <span class="c">// → true (first time)</span>
+<span class="k">await</span> flows.consume(<span class="s">'password_reset'</span>, <span class="s">'user@example.com'</span>, token)   <span class="c">// → false (single-use)</span></code></pre>
+      <p class="muted">
+        A wrong secret, wrong kind, wrong subject, expired, or garbage token all return <code>false</code>
+        without throwing — and a wrong-kind attempt never burns the real token. <code>email_verify</code> and
+        <code>password_reset</code> are independent flows for the same subject, and only a hash is stored.
       </p>
 
       <h2 id="mcp">The AI surface <a class="anchor" href="#mcp">#</a></h2>

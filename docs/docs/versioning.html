@@ -80,6 +80,17 @@
         </ul>
       </div>
       <div class="group">
+        <p class="group-title">Platform</p>
+        <ul>
+          <li><a href="./cache.html">Cache</a></li>
+          <li><a href="./storage.html">Storage</a></li>
+          <li><a href="./queues.html">Queues</a></li>
+          <li><a href="./mail.html">Mail</a></li>
+          <li><a href="./notifications.html">Notifications</a></li>
+          <li><a href="./realtime.html">Real-time</a></li>
+        </ul>
+      </div>
+      <div class="group">
         <p class="group-title">Testing</p>
         <ul>
           <li><a href="./testing.html">Test Kit</a></li>
@@ -156,7 +167,8 @@
             <tr><td><code>@apex-stack/core/server</code></td><td><code>sessionAuth</code>, <code>login</code>, <code>logout</code>, <code>getSession</code>, <code>checkCsrf</code>, <code>applySecurityHeaders</code> (+ more)</td></tr>
             <tr><td><code>@apex-stack/core/client</code></td><td><code>registerApexComponent</code>, <code>installNav</code>, <code>createAction</code></td></tr>
             <tr><td><code>@apex-stack/core/testing</code></td><td><code>createTestApp</code></td></tr>
-            <tr><td><code>@apex-stack/data</code></td><td><code>defineModel</code>, <code>defineResource</code>, <code>createDb</code>, <code>applyMigrations</code>, <code>timestamps</code>/<code>owned</code>/<code>softDeletes</code>, <code>factory</code></td></tr>
+            <tr><td><code>@apex-stack/data</code></td><td><code>defineModel</code> (active-record + <code>.resource()</code>), <code>defineResource</code>, <code>createDb</code>/<code>lazyDb</code> (+ <code>handle.transaction</code>), <code>applyMigrations</code>, behaviors (<code>timestamps</code>/<code>owned</code>/<code>softDeletes</code>/<code>observable</code>/<code>auditable</code>), relations (<code>hasMany</code>/<code>hasOne</code>/<code>belongsTo</code>), <code>raw</code>, <code>Collection</code>, errors (<code>ModelNotFoundException</code>/<code>QueryException</code>/<code>StaleModelException</code>), <code>factory</code></td></tr>
+            <tr><td><code>@apex-stack/core/server</code></td><td>Platform: <code>createCache</code>, <code>createStorage</code>, <code>createQueue</code>/<code>defineJob</code>, <code>createMailer</code>, <code>createNotifier</code>, <code>createBroadcaster</code>/<code>sseHandler</code>, <code>createAccessControl</code>/<code>createTokenStore</code>/<code>createFlowTokens</code>, <code>hashPassword</code>/<code>verifyPassword</code></td></tr>
             <tr><td>CLI</td><td><code>dev build start new make add migrate theme upgrade test mcp</code> — command names + documented flags are part of the contract</td></tr>
           </tbody>
         </table>

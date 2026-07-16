@@ -1,0 +1,245 @@
+<title>Storage — Apex JS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="canonical" href="https://apexjs.site/docs/storage.html" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <meta name="keywords" content="Apex JS, Alpine.js, storage, createStorage, local storage, S3, signed URLs, presigned URL, SigV4, file uploads, TypeScript" />
+  <meta property="og:site_name" content="Apex JS" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://apexjs.site/docs/storage.html" />
+  <meta property="og:title" content="Storage — Apex JS" />
+  <meta property="og:description" content="One Storage interface — put/get/getText/exists/delete/list/url — over a local filesystem driver or any S3-compatible object store, with signed and presigned URLs." />
+  <meta property="og:image" content="https://apexjs.site/assets/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Storage — Apex JS" />
+  <meta name="twitter:description" content="One Storage interface — put/get/getText/exists/delete/list/url — over a local filesystem driver or any S3-compatible object store, with signed and presigned URLs." />
+  <meta name="twitter:image" content="https://apexjs.site/assets/og-image.png" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"Storage — Apex JS","description":"One Storage interface — put/get/getText/exists/delete/list/url — over a local filesystem driver or any S3-compatible object store, with signed and presigned URLs.","url":"https://apexjs.site/docs/storage.html","isPartOf":{"@type":"WebSite","name":"Apex JS","url":"https://apexjs.site"},"inLanguage":"en"}]}</script>
+<meta name="description" content="One Storage interface — put/get/getText/exists/delete/list/url — over a local filesystem driver or any S3-compatible object store, with signed and presigned URLs." />
+<link rel="stylesheet" href="../style.css?v=20260711c" />
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="../index.html">
+      <img src="../assets/apex-mark.svg" alt="Apex JS" class="brand-mark" width="22" height="22" />
+      Apex&nbsp;JS
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="../index.html">Home</a>
+      <a href="./index.html">Docs</a>
+      <a href="../ui.html">UI Kit</a>
+      <a href="../theme.html">Theme</a>
+      <a href="https://github.com/andrecorugda/apexjs" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle light or dark theme" title="Toggle theme"><svg class="ic-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="ic-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">Storage</p>
+      <h1>Files &amp; blobs. Local <em>or</em> S3.</h1>
+      <p class="lede">
+        <code>createStorage()</code> returns one driver-agnostic <code>Storage</code> — <code>put</code>,
+        <code>get</code>, <code>getText</code>, <code>exists</code>, <code>delete</code>, <code>list</code>,
+        and <code>url</code>. The local driver writes under a base directory (path-traversal-proof); the
+        S3 driver targets any S3-compatible store over <code>fetch</code> + SigV4. Your app depends only on
+        the interface, so filesystem&nbsp;↔&nbsp;S3 is a config change.
+      </p>
+    </div>
+  </section>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" aria-label="Docs sections">
+      <div class="group">
+        <p class="group-title">Introduction</p>
+        <ul>
+          <li><a href="./index.html">Overview</a></li>
+          <li><a href="./getting-started.html">Getting Started</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Core</p>
+        <ul>
+          <li><a href="./routing.html">Routing</a></li>
+          <li><a href="./components.html">Components</a></li>
+          <li><a href="./islands.html">Islands</a></li>
+          <li><a href="./i18n.html">Internationalization</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Backend &amp; Data</p>
+        <ul>
+          <li><a href="./data.html">Data</a></li>
+          <li><a href="./ai-native.html">AI-Native APIs</a></li>
+          <li><a href="./auth.html">Auth</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Platform</p>
+        <ul>
+          <li><a href="./cache.html">Cache</a></li>
+          <li><a href="./storage.html" aria-current="page">Storage</a>
+            <ul class="subnav">
+              <li><a href="#setup">Setup</a></li>
+              <li><a href="#ops">Read, write, list</a></li>
+              <li><a href="#urls">Public &amp; signed URLs</a></li>
+              <li><a href="#s3">S3 &amp; compatible</a></li>
+              <li><a href="#safety">Path safety</a></li>
+            </ul>
+          </li>
+          <li><a href="./queues.html">Queues</a></li>
+          <li><a href="./mail.html">Mail</a></li>
+          <li><a href="./notifications.html">Notifications</a></li>
+          <li><a href="./realtime.html">Real-time</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Testing</p>
+        <ul>
+          <li><a href="./testing.html">Test Kit</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Ship</p>
+        <ul>
+          <li><a href="./cli.html">CLI</a></li>
+          <li><a href="./deploy.html">Build &amp; Deploy</a></li>
+          <li><a href="./mobile.html">Mobile</a></li>
+          <li><a href="./pwa.html">PWA</a></li>
+          <li><a href="./versioning.html">Stability &amp; Versioning</a></li>
+        </ul>
+      </div>
+    </aside>
+    <section class="doc">
+
+      <h2 id="setup">Setup <a class="anchor" href="#setup">#</a></h2>
+      <p>
+        <code>createStorage(config)</code> selects a driver by its <code>driver</code> discriminant —
+        <code>local</code> (the default) or <code>s3</code>. The local driver just needs a base directory.
+      </p>
+      <pre><code><span class="k">import</span> { createStorage } <span class="k">from</span> <span class="s">'@apex-stack/core/server'</span>
+
+<span class="k">const</span> storage = createStorage({ driver: <span class="s">'local'</span>, dir: <span class="s">'storage/app'</span> })</code></pre>
+
+      <h2 id="ops">Read, write, list <a class="anchor" href="#ops">#</a></h2>
+      <p>
+        <code>put</code> accepts a string or <code>Uint8Array</code> (with an optional
+        <code>contentType</code>). <code>get</code> returns bytes or <code>null</code>;
+        <code>getText</code> decodes to a string. <code>delete</code> is idempotent, and <code>list</code>
+        returns <code>{ path, size }</code> entries, optionally under a prefix.
+      </p>
+      <pre><code><span class="k">await</span> storage.put(<span class="s">'docs/a.txt'</span>, <span class="s">'hello world'</span>, { contentType: <span class="s">'text/plain'</span> })
+
+<span class="k">await</span> storage.exists(<span class="s">'docs/a.txt'</span>)   <span class="c">// → true</span>
+<span class="k">await</span> storage.getText(<span class="s">'docs/a.txt'</span>)  <span class="c">// → 'hello world'</span>
+<span class="k">await</span> storage.get(<span class="s">'docs/a.txt'</span>)      <span class="c">// → Uint8Array | null</span>
+
+<span class="k">await</span> storage.put(<span class="s">'bin/blob'</span>, <span class="k">new</span> Uint8Array([<span class="s">0</span>, <span class="s">1</span>, <span class="s">2</span>, <span class="s">255</span>]))  <span class="c">// binary too</span>
+
+<span class="k">await</span> storage.list(<span class="s">'docs/'</span>)  <span class="c">// → [{ path: 'docs/a.txt', size: 11 }, …]</span>
+<span class="k">await</span> storage.delete(<span class="s">'docs/a.txt'</span>)  <span class="c">// idempotent — deleting a missing key is a no-op</span></code></pre>
+
+      <h2 id="urls">Public &amp; signed URLs <a class="anchor" href="#urls">#</a></h2>
+      <p>
+        <code>url(path)</code> with no options returns a plain public URL; pass
+        <code>{ expiresInSeconds }</code> for a time-limited, tamper-checked signed URL. The local driver
+        signs with a <code>signingSecret</code> (it throws if you ask for a signed URL without one).
+      </p>
+      <pre><code><span class="k">const</span> storage = createStorage({
+  driver: <span class="s">'local'</span>,
+  dir: <span class="s">'storage/app'</span>,
+  signingSecret: process.env.APEX_STORAGE_SECRET,
+})
+
+<span class="k">await</span> storage.url(<span class="s">'img/pic.png'</span>)                          <span class="c">// → '/storage/img/pic.png'</span>
+<span class="k">await</span> storage.url(<span class="s">'img/pic.png'</span>, { expiresInSeconds: <span class="s">3600</span> })  <span class="c">// → /storage/img/pic.png?sig=…&amp;exp=…</span></code></pre>
+      <p class="muted">
+        A signed URL carries <code>sig</code> + <code>exp</code>; the server verifies both — a tampered
+        path, a tampered signature, the wrong secret, or a past expiry all fail closed.
+      </p>
+
+      <h2 id="s3">S3 &amp; compatible <a class="anchor" href="#s3">#</a></h2>
+      <p>
+        The S3 driver speaks SigV4 over <code>fetch</code> — no AWS SDK. <code>url()</code> with an expiry
+        returns a presigned GET; without one, a plain object URL. Point <code>endpoint</code> at MinIO (or
+        any S3-compatible store) to switch to path-style addressing.
+      </p>
+      <pre><code><span class="k">const</span> storage = createStorage({
+  driver: <span class="s">'s3'</span>,
+  bucket: <span class="s">'my-bucket'</span>,
+  region: <span class="s">'eu-west-1'</span>,
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+})
+
+<span class="k">await</span> storage.put(<span class="s">'avatars/1.png'</span>, bytes, { contentType: <span class="s">'image/png'</span> })
+<span class="k">await</span> storage.url(<span class="s">'avatars/1.png'</span>, { expiresInSeconds: <span class="s">900</span> })  <span class="c">// SigV4 presigned GET</span>
+
+<span class="c">// Custom endpoint → path-style addressing (MinIO, R2, …)</span>
+<span class="k">const</span> minio = createStorage({ driver: <span class="s">'s3'</span>, bucket, region, accessKeyId, secretAccessKey,
+  endpoint: <span class="s">'https://minio.example.com'</span> })</code></pre>
+
+      <h2 id="safety">Path safety <a class="anchor" href="#safety">#</a></h2>
+      <p>
+        Every key is normalized and confined to the base directory. A <code>..</code> segment that would
+        escape the root is rejected with a <code>StoragePathError</code> — while a <code>..</code> that
+        stays inside resolves normally.
+      </p>
+      <div class="callout warm">
+        <span class="h">Fail-closed on traversal</span>
+        <p>
+          <code>storage.put('../escape.txt', …)</code> and <code>storage.get('../../etc/passwd')</code>
+          both throw <code>StoragePathError</code> — user-supplied keys can never read or write outside the
+          storage root.
+        </p>
+      </div>
+
+      <div class="card-grid cols-2">
+        <a class="card" href="./cache.html"><span class="k">Platform</span><h3>Cache</h3><p>Memory or file cache with TTL and tags.</p></a>
+        <a class="card" href="./queues.html"><span class="k">Platform</span><h3>Queues</h3><p>Offload heavy work — image processing, uploads.</p></a>
+      </div>
+
+  </section>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand-col">
+        <a class="brand" href="../index.html">
+          <img src="../assets/apex-mark.svg" alt="Apex JS" class="brand-mark" width="22" height="22" />
+          Apex&nbsp;JS
+        </a>
+        <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
+        <p class="kofi" style="margin-top:.75rem"><a href="https://ko-fi.com/G7S722N0L8" target="_blank" rel="noopener"><img height="36" style="border:0;height:36px;" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" alt="Buy Me a Coffee at ko-fi.com" /></a></p>
+      </div>
+      <div class="links">
+        <a href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        <a href="./getting-started.html">Get started</a>
+        <a href="./ai-native.html">AI-native</a>
+        <a href="./cli.html">CLI</a>
+      </div>
+    </div>
+    <p class="foot-note">Apex&nbsp;JS · MIT · built by Andre Corugda · npm create apexjs@latest</p>
+  </div>
+</footer>
+
+<script src="../enhance.js" defer></script>
+<script>
+  document.documentElement.classList.add("js");
+  (() => {
+    var root = document.documentElement;
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
+      root.setAttribute("data-theme", dark ? "light" : "dark");
+    });
+  })();
+</script>
