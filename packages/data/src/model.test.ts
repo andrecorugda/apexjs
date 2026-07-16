@@ -31,19 +31,19 @@ describe('defineModel — zod insert shape', () => {
 describe('defineModel — migration SQL', () => {
   it('generates a dialect-appropriate CREATE TABLE (sqlite)', () => {
     const sql = todos.migrationSql('sqlite')
-    expect(sql).toContain('CREATE TABLE IF NOT EXISTS todos')
-    expect(sql).toContain('id INTEGER PRIMARY KEY AUTOINCREMENT')
-    expect(sql).toContain('title TEXT NOT NULL')
-    expect(sql).toContain('done INTEGER DEFAULT FALSE')
-    expect(sql).toContain('views INTEGER DEFAULT 0')
-    expect(sql).toContain('meta TEXT')
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS "todos"')
+    expect(sql).toContain('"id" INTEGER PRIMARY KEY AUTOINCREMENT')
+    expect(sql).toContain('"title" TEXT NOT NULL')
+    expect(sql).toContain('"done" INTEGER DEFAULT FALSE')
+    expect(sql).toContain('"views" INTEGER DEFAULT 0')
+    expect(sql).toContain('"meta" TEXT')
   })
 
   it('generates postgres types', () => {
     const sql = todos.migrationSql('postgres')
-    expect(sql).toContain('id SERIAL PRIMARY KEY')
-    expect(sql).toContain('meta JSONB')
-    expect(sql).toContain('done BOOLEAN')
+    expect(sql).toContain('"id" SERIAL PRIMARY KEY')
+    expect(sql).toContain('"meta" JSONB')
+    expect(sql).toContain('"done" BOOLEAN')
   })
 })
 
@@ -57,8 +57,8 @@ describe('defineModel — timestamp is a JSON-Schema-safe string', () => {
     )
   })
   it('uses a string column type in migrations', () => {
-    expect(events.migrationSql('sqlite')).toContain('at TEXT')
-    expect(events.migrationSql('postgres')).toContain('at TIMESTAMP')
+    expect(events.migrationSql('sqlite')).toContain('"at" TEXT')
+    expect(events.migrationSql('postgres')).toContain('"at" TIMESTAMP')
   })
 })
 

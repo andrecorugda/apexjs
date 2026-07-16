@@ -43,6 +43,14 @@ export interface FieldDef {
   notNull?: boolean
   unique?: boolean
   default?: unknown
+  /** Create a single-column index on this column (real apps need FKs/filters indexed). */
+  index?: boolean
+  /** Foreign key: this column references `table`(`column`, default the pk `id`). */
+  references?: {
+    table: string
+    column?: string
+    onDelete?: 'cascade' | 'restrict' | 'set null' | 'no action'
+  }
 }
 
 /** A field is either a shorthand type string or a full definition. */
@@ -53,6 +61,9 @@ export interface DefineModelOptions {
   fields: Fields
   /** Primary key column name (auto-increment integer). Default `id`. */
   pk?: string
+  /** Composite / named indexes emitted after the table (e.g. `{ on: ['teamId','createdAt'] }`). */
+  indexes?: Array<{ on: string[]; unique?: boolean; name?: string }>
+
   /**
    * Per-operation authorization for the derived resource (reuses the route gate).
    * Declaring it (or `scope`) gates the whole resource — unlisted ops default to
@@ -272,17 +283,41 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
     return dialect === 'sqlite' ? sqliteTable(name, cols as never) : pgTable(name, cols as never)
   }
 
+  // Quote identifiers so the DB column names match Drizzle's quoted names exactly — otherwise
+  // Postgres lower-cases unquoted camelCase (teamId → teamid) and every camelCase column (ownerId,
+  // createdAt, …) breaks. SQLite accepts double-quoted identifiers too.
+  const q = (id: string) => `"${id}"`
   const migrationSql = (dialect: Dialect): string => {
     const pkSql = dialect === 'sqlite' ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'SERIAL PRIMARY KEY'
-    const lines = [`  ${pk} ${pkSql}`]
+    const lines = [`  ${q(pk)} ${pkSql}`]
     for (const [key, def] of Object.entries(fields)) {
-      let line = `  ${key} ${sqlType(def, dialect)}`
+      let line = `  ${q(key)} ${sqlType(def, dialect)}`
       if (def.notNull) line += ' NOT NULL'
       if (def.unique) line += ' UNIQUE'
       if (def.default !== undefined) line += ` DEFAULT ${sqlDefault(def.default)}`
+      if (def.references) {
+        line += ` REFERENCES ${q(def.references.table)}(${q(def.references.column ?? 'id')})`
+        if (def.references.onDelete) line += ` ON DELETE ${def.references.onDelete.toUpperCase()}`
+      }
       lines.push(line)
     }
-    return `CREATE TABLE IF NOT EXISTS ${name} (\n${lines.join(',\n')}\n);`
+    let sql = `CREATE TABLE IF NOT EXISTS ${q(name)} (\n${lines.join(',\n')}\n);`
+    // Indexes — single-column (`field.index`) + composite (`opts.indexes`). FK columns and
+    // frequent filters need these or every query table-scans at scale.
+    const idx: string[] = []
+    for (const [key, def] of Object.entries(fields)) {
+      if (def.index)
+        idx.push(`CREATE INDEX IF NOT EXISTS idx_${name}_${key} ON ${q(name)} (${q(key)});`)
+    }
+    for (const i of opts.indexes ?? []) {
+      const cols = i.on.map(q).join(', ')
+      const iname = i.name ?? `idx_${name}_${i.on.join('_')}`
+      idx.push(
+        `CREATE ${i.unique ? 'UNIQUE ' : ''}INDEX IF NOT EXISTS ${iname} ON ${q(name)} (${cols});`,
+      )
+    }
+    if (idx.length) sql += `\n${idx.join('\n')}`
+    return sql
   }
 
   const resource = (handle: ApexDbHandle): ApexResource =>
