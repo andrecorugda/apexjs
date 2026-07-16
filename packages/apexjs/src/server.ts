@@ -3,6 +3,7 @@
 
 export type { ApexUser, AuthConfig, AuthResolveContext, RouteGate } from './auth/define.js'
 export { defineAuth } from './auth/define.js'
+export { hashPassword, verifyPassword } from './auth/password.js'
 export { setStatus } from './auth/respond.js'
 export {
   getSession,
@@ -26,6 +27,16 @@ export {
   startProdServer,
 } from './prod/server.js'
 export { gracefulShutdown, onShutdown } from './prod/shutdown.js'
+export {
+  type CorsConfig,
+  DEFAULT_CSP,
+  type HeadersConfig,
+  type HstsConfig,
+  type RateLimitConfig,
+  type ResolvedSecurity,
+  resolveSecurityConfig,
+  type SecurityConfig,
+} from './security/config.js'
 export { checkCsrf, isCsrfSafe } from './security/csrf.js'
 export { applySecurityHeaders, securityHeaders } from './security/headers.js'
 export { createMemoryStore, type KvStore } from './security/kvStore.js'

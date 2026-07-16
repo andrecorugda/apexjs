@@ -1,6 +1,14 @@
 // Sealed-cookie sessions — server-only helpers built on h3's encrypted+signed
-// session cookies (HttpOnly, SameSite=Lax by default). This is Apex's built-in
-// identity store for the "hybrid" auth scope; OAuth/JWT/2FA remain adapter territory.
+// session cookies (HttpOnly, SameSite=Lax by default, Secure in production). This is
+// Apex's built-in identity store for the "hybrid" auth scope; OAuth/JWT/2FA remain
+// adapter territory.
+//
+// REVOCATION LIMITATION: these sessions are STATELESS — the whole payload lives in the
+// (encrypted/signed) cookie, with no server-side store to invalidate. There is therefore
+// no true server-side "log this session out everywhere" until `maxAge` expires. `logout()`
+// only clears the cookie in the caller's own browser; a copied/stolen cookie stays valid
+// until it expires. For hard revocation, keep a server-side session/token store (adapter
+// territory) or rotate the sealing `password` (invalidates ALL sessions at once).
 import { deleteCookie, getCookie, type H3Event, setCookie, useSession } from 'h3'
 import { type ApexUser, type AuthConfig, defineAuth } from './define.js'
 import { sealHmac, unsealHmac } from './hmac.js'
@@ -16,9 +24,19 @@ export interface SessionOptions {
   name?: string
   /** Cookie max-age in seconds. */
   maxAge?: number
+  /**
+   * Set the `Secure` cookie flag (HTTPS-only). Defaults to true in production
+   * (`NODE_ENV === 'production'`) and false otherwise so local http dev still works.
+   */
+  secure?: boolean
 }
 
 const NAME = 'apex-session'
+
+/** Whether the session cookie should carry `Secure` — explicit opt-in wins, else prod-only. */
+function secureCookie(opts: SessionOptions): boolean {
+  return opts.secure ?? process.env.NODE_ENV === 'production'
+}
 
 // The `event` params are typed `unknown` (not `H3Event`) so route handlers — whose
 // ctx.event is intentionally loosely typed — can pass it with no cast. It is an
@@ -48,6 +66,7 @@ function deviceSession<T extends Record<string, unknown>>(
   const cookie = {
     httpOnly: true,
     sameSite: 'lax' as const,
+    secure: secureCookie(opts),
     path: '/',
     ...(opts.maxAge ? { maxAge: opts.maxAge } : {}),
   }
@@ -81,7 +100,11 @@ export async function getSession<T extends Record<string, unknown> = Record<stri
   return useSession<T>(event as H3Event, {
     password: opts.password,
     name: opts.name ?? NAME,
-    cookie: { sameSite: 'lax', ...(opts.maxAge ? { maxAge: opts.maxAge } : {}) },
+    cookie: {
+      sameSite: 'lax',
+      secure: secureCookie(opts),
+      ...(opts.maxAge ? { maxAge: opts.maxAge } : {}),
+    },
   }) as unknown as ApexSession<T>
 }
 

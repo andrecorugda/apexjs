@@ -1,12 +1,13 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
-import { defineEventHandler, type EventHandler, toWebRequest } from 'h3'
+import { defineEventHandler, type EventHandler, setResponseStatus, toWebRequest } from 'h3'
 import { type ZodRawShape, z } from 'zod'
 import type { ApiEntry } from '../api/routes.js'
 import { checkRouteAccess } from '../auth/check.js'
 import type { ApexUser, AuthConfig } from '../auth/define.js'
 import { getRequestUser } from '../auth/run.js'
 import type { RuntimeConfig } from '../config/runtime.js'
+import { bodyExceedsLimit } from '../security/middleware.js'
 
 /** True if any loaded route opted into MCP exposure. */
 export function hasMcpRoutes(entries: ApiEntry[]): boolean {
@@ -41,7 +42,9 @@ export interface McpHandlerOptions {
   /** Include real error messages in tool failures (dev/tests). Production: generic text. */
   exposeErrors?: boolean
   /** Receives the FULL error when a tool call throws. */
-  onError?: (error: unknown, ctx: { kind: 'mcp'; path: string }) => void
+  onError?: (error: unknown, ctx: { kind: 'mcp'; path: string; requestId?: string }) => void
+  /** Reject a request body larger than this many bytes with `413` (before dispatch). */
+  bodyLimitBytes?: number
 }
 
 function buildServer(
@@ -104,13 +107,24 @@ export function createMcpHandler(
   const mcpEntries = entries.filter((e) => e.route.mcp)
 
   return defineEventHandler(async (event) => {
+    // Body-size cap: reject an oversized JSON-RPC payload before the transport reads it.
+    if (opts?.bodyLimitBytes && bodyExceedsLimit(event, opts.bodyLimitBytes)) {
+      setResponseStatus(event, 413)
+      return { error: 'Payload too large' }
+    }
     const user = await getRequestUser(event, auth, config)
     const visible: ApiEntry[] = []
     for (const entry of mcpEntries) {
       const decision = await checkRouteAccess(entry.route, user, undefined, { listTime: true })
       if (decision.ok) visible.push(entry)
     }
-    const server = buildServer(visible, config, user, opts)
+    // Thread the per-request id into tool-failure reports (echoed as `x-request-id`).
+    const requestId = event.context.apexRequestId as string | undefined
+    const scopedOpts: McpHandlerOptions | undefined =
+      opts?.onError && requestId
+        ? { ...opts, onError: (e, ctx) => opts.onError?.(e, { ...ctx, requestId }) }
+        : opts
+    const server = buildServer(visible, config, user, scopedOpts)
     const transport = new WebStandardStreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
