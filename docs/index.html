@@ -276,7 +276,7 @@
             <h3>Server rendering</h3>
             <p>Every page renders to real HTML on the server through a typed <code>loader()</code> — fast first paint, real SEO, no client round-trip.</p>
             <pre><code><span class="k">export async function</span> <span class="f">loader</span>() {
-  <span class="k">return</span> { posts: <span class="k">await</span> db.select().from(schema.posts) }
+  <span class="k">return</span> { posts: <span class="k">await</span> Post.all(handle) }
 }</code></pre>
           </article>
 
@@ -306,11 +306,11 @@ pages/blog/[slug].alpine  → <span class="s">/blog/:slug</span></code></pre>
           <article class="feature-slide">
             <span class="fs-num">05</span>
             <h3>Typed data layer</h3>
-            <p>One <code>defineResource</code> gives you CRUD over Drizzle — SQLite, Postgres, Turso or Neon.</p>
-            <pre><code><span class="k">export default</span> <span class="f">defineResource</span>(<span class="s">'posts'</span>, {
-  db, table: schema.posts,
-  insert: { title: <span class="f">z</span>.string() },
-})</code></pre>
+            <p>One <code>defineModel</code> gives you REST + MCP CRUD over Drizzle — SQLite, Postgres, Turso or Neon.</p>
+            <pre><code><span class="k">export const</span> Post = <span class="f">defineModel</span>(<span class="s">'posts'</span>, {
+  fields: { title: { type: <span class="s">'string'</span>, notNull: <span class="k">true</span> } },
+})
+<span class="k">export default</span> Post.resource(handle)</code></pre>
           </article>
 
           <article class="feature-slide accent">
@@ -330,20 +330,23 @@ pages/blog/[slug].alpine  → <span class="s">/blog/:slug</span></code></pre>
       <div class="carousel-dots" data-carousel-dots></div>
 
       <p class="code-label">server/api/features.ts — the whole backend of the demo</p>
-      <pre><code><span class="c">// One definition → REST endpoints AND MCP tools</span>
+      <pre><code><span class="k">import</span> { defineModel } <span class="k">from</span> <span class="s">'@apex-stack/data'</span>
+<span class="k">import</span> { handle } <span class="k">from</span> <span class="s">'../../db/index.js'</span>
+
+<span class="c">// One definition → REST endpoints AND MCP tools</span>
 <span class="c">// (features_list / get / create / update / delete). The UI</span>
 <span class="c">// below and an AI assistant call the SAME handlers.</span>
-<span class="k">export default</span> defineResource(<span class="s">'features'</span>, {
-  db,
-  table: schema.features,
-  insert: { name: z.string(), tag: z.string().optional() },
-})</code></pre>
+<span class="k">export const</span> Feature = defineModel(<span class="s">'features'</span>, {
+  fields: { name: { type: <span class="s">'string'</span>, notNull: <span class="k">true</span> }, tag: <span class="s">'string'</span> },
+})
+<span class="k">export default</span> Feature.resource(handle)</code></pre>
 
       <p class="code-label">pages/index.alpine — the list is rendered from the DB on the server</p>
       <pre><code>&lt;<span class="t">script</span> <span class="k">server</span>&gt;
-  <span class="k">import</span> { db, schema } <span class="k">from</span> <span class="s">'../db/index.js'</span>
+  <span class="k">import</span> { handle } <span class="k">from</span> <span class="s">'../db/index.js'</span>
+  <span class="k">import</span> { Feature } <span class="k">from</span> <span class="s">'../server/api/features.js'</span>
   <span class="k">export async function</span> loader() {
-    <span class="k">const</span> features = <span class="k">await</span> db.select().from(schema.features)
+    <span class="k">const</span> features = <span class="k">await</span> Feature.all(handle)   <span class="c">// active-record; hydrated instances</span>
     <span class="k">return</span> { features }   <span class="c">// → Alpine x-data, in the first HTML</span>
   }
 &lt;/<span class="t">script</span>&gt;</code></pre>
@@ -351,7 +354,7 @@ pages/blog/[slug].alpine  → <span class="s">/blog/:slug</span></code></pre>
       <p class="muted">
         The browser's "Add" and the "Simulate an AI" button both <code>POST /api/features</code> — the
         exact endpoint exposed as the MCP tool <code>features_create</code>. One
-        <code>defineResource</code>, and the UI and an assistant operate on the same rows.
+        <code>defineModel</code>, and the UI and an assistant operate on the same rows.
         <a href="./docs/data.html">See the Data guide →</a>
       </p>
 
@@ -372,7 +375,7 @@ pages/blog/[slug].alpine  → <span class="s">/blog/:slug</span></code></pre>
             <article class="pano-slide">
               <p class="pano-k">Data</p>
               <h3>One definition, two surfaces</h3>
-              <p><code>defineResource</code> turns a table into REST endpoints <em>and</em> MCP tools — one database, no drift.</p>
+              <p><code>defineModel</code> turns a table into REST endpoints <em>and</em> MCP tools — one database, no drift.</p>
             </article>
             <article class="pano-slide">
               <p class="pano-k">Reusable logic</p>
@@ -710,22 +713,18 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
 "</style>\n" },
 
       "server/api/posts.ts": { lang: "TYPESCRIPT", dot: "ts", code:
-"import { defineApexRoute } from '@apex-stack/core'\n" +
-"import { z } from 'zod'\n" +
-"import { PostService } from '../../services/PostService'\n" +
+"import { handle } from '../../db/index.js'\n" +
+"import { Post } from '../../models/Post.js'\n" +
 "\n" +
-"const posts = new PostService()\n" +
-"\n" +
-"// GET /api/posts  ·  MCP tool \"posts_list\"\n" +
-"// Because mcp: true, this handler is a REST endpoint AND a tool your\n" +
-"// AI can call at /mcp. One definition, two consumers.\n" +
-"export default defineApexRoute({\n" +
-"  method: 'GET',\n" +
-"  description: 'List blog posts, optionally filtered by tag',\n" +
-"  input: { tag: z.string().optional() },\n" +
-"  mcp: true,\n" +
-"  handler: ({ input }) => posts.all(input.tag),\n" +
-"})\n" },
+"// The model becomes a live REST + MCP resource — this one line gives you\n" +
+"//   GET /api/posts · MCP tool posts_list  (+ get / create / update / delete),\n" +
+"// list paginated/filterable/sortable via ?page / ?perPage / ?sort / ?<col>=.\n" +
+"//\n" +
+"// Query it yourself with the SAME model (active-record — writes fire the\n" +
+"// model's hooks + row-level scope, exactly like the resource does):\n" +
+"//   const recent = await Post.where({ published: true })\n" +
+"//     .orderBy('created_at', 'desc').limit(10).all(handle)\n" +
+"export default Post.resource(handle)\n" },
 
       "services/PostService.ts": { lang: "TYPESCRIPT", dot: "ts", code:
 "import type { Post } from '../shared/types'\n" +
@@ -830,18 +829,19 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
       "models/Post.ts": { lang: "TYPESCRIPT", dot: "ts", code:
 "import { defineModel, timestamps, owned } from '@apex-stack/data'\n" +
 "\n" +
-"// One definition → a typed schema, a SQL migration, and REST + MCP CRUD.\n" +
-"export default defineModel('posts', {\n" +
+"// One definition → a typed schema + SQL migration, REST + MCP CRUD, AND an\n" +
+"// active-record query API (Post.where(...).all(handle), Post.create(...)).\n" +
+"export const Post = defineModel('posts', {\n" +
 "  fields: {\n" +
 "    title: { type: 'string', notNull: true },\n" +
 "    slug: { type: 'string', unique: true },\n" +
 "    body: 'string',\n" +
 "    published: { type: 'boolean', default: false },\n" +
+"    authorId: 'int',\n" +
 "  },\n" +
-"  // Composable lifecycle behaviors: created_at/updated_at + owner stamping.\n" +
-"  behaviors: [timestamps(), owned('authorId')],\n" +
-"  // Row-level security — authors only ever see their own posts.\n" +
-"  scope: ({ user }) => ({ authorId: user.id }),\n" +
+"  // Composable behaviors passed to `use`: created_at/updated_at, plus owner\n" +
+"  // stamping + row-level security — authors only ever see their own posts.\n" +
+"  use: [timestamps(), owned('authorId')],\n" +
 "})\n" },
 
       "server/auth.ts": { lang: "TYPESCRIPT", dot: "ts", code:

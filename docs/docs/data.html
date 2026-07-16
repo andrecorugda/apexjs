@@ -8,14 +8,14 @@
   <meta property="og:type" content="article" />
   <meta property="og:url" content="https://apexjs.site/docs/data.html" />
   <meta property="og:title" content="Data — Apex JS" />
-  <meta property="og:description" content="defineResource turns one table into REST + MCP CRUD. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations." />
+  <meta property="og:description" content="defineModel turns one table into REST + MCP CRUD plus an active-record query API. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations." />
   <meta property="og:image" content="https://apexjs.site/assets/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Data — Apex JS" />
-  <meta name="twitter:description" content="defineResource turns one table into REST + MCP CRUD. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations." />
+  <meta name="twitter:description" content="defineModel turns one table into REST + MCP CRUD plus an active-record query API. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations." />
   <meta name="twitter:image" content="https://apexjs.site/assets/og-image.png" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"Data — Apex JS","description":"defineResource turns one table into REST + MCP CRUD. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations.","url":"https://apexjs.site/docs/data.html","isPartOf":{"@type":"WebSite","name":"Apex JS","url":"https://apexjs.site"},"inLanguage":"en"}]}</script>
-<meta name="description" content="defineResource turns one table into REST + MCP CRUD. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations." />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"Data — Apex JS","description":"defineModel turns one table into REST + MCP CRUD plus an active-record query API. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations.","url":"https://apexjs.site/docs/data.html","isPartOf":{"@type":"WebSite","name":"Apex JS","url":"https://apexjs.site"},"inLanguage":"en"}]}</script>
+<meta name="description" content="defineModel turns one table into REST + MCP CRUD plus an active-record query API. Drivers for SQLite, Turso, Supabase, Neon, and PGlite, plus SQL migrations." />
 <link rel="stylesheet" href="../style.css?v=20260711c" />
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
@@ -45,9 +45,10 @@
       <p class="eyebrow">Data</p>
       <h1>One table → REST <em>and</em> MCP CRUD.</h1>
       <p class="lede">
-        <code>@apex-stack/data</code> wraps Drizzle and turns a table into a full resource: list, get,
-        create, update, delete — over REST <strong>and</strong> as MCP tools, on the same database.
-        Your data is AI-callable by construction.
+        <code>@apex-stack/data</code> turns one <code>defineModel</code> into a full resource: list, get,
+        create, update, delete — over REST <strong>and</strong> as MCP tools, on the same database. The
+        same model <em>is</em> an Eloquent-style active-record API for your own code. Your data is
+        AI-callable by construction.
       </p>
     </div>
   </section>
@@ -78,6 +79,10 @@
               <li><a href="#install">Install</a></li>
               <li><a href="#define">Define once</a></li>
               <li><a href="#surfaces">The surfaces you get</a></li>
+              <li><a href="#query">Query with active record</a></li>
+              <li><a href="#relations">Relations &amp; eager loading</a></li>
+              <li><a href="#transactions">Transactions</a></li>
+              <li><a href="#advanced">Scopes, casts &amp; locking</a></li>
               <li><a href="#composable">Consume it on the client</a></li>
               <li><a href="#drivers">Databases &amp; drivers</a></li>
               <li><a href="#migrations">Migrations</a></li>
@@ -113,10 +118,12 @@
       <p class="muted">Postgres/PGlite drivers load on demand — install only the one you use (below).</p>
 
       <h2 id="define">Define once <a class="anchor" href="#define">#</a></h2>
-      <p>The fastest path is <code>defineModel</code>: one file derives the Zod schema, the SQL
-      migration, the Drizzle table, <em>and</em> a full REST + MCP resource. Composable
-      <code>behaviors</code> (<code>timestamps()</code>, <code>owned()</code>, <code>softDeletes()</code>,
-      <code>auditable()</code>, <code>observable()</code>) add lifecycle logic.</p>
+      <p>One <code>defineModel</code> is the single source of truth: from a field spec it derives the Zod
+      validation, the dialect-aware Drizzle table, the <code>CREATE TABLE</code> migration SQL, a full
+      REST + MCP resource, <em>and</em> a typed active-record query API. Composable
+      <code>behaviors</code> passed to <code>use</code> (<code>timestamps()</code>, <code>owned()</code>,
+      <code>softDeletes()</code>, <code>auditable()</code>, <code>observable()</code>) fold in lifecycle
+      logic and row-level security.</p>
       <p class="code-label">models/Message.ts</p>
       <pre><code><span class="k">import</span> { defineModel, timestamps } <span class="k">from</span> <span class="s">'@apex-stack/data'</span>
 
@@ -127,62 +134,58 @@
   },
   use: [timestamps()], <span class="c">// created_at / updated_at, kept out of the insert shape</span>
 })</code></pre>
-      <p>Mount it as a live resource from a <code>server/api/*.ts</code> file — that's the whole backend:</p>
+      <p>Open one shared database <code>handle</code> in <code>db/index.ts</code>. Use
+      <code>lazyDb</code> — it opens without a top-level <code>await</code> (so the module also bundles
+      into the on-device <code>apex build --mobile</code> output) and connects, migrates, and seeds on
+      first use. libSQL in-memory locally / on-device; Postgres when <code>DATABASE_URL</code> is set:</p>
+      <p class="code-label">db/index.ts</p>
+      <pre><code><span class="k">import</span> { lazyDb } <span class="k">from</span> <span class="s">'@apex-stack/data'</span>
+<span class="k">import</span> { Message } <span class="k">from</span> <span class="s">'../models/Message.js'</span>
+
+<span class="k">const</span> url = process.env.DATABASE_URL
+<span class="k">export const</span> handle = lazyDb(
+  () =&gt; (url ? { driver: <span class="s">'postgres'</span>, url } : { driver: <span class="s">'libsql'</span>, url: <span class="s">':memory:'</span> }),
+  { init: <span class="k">async</span> (h) =&gt; { <span class="k">await</span> h.exec(Message.migrationSql(h.dialect)) } }, <span class="c">// dialect-aware schema</span>
+)</code></pre>
+      <p>Mount the model as a live resource from a <code>server/api/*.ts</code> file — this one line is the
+      whole backend:</p>
       <p class="code-label">server/api/messages.ts</p>
       <pre><code><span class="k">import</span> { handle } <span class="k">from</span> <span class="s">'../../db/index.js'</span>
 <span class="k">import</span> { Message } <span class="k">from</span> <span class="s">'../../models/Message.js'</span>
 
 <span class="k">export default</span> Message.resource(handle)</code></pre>
-      <p>Already have a Drizzle table, or want full control? Drop to the lower-level
-      <code>defineResource</code> — a schema, a database handle, and a resource:</p>
-      <p class="code-label">db/schema.ts</p>
-      <pre><code><span class="k">import</span> { integer, sqliteTable, text } <span class="k">from</span> <span class="s">'drizzle-orm/sqlite-core'</span>
-
-<span class="k">export const</span> todos = sqliteTable(<span class="s">'todos'</span>, {
-  id: integer(<span class="s">'id'</span>).primaryKey({ autoIncrement: <span class="k">true</span> }),
-  text: text(<span class="s">'text'</span>).notNull(),
-  done: integer(<span class="s">'done'</span>, { mode: <span class="s">'boolean'</span> }).notNull().default(<span class="k">false</span>),
-})</code></pre>
-      <p class="code-label">db/index.ts — pick your database in one line</p>
-      <pre><code><span class="k">import</span> { fileURLToPath } <span class="k">from</span> <span class="s">'node:url'</span>
-<span class="k">import</span> { applyMigrations, createDb } <span class="k">from</span> <span class="s">'@apex-stack/data'</span>
-<span class="k">import</span> * <span class="k">as</span> schema <span class="k">from</span> <span class="s">'./schema.js'</span>
-
-<span class="k">const</span> handle = <span class="k">await</span> createDb(<span class="s">'data.db'</span>)   <span class="c">// local SQLite (libSQL)</span>
-<span class="k">await</span> applyMigrations(handle, fileURLToPath(<span class="k">new</span> URL(<span class="s">'./migrations'</span>, <span class="k">import</span>.meta.url)))
-
-<span class="k">export const</span> db = handle.db
-<span class="k">export</span> { schema }</code></pre>
-      <p class="code-label">server/api/todos.ts</p>
-      <pre><code><span class="k">import</span> { defineResource } <span class="k">from</span> <span class="s">'@apex-stack/data'</span>
-<span class="k">import</span> { z } <span class="k">from</span> <span class="s">'zod'</span>
-<span class="k">import</span> { db, schema } <span class="k">from</span> <span class="s">'../../db/index.js'</span>
-
-<span class="k">export default</span> defineResource(<span class="s">'todos'</span>, {
-  db,
-  table: schema.todos,
-  insert: { text: z.string(), done: z.boolean().optional() },
-})</code></pre>
+      <p class="muted">
+        <code>apex make model &lt;Name&gt; field:type …</code> scaffolds the model, its resource, a
+        reversible migration, and <code>db/index.ts</code> (if absent) for you.
+      </p>
 
       <h2 id="surfaces">The surfaces you get <a class="anchor" href="#surfaces">#</a></h2>
-      <p>From that single <code>defineModel</code> (or <code>defineResource</code>) definition:</p>
+      <p>From that single <code>defineModel</code> definition:</p>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Action</th><th>REST</th><th>MCP tool</th></tr></thead>
           <tbody>
-            <tr><td>List</td><td><code>GET /api/todos</code></td><td><code>todos_list</code></td></tr>
-            <tr><td>Get</td><td><code>GET /api/todos/:id</code></td><td><code>todos_get</code></td></tr>
-            <tr><td>Create</td><td><code>POST /api/todos</code></td><td><code>todos_create</code></td></tr>
-            <tr><td>Update</td><td><code>PATCH /api/todos/:id</code></td><td><code>todos_update</code></td></tr>
-            <tr><td>Delete</td><td><code>DELETE /api/todos/:id</code></td><td><code>todos_delete</code></td></tr>
+            <tr><td>List</td><td><code>GET /api/messages</code></td><td><code>messages_list</code></td></tr>
+            <tr><td>Get</td><td><code>GET /api/messages/:id</code></td><td><code>messages_get</code></td></tr>
+            <tr><td>Create</td><td><code>POST /api/messages</code></td><td><code>messages_create</code></td></tr>
+            <tr><td>Update</td><td><code>PATCH /api/messages/:id</code></td><td><code>messages_update</code></td></tr>
+            <tr><td>Delete</td><td><code>DELETE /api/messages/:id</code></td><td><code>messages_delete</code></td></tr>
           </tbody>
         </table>
       </div>
       <p>
         REST and MCP run the <strong>same handlers over the same database</strong>. An AI that creates a
-        todo via <code>todos_create</code> and a browser that lists via <code>GET /api/todos</code> see
-        the same rows. The <code>insert</code> shape validates creates; updates accept the same fields,
-        all optional, keyed by <code>id</code>.
+        message via <code>messages_create</code> and a browser that lists via
+        <code>GET /api/messages</code> see the same rows. The model's field spec validates creates;
+        updates accept the same fields, all optional, keyed by <code>id</code>.
+      </p>
+      <p>
+        List is paginated, filterable, and sortable out of the box — for both REST and the
+        <code>_list</code> MCP tool. Add <code>?page</code> &amp; <code>?perPage</code> to get a
+        <code>{ data, total, page, perPage, lastPage }</code> envelope (<code>perPage</code> capped at
+        100; without them list returns a plain array), <code>?sort=-createdAt,author</code> to sort
+        (leading <code>-</code> = descending), and <code>?&lt;col&gt;=value</code> to filter by any of the
+        model's columns.
       </p>
       <div class="callout warm">
         <span class="h">Why this matters</span>
@@ -192,6 +195,127 @@
           for how the MCP transport is carried for you.
         </p>
       </div>
+
+      <h2 id="query">Query with active record <a class="anchor" href="#query">#</a></h2>
+      <p>
+        The model object <em>is</em> the query API — no hand-written SQL. Reads run through Drizzle
+        (typed columns hydrate <code>boolean</code>/<code>json</code> automatically) and return
+        hydrated <strong>instances</strong>; <code>.all()</code> returns a <code>Collection</code>. Pass
+        the shared <code>handle</code> as the terminal argument:
+      </p>
+      <pre><code><span class="k">import</span> { raw } <span class="k">from</span> <span class="s">'@apex-stack/data'</span>
+<span class="k">import</span> { handle } <span class="k">from</span> <span class="s">'../../db/index.js'</span>
+<span class="k">import</span> { Player } <span class="k">from</span> <span class="s">'../../models/Player.js'</span>
+
+<span class="k">await</span> Player.first(handle)            <span class="c">// first row, or null</span>
+<span class="k">await</span> Player.find(handle, id)         <span class="c">// by primary key (findOrFail throws if missing)</span>
+<span class="k">await</span> Player.all(handle)              <span class="c">// a Collection of every row</span>
+<span class="k">await</span> Player.count(handle, { team: <span class="s">'A'</span> })
+
+<span class="c">// Chainable builder — ops: eq/ne/gt/gte/lt/lte/like/in/notIn/isNull, plus .orWhere()</span>
+<span class="k">await</span> Player.where({ team: <span class="s">'A'</span>, plays: { gt: <span class="t">5</span>, lte: <span class="t">100</span> } })
+  .orderBy(<span class="s">'plays'</span>, <span class="s">'desc'</span>).limit(<span class="t">10</span>).offset(<span class="t">0</span>)
+  .all(handle)                       <span class="c">// terminals: .all/.first/.count/.exists/.pluck/.sum/avg/min/max/.delete</span></code></pre>
+      <p>
+        Writes go through the <strong>same pipeline as the REST/MCP resource</strong>, so
+        <code>create</code>/<code>update</code>/<code>updateOrCreate</code>/<code>delete</code> fire the
+        model's hooks (<code>timestamps()</code>, <code>observable()</code>, <code>auditable()</code>),
+        apply row-level <code>scope</code>, respect <code>softDeletes()</code>, and validate the payload —
+        so <code>Model.*</code> and <code>/api/*</code> never diverge. Pass <code>{ user }</code> as the
+        last argument to apply tenant scope.
+      </p>
+      <pre><code><span class="k">await</span> Player.create(handle, { handle: <span class="s">'ada'</span>, plays: <span class="t">0</span> })                  <span class="c">// → the inserted instance</span>
+<span class="k">await</span> Player.updateOrCreate(handle, { handle: <span class="s">'ada'</span> }, { plays: <span class="t">10</span> })
+<span class="k">await</span> Player.update(handle, id, { plays: raw(<span class="s">'plays + 1'</span>) })          <span class="c">// raw() = a trusted SQL expr</span>
+<span class="k">await</span> Player.delete(handle, { team: <span class="s">'A'</span> })                            <span class="c">// soft-delete aware; returns the count</span>
+
+<span class="c">// Bulk primitives for imports/ETL (fast; bypass per-row hooks, like Eloquent's bulk ops)</span>
+<span class="k">await</span> Player.insertMany(handle, [{ handle: <span class="s">'a'</span> }, { handle: <span class="s">'b'</span> }])
+<span class="k">await</span> Player.updateMany(handle, { team: { in: [<span class="s">'A'</span>, <span class="s">'B'</span>] } }, { active: <span class="k">false</span> })
+<span class="k">await</span> Player.upsert(handle, [<span class="s">'handle'</span>], { handle: <span class="s">'ada'</span>, plays: <span class="t">99</span> }, { keep: { plays: <span class="s">'max'</span> } })</code></pre>
+      <p>
+        Instances carry their own methods, and a <code>Collection</code> extends <code>Array</code> with
+        Eloquent-style helpers:
+      </p>
+      <pre><code><span class="k">const</span> p = <span class="k">await</span> Player.find(handle, id)
+p.plays = <span class="t">5</span>
+p.isDirty()          <span class="c">// true; p.changes() → { plays: 5 }</span>
+<span class="k">await</span> p.save()        <span class="c">// persists only dirty attributes through the write pipeline</span>
+<span class="k">await</span> p.refresh()     <span class="c">// reloads attributes from the row; p.delete() removes it</span>
+p.toJSON()           <span class="c">// omits any `hidden` columns (also stripped from every REST/MCP response)</span>
+
+<span class="k">const</span> players = <span class="k">await</span> Player.all(handle)
+players.pluck(<span class="s">'handle'</span>)         <span class="c">// string[]</span>
+players.groupBy(<span class="s">'team'</span>)          <span class="c">// { A: Collection, B: Collection }</span>
+players.sum(<span class="s">'plays'</span>)</code></pre>
+      <p class="muted">
+        A mistyped column is validated against the model's fields and <em>throws</em> — never an
+        injection vector; values are always bound. Need a join, <code>GROUP BY</code>, or a window
+        function the builder can't express? <code>Player.tableFor(handle)</code> returns the model's
+        Drizzle table for the full typed builder:
+        <code>handle.db.select(…).from(Player.tableFor(handle))…</code>.
+      </p>
+
+      <h2 id="relations">Relations &amp; eager loading <a class="anchor" href="#relations">#</a></h2>
+      <p>
+        Declare relations with thunk refs, then eager-load them with <code>.with(…)</code> — each
+        relation is batch-loaded in ONE query keyed by the parent keys (N parents ⇒ 1 extra query, not
+        N). Loaded relations attach as instance properties and serialize with <code>toJSON</code>.
+      </p>
+      <pre><code><span class="k">import</span> { defineModel, belongsTo, hasMany } <span class="k">from</span> <span class="s">'@apex-stack/data'</span>
+
+<span class="k">export const</span> Post = defineModel(<span class="s">'posts'</span>, {
+  fields: { title: { type: <span class="s">'string'</span>, notNull: <span class="k">true</span> }, authorId: <span class="s">'int'</span> },
+  relations: {
+    author: belongsTo(() =&gt; User, <span class="s">'authorId'</span>),
+    comments: hasMany(() =&gt; Comment, <span class="s">'postId'</span>),
+  },
+})
+
+<span class="k">const</span> posts = <span class="k">await</span> Post.with(<span class="s">'author'</span>, <span class="s">'comments'</span>).orderBy(<span class="s">'id'</span>, <span class="s">'asc'</span>).all(handle)
+posts[<span class="t">0</span>].author    <span class="c">// a User instance</span>
+posts[<span class="t">0</span>].comments  <span class="c">// a Collection of Comment instances</span></code></pre>
+      <p class="muted"><code>hasOne</code>, <code>hasMany</code>, and <code>belongsTo</code> are supported; an unknown relation name throws.</p>
+
+      <h2 id="transactions">Transactions <a class="anchor" href="#transactions">#</a></h2>
+      <p>
+        <code>handle.transaction(fn)</code> runs <code>fn</code> atomically — auto-commits when it
+        resolves, auto-rolls-back if it throws. The callback receives a handle bound to the
+        transaction; pass it to your writes so the whole unit is one atomic step:
+      </p>
+      <pre><code><span class="k">await</span> handle.transaction(<span class="k">async</span> (tx) =&gt; {
+  <span class="k">await</span> Account.create(tx, { name: <span class="s">'a'</span>, balance: <span class="t">100</span> })
+  <span class="k">await</span> Account.update(tx, id, { balance: raw(<span class="s">'balance - 100'</span>) })
+  <span class="c">// a throw here rolls back BOTH writes</span>
+})</code></pre>
+
+      <h2 id="advanced">Scopes, casts &amp; locking <a class="anchor" href="#advanced">#</a></h2>
+      <p>
+        Reusable query fragments, attribute casts, optimistic locking, and typed errors round out the
+        Eloquent parity — all declared on the model:
+      </p>
+      <pre><code><span class="k">const</span> Post = defineModel(<span class="s">'posts'</span>, {
+  fields: { title: <span class="s">'string'</span>, status: <span class="s">'string'</span>, at: <span class="s">'timestamp'</span>, prefs: <span class="s">'text'</span>, version: { type: <span class="s">'int'</span>, default: <span class="t">0</span> } },
+  <span class="c">// Named, chainable scopes → Model.scope('published').all(handle)</span>
+  scopes: {
+    published: (q) =&gt; q.where({ status: <span class="s">'published'</span> }),
+    top: (q, n) =&gt; q.orderBy(<span class="s">'score'</span>, <span class="s">'desc'</span>).limit(n),
+  },
+  <span class="c">// Value casts on reads/writes: stored as strings, seen as Date / object</span>
+  casts: { at: <span class="s">'date'</span>, prefs: <span class="s">'json'</span> },
+  <span class="c">// instance.save() guards the loaded version + bumps it (409 on a stale write)</span>
+  optimisticLock: <span class="s">'version'</span>,
+})
+
+<span class="k">await</span> Post.scope(<span class="s">'published'</span>).all(handle)
+<span class="k">await</span> Post.scope(<span class="s">'top'</span>, <span class="t">5</span>).all(handle)</code></pre>
+      <p>
+        Missing rows throw <code>ModelNotFoundException</code> (HTTP 404) via
+        <code>findOrFail</code>/<code>firstOrFail</code>; a driver failure is rethrown as a
+        <code>QueryException</code> carrying the model, op, and original <code>cause</code>; a stale
+        <code>save()</code> under <code>optimisticLock</code> throws <code>StaleModelException</code>
+        (HTTP 409) instead of silently clobbering. All extend <code>ApexDataError</code>.
+      </p>
 
       <h2 id="composable">Consume it on the client <a class="anchor" href="#composable">#</a></h2>
       <p>
@@ -225,13 +349,19 @@
 
       <h2 id="drivers">Databases &amp; drivers <a class="anchor" href="#drivers">#</a></h2>
       <p>
-        <code>createDb</code> is driver-agnostic — every driver uses Drizzle's async API, so a
-        <code>defineResource</code> written once runs unchanged across all of them:
+        The handle is driver-agnostic — every driver uses Drizzle's async API, so a model written once
+        runs unchanged across all of them. <code>lazyDb</code>'s factory just returns the config for the
+        database you want (the same config shapes <code>createDb</code> accepts):
       </p>
-      <pre><code><span class="k">await</span> createDb(<span class="s">'data.db'</span>)                                       <span class="c">// local SQLite (libSQL)</span>
-<span class="k">await</span> createDb({ driver: <span class="s">'libsql'</span>, url: process.env.TURSO_URL })  <span class="c">// Turso (edge)</span>
-<span class="k">await</span> createDb({ driver: <span class="s">'postgres'</span>, url: process.env.DATABASE_URL }) <span class="c">// Supabase / Neon</span>
-<span class="k">await</span> createDb({ driver: <span class="s">'pglite'</span> })                             <span class="c">// embedded Postgres (tests)</span></code></pre>
+      <pre><code>{ driver: <span class="s">'libsql'</span>, url: <span class="s">':memory:'</span> }                    <span class="c">// local / on-device SQLite (libSQL)</span>
+{ driver: <span class="s">'libsql'</span>, url: process.env.TURSO_URL }        <span class="c">// Turso (edge)</span>
+{ driver: <span class="s">'postgres'</span>, url: process.env.DATABASE_URL }   <span class="c">// Supabase / Neon</span>
+{ driver: <span class="s">'pglite'</span> }                                    <span class="c">// embedded Postgres (tests)</span></code></pre>
+      <p class="muted">
+        Tests reach for the synchronous <code>createDb</code> directly (e.g.
+        <code>await createDb({ driver: 'pglite' })</code>); your app shares the one <code>lazyDb</code>
+        handle from <code>db/index.ts</code>.
+      </p>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Driver</th><th>Dialect</th><th>Good for</th><th>Install</th></tr></thead>
@@ -256,10 +386,12 @@
         <a href="./cli.html#migrate"><code>apex migrate</code></a> (idempotent).
       </p>
       <p class="code-label">db/migrations/0001_init.sql</p>
-      <pre><code><span class="k">CREATE TABLE IF NOT EXISTS</span> todos (
+      <pre><code><span class="k">CREATE TABLE IF NOT EXISTS</span> messages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  text TEXT NOT NULL,
-  done INTEGER NOT NULL DEFAULT 0
+  author TEXT NOT NULL,
+  body TEXT NOT NULL,
+  created_at TEXT,
+  updated_at TEXT
 );</code></pre>
       <pre><code>apex migrate                                   <span class="c"># default: data.db (sqlite)</span>
 apex migrate --driver postgres --url $DATABASE_URL</code></pre>
