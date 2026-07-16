@@ -87,7 +87,7 @@ function contract(make: () => Promise<ApexDbHandle>): void {
     await Player.upsert(h, ['handle'], { handle: 'ada', plays: 50 }, { keep: { plays: 'max' } })
     // A LOWER score must NOT overwrite (keep max).
     await Player.upsert(h, ['handle'], { handle: 'ada', plays: 20 }, { keep: { plays: 'max' } })
-    let row = await Player.find(h, ((await Player.first(h)) as { id: number }).id)
+    let row = await Player.find(h, (await Player.first(h))?.id)
     expect(row?.plays).toBe(50)
     // A HIGHER score does overwrite.
     await Player.upsert(h, ['handle'], { handle: 'ada', plays: 99 }, { keep: { plays: 'max' } })

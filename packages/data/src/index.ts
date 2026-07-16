@@ -34,7 +34,18 @@ export type {
 export { defineModel } from './model.js'
 // Active-record query layer (P1): raw() escape hatch + the chainable QueryBuilder.
 export { QueryBuilder, raw, Raw } from './query.js'
-export type { Cond, Op, QueryOpts, Row, UpsertOptions, Values, WhereConds } from './query.js'
+export type {
+  Cond,
+  ModelInstance,
+  Op,
+  QueryOpts,
+  Row,
+  UpsertOptions,
+  Values,
+  WhereConds,
+} from './query.js'
+// Fluent result collection returned by model reads.
+export { Collection, collect } from './collection.js'
 
 export type Dialect = 'sqlite' | 'postgres'
 
@@ -430,6 +441,8 @@ export interface DefineResourceOptions {
   filters?: FilterFn[]
   /** If set, DELETE soft-deletes by stamping this column instead of removing the row. */
   softDelete?: string
+  /** Columns stripped from every response (list/get/create/update) — e.g. `password`, `secret`. */
+  hidden?: string[]
   /** The full db handle — passed to hooks (e.g. `auditable` writes a companion table). */
   handle?: ApexDbHandle
 }
@@ -461,6 +474,15 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
     handle: opts.handle,
   })
   const pkCol = repo.pkCol
+
+  // Strip `hidden` columns (password/secret) from every response — REST + MCP.
+  const hiddenCols = new Set(opts.hidden ?? [])
+  const strip = <T extends Record<string, unknown> | null>(r: T): T => {
+    if (!r || !hiddenCols.size) return r
+    const o = { ...r }
+    for (const k of hiddenCols) delete o[k]
+    return o as T
+  }
 
   // Gating posture: declaring `access` or `scope` opts the whole resource in;
   // an unlisted op then defaults to 'authed' (fail-closed), never public.
@@ -546,7 +568,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
             if (q.page === undefined && q.perPage === undefined) {
               const rows = await build()
               await repo.runAfterList(rows, user ?? null)
-              return rows
+              return rows.map(strip)
             }
             const page = Number(q.page ?? 1)
             const perPage = Number(q.perPage ?? 25)
@@ -555,7 +577,13 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
             const totalRows = where ? await totalQ.where(where) : await totalQ
             const total = Number((totalRows[0] as { n: unknown } | undefined)?.n ?? 0)
             await repo.runAfterList(data, user ?? null)
-            return { data, total, page, perPage, lastPage: Math.max(1, Math.ceil(total / perPage)) }
+            return {
+              data: data.map(strip),
+              total,
+              page,
+              perPage,
+              lastPage: Math.max(1, Math.ceil(total / perPage)),
+            }
           },
         }),
       },
@@ -578,7 +606,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
                   .where(and(eq(pkCol, id), ...repo.scopeConds(user ?? null)))
               )[0] ?? null
             await repo.runAfterGet(row, id, user ?? null)
-            return row
+            return strip(row)
           },
         }),
       },
@@ -592,7 +620,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           mcp: true,
           ...gate('create'),
           handler: async ({ input, user }) =>
-            repo.create(input as Record<string, unknown>, user ?? null),
+            strip(await repo.create(input as Record<string, unknown>, user ?? null)),
         }),
       },
       {
@@ -606,7 +634,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           ...gate('update'),
           handler: async ({ input, user }) => {
             const { id, ...fields } = input as { id: number } & Record<string, unknown>
-            return repo.update(eq(pkCol, id), fields, user ?? null, id)
+            return strip(await repo.update(eq(pkCol, id), fields, user ?? null, id))
           },
         }),
       },
@@ -621,7 +649,7 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
           ...gate('delete'),
           handler: async ({ input, user }) => {
             const id = (input as { id: number }).id
-            return repo.remove(eq(pkCol, id), user ?? null, id)
+            return strip(await repo.remove(eq(pkCol, id), user ?? null, id))
           },
         }),
       },

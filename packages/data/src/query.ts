@@ -32,11 +32,28 @@ import {
 } from 'drizzle-orm'
 import { z } from 'zod'
 import type { BehaviorHooks, FilterFn } from './behavior.js'
+import { Collection, collect } from './collection.js'
 import type { ApexDbHandle, Dialect, ScopeFn } from './index.js'
 import type { FieldDef } from './model.js'
 import { type Repo, repository } from './repository.js'
 
 export type Row = Record<string, unknown>
+
+/** A hydrated model instance: attribute props + methods (save/delete/refresh/isDirty/toJSON). */
+export interface ModelInstance extends Row {
+  /** Persist changed attributes (goes through the write pipeline: hooks/timestamps/scope). */
+  save(): Promise<ModelInstance>
+  /** Delete this row (soft-delete aware). */
+  delete(): Promise<ModelInstance>
+  /** Reload attributes from the database. */
+  refresh(): Promise<ModelInstance>
+  /** Whether any attribute (or `col`) differs from the last persisted value. */
+  isDirty(col?: string): boolean
+  /** Attributes changed since load/save. */
+  changes(): Row
+  /** Serialize to a plain object, omitting the model's `hidden` columns. */
+  toJSON(): Row
+}
 
 /** A raw SQL expression: `{ plays: raw('plays + 1') }`. Trusted code only — never user input. */
 export class Raw {
@@ -85,6 +102,62 @@ export interface ModelArConfig {
   insertShape: Record<string, z.ZodTypeAny>
   /** Named, reusable query scopes: `Model.scope('published').all(h)`. */
   scopes?: Record<string, (qb: QueryBuilder, ...args: any[]) => QueryBuilder>
+  /** Columns omitted from `instance.toJSON()` (e.g. password/secret). */
+  hidden?: Set<string>
+}
+
+/** Wrap a DB row as a model instance: attributes as own props + non-enumerable methods. */
+function makeInstance(cfg: ModelArConfig, handle: ApexDbHandle, attrs: Row): ModelInstance {
+  const inst = { ...attrs } as ModelInstance
+  const state = { original: { ...attrs } as Row }
+  const hidden = cfg.hidden ?? new Set<string>()
+  const pk = cfg.pk
+  const def = (name: string, value: unknown) =>
+    Object.defineProperty(inst, name, { value, enumerable: false })
+
+  def('isDirty', function (this: Row, col?: string): boolean {
+    if (col) return this[col] !== state.original[col]
+    return Object.keys(this).some((k) => this[k] !== state.original[k])
+  })
+  def('changes', function (this: Row): Row {
+    const c: Row = {}
+    for (const k of Object.keys(this)) if (this[k] !== state.original[k]) c[k] = this[k]
+    return c
+  })
+  def('save', async function (this: ModelInstance): Promise<ModelInstance> {
+    const b = bindModel(cfg, handle)
+    const dirty: Values = {}
+    for (const k of Object.keys(this)) {
+      if (k !== pk && this[k] !== state.original[k]) dirty[k] = this[k] as never
+    }
+    if (Object.keys(dirty).length) {
+      const data = prepareWrite(dirty, b.cols, cfg.insertShape, true)
+      const row = await b.repo.update(eq(b.table[pk], this[pk]), data, null, this[pk] as number)
+      if (row) Object.assign(this, row)
+    }
+    state.original = { ...this }
+    return this
+  })
+  def('delete', async function (this: ModelInstance): Promise<ModelInstance> {
+    const b = bindModel(cfg, handle)
+    await b.repo.remove(eq(b.table[pk], this[pk]), null, this[pk] as number)
+    return this
+  })
+  def('refresh', async function (this: ModelInstance): Promise<ModelInstance> {
+    const b = bindModel(cfg, handle)
+    const rows = (await handle.db.select().from(b.table).where(eq(b.table[pk], this[pk]))) as Row[]
+    if (rows[0]) {
+      Object.assign(this, rows[0])
+      state.original = { ...rows[0] }
+    }
+    return this
+  })
+  def('toJSON', function (this: Row): Row {
+    const out: Row = {}
+    for (const k of Object.keys(this)) if (!hidden.has(k)) out[k] = this[k]
+    return out
+  })
+  return inst
 }
 
 const OP_KEYS = new Set(['eq', 'ne', 'gt', 'gte', 'lt', 'lte', 'like', 'in', 'notIn', 'isNull'])
@@ -223,7 +296,7 @@ export class QueryBuilder {
     return bindModel(this.cfg, handle)
   }
 
-  async all(handle: ApexDbHandle, opts?: QueryOpts): Promise<Row[]> {
+  async all(handle: ApexDbHandle, opts?: QueryOpts): Promise<Collection<ModelInstance>> {
     const b = this.bound(handle)
     let q = handle.db.select().from(b.table)
     const w = this.conds(b, opts?.user ?? null)
@@ -239,10 +312,11 @@ export class QueryBuilder {
     if (this.locking && handle.dialect === 'postgres' && typeof q.for === 'function') {
       q = q.for('update')
     }
-    return (await q) as Row[]
+    const rows = (await q) as Row[]
+    return collect(rows.map((r) => makeInstance(this.cfg, handle, r)))
   }
 
-  async first(handle: ApexDbHandle, opts?: QueryOpts): Promise<Row | null> {
+  async first(handle: ApexDbHandle, opts?: QueryOpts): Promise<ModelInstance | null> {
     this.lim = 1
     return (await this.all(handle, opts))[0] ?? null
   }
@@ -351,10 +425,14 @@ function bindModel(cfg: ModelArConfig, handle: ApexDbHandle): Bound {
 export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfig): T {
   const qb = (): QueryBuilder => new QueryBuilder(cfg)
 
-  const create = async (handle: ApexDbHandle, values: Values, opts?: QueryOpts): Promise<Row> => {
+  const create = async (
+    handle: ApexDbHandle,
+    values: Values,
+    opts?: QueryOpts,
+  ): Promise<ModelInstance> => {
     const b = bindModel(cfg, handle)
     const data = prepareWrite(values, b.cols, cfg.insertShape, false)
-    return b.repo.create(data, opts?.user ?? null)
+    return makeInstance(cfg, handle, await b.repo.create(data, opts?.user ?? null))
   }
 
   const update = async (
@@ -362,10 +440,11 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
     id: unknown,
     values: Values,
     opts?: QueryOpts,
-  ): Promise<Row | null> => {
+  ): Promise<ModelInstance | null> => {
     const b = bindModel(cfg, handle)
     const data = prepareWrite(values, b.cols, cfg.insertShape, true)
-    return b.repo.update(eq(b.table[cfg.pk], id), data, opts?.user ?? null, id as number)
+    const row = await b.repo.update(eq(b.table[cfg.pk], id), data, opts?.user ?? null, id as number)
+    return row ? makeInstance(cfg, handle, row) : null
   }
 
   const insertMany = async (
@@ -430,7 +509,7 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
       match: WhereConds,
       values: Values,
       opts?: QueryOpts,
-    ): Promise<Row> => {
+    ): Promise<ModelInstance> => {
       const existing = await qb().where(match).first(handle, opts)
       if (existing) {
         const updated = await update(handle, existing[cfg.pk], values, opts)
@@ -467,7 +546,7 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
           ? base.onConflictDoUpdate({ target, set })
           : base.onConflictDoNothing({ target })
       const rows = (await stmt.returning()) as Row[]
-      return rows[0] ?? null
+      return rows[0] ? makeInstance(cfg, handle, rows[0]) : null
     },
   }
 

@@ -26,8 +26,10 @@ import {
   defineResource,
   type ScopeFn,
 } from './index.js'
+import type { Collection } from './collection.js'
 import {
   attachActiveRecord,
+  type ModelInstance,
   type QueryBuilder,
   type QueryOpts,
   type Row,
@@ -83,6 +85,9 @@ export interface DefineModelOptions {
    * QueryBuilder (+ any args) and returns it chained: `{ published: (q) => q.where({ status: 'published' }) }`.
    */
   scopes?: Record<string, (qb: QueryBuilder, ...args: any[]) => QueryBuilder>
+  /** Columns hidden from serialization — omitted by `instance.toJSON()` AND the REST/MCP resource
+   * responses (e.g. `password`, `secret`). */
+  hidden?: string[]
 }
 
 /** A model: its schema derivations + a factory for its REST/MCP resource. */
@@ -107,12 +112,12 @@ export interface ApexModel {
   // (typo → throw, never an injection vector). `raw('plays + 1')` = a SQL expression.
   // `opts.user` drives row-level `scope` isolation (omitted = trusted/admin).
 
-  /** All rows. */
-  all(handle: ApexDbHandle, opts?: QueryOpts): Promise<Row[]>
+  /** All rows, as hydrated instances in a Collection. */
+  all(handle: ApexDbHandle, opts?: QueryOpts): Promise<Collection<ModelInstance>>
   /** First row ordered by primary key, or `null`. */
-  first(handle: ApexDbHandle, opts?: QueryOpts): Promise<Row | null>
+  first(handle: ApexDbHandle, opts?: QueryOpts): Promise<ModelInstance | null>
   /** Row by primary key, or `null`. */
-  find(handle: ApexDbHandle, id: unknown, opts?: QueryOpts): Promise<Row | null>
+  find(handle: ApexDbHandle, id: unknown, opts?: QueryOpts): Promise<ModelInstance | null>
   /** Start a filtered query: `Model.where({ team: 'A', plays: { gt: 5 } }).orderBy('plays','desc').all(h)`. */
   where(conds: WhereConds): QueryBuilder
   /** Start an ordered query. */
@@ -126,7 +131,7 @@ export interface ApexModel {
   /** Delete rows matching `conds` (soft-delete aware); returns the number removed. */
   delete(handle: ApexDbHandle, conds: WhereConds, opts?: QueryOpts): Promise<number>
   /** Insert a row through the write pipeline (hooks/timestamps/scope/validation); returns it. */
-  create(handle: ApexDbHandle, values: Values, opts?: QueryOpts): Promise<Row>
+  create(handle: ApexDbHandle, values: Values, opts?: QueryOpts): Promise<ModelInstance>
   /** Bulk-insert rows in one statement; scope-stamped, returns them. Fast — bypasses per-row hooks. */
   insertMany(handle: ApexDbHandle, rows: Values[], opts?: QueryOpts): Promise<Row[]>
   /** Bulk-update all rows matching `conds`; returns the count. Fast — bypasses per-row hooks. */
@@ -137,14 +142,19 @@ export interface ApexModel {
     opts?: QueryOpts,
   ): Promise<number>
   /** Update the row with the given primary key; returns it, or `null` if absent. */
-  update(handle: ApexDbHandle, id: unknown, values: Values, opts?: QueryOpts): Promise<Row | null>
+  update(
+    handle: ApexDbHandle,
+    id: unknown,
+    values: Values,
+    opts?: QueryOpts,
+  ): Promise<ModelInstance | null>
   /** Update the first row matching `match`, else create `{ ...match, ...values }`. */
   updateOrCreate(
     handle: ApexDbHandle,
     match: WhereConds,
     values: Values,
     opts?: QueryOpts,
-  ): Promise<Row>
+  ): Promise<ModelInstance>
   /**
    * Insert; on conflict with `conflictKeys`, update the other columns. `opts.keep`
    * picks `max`/`min` per column instead of overwriting (e.g. a high-score row).
@@ -156,7 +166,7 @@ export interface ApexModel {
     conflictKeys: string[],
     values: Values,
     opts?: UpsertOptions,
-  ): Promise<Row | null>
+  ): Promise<ModelInstance | null>
 }
 
 function normalize(field: Field): FieldDef {
@@ -338,6 +348,7 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
       filters: composed.filters,
       softDelete: composed.softDelete,
       hooks: composed.hooks,
+      hidden: opts.hidden,
       handle,
     })
 
@@ -356,5 +367,6 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
     hooks: composed.hooks,
     insertShape: insert,
     scopes: opts.scopes,
+    hidden: opts.hidden ? new Set(opts.hidden) : undefined,
   }) as ApexModel
 }
