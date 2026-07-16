@@ -1,5 +1,14 @@
 # Apex JS — v1 Gap Register (real-apps reframe)
 
+> **STATUS (v1 COMPLETE):** all five tracks shipped on branch `feat/eloquent-parity` — full monorepo
+> **438 tests green**, typecheck clean. Track 1 (data/Eloquent parity: AR + transactions + list-API +
+> bulk + instances/collections + relations + casts + serialization + typed errors + scopes + locking +
+> schema depth), Track 2 (cache + storage + queues), Track 3 (Alpine zero-flash), Track 4 (server
+> hardening), Track 5 (scaffold/docs). Remaining = the **1.1+ pillars** (mail, notifications, real-time,
+> RBAC/tokens/auth-flows) + 2 tiny enhancements (JSON-col sugar, islands `$store` forwarding). Not yet
+> merged/published — awaiting review + release call.
+
+
 What a **big / complex production app** needs, not what a todo demo needs. Two primary tracks —
 **Data layer** and **Platform pillars** — plus frontend fidelity, server hardening, and scaffold/docs.
 `[v1]` blocks 1.0. `[1.1+]` = staged ecosystem. Severity 🔴 blocker · 🟠 high · 🟡 med.
