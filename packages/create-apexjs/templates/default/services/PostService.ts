@@ -4,7 +4,7 @@ import type { Post } from '../shared/types'
  * A service holds business logic as a plain class — testable in isolation and
  * reusable from routes, page loaders, and jobs. Here it stands in for a database
  * with in-memory sample data; swap the array for a real query (see the `db/`
- * folder and `defineResource`) and nothing else in the app changes.
+ * folder and `defineModel(...).resource(handle)`) and nothing else in the app changes.
  */
 const POSTS: Post[] = [
   {

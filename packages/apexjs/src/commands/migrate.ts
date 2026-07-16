@@ -23,7 +23,7 @@ export const migrateCommand = defineCommand({
   },
   args: {
     db: { type: 'string', description: 'SQLite file path (libSQL)', default: 'data.db' },
-    driver: { type: 'string', description: 'sqlite | postgres | pglite', default: 'sqlite' },
+    driver: { type: 'string', description: 'libsql | postgres | pglite', default: 'libsql' },
     url: { type: 'string', description: 'Connection URL (postgres) — overrides --db' },
     dir: { type: 'string', description: 'Migrations directory', default: 'db/migrations' },
     root: { type: 'string', description: 'Project root', default: '.' },
@@ -46,12 +46,14 @@ export const migrateCommand = defineCommand({
       process.exit(1)
     }
 
+    // One canonical driver signature everywhere: { driver: 'libsql', url } locally (a file
+    // path is wrapped into a file: URL by createDb), { driver: 'postgres', url } hosted.
     const config =
       args.driver === 'postgres'
         ? { driver: 'postgres', url: args.url }
         : args.driver === 'pglite'
           ? { driver: 'pglite', dir: args.url }
-          : resolve(root, args.db)
+          : { driver: 'libsql', url: resolve(root, args.db) }
     const handle = await data.createDb(config)
     const dir = resolve(root, args.dir)
     const log = console.log

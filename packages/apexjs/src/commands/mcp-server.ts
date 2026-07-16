@@ -171,8 +171,11 @@ export const mcpServerCommand = defineCommand({
       'apex_extend',
       {
         description:
-          'Add an optional feature to an Apex app: data (DB model + REST/MCP CRUD + a demo page), auth (sealed-cookie sessions + login/logout + gated route), or i18n (locales + /<locale> routing). Idempotent.',
-        inputSchema: { feature: z.enum(['data', 'auth', 'i18n']), root: z.string().optional() },
+          'Add an optional feature to an Apex app: data (DB model + REST/MCP CRUD + a demo page), auth (sealed-cookie sessions + login/logout + gated route), i18n (locales + /<locale> routing), or pwa (web-app manifest + service worker for offline/installable). Idempotent.',
+        inputSchema: {
+          feature: z.enum(['data', 'auth', 'i18n', 'pwa']),
+          root: z.string().optional(),
+        },
       },
       async (a) => run(['extend', a.feature], rootOf(a)),
     )

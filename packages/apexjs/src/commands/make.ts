@@ -297,37 +297,97 @@ ${body}
 }
 
 function modelApiTemplate(file: string, resource: string): string {
-  return `import { createDb } from '@apex-stack/data'
-import model from '../../models/${file}'
+  return `import { handle } from '../../db/index.js'
+import model from '../../models/${file}.js'
 
 // Auto-served by Apex's API loader: REST at /api/${resource} (+ /:id) and MCP tools
 // ${resource}_list / _get / _create / _update / _delete. Override any op by adding your
-// own defineApexRoute here, or swap the connection for Turso/Supabase/Neon/PGlite.
-const db = await createDb('data.db')
-export default model.resource(db)
+// own defineApexRoute here. The connection is the shared lazy handle from db/index.ts —
+// libSQL in-memory locally / on-device, Postgres when DATABASE_URL is set. No top-level
+// await, so this also bundles into \`apex build --mobile\`.
+export default model.resource(handle)
 `
 }
 
-/** SQLite column type for the starter migration (matches defineModel's mapping). */
-function sqliteType(t: FieldType): string {
-  // timestamp is stored as an ISO string (TEXT) — matches defineModel, and stays
-  // portable to Postgres unlike the loose-typed INTEGER SQLite would tolerate.
-  return t === 'float'
-    ? 'REAL'
-    : t === 'string' || t === 'text' || t === 'json' || t === 'timestamp'
-      ? 'TEXT'
-      : 'INTEGER'
+/** The shared, lazily-opened db handle (db/index.ts). Scaffolded once, when the first
+ * model is generated and the app has no handle yet — mirrors \`apex extend data\`. */
+function dbIndexTemplate(file: string): string {
+  return `import { lazyDb } from '@apex-stack/data'
+import model from '../models/${file}.js'
+
+// The one database handle the whole app shares. Opened LAZILY (no top-level \`await\`) so
+// this module also bundles into the classic-script \`apex build --mobile\` output. Locally
+// (and on-device) it's an in-memory libSQL database; a hosted Postgres is used when
+// DATABASE_URL is set (server/dev only). The real connection opens + creates the schema
+// on first use — dialect-aware, straight from the model, so it never drifts from your fields.
+const url = process.env.DATABASE_URL
+export const handle = lazyDb(
+  () => (url ? { driver: 'postgres', url } : { driver: 'libsql', url: ':memory:' }),
+  {
+    init: async (h) => {
+      // Create the table if missing. Add a line per additional model you generate, e.g.
+      //   await h.exec(OtherModel.migrationSql(h.dialect))
+      // so its table exists in the in-memory dev database too.
+      await h.exec(model.migrationSql(h.dialect))
+    },
+  },
+)
+`
+}
+
+/** Column SQL type for the starter migration, per dialect — mirrors defineModel's own
+ * `migrationSql` mapping exactly (@apex-stack/data model.ts) so the two never diverge. */
+function sqlColType(t: FieldType, dialect: 'sqlite' | 'postgres'): string {
+  if (dialect === 'sqlite') {
+    // int + boolean → INTEGER, float → REAL, everything else (string/text/json/timestamp) → TEXT.
+    return t === 'float' ? 'REAL' : t === 'int' || t === 'boolean' ? 'INTEGER' : 'TEXT'
+  }
+  switch (t) {
+    case 'int':
+      return 'INTEGER'
+    case 'float':
+      return 'DOUBLE PRECISION'
+    case 'boolean':
+      return 'BOOLEAN'
+    case 'timestamp':
+      return 'TIMESTAMP'
+    case 'json':
+      return 'JSONB'
+    default:
+      return 'TEXT' // string, text
+  }
+}
+
+/** A `CREATE TABLE` for one dialect — identical shape to the model's own migrationSql. */
+function createTableSql(
+  resource: string,
+  fields: ParsedField[],
+  dialect: 'sqlite' | 'postgres',
+): string {
+  const pk = dialect === 'sqlite' ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'SERIAL PRIMARY KEY'
+  const cols = [
+    `  id ${pk}`,
+    ...fields.map(
+      (f) => `  ${f.name} ${sqlColType(f.type, dialect)}${f.notNull ? ' NOT NULL' : ''}`,
+    ),
+  ]
+  return `CREATE TABLE IF NOT EXISTS ${resource} (\n${cols.join(',\n')}\n);`
 }
 
 function modelMigration(resource: string, fields: ParsedField[]): string {
-  const cols = [
-    '  id INTEGER PRIMARY KEY AUTOINCREMENT',
-    ...fields.map((f) => `  ${f.name} ${sqliteType(f.type)}${f.notNull ? ' NOT NULL' : ''}`),
-  ]
+  // Dialect-aware: the SQLite/libSQL form is active (the local `apex migrate` default);
+  // the Postgres form is right below it, ready to swap in. `db/index.ts` also creates the
+  // schema dialect-aware from the model on first boot, so local/on-device just works either way.
   return `-- Create the ${resource} table. Run \`apex migrate\` (reverse with \`apex migrate --rollback\`).
-CREATE TABLE IF NOT EXISTS ${resource} (
-${cols.join(',\n')}
-);
+-- SQLite / libSQL (the default local driver):
+${createTableSql(resource, fields, 'sqlite')}
+
+-- Postgres — uncomment this instead when you deploy to Supabase / Neon / any Postgres
+-- (or just rely on db/index.ts, whose init creates the schema dialect-aware from the model):
+${createTableSql(resource, fields, 'postgres')
+  .split('\n')
+  .map((l) => `-- ${l}`)
+  .join('\n')}
 
 -- @down
 DROP TABLE IF EXISTS ${resource};
@@ -383,8 +443,45 @@ function sliceBraces(src: string, open: number): string | undefined {
   return undefined
 }
 
+/** Strip line and block comments (respecting string/template literals) so commented-out
+ * fields — like the model template's `// title: 'string'` placeholder — are never scraped
+ * as real fields, and a comment marker inside a comment can't shift the `fields:` match. */
+function stripComments(src: string): string {
+  let out = ''
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i]
+    if (c === '"' || c === "'" || c === '`') {
+      // Copy the whole string literal verbatim (honoring backslash escapes).
+      out += c
+      for (i++; i < src.length; i++) {
+        out += src[i]
+        if (src[i] === '\\') {
+          out += src[++i] ?? ''
+          continue
+        }
+        if (src[i] === c) break
+      }
+      continue
+    }
+    if (c === '/' && src[i + 1] === '/') {
+      while (i < src.length && src[i] !== '\n') i++
+      out += '\n'
+      continue
+    }
+    if (c === '/' && src[i + 1] === '*') {
+      i += 2
+      while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) i++
+      i++ // skip the closing '/'
+      continue
+    }
+    out += c
+  }
+  return out
+}
+
 /** Best-effort read of a model's declared fields (object form + `name: 'type'` shorthand). */
-function parseModelFields(src: string): ParsedField[] {
+function parseModelFields(rawSrc: string): ParsedField[] {
+  const src = stripComments(rawSrc)
   const at = src.search(/fields\s*:\s*\{/)
   if (at === -1) return []
   const block = sliceBraces(src, src.indexOf('{', at))
@@ -768,7 +865,7 @@ describe('${file} model', () => {
   })
 
   it('creates rows in a fresh in-memory db', async () => {
-    const db = await createDb({ driver: 'sqlite', url: ':memory:' })
+    const db = await createDb({ driver: 'libsql', url: ':memory:' })
     await db.exec(model.migrationSql('sqlite'))
     await factory(model).createMany(db, 3)
     const rows = await db.query('SELECT COUNT(*) AS n FROM ${resource}')
@@ -849,18 +946,26 @@ function plan(
       // drives /api, the table, and MCP tools — regardless of how `name` was typed.
       const file = pascalCase(name)
       const resource = resourceName(name)
-      return [
+      const out: Artifact[] = [
         { path: join(root, 'models', `${file}.ts`), contents: modelTemplate(resource, fields) },
         {
           path: join(root, 'server', 'api', `${resource}.ts`),
           contents: modelApiTemplate(file, resource),
         },
+      ]
+      // Scaffold the shared lazy db handle once — only if the app has none yet (`apex extend
+      // data` creates it too). The model's API + loaders import `handle` from here.
+      if (!existsSync(join(root, 'db', 'index.ts'))) {
+        out.push({ path: join(root, 'db', 'index.ts'), contents: dbIndexTemplate(file) })
+      }
+      out.push(
         {
           path: join(root, 'db', 'migrations', `${migrationStamp()}_create_${resource}.sql`),
           contents: modelMigration(resource, fields),
         },
         ...test(`${file}.test.ts`, modelTestTemplate(file, resource)),
-      ]
+      )
+      return out
     }
   }
 }
@@ -942,8 +1047,11 @@ export const makeCommand = defineCommand({
     }
     if (kind === 'model') {
       console.log(
-        `\n  Next: install the data layer + a driver (\x1b[36mnpm i @apex-stack/data @libsql/client\x1b[0m), ` +
-          `run \x1b[36mapex migrate\x1b[0m, then \x1b[36mapex dev\x1b[0m — REST at /api/${resourceName(args.name ?? '')} and MCP tools are live.\n`,
+        `\n  Next: install the data layer + drivers ` +
+          `(\x1b[36mnpm i @apex-stack/data drizzle-orm @libsql/client sql.js\x1b[0m` +
+          `\x1b[2m — add \x1b[0m\x1b[36mpostgres\x1b[0m\x1b[2m for a hosted DB\x1b[0m), ` +
+          `then \x1b[36mapex dev\x1b[0m — REST at /api/${resourceName(args.name ?? '')} and MCP tools are live. ` +
+          `The schema is created from the model on first boot; run \x1b[36mapex migrate\x1b[0m for a persistent DB.\n`,
       )
     } else if (kind === 'auth') {
       console.log(
