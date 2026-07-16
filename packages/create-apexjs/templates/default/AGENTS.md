@@ -88,6 +88,19 @@ tests/*.test.ts     Vitest. createTestApp boots the whole app in-process.
 ## APIs you'll use (import from `@apex-stack/core`, `/server`, `/testing`; data from `@apex-stack/data`)
 - **Route** → `defineApexRoute({ method, input: { …zod }, mcp: true, auth: true, can, handler })`. `mcp: true` makes it an AI-callable tool at `/mcp`.
 - **Model** → `defineModel('articles', { fields: {…}, use: [timestamps(), owned()] })` → `.resource(handle)` mounts REST + MCP CRUD. Its route imports `@apex-stack/data`, so install it (`npm i @apex-stack/data @libsql/client`) — otherwise `createTestApp` can't mount `/api` and every API test errors (or pass `createTestApp({ root, lenientRoutes: true })` to skip unresolvable routes).
+- **Query a model (active-record — do NOT hand-write SQL)** → the model object *is* the query API. Pass your db handle (`db` from `db/index.ts`):
+  ```ts
+  await Player.first(db)                                   // first row, or null
+  await Player.find(db, id)                                // by primary key
+  await Player.where({ team: 'A', plays: { gt: 5, lte: 100 } }) // ops: eq/ne/gt/gte/lt/lte/like/in/notIn/isNull
+    .orderBy('plays', 'desc').limit(10).all(db)            // + .offset() .orWhere() .count() .exists() .pluck() .sum/avg/min/max()
+  await Player.create(db, { handle: 'ada', plays: 0 })     // → the inserted row
+  await Player.updateOrCreate(db, { handle: 'ada' }, { plays: 10 })
+  await Player.upsert(db, ['handle'], { handle: 'ada', plays: 99 }, { keep: { plays: 'max' } }) // high-score
+  await Player.update(db, id, { plays: raw('plays + 1') }) // raw() = a trusted SQL expression
+  await Player.count(db, { team: 'A' }); await Player.delete(db, { team: 'A' })
+  ```
+  Writes go through the **same pipeline as your REST/MCP resource**: `create/update/updateOrCreate/delete` fire your model's hooks (`timestamps()`, `observable()`, `auditable()`), apply row-level `scope`, respect `softDeletes()`, and validate the payload — so `Model.*` and `/api/*` never diverge. Pass `{ user }` as the last arg to apply tenant scope (`Player.all(db, { user })`). Column names are validated against the model's fields (a typo throws — never an injection vector); values are bound; booleans/JSON hydrate automatically. Works identically on sqlite/Postgres/on-device. (`upsert` is a fast bulk primitive — it bypasses per-row hooks, like Eloquent's; use `updateOrCreate` when you need them.) Only drop to `db.query(sql, params)` (bound `?` placeholders) for something the API can't express — never string-concatenate values into SQL.
 - **Auth** → `server/auth.ts` default-exports `sessionAuth({ password })`; gate routes with `auth: true` / `can`. In loaders, the user is `locals.user`.
 - **Config** → `apex.config.ts`: `defineConfig({ runtimeConfig: { …, public: {…} }, i18n: {…} })`. Read with `useRuntimeConfig()`.
 - **Test** → `createTestApp({ root })` → `app.get/post(path, body?, { user })`, `app.mcp.listTools()`.

@@ -26,6 +26,15 @@ import {
   defineResource,
   type ScopeFn,
 } from './index.js'
+import {
+  attachActiveRecord,
+  type QueryBuilder,
+  type QueryOpts,
+  type Row,
+  type UpsertOptions,
+  type Values,
+  type WhereConds,
+} from './query.js'
 
 export type FieldType = 'string' | 'text' | 'int' | 'float' | 'boolean' | 'timestamp' | 'json'
 
@@ -73,6 +82,54 @@ export interface ApexModel {
   migrationSql(dialect: Dialect): string
   /** Bind the model to a db handle → a REST + MCP resource (list/get/create/update/delete). */
   resource(handle: ApexDbHandle): ApexResource
+
+  // ── Active-record query API (P1) ────────────────────────────────────────
+  // Server code queries its own models without hand-writing SQL. Reads run through
+  // Drizzle (operators/ordering/pagination; bool+JSON hydrate); writes run through the
+  // SAME pipeline as REST/MCP — hooks (timestamps/observers/audit), row-level `scope`,
+  // soft-delete, and validation all fire. Column names are validated against `fields`
+  // (typo → throw, never an injection vector). `raw('plays + 1')` = a SQL expression.
+  // `opts.user` drives row-level `scope` isolation (omitted = trusted/admin).
+
+  /** All rows. */
+  all(handle: ApexDbHandle, opts?: QueryOpts): Promise<Row[]>
+  /** First row ordered by primary key, or `null`. */
+  first(handle: ApexDbHandle, opts?: QueryOpts): Promise<Row | null>
+  /** Row by primary key, or `null`. */
+  find(handle: ApexDbHandle, id: unknown, opts?: QueryOpts): Promise<Row | null>
+  /** Start a filtered query: `Model.where({ team: 'A', plays: { gt: 5 } }).orderBy('plays','desc').all(h)`. */
+  where(conds: WhereConds): QueryBuilder
+  /** Start an ordered query. */
+  orderBy(col: string, dir?: 'asc' | 'desc'): QueryBuilder
+  /** Count rows (optionally matching `conds`). */
+  count(handle: ApexDbHandle, conds?: WhereConds, opts?: QueryOpts): Promise<number>
+  /** Whether any row matches. */
+  exists(handle: ApexDbHandle, conds?: WhereConds, opts?: QueryOpts): Promise<boolean>
+  /** Delete rows matching `conds` (soft-delete aware); returns the number removed. */
+  delete(handle: ApexDbHandle, conds: WhereConds, opts?: QueryOpts): Promise<number>
+  /** Insert a row through the write pipeline (hooks/timestamps/scope/validation); returns it. */
+  create(handle: ApexDbHandle, values: Values, opts?: QueryOpts): Promise<Row>
+  /** Update the row with the given primary key; returns it, or `null` if absent. */
+  update(handle: ApexDbHandle, id: unknown, values: Values, opts?: QueryOpts): Promise<Row | null>
+  /** Update the first row matching `match`, else create `{ ...match, ...values }`. */
+  updateOrCreate(
+    handle: ApexDbHandle,
+    match: WhereConds,
+    values: Values,
+    opts?: QueryOpts,
+  ): Promise<Row>
+  /**
+   * Insert; on conflict with `conflictKeys`, update the other columns. `opts.keep`
+   * picks `max`/`min` per column instead of overwriting (e.g. a high-score row).
+   * Fast bulk primitive — bypasses per-row hooks (like Eloquent `upsert`). Use
+   * `updateOrCreate` when you need timestamps/observers.
+   */
+  upsert(
+    handle: ApexDbHandle,
+    conflictKeys: string[],
+    values: Values,
+    opts?: UpsertOptions,
+  ): Promise<Row | null>
 }
 
 function normalize(field: Field): FieldDef {
@@ -233,5 +290,19 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
       handle,
     })
 
-  return { name, pk, fields, insert, table, migrationSql, resource }
+  const model = { name, pk, fields, insert, table, migrationSql, resource }
+  // Attach the active-record statics (first/where/create/upsert/…). They share the
+  // model's composed behaviors — so Model.* writes fire the SAME hooks/scope/soft-delete
+  // pipeline as the REST/MCP resource (see repository.ts).
+  return attachActiveRecord(model, {
+    name,
+    pk,
+    fields,
+    table,
+    scope: composed.scope,
+    filters: composed.filters,
+    softDelete: composed.softDelete,
+    hooks: composed.hooks,
+    insertShape: insert,
+  }) as ApexModel
 }
