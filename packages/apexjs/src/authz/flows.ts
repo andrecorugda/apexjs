@@ -128,9 +128,14 @@ export function createFlowTokens(opts: FlowTokensOptions): FlowTokens {
       // Expiry.
       const expiresAt = toNullableNumber(row.expires_at)
       if (expiresAt === null || expiresAt <= now()) return false
-      // Mark used — the second consume of this token will fail the used_at check above.
-      await handle.exec(`UPDATE ${table} SET used_at = ? WHERE id = ?`, [now(), parts.id])
-      return true
+      // Claim the token ATOMICALLY: the `used_at IS NULL` guard + RETURNING closes the
+      // check-then-act race — two concurrent consumes of the same valid token, only one wins
+      // the UPDATE and gets a row back; the loser sees an empty result and fails.
+      const claimed = await handle.query(
+        `UPDATE ${table} SET used_at = ? WHERE id = ? AND used_at IS NULL RETURNING id`,
+        [now(), parts.id],
+      )
+      return claimed.length > 0
     },
   }
 }

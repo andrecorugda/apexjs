@@ -74,6 +74,8 @@ export {
 export * from './mail/index.js'
 // Real-time SSE broadcasting (pub/sub hub + h3 handler + browser client).
 export * from './realtime/index.js'
+// Authorization: roles+permissions (Spatie-style), opaque API tokens (Sanctum-style), auth flows.
+export * from './authz/index.js'
 // Multi-channel notifications (database channel + pluggable mail/custom channels).
 export {
   buildMigrationSql as buildNotificationsMigrationSql,

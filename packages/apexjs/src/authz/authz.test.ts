@@ -52,6 +52,12 @@ function memoryHandle(): AuthzDbHandle {
         checks.push((row) => row[col] === val)
         continue
       }
+      const nullMatch = term.match(/^(\w+) IS NULL$/i)
+      if (nullMatch) {
+        const col = nullMatch[1] as string
+        checks.push((row) => row[col] === null || row[col] === undefined)
+        continue
+      }
       throw new Error(`memoryHandle: unsupported WHERE term: ${term}`)
     }
     return (row) => checks.every((c) => c(row))
@@ -101,19 +107,21 @@ function memoryHandle(): AuthzDbHandle {
       return []
     }
 
-    const update = s.match(/^UPDATE (\w+) SET (.+?) WHERE (.+)$/i)
+    const update = s.match(/^UPDATE (\w+) SET (.+?) WHERE (.+?)(?: RETURNING (.+))?$/i)
     if (update) {
       const table = update[1] as string
       const assigns = (update[2] as string).split(',').map((a) => a.trim())
       const setCols = assigns.map((a) => (a.match(/^(\w+) = \?$/) as RegExpMatchArray)[1] as string)
       const test = predicate(update[3], params, setCols.length)
+      const updated: Row[] = []
       for (const row of rowsOf(table)) {
         if (!test(row)) continue
         setCols.forEach((c, idx) => {
           row[c] = params[idx] ?? null
         })
+        updated.push({ ...row })
       }
-      return []
+      return update[4] ? updated : []
     }
 
     throw new Error(`memoryHandle: unhandled SQL: ${s}`)
