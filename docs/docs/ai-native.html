@@ -319,10 +319,11 @@ apex mcp-server --root /abs/path/to/your-app</code></pre>
 
       <h2 id="resources">Resources are AI-native too <a class="anchor" href="#resources">#</a></h2>
       <p>
-        The same principle scales to data. <a href="./data.html"><code>defineResource</code></a> turns
-        one table into list/get/create/update/delete over REST <strong>and</strong> as MCP tools
+        The same principle scales to data. <a href="./data.html"><code>defineModel(...).resource(handle)</code></a> turns
+        one model into list/get/create/update/delete over REST <strong>and</strong> as MCP tools
         (<code>&lt;name&gt;_list</code>, <code>&lt;name&gt;_create</code>, …) on one database — so an AI
-        creating a row and a browser listing rows see the same data.
+        creating a row and a browser listing rows see the same data. The <code>_list</code> tool even takes
+        <code>page</code>/<code>perPage</code>/<code>sort</code>/filter params.
       </p>
 
       <h2 id="design">Design notes <a class="anchor" href="#design">#</a></h2>

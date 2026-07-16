@@ -193,7 +193,7 @@ apex dev</code></pre>
           <tbody>
             <tr><td><code>pages/**/*.alpine</code></td><td>Routes. File path → URL. <code>[param]</code> segments are dynamic. See <a href="./routing.html">Routing</a>.</td></tr>
             <tr><td><code>components/*.alpine</code></td><td>Reusable <code>.alpine</code> components embedded as <code>&lt;PascalCase /&gt;</code>. See <a href="./components.html">Components</a>.</td></tr>
-            <tr><td><code>server/api/*.ts</code></td><td>Typed API routes (<code>defineApexRoute</code>) and data resources (<code>defineResource</code>). REST + MCP. See <a href="./ai-native.html">AI-native</a>.</td></tr>
+            <tr><td><code>server/api/*.ts</code></td><td>Typed API routes (<code>defineApexRoute</code>) and data resources (<code>defineModel(...).resource(handle)</code>). REST + MCP. See <a href="./ai-native.html">AI-native</a>.</td></tr>
             <tr><td><code>db/</code></td><td>Schema, <code>createDb</code>, and <code>db/migrations/*.sql</code>. See <a href="./data.html">Data</a>.</td></tr>
             <tr><td><code>public/</code></td><td>Static assets copied verbatim into the build output.</td></tr>
           </tbody>
