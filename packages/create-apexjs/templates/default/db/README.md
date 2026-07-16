@@ -26,20 +26,29 @@ export const Message = defineModel('messages', {
 ```
 
 Open the database **lazily** in `db/index.ts` so it also bundles into `apex build --mobile`
-(a bare on-device engine can't do top-level `await`). One handle is shared app-wide —
-libSQL in-memory locally / on-device, Postgres when `DATABASE_URL` is set:
+(a bare on-device engine can't do top-level `await`). One handle is shared app-wide — a
+file-backed SQLite locally (data + migration history persist), Postgres when `DATABASE_URL`
+is set. On boot it applies the versioned `.sql` files in `db/migrations/` (tracked in an
+`_apex_migrations` ledger, shared with `apex migrate`); on-device (no filesystem) it falls
+back to creating the schema straight from the model:
 
 ```ts
 // db/index.ts
-import { lazyDb } from '@apex-stack/data'
+import { applyMigrations, lazyDb } from '@apex-stack/data'
 import { Message } from '../models/Message.js'
 
 const url = process.env.DATABASE_URL
+const onDevice = (globalThis as { __APEX_DEVICE__?: boolean }).__APEX_DEVICE__
 export const handle = lazyDb(
-  () => (url ? { driver: 'postgres', url } : { driver: 'libsql', url: ':memory:' }),
-  { init: async (h) => { await h.exec(Message.migrationSql(h.dialect)) } }, // dialect-aware schema
+  () => (url ? { driver: 'postgres', url } : { driver: 'libsql', url: 'file:./data.db' }),
+  { init: async (h) => {
+    onDevice ? await h.exec(Message.migrationSql(h.dialect)) : await applyMigrations(h, 'db/migrations')
+  } },
 )
 ```
+
+Schema changes are new files in `db/migrations/` (`apex make model` writes the first one for
+you); run them with `apex migrate` (reverse with `apex migrate --rollback`).
 
 Mount the model as a resource — this one line gives you `GET/POST/PATCH/DELETE /api/messages`
 plus the MCP tools `messages_list/get/create/update/delete`:
