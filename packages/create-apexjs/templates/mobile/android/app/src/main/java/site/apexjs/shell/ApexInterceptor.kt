@@ -27,13 +27,19 @@ class ApexInterceptor(
   ): WebResourceResponse? {
     val path = request.url.path ?: "/"
 
-    // 1) Static client assets from the APK (client JS/CSS bundle, favicon).
-    if (path.startsWith("/assets/") || path == "/favicon.svg") {
-      return try {
-        val asset = context.assets.open(path.removePrefix("/"))
-        WebResourceResponse(mimeOf(path), "utf-8", asset)
+    // 1) Any static file bundled into the APK (public/) — the client JS/CSS under /assets/,
+    //    the favicon, AND sprites / audio / images / fonts / manifest / etc. A file request
+    //    has an extension in its last segment; extensionless paths (/, /guestbook, /api/…) are
+    //    SSR/API routes and fall through to the engine below. Serve whatever actually exists in
+    //    the bundle; a miss (not an asset) falls through too.
+    if (path.substringAfterLast('/').contains('.')) {
+      val assetPath = path.removePrefix("/")
+      try {
+        val asset = context.assets.open(assetPath)
+        val encoding = if (isTextAsset(path)) "utf-8" else null
+        return WebResourceResponse(mimeOf(path), encoding, asset)
       } catch (e: Exception) {
-        null
+        // Not a bundled file (or a directory) → fall through to the SSR engine.
       }
     }
 
@@ -75,9 +81,23 @@ class ApexInterceptor(
     )
   }
 
-  private fun mimeOf(path: String) = when (path.substringAfterLast('.')) {
+  private fun mimeOf(path: String) = when (path.substringAfterLast('.').lowercase()) {
     "js", "mjs" -> "text/javascript"; "css" -> "text/css"; "svg" -> "image/svg+xml"
-    "json" -> "application/json"; "png" -> "image/png"; "woff2" -> "font/woff2"
+    "json", "map" -> "application/json"; "html", "htm" -> "text/html"; "txt" -> "text/plain"
+    "wasm" -> "application/wasm"
+    // images
+    "png" -> "image/png"; "jpg", "jpeg" -> "image/jpeg"; "gif" -> "image/gif"
+    "webp" -> "image/webp"; "avif" -> "image/avif"; "ico" -> "image/x-icon"
+    // audio / video
+    "mp3" -> "audio/mpeg"; "wav" -> "audio/wav"; "ogg", "oga" -> "audio/ogg"
+    "m4a" -> "audio/mp4"; "mp4" -> "video/mp4"; "webm" -> "video/webm"
+    // fonts
+    "woff2" -> "font/woff2"; "woff" -> "font/woff"; "ttf" -> "font/ttf"; "otf" -> "font/otf"
     else -> "application/octet-stream"
+  }
+
+  private fun isTextAsset(path: String) = when (path.substringAfterLast('.').lowercase()) {
+    "js", "mjs", "css", "svg", "json", "map", "html", "htm", "txt", "xml" -> true
+    else -> false
   }
 }
