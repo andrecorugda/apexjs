@@ -169,7 +169,7 @@
 
       <h2 id="resources">Resource access &amp; scope <a class="anchor" href="#resources">#</a></h2>
       <p>
-        For <code>defineResource</code>/<code>defineModel</code>, gate each operation with
+        For <code>defineModel</code> resources, gate each operation with
         <code>access</code> and filter rows per-caller with <code>scope</code>. <code>scope</code> is
         applied to <strong>every</strong> op — a <code>WHERE</code> on list/get/update/delete and a
         stamp on create — so a caller only ever sees or touches their own rows.
