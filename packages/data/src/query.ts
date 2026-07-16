@@ -578,6 +578,10 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
     where: (conds: WhereConds) => qb().where(conds),
     orderBy: (col: string, dir?: 'asc' | 'desc') => qb().orderBy(col, dir),
     with: (...names: string[]) => qb().with(...names),
+    // Escape hatch for queries the AR API can't express (joins, GROUP BY, subqueries, window
+    // functions): the model's Drizzle table for this handle's dialect. Use with `handle.db`:
+    //   handle.db.select({...}).from(Model.tableFor(handle)).leftJoin(Other.tableFor(handle), …).groupBy(…)
+    tableFor: (handle: ApexDbHandle) => bindModel(cfg, handle).table,
     scope: (name: string, ...args: unknown[]): QueryBuilder => {
       const fn = cfg.scopes?.[name]
       if (!fn) throw new Error(`[apex] unknown scope '${name}' on model '${cfg.name}'`)

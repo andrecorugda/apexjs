@@ -178,6 +178,9 @@ export interface ApexModel {
   scope(name: string, ...args: unknown[]): QueryBuilder
   /** Start a query eager-loading relations: `Model.with('author', 'comments').all(h)`. */
   with(...names: string[]): QueryBuilder
+  /** The model's Drizzle table for this handle's dialect — escape hatch for joins/GROUP BY/
+   * subqueries via `handle.db` when the AR API can't express the query. */
+  tableFor(handle: ApexDbHandle): unknown
   /** Count rows (optionally matching `conds`). */
   count(handle: ApexDbHandle, conds?: WhereConds, opts?: QueryOpts): Promise<number>
   /** Whether any row matches. */
