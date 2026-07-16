@@ -336,8 +336,45 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
     return b.repo.update(eq(b.table[cfg.pk], id), data, opts?.user ?? null, id as number)
   }
 
+  const insertMany = async (
+    handle: ApexDbHandle,
+    rows: Values[],
+    opts?: QueryOpts,
+  ): Promise<Row[]> => {
+    if (!rows.length) return []
+    const b = bindModel(cfg, handle)
+    const scope = cfg.scope?.({ user: opts?.user ?? null }) ?? {}
+    const data = rows.map((r) => ({ ...prepareWrite(r, b.cols, cfg.insertShape, false), ...scope }))
+    return (await handle.db.insert(b.table).values(data).returning()) as Row[]
+  }
+
+  const updateMany = async (
+    handle: ApexDbHandle,
+    conds: WhereConds,
+    values: Values,
+    opts?: QueryOpts,
+  ): Promise<number> => {
+    const b = bindModel(cfg, handle)
+    const all: SQL[] = [...b.repo.scopeConds(opts?.user ?? null)]
+    for (const [k, v] of Object.entries(conds)) {
+      if (v === undefined) continue
+      assertCol(b.cols, k)
+      const c = condFor(b.table[k], v)
+      if (c) all.push(c)
+    }
+    const data = prepareWrite(values, b.cols, cfg.insertShape, true)
+    const rows = await handle.db
+      .update(b.table)
+      .set(data)
+      .where(all.length ? and(...all) : undefined)
+      .returning()
+    return (rows as unknown[]).length
+  }
+
   const methods = {
     all: (handle: ApexDbHandle, opts?: QueryOpts) => qb().all(handle, opts),
+    insertMany,
+    updateMany,
     first: (handle: ApexDbHandle, opts?: QueryOpts) => qb().orderBy(cfg.pk, 'asc').first(handle, opts),
     find: (handle: ApexDbHandle, id: unknown, opts?: QueryOpts) =>
       qb().where({ [cfg.pk]: id }).first(handle, opts),

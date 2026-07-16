@@ -215,3 +215,26 @@ describe('active-record writes go through the behavior pipeline (A1–A4)', () =
     await h.close()
   })
 })
+
+describe('bulk operations (insertMany / updateMany)', () => {
+  beforeEach(() => {
+    globalThis.__APEX_DEVICE__ = true
+  })
+  afterEach(() => {
+    globalThis.__APEX_DEVICE__ = undefined
+  })
+  it('insertMany inserts in one shot; updateMany updates matching rows', async () => {
+    const Tag = defineModel('tags', {
+      fields: { name: { type: 'string', notNull: true }, hot: { type: 'boolean', default: false } },
+    })
+    const h = await createDb({ driver: 'libsql', url: ':memory:' })
+    await h.exec(Tag.migrationSql(h.dialect))
+    const made = await Tag.insertMany(h, [{ name: 'a' }, { name: 'b' }, { name: 'c' }])
+    expect(made).toHaveLength(3)
+    expect(await Tag.count(h)).toBe(3)
+    const n = await Tag.updateMany(h, { name: { in: ['a', 'b'] } }, { hot: true })
+    expect(n).toBe(2)
+    expect(await Tag.count(h, { hot: true })).toBe(2)
+    await h.close()
+  })
+})

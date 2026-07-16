@@ -109,6 +109,15 @@ export interface ApexModel {
   delete(handle: ApexDbHandle, conds: WhereConds, opts?: QueryOpts): Promise<number>
   /** Insert a row through the write pipeline (hooks/timestamps/scope/validation); returns it. */
   create(handle: ApexDbHandle, values: Values, opts?: QueryOpts): Promise<Row>
+  /** Bulk-insert rows in one statement; scope-stamped, returns them. Fast — bypasses per-row hooks. */
+  insertMany(handle: ApexDbHandle, rows: Values[], opts?: QueryOpts): Promise<Row[]>
+  /** Bulk-update all rows matching `conds`; returns the count. Fast — bypasses per-row hooks. */
+  updateMany(
+    handle: ApexDbHandle,
+    conds: WhereConds,
+    values: Values,
+    opts?: QueryOpts,
+  ): Promise<number>
   /** Update the row with the given primary key; returns it, or `null` if absent. */
   update(handle: ApexDbHandle, id: unknown, values: Values, opts?: QueryOpts): Promise<Row | null>
   /** Update the first row matching `match`, else create `{ ...match, ...values }`. */
