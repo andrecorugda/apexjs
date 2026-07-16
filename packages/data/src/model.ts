@@ -78,6 +78,11 @@ export interface DefineModelOptions {
    * behaviors and AUTH_DESIGN.md §8.
    */
   use?: Behavior[]
+  /**
+   * Named, reusable query scopes — `Model.scope('published').all(h)`. Each receives a fresh
+   * QueryBuilder (+ any args) and returns it chained: `{ published: (q) => q.where({ status: 'published' }) }`.
+   */
+  scopes?: Record<string, (qb: QueryBuilder, ...args: any[]) => QueryBuilder>
 }
 
 /** A model: its schema derivations + a factory for its REST/MCP resource. */
@@ -112,6 +117,8 @@ export interface ApexModel {
   where(conds: WhereConds): QueryBuilder
   /** Start an ordered query. */
   orderBy(col: string, dir?: 'asc' | 'desc'): QueryBuilder
+  /** Start a query from a named scope: `Model.scope('published').all(h)`. */
+  scope(name: string, ...args: unknown[]): QueryBuilder
   /** Count rows (optionally matching `conds`). */
   count(handle: ApexDbHandle, conds?: WhereConds, opts?: QueryOpts): Promise<number>
   /** Whether any row matches. */
@@ -348,5 +355,6 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
     softDelete: composed.softDelete,
     hooks: composed.hooks,
     insertShape: insert,
+    scopes: opts.scopes,
   }) as ApexModel
 }
