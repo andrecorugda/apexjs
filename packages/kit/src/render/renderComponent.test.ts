@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseAlpineFile } from '../parse/parseAlpineFile.js'
-import { renderComponent } from './renderComponent.js'
+import { renderComponent, renderFragment } from './renderComponent.js'
 
 async function render(src: string, loaderData: Record<string, unknown> = {}): Promise<string> {
   const descriptor = parseAlpineFile(src, 'test.alpine')
@@ -156,6 +156,118 @@ describe('renderComponent', async () => {
     expect(html).toContain(`x-init="location.href='/next'"`)
     expect(html).toContain('@click="go()"')
     expect(html).toContain('x-data="apex_c0"') // x-data stays the component ref
+  })
+})
+
+describe('x-model initial state (zero-flash)', async () => {
+  it('renders value= on a text input', async () => {
+    const html = await render('<template x-data><input x-model="name"></template>', {
+      name: 'Ada',
+    })
+    expect(html).toMatch(/<input[^>]*value="Ada"/)
+    // The x-model directive stays for client rebinding.
+    expect(html).toContain('x-model="name"')
+  })
+
+  it('renders an explicit input type value=', async () => {
+    const html = await render(
+      '<template x-data><input type="email" x-model="email"></template>',
+      { email: 'a@b.com' },
+    )
+    expect(html).toMatch(/value="a@b\.com"/)
+  })
+
+  it('sets textarea text content', async () => {
+    const html = await render('<template x-data><textarea x-model="bio"></textarea></template>', {
+      bio: 'hello world',
+    })
+    expect(html).toMatch(/<textarea[^>]*>hello world<\/textarea>/)
+  })
+
+  it('adds checked to a boolean checkbox when truthy, omits when falsy', async () => {
+    const on = await render(
+      '<template x-data><input type="checkbox" x-model="agree"></template>',
+      { agree: true },
+    )
+    expect(on).toMatch(/<input[^>]*checked/)
+    const off = await render(
+      '<template x-data><input type="checkbox" x-model="agree"></template>',
+      { agree: false },
+    )
+    expect(off).not.toMatch(/<input[^>]*checked/)
+  })
+
+  it('checks an array-bound checkbox by value membership', async () => {
+    const html = await render(
+      '<template x-data><input type="checkbox" value="b" x-model="picks"></template>',
+      { picks: ['a', 'b'] },
+    )
+    expect(html).toMatch(/<input[^>]*checked/)
+    const miss = await render(
+      '<template x-data><input type="checkbox" value="z" x-model="picks"></template>',
+      { picks: ['a', 'b'] },
+    )
+    expect(miss).not.toMatch(/<input[^>]*checked/)
+  })
+
+  it('checks the radio whose value matches', async () => {
+    const html = await render(
+      '<template x-data><input type="radio" value="yes" x-model="answer"><input type="radio" value="no" x-model="answer"></template>',
+      { answer: 'no' },
+    )
+    // Second radio (value="no") is checked, first is not.
+    const radios = html.match(/<input[^>]*>/g) ?? []
+    expect(radios[0]).not.toMatch(/checked/)
+    expect(radios[1]).toMatch(/checked/)
+  })
+
+  it('marks the matching <select> option selected', async () => {
+    const html = await render(
+      '<template x-data><select x-model="color"><option value="red">Red</option><option value="green">Green</option></select></template>',
+      { color: 'green' },
+    )
+    // Attribute order isn't guaranteed by the serializer; assert per-option.
+    const greenOpt = /<option[^>]*value="green"[^>]*>/.exec(html)?.[0] ?? ''
+    const redOpt = /<option[^>]*value="red"[^>]*>/.exec(html)?.[0] ?? ''
+    expect(greenOpt).toMatch(/selected/)
+    expect(redOpt).not.toMatch(/selected/)
+  })
+
+  it('does not emit a value when the model is undefined', async () => {
+    const html = await render('<template x-data><input x-model="missing"></template>', {})
+    expect(html).not.toMatch(/value=/)
+  })
+})
+
+describe('$store during SSR (islands / fragments / nested)', async () => {
+  it('resolves $store inside a rendered fragment', async () => {
+    const html = await renderFragment(
+      '<p x-text="$store.settings.title"></p>',
+      {},
+      'data-apex-test',
+      {},
+      { settings: { title: 'Dashboard' } },
+    )
+    expect(html).toContain('>Dashboard</p>')
+  })
+
+  it('resolves $store inside a nested component instance', async () => {
+    const { html } = await renderComponent({
+      template: '<Badge/>',
+      rootXData: null,
+      componentId: 'c0',
+      scopeId: 'data-apex-test',
+      loaderData: {},
+      stores: { settings: { title: 'Pro' } },
+      registry: {
+        Badge: {
+          template: '<span x-text="$store.settings.title"></span>',
+          rootXData: null,
+          scopeId: 'data-apex-badge',
+        },
+      },
+    })
+    expect(html).toContain('>Pro</span>')
   })
 })
 
