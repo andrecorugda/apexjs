@@ -101,11 +101,26 @@ tests/*.test.ts     Vitest. createTestApp boots the whole app in-process.
   await Player.count(db, { team: 'A' }); await Player.delete(db, { team: 'A' })
   ```
   Writes go through the **same pipeline as your REST/MCP resource**: `create/update/updateOrCreate/delete` fire your model's hooks (`timestamps()`, `observable()`, `auditable()`), apply row-level `scope`, respect `softDeletes()`, and validate the payload — so `Model.*` and `/api/*` never diverge. Pass `{ user }` as the last arg to apply tenant scope (`Player.all(db, { user })`). Column names are validated against the model's fields (a typo throws — never an injection vector); values are bound; booleans/JSON hydrate automatically. Works identically on sqlite/Postgres/on-device. (`upsert` is a fast bulk primitive — it bypasses per-row hooks, like Eloquent's; use `updateOrCreate` when you need them.) Only drop to `db.query(sql, params)` (bound `?` placeholders) for something the API can't express — never string-concatenate values into SQL.
+- **More model options** (Eloquent-parity) → `defineModel('posts', { fields, use: [...], relations: { author: belongsTo(() => User, 'authorId'), comments: hasMany(() => Comment, 'postId') }, hidden: ['secret'], casts: { publishedAt: 'date', prefs: 'json' }, scopes: { published: q => q.where({ status: 'published' }) }, indexes: [{ on: ['teamId'] }], optimisticLock: 'version' })`.
+  - **Eager-load** relations (no N+1): `await Post.with('author', 'comments').all(db)` → `post.author` (instance), `post.comments` (Collection). Also `belongsTo/hasOne/hasMany` from `@apex-stack/data`.
+  - **Instances**: reads return live rows — `row.save()` (persists dirty fields through the pipeline), `row.delete()`, `row.refresh()`, `row.isDirty()`, `row.toJSON()` (omits `hidden`). Reads return a **Collection** (`.pluck/.groupBy/.sum`).
+  - **Named scopes**: `Post.scope('published').all(db)`. **Not-found**: `Post.findOrFail(db, id)` / `firstOrFail` throw `ModelNotFoundException` (→ HTTP 404). Driver errors surface as `QueryException` (logged, masked to clients).
+- **Transactions** → `await db.transaction(async (tx) => { await Order.create(tx, …); await Wallet.update(tx, id, …) })` — auto-commit on resolve, auto-rollback on throw (atomic). Pessimistic: `Model.where(...).lockForUpdate().all(tx)`; optimistic: `optimisticLock: 'version'` + `save()` throws `StaleModelException` (409) on a stale write.
 - **Auth** → `server/auth.ts` default-exports `sessionAuth({ password })`; gate routes with `auth: true` / `can`. In loaders, the user is `locals.user`.
 - **Config** → `apex.config.ts`: `defineConfig({ runtimeConfig: { …, public: {…} }, i18n: {…} })`. Read with `useRuntimeConfig()`.
 - **Test** → `createTestApp({ root })` → `app.get/post(path, body?, { user })`, `app.mcp.listTools()`.
 
 The full stability contract of public APIs is in the framework's `API.md` — 🟢 Stable ones won't break; 🟡 Experimental ones might.
+
+## Backend platform (import from `@apex-stack/core/server`)
+Batteries for real apps — each is a small factory over an interface (drivers configurable, on-device-safe defaults):
+- **Cache** → `const cache = createCache({ driver: 'memory' })` — `get/set(key,val,ttl)/has/delete/remember(key,ttl,fn)/flush`, plus `cache.tags(['posts']).flush()`. Drivers: `memory` (default) / `file`.
+- **Storage** → `const s = createStorage({ driver: 'local', dir })` — `put/get/getText/exists/delete/list/url(path,{expiresInSeconds})` (signed). Drivers: `local` / `s3` (SigV4).
+- **Queue** → `const q = createQueue({ driver: 'database', handle })`; `q.register(defineJob('email', async (payload) => {…}))`; `await q.enqueue('email', {...}, { delaySeconds })`; run a worker with `q.work({ intervalMs })`. Retries + exponential backoff + dead-letter built in. `await h.exec(q.migrationSql())` for the `database` driver.
+- **Mail** → `const mail = createMailer({ driver: 'http', ...resend(apiKey) })`; `await mail.send({ to, subject, html })`. Drivers: `memory` (captures on `.sent`) / `http` (Resend/Postmark presets) / `smtp`. `renderTemplate(html, vars)` for `{{ var }}`.
+- **Notifications** → `const notifier = createNotifier({ channels: { database: databaseChannel({ handle }), mail: (m) => mail.send(m) } })`; `defineNotification({ via: () => ['database','mail'], toDatabase, toMail })`; `await notifier.send(user, invoicePaid({...}))`.
+- **Real-time (SSE)** → `const bus = createBroadcaster()`; mount `app.use('/events', sseHandler(bus, { channels: (e) => [...] }))`; `bus.publish('room:1', 'message', {...})`. Browser: `apexRealtimeClient('/events', { onEvent })`.
+- **Authorization** → roles+permissions `createAccessControl({ handle })` (`assignRole/grantPermissionToRole/hasPermission`, gate routes with `can: permissionGate(ac, 'posts.edit')`); API tokens `createTokenStore({ handle })` (`issue(userId, name, abilities) → { token }`, `verify(token)`, `can(token, ability)`, `revoke`); auth flows `createFlowTokens({ handle })` (single-use `issue('password_reset', email)` / `consume(...)` — you mail the token). Run each subsystem's `migrationSql()` once. (OAuth/SSO + 2FA are not shipped yet.)
 
 ## Deploy
 `apex build --preset vercel|netlify|docker`. Set `DATABASE_URL` (Supabase/Neon/Postgres or Turso) + `APEX_SESSION_PASSWORD` (≥32 chars) in the host env. See the deploy docs.
