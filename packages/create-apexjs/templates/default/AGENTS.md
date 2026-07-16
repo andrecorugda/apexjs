@@ -55,7 +55,7 @@ components/**/*.alpine  Reusable <PascalCase/> components (props via attributes)
 server/api/*.ts     Typed routes (defineApexRoute) / model resources → REST + MCP.
 server/auth.ts      Identity (sessionAuth) → ctx.user everywhere. (from `apex extend auth`)
 models/*.ts         defineModel → schema + migration + table + REST/MCP CRUD.
-db/                 createDb + migrations. Uses DATABASE_URL (Postgres) or in-memory libSQL.
+db/                 Shared lazyDb handle + db/migrations/*.sql (applied on boot + `apex migrate`). File-backed SQLite locally; DATABASE_URL (Postgres) when set.
 locales/*.json      i18n catalogs. (from `apex extend i18n`)
 services/*.ts       Business logic (classes). Keep routes thin; delegate here.
 stores/*.ts         Global SSR-safe state ($store.x).
