@@ -36,6 +36,7 @@ import { Collection, collect } from './collection.js'
 import { guard, ModelNotFoundException } from './errors.js'
 import type { ApexDbHandle, Dialect, ScopeFn } from './index.js'
 import type { FieldDef, ResolvedCast } from './model.js'
+import type { RelationDef } from './relations.js'
 import { type Repo, repository } from './repository.js'
 
 export type Row = Record<string, unknown>
@@ -107,6 +108,51 @@ export interface ModelArConfig {
   hidden?: Set<string>
   /** Per-column casts (get on read, set on write). */
   casts?: Record<string, ResolvedCast>
+  /** Relationships for eager loading via `.with(...)`. */
+  relations?: Record<string, RelationDef>
+}
+
+/** Eager-load named relations onto already-loaded parent rows — one batched query per relation. */
+async function eagerLoad(
+  cfg: ModelArConfig,
+  handle: ApexDbHandle,
+  rows: ModelInstance[],
+  names: string[],
+  opts?: QueryOpts,
+): Promise<void> {
+  for (const name of names) {
+    const rel = cfg.relations?.[name]
+    if (!rel) throw new Error(`[apex] unknown relation '${name}' on model '${cfg.name}'`)
+    const related = rel.related()
+    if (rel.kind === 'belongsTo') {
+      const fkVals = [...new Set(rows.map((r) => r[rel.foreignKey]).filter((v) => v != null))]
+      if (!fkVals.length) {
+        for (const r of rows) r[name] = null
+        continue
+      }
+      const found = await related.where({ [rel.localKey]: { in: fkVals } }).all(handle, opts)
+      const byKey = new Map(found.map((x) => [x[rel.localKey], x]))
+      for (const r of rows) r[name] = byKey.get(r[rel.foreignKey]) ?? null
+    } else {
+      const parentVals = [...new Set(rows.map((r) => r[rel.localKey]).filter((v) => v != null))]
+      if (!parentVals.length) {
+        for (const r of rows) r[name] = rel.kind === 'hasMany' ? collect([]) : null
+        continue
+      }
+      const children = await related.where({ [rel.foreignKey]: { in: parentVals } }).all(handle, opts)
+      const groups = new Map<unknown, ModelInstance[]>()
+      for (const c of children) {
+        const k = c[rel.foreignKey]
+        const g = groups.get(k)
+        if (g) g.push(c)
+        else groups.set(k, [c])
+      }
+      for (const r of rows) {
+        const g = groups.get(r[rel.localKey]) ?? []
+        r[name] = rel.kind === 'hasMany' ? collect(g) : (g[0] ?? null)
+      }
+    }
+  }
 }
 
 /** Wrap a DB row as a model instance: attributes as own props + non-enumerable methods. */
@@ -245,8 +291,15 @@ export class QueryBuilder {
   private lim?: number
   private off?: number
   private locking = false
+  private withRels: string[] = []
 
   constructor(private cfg: ModelArConfig) {}
+
+  /** Eager-load relations to avoid N+1: `Post.where({}).with('author', 'comments').all(h)`. */
+  with(...names: string[]): this {
+    this.withRels.push(...names)
+    return this
+  }
 
   /** Pessimistic lock (`SELECT … FOR UPDATE`, Postgres) — use inside a `handle.transaction`. No-op on sqlite. */
   lockForUpdate(): this {
@@ -323,7 +376,9 @@ export class QueryBuilder {
       q = q.for('update')
     }
     const rows = await guard(this.cfg.name, 'select', async () => (await q) as Row[])
-    return collect(rows.map((r) => makeInstance(this.cfg, handle, r)))
+    const instances = collect(rows.map((r) => makeInstance(this.cfg, handle, r)))
+    if (this.withRels.length) await eagerLoad(this.cfg, handle, instances, this.withRels, opts)
+    return instances
   }
 
   async first(handle: ApexDbHandle, opts?: QueryOpts): Promise<ModelInstance | null> {
@@ -522,6 +577,7 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
       qb().where({ [cfg.pk]: id }).firstOrFail(handle, opts, id),
     where: (conds: WhereConds) => qb().where(conds),
     orderBy: (col: string, dir?: 'asc' | 'desc') => qb().orderBy(col, dir),
+    with: (...names: string[]) => qb().with(...names),
     scope: (name: string, ...args: unknown[]): QueryBuilder => {
       const fn = cfg.scopes?.[name]
       if (!fn) throw new Error(`[apex] unknown scope '${name}' on model '${cfg.name}'`)

@@ -27,6 +27,7 @@ import {
   type ScopeFn,
 } from './index.js'
 import type { Collection } from './collection.js'
+import type { RelationDef } from './relations.js'
 import {
   attachActiveRecord,
   type ModelInstance,
@@ -133,6 +134,8 @@ export interface DefineModelOptions {
   hidden?: string[]
   /** Per-column value casts applied on model reads/writes — `{ publishedAt: 'date', prefs: 'json' }`. */
   casts?: Record<string, Cast>
+  /** Relationships for eager loading — `{ author: belongsTo(() => User, 'authorId'), comments: hasMany(() => Comment, 'postId') }`. */
+  relations?: Record<string, RelationDef>
 }
 
 /** A model: its schema derivations + a factory for its REST/MCP resource. */
@@ -173,6 +176,8 @@ export interface ApexModel {
   orderBy(col: string, dir?: 'asc' | 'desc'): QueryBuilder
   /** Start a query from a named scope: `Model.scope('published').all(h)`. */
   scope(name: string, ...args: unknown[]): QueryBuilder
+  /** Start a query eager-loading relations: `Model.with('author', 'comments').all(h)`. */
+  with(...names: string[]): QueryBuilder
   /** Count rows (optionally matching `conds`). */
   count(handle: ApexDbHandle, conds?: WhereConds, opts?: QueryOpts): Promise<number>
   /** Whether any row matches. */
@@ -418,5 +423,6 @@ export function defineModel(name: string, opts: DefineModelOptions): ApexModel {
     scopes: opts.scopes,
     hidden: opts.hidden ? new Set(opts.hidden) : undefined,
     casts: resolveCasts(opts.casts),
+    relations: opts.relations,
   }) as ApexModel
 }
