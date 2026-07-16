@@ -148,15 +148,20 @@
       <p>Open one shared database <code>handle</code> in <code>db/index.ts</code>. Use
       <code>lazyDb</code> — it opens without a top-level <code>await</code> (so the module also bundles
       into the on-device <code>apex build --mobile</code> output) and connects, migrates, and seeds on
-      first use. libSQL in-memory locally / on-device; Postgres when <code>DATABASE_URL</code> is set:</p>
+      first use. A file-backed libSQL/SQLite database locally (data + migration history persist);
+      Postgres when <code>DATABASE_URL</code> is set:</p>
       <p class="code-label">db/index.ts</p>
-      <pre><code><span class="k">import</span> { lazyDb } <span class="k">from</span> <span class="s">'@apex-stack/data'</span>
+      <pre><code><span class="k">import</span> { applyMigrations, lazyDb } <span class="k">from</span> <span class="s">'@apex-stack/data'</span>
 <span class="k">import</span> { Message } <span class="k">from</span> <span class="s">'../models/Message.js'</span>
 
 <span class="k">const</span> url = process.env.DATABASE_URL
+<span class="k">const</span> onDevice = (globalThis <span class="k">as</span> { __APEX_DEVICE__?: boolean }).__APEX_DEVICE__
 <span class="k">export const</span> handle = lazyDb(
-  () =&gt; (url ? { driver: <span class="s">'postgres'</span>, url } : { driver: <span class="s">'libsql'</span>, url: <span class="s">':memory:'</span> }),
-  { init: <span class="k">async</span> (h) =&gt; { <span class="k">await</span> h.exec(Message.migrationSql(h.dialect)) } }, <span class="c">// dialect-aware schema</span>
+  () =&gt; (url ? { driver: <span class="s">'postgres'</span>, url } : { driver: <span class="s">'libsql'</span>, url: <span class="s">'file:./data.db'</span> }),
+  { init: <span class="k">async</span> (h) =&gt; {
+    <span class="c">// Server/dev: run the tracked db/migrations/*.sql files. On-device (no fs): create from the model.</span>
+    onDevice ? <span class="k">await</span> h.exec(Message.migrationSql(h.dialect)) : <span class="k">await</span> applyMigrations(h, <span class="s">'db/migrations'</span>)
+  } },
 )</code></pre>
       <p>Mount the model as a live resource from a <code>server/api/*.ts</code> file — this one line is the
       whole backend:</p>
@@ -364,7 +369,8 @@ posts[<span class="t">0</span>].comments  <span class="c">// a Collection of Com
         runs unchanged across all of them. <code>lazyDb</code>'s factory just returns the config for the
         database you want (the same config shapes <code>createDb</code> accepts):
       </p>
-      <pre><code>{ driver: <span class="s">'libsql'</span>, url: <span class="s">':memory:'</span> }                    <span class="c">// local / on-device SQLite (libSQL)</span>
+      <pre><code>{ driver: <span class="s">'libsql'</span>, url: <span class="s">'file:./data.db'</span> }              <span class="c">// local SQLite file (libSQL) — the default</span>
+{ driver: <span class="s">'libsql'</span>, url: <span class="s">':memory:'</span> }                    <span class="c">// ephemeral (on-device / quick demos)</span>
 { driver: <span class="s">'libsql'</span>, url: process.env.TURSO_URL }        <span class="c">// Turso (edge)</span>
 { driver: <span class="s">'postgres'</span>, url: process.env.DATABASE_URL }   <span class="c">// Supabase / Neon</span>
 { driver: <span class="s">'pglite'</span> }                                    <span class="c">// embedded Postgres (tests)</span></code></pre>

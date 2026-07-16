@@ -312,23 +312,29 @@ export default model.resource(handle)
 /** The shared, lazily-opened db handle (db/index.ts). Scaffolded once, when the first
  * model is generated and the app has no handle yet — mirrors \`apex extend data\`. */
 function dbIndexTemplate(file: string): string {
-  return `import { lazyDb } from '@apex-stack/data'
+  return `import { applyMigrations, lazyDb } from '@apex-stack/data'
 import model from '../models/${file}.js'
 
-// The one database handle the whole app shares. Opened LAZILY (no top-level \`await\`) so
-// this module also bundles into the classic-script \`apex build --mobile\` output. Locally
-// (and on-device) it's an in-memory libSQL database; a hosted Postgres is used when
-// DATABASE_URL is set (server/dev only). The real connection opens + creates the schema
-// on first use — dialect-aware, straight from the model, so it never drifts from your fields.
+// The one database handle the whole app shares. Opened LAZILY (no top-level \`await\`) so this
+// module also bundles into the classic-script \`apex build --mobile\` output. Locally it's a
+// file-backed libSQL/SQLite database (data + migration history persist); a hosted Postgres is
+// used when DATABASE_URL is set (server/dev only).
 const url = process.env.DATABASE_URL
+// The mobile bundle has no filesystem to read \`db/migrations/\` from — create the schema from
+// the model there. Everywhere else, run the versioned .sql files (tracked in _apex_migrations,
+// so each runs once and \`apex migrate\` shares the ledger).
+const onDevice = (globalThis as { __APEX_DEVICE__?: boolean }).__APEX_DEVICE__
+
 export const handle = lazyDb(
-  () => (url ? { driver: 'postgres', url } : { driver: 'libsql', url: ':memory:' }),
+  () => (url ? { driver: 'postgres', url } : { driver: 'libsql', url: 'file:./data.db' }),
   {
     init: async (h) => {
-      // Create the table if missing. Add a line per additional model you generate, e.g.
-      //   await h.exec(OtherModel.migrationSql(h.dialect))
-      // so its table exists in the in-memory dev database too.
-      await h.exec(model.migrationSql(h.dialect))
+      if (onDevice) {
+        // No fs on-device — create from the model. Add a line per model you generate.
+        await h.exec(model.migrationSql(h.dialect))
+      } else {
+        await applyMigrations(h, 'db/migrations')
+      }
     },
   },
 )
@@ -364,33 +370,36 @@ function createTableSql(
   fields: ParsedField[],
   dialect: 'sqlite' | 'postgres',
 ): string {
+  // Quote identifiers to match defineModel's own migrationSql (Postgres lower-cases unquoted
+  // camelCase, which breaks columns like `ownerId`).
+  const q = (id: string) => `"${id}"`
   const pk = dialect === 'sqlite' ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'SERIAL PRIMARY KEY'
   const cols = [
-    `  id ${pk}`,
+    `  ${q('id')} ${pk}`,
     ...fields.map(
-      (f) => `  ${f.name} ${sqlColType(f.type, dialect)}${f.notNull ? ' NOT NULL' : ''}`,
+      (f) => `  ${q(f.name)} ${sqlColType(f.type, dialect)}${f.notNull ? ' NOT NULL' : ''}`,
     ),
   ]
-  return `CREATE TABLE IF NOT EXISTS ${resource} (\n${cols.join(',\n')}\n);`
+  return `CREATE TABLE IF NOT EXISTS ${q(resource)} (\n${cols.join(',\n')}\n);`
 }
 
 function modelMigration(resource: string, fields: ParsedField[]): string {
   // Dialect-aware: the SQLite/libSQL form is active (the local `apex migrate` default);
   // the Postgres form is right below it, ready to swap in. `db/index.ts` also creates the
   // schema dialect-aware from the model on first boot, so local/on-device just works either way.
-  return `-- Create the ${resource} table. Run \`apex migrate\` (reverse with \`apex migrate --rollback\`).
--- SQLite / libSQL (the default local driver):
+  return `-- Create the ${resource} table. Applied automatically on first boot (db/index.ts runs
+-- \`applyMigrations\`) and on demand with \`apex migrate\` (reverse with \`apex migrate --rollback\`).
+-- SQLite / libSQL — the default local driver:
 ${createTableSql(resource, fields, 'sqlite')}
 
--- Postgres — uncomment this instead when you deploy to Supabase / Neon / any Postgres
--- (or just rely on db/index.ts, whose init creates the schema dialect-aware from the model):
+-- Postgres — uncomment this block instead when you deploy to Supabase / Neon / any Postgres:
 ${createTableSql(resource, fields, 'postgres')
   .split('\n')
   .map((l) => `-- ${l}`)
   .join('\n')}
 
 -- @down
-DROP TABLE IF EXISTS ${resource};
+DROP TABLE IF EXISTS "${resource}";
 `
 }
 
