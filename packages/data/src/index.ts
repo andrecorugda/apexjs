@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { type ApexResource, type ApexUser, defineApexRoute } from '@apex-stack/core'
-import { and, eq, type SQL, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, type SQL, sql } from 'drizzle-orm'
 import { type ZodRawShape, z } from 'zod'
 import type { BehaviorHooks, FilterFn } from './behavior.js'
 import { repository } from './repository.js'
@@ -489,6 +489,21 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
     updateShape[key] = schema.optional()
   }
 
+  // List query params: pagination + sort + per-column equality filters — also exposed on the
+  // `_list` MCP tool, so an AI can page/filter too. Backward-compatible: with no page/perPage,
+  // list returns a plain array; with either, a `{ data, total, page, perPage, lastPage }` envelope.
+  const MAX_PER_PAGE = 100
+  const listInput: Record<string, unknown> = {
+    page: z.coerce.number().int().min(1).optional(),
+    perPage: z.coerce.number().int().min(1).max(MAX_PER_PAGE).optional(),
+    sort: z.string().optional(),
+  }
+  for (const [key, schema] of Object.entries(
+    insert as unknown as Record<string, { optional(): unknown }>,
+  )) {
+    listInput[key] = schema.optional()
+  }
+
   return {
     __apexResource: true,
     name,
@@ -498,15 +513,49 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
         mcpName: `${name}_list`,
         route: defineApexRoute({
           method: 'GET',
-          description: `List ${name}`,
+          description: `List ${name} — supports ?page & ?perPage (→ {data,total,…}), ?sort=-col, and ?<col>=value filters`,
+          input: listInput as ZodRawShape,
           mcp: true,
           ...gate('list'),
-          handler: async ({ user }) => {
-            const c = repo.scopeConds(user ?? null)
-            const q = db.select().from(table)
-            const rows = c.length ? await q.where(and(...c)) : await q
-            await repo.runAfterList(rows, user ?? null)
-            return rows
+          handler: async ({ input, user }) => {
+            const q = (input ?? {}) as Record<string, unknown>
+            const conds = repo.scopeConds(user ?? null)
+            // Per-column equality filters (only over the model's own columns).
+            for (const key of Object.keys(insert)) {
+              const v = q[key]
+              if (v !== undefined && v !== '') conds.push(eq(table[key], v))
+            }
+            const where = conds.length ? and(...conds) : undefined
+            // Sort: `?sort=-createdAt,name` (leading `-` = desc). Columns validated via the table.
+            const orders: SQL[] = []
+            if (typeof q.sort === 'string' && q.sort) {
+              for (const part of q.sort.split(',')) {
+                const dir = part.startsWith('-')
+                const col = part.replace(/^[-+]/, '').trim()
+                const c = table[col]
+                if (c && typeof c === 'object') orders.push(dir ? desc(c) : asc(c))
+              }
+            }
+            const build = () => {
+              let sel = db.select().from(table)
+              if (where) sel = sel.where(where)
+              if (orders.length) sel = sel.orderBy(...orders)
+              return sel
+            }
+            // No pagination requested → a plain array (backward-compatible).
+            if (q.page === undefined && q.perPage === undefined) {
+              const rows = await build()
+              await repo.runAfterList(rows, user ?? null)
+              return rows
+            }
+            const page = Number(q.page ?? 1)
+            const perPage = Number(q.perPage ?? 25)
+            const data = await build().limit(perPage).offset((page - 1) * perPage)
+            const totalQ = db.select({ n: sql<number>`count(*)` }).from(table)
+            const totalRows = where ? await totalQ.where(where) : await totalQ
+            const total = Number((totalRows[0] as { n: unknown } | undefined)?.n ?? 0)
+            await repo.runAfterList(data, user ?? null)
+            return { data, total, page, perPage, lastPage: Math.max(1, Math.ceil(total / perPage)) }
           },
         }),
       },
