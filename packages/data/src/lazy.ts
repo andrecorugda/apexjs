@@ -100,10 +100,10 @@ export function lazyDb(
   return {
     db: deferredDb(ensure),
     dialect: dialectOf(resolved),
-    exec: async (sql) => {
-      await (await ensure()).exec(sql)
+    exec: async (sql, params) => {
+      await (await ensure()).exec(sql, params)
     },
-    query: async (sql) => (await ensure()).query(sql),
+    query: async (sql, params) => (await ensure()).query(sql, params),
     close: async () => {
       if (ready) await (await ready).close()
     },

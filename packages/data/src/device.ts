@@ -15,8 +15,8 @@ import type { ApexDbHandle } from './index.js'
 
 // Minimal shapes for the optional `sql.js` peer (avoids a hard type dependency).
 interface SqlJsDatabase {
-  run(sql: string): void
-  exec(sql: string): Array<{ columns: string[]; values: unknown[][] }>
+  run(sql: string, params?: readonly unknown[]): void
+  exec(sql: string, params?: readonly unknown[]): Array<{ columns: string[]; values: unknown[][] }>
   export(): Uint8Array
   close(): void
 }
@@ -63,11 +63,12 @@ export async function createDeviceSqlite(): Promise<ApexDbHandle> {
   return {
     db: drizzle(database as never),
     dialect: 'sqlite',
-    exec: async (sql) => {
-      database.run(sql)
+    exec: async (sql, params) => {
+      // With params it's one parameterized statement; without, sql.js runs all statements.
+      database.run(sql, params)
     },
-    query: async (sql) => {
-      const res = database.exec(sql)
+    query: async (sql, params) => {
+      const res = database.exec(sql, params)
       if (!res.length) return []
       const { columns, values } = res[0] as { columns: string[]; values: unknown[][] }
       return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))

@@ -34,15 +34,48 @@ export { defineModel } from './model.js'
 
 export type Dialect = 'sqlite' | 'postgres'
 
+/** A bound parameter value. Arrays/objects should be pre-serialized by the caller. */
+export type SqlParam = string | number | boolean | null | Uint8Array | bigint
+
 /** A driver-agnostic database handle. `db` is a Drizzle instance (async API). */
 export interface ApexDbHandle {
   db: any
   dialect: Dialect
-  /** Run raw SQL (one or more statements). */
-  exec(sql: string): Promise<void>
-  /** Run a query and return rows. */
-  query(sql: string): Promise<Array<Record<string, unknown>>>
+  /**
+   * Run SQL that returns nothing. Without `params`, `sql` may contain multiple statements
+   * (migrations, seeds). With `params`, it's ONE parameterized statement — use `?` placeholders
+   * (portable; translated to `$1,$2,…` on Postgres) so values are bound safely, never string-concatenated.
+   */
+  exec(sql: string, params?: readonly SqlParam[]): Promise<void>
+  /**
+   * Run a single query and return rows. Use `?` placeholders + `params` to bind values safely
+   * (portable across SQLite/Postgres) instead of interpolating into the SQL string.
+   */
+  query(sql: string, params?: readonly SqlParam[]): Promise<Array<Record<string, unknown>>>
   close(): Promise<void>
+}
+
+/**
+ * Translate portable `?` placeholders to Postgres `$1,$2,…` positional params. Skips `?` inside
+ * single-quoted string literals and `??` (JSON `?` operators aren't supported — use a bound param).
+ * SQLite/libSQL/sql.js use `?` natively, so this only runs on the Postgres-family drivers.
+ */
+export function toPgPlaceholders(sql: string): string {
+  let out = ''
+  let n = 0
+  let inStr = false
+  for (let i = 0; i < sql.length; i++) {
+    const c = sql[i]
+    if (c === "'") {
+      inStr = !inStr
+      out += c
+    } else if (c === '?' && !inStr) {
+      out += `$${++n}`
+    } else {
+      out += c
+    }
+  }
+  return out
 }
 
 /** Postgres connection tuning (passed through to postgres-js). */
@@ -167,10 +200,14 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
     return {
       db: drizzle(client),
       dialect: 'sqlite',
-      exec: async (sql) => {
-        await client.executeMultiple(sql)
+      exec: async (sql, params) => {
+        if (params) await client.execute({ sql, args: params as never })
+        else await client.executeMultiple(sql)
       },
-      query: async (sql) => (await client.execute(sql)).rows as Array<Record<string, unknown>>,
+      query: async (sql, params) =>
+        (await client.execute(params ? { sql, args: params as never } : sql)).rows as Array<
+          Record<string, unknown>
+        >,
       close: async () => {
         client.close()
       },
@@ -184,10 +221,14 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
     return {
       db: drizzle(client),
       dialect: 'postgres',
-      exec: async (sql) => {
-        await client.unsafe(sql)
+      exec: async (sql, params) => {
+        if (params) await client.unsafe(toPgPlaceholders(sql), params as never)
+        else await client.unsafe(sql)
       },
-      query: async (sql) => (await client.unsafe(sql)) as unknown as Array<Record<string, unknown>>,
+      query: async (sql, params) =>
+        (await (params
+          ? client.unsafe(toPgPlaceholders(sql), params as never)
+          : client.unsafe(sql))) as unknown as Array<Record<string, unknown>>,
       close: async () => {
         await client.end()
       },
@@ -202,10 +243,13 @@ async function openDb(config: CreateDbConfig): Promise<ApexDbHandle> {
   return {
     db: drizzle(client),
     dialect: 'postgres',
-    exec: async (sql) => {
-      await client.exec(sql)
+    exec: async (sql, params) => {
+      if (params) await client.query(toPgPlaceholders(sql), params as never[])
+      else await client.exec(sql)
     },
-    query: async (sql) => (await client.query(sql)).rows as Array<Record<string, unknown>>,
+    query: async (sql, params) =>
+      (await (params ? client.query(toPgPlaceholders(sql), params as never[]) : client.query(sql)))
+        .rows as Array<Record<string, unknown>>,
     close: async () => {
       await client.close()
     },

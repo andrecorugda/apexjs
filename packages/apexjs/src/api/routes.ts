@@ -69,6 +69,13 @@ export function expandApiModule(
   if (typeof def.handler === 'function') {
     return [entryFor(`/api/${name}`, def.method, sanitizeName(name), def)]
   }
+  // Present, but not a route or resource — almost always a plain `export default function`, which
+  // Apex can't serve (no method/validation). Warn loudly instead of a silent 404.
+  const kind = typeof def === 'function' ? 'a plain function' : 'an unrecognized value'
+  console.warn(
+    `[apex] server/api/${name}.ts default-exports ${kind} — it will NOT be served (requests 404). ` +
+      `Wrap it in defineApexRoute({ method, input?, handler }) (or export a defineResource).`,
+  )
   return []
 }
 
