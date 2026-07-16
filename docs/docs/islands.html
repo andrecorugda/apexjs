@@ -179,6 +179,19 @@
         <figcaption>A <code>client:load</code> island — server-rendered, then hydrated in the browser (the click count is live). From <code>examples/showcase</code>.</figcaption>
       </figure>
 
+      <div class="callout warm">
+        <span class="h">Scope gotcha · <code>&lt;script client&gt;</code> imports</span>
+        <p>
+          A page's <code>&lt;script client&gt;</code> imports and symbols are in scope only on the
+          <strong>page-root</strong> <code>&lt;template x-data&gt;</code> — <em>not</em> inside a
+          <code>client:load</code> (or any <code>client:*</code>) island, which hydrates as its own
+          isolated Alpine root. If an island needs a helper, import it in <em>that island's own</em>
+          <code>&lt;script client&gt;</code>, register it with <code>Alpine.data()</code> / a store, or lift
+          the state up to the page root. Symptom if you forget: the island renders fine but its
+          handlers silently do nothing (the referenced symbol is <code>undefined</code> in that scope).
+        </p>
+      </div>
+
       <h2 id="how">How it works <a class="anchor" href="#how">#</a></h2>
       <ol>
         <li><strong>SSR</strong> — the whole page renders on the server (static HTML <em>and</em> island subtrees, evaluated against loader data). Each <code>client:*</code> element is marked <code>data-apex-island</code> + <code>data-apex-client="&lt;mode&gt;"</code> and <code>x-ignore</code>d so global Alpine never auto-hydrates it.</li>

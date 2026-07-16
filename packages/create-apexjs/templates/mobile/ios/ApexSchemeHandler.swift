@@ -56,11 +56,12 @@ final class ApexSchemeHandler: NSObject, WKURLSchemeHandler {
     }
     let path = url.path.isEmpty ? "/" : url.path
 
-    // 1) Static client assets straight from the app bundle (client JS/CSS bundle, favicon) —
-    //    mirrors ApexInterceptor's `/assets/` + `/favicon.svg` fast path. No engine round-trip.
-    if path.hasPrefix("/assets/") || path == "/favicon.svg" {
+    // 1) Any static file bundled into the app — the client JS/CSS under /assets/, the favicon,
+    //    AND sprites / audio / images / fonts / manifest / etc. A file request has an extension in
+    //    its last segment; extensionless paths (/, /guestbook, /api/…) are SSR/API routes handled
+    //    by the engine below. A bundle miss also falls through (lets the engine 404 cleanly).
+    if !((path as NSString).lastPathComponent as NSString).pathExtension.isEmpty {
       if serveBundledAsset(path: path, url: url, task: task, id: id) { return }
-      // Fall through to the engine if the file isn't in the bundle (lets the engine 404 cleanly).
     }
 
     // 2) Everything else → the on-device engine. Build the {url,method,headers,body} request JSON,
@@ -159,24 +160,20 @@ final class ApexSchemeHandler: NSObject, WKURLSchemeHandler {
 
   // MARK: - Static assets
 
-  /// Serve a bundled `/assets/...` or `/favicon.svg` file. Returns true if handled.
-  ///
-  /// Assets are copied into the app bundle under an `assets/` folder reference (see ios/README.md),
-  /// so `/assets/app-abc123.js` maps to bundle resource `app-abc123.js` in subdirectory `assets`,
-  /// and `/favicon.svg` maps to `favicon.svg` at the bundle root.
+  /// Serve any static file bundled into the app (public/ is copied in as a folder reference —
+  /// see ios/README.md — preserving structure). `/assets/app-abc.js` → resource `app-abc` ext
+  /// `js` subdir `assets`; `/sprites/robot.png` → `robot`/`png`/`sprites`; `/favicon.svg` →
+  /// `favicon`/`svg` at the bundle root. Returns true if handled, false on a bundle miss.
   private func serveBundledAsset(path: String, url: URL, task: WKURLSchemeTask, id: ObjectIdentifier) -> Bool {
-    let fileURL: URL?
-    if path == "/favicon.svg" {
-      fileURL = Bundle.main.url(forResource: "favicon", withExtension: "svg")
-    } else {
-      // "/assets/app-abc123.js" → resource "app-abc123", ext "js", subdirectory "assets".
-      let name = (path as NSString).lastPathComponent            // app-abc123.js
-      let ext = (name as NSString).pathExtension                  // js
-      let base = (name as NSString).deletingPathExtension         // app-abc123
-      let subdir = ((path as NSString).deletingLastPathComponent as NSString)
-        .lastPathComponent                                        // assets
-      fileURL = Bundle.main.url(forResource: base, withExtension: ext, subdirectory: subdir)
-    }
+    let name = (path as NSString).lastPathComponent               // robot.png
+    let ext = (name as NSString).pathExtension                    // png
+    let base = (name as NSString).deletingPathExtension           // robot
+    // Full directory path (not just the last component) so NESTED public/ folders resolve.
+    var subdir = (path as NSString).deletingLastPathComponent     // /sprites  (or /img/a, or /)
+    if subdir.hasPrefix("/") { subdir.removeFirst() }             // sprites   (or img/a, or "")
+    let fileURL = Bundle.main.url(
+      forResource: base, withExtension: ext,
+      subdirectory: subdir.isEmpty ? nil : subdir)
 
     guard let fileURL, let fileData = try? Data(contentsOf: fileURL) else {
       return false
@@ -244,14 +241,26 @@ final class ApexSchemeHandler: NSObject, WKURLSchemeHandler {
     case "js", "mjs": return "text/javascript; charset=utf-8"
     case "css": return "text/css; charset=utf-8"
     case "svg": return "image/svg+xml"
-    case "json": return "application/json; charset=utf-8"
+    case "json", "map": return "application/json; charset=utf-8"
+    case "html", "htm": return "text/html; charset=utf-8"
+    case "txt": return "text/plain; charset=utf-8"
+    case "wasm": return "application/wasm"
     case "png": return "image/png"
     case "jpg", "jpeg": return "image/jpeg"
+    case "gif": return "image/gif"
     case "webp": return "image/webp"
+    case "avif": return "image/avif"
+    case "ico": return "image/x-icon"
+    case "mp3": return "audio/mpeg"
+    case "wav": return "audio/wav"
+    case "ogg", "oga": return "audio/ogg"
+    case "m4a": return "audio/mp4"
+    case "mp4": return "video/mp4"
+    case "webm": return "video/webm"
     case "woff2": return "font/woff2"
     case "woff": return "font/woff"
     case "ttf": return "font/ttf"
-    case "ico": return "image/x-icon"
+    case "otf": return "font/otf"
     default: return "application/octet-stream"
     }
   }
