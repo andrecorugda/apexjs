@@ -45,11 +45,12 @@ ecosystem (and dovetails with deploy presets exposing a `DeployPreset` contract)
 it, all extension goes through core.
 
 > **Status after end-to-end verification (fresh-scaffold E2E, not just unit tests):**
-> - **#20 (morph HMR)** — verified working end-to-end in a real browser; ships next release.
-> - **#18 (image/font)** — merged, but E2E found the image-transform and fonts pipelines were
->   *unit-tested yet never wired into the real build*; the `<Image>` helper works. Wiring fixes
->   (config threading + font emit/preload + scaffold `@apex-stack/kit` dep) are in progress; ships
->   once the transform + fonts are proven emitting in a built app.
+> - **#20 (morph HMR)** — ✅ **shipped** in `@apex-stack/vite@0.5.0` + `@apex-stack/kit@0.10.0`
+>   (verified in a real browser). See [done](done.md).
+> - **#18 (image/font)** — ✅ **shipped** in `@apex-stack/core@0.44.0` + `@apex-stack/kit@0.10.0`
+>   (`create-apexjs@0.7.2` adds the kit scaffold dep). E2E found the transform + fonts were
+>   *unit-tested yet never wired into the real build*; now wired + verified. One follow-up:
+>   the image transform doesn't yet run under `apex build --islands` ([#57](https://github.com/andrecorugda/apexjs/issues/57); fonts do). See [done](done.md).
 > - **#19 (Cloudflare edge)** — **held back**: the emitted worker reads the build via `node:fs` +
 >   a runtime dynamic `import()`, which don't run on the real Workers edge. It needs a self-contained
 >   bundled worker (like the mobile preset). Issue #19 stays open; kept out of the release until fixed.
