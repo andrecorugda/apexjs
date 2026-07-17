@@ -1,5 +1,13 @@
 # @apex-stack/core
 
+## 0.44.5
+
+### Patch Changes
+
+- Fix `apex new` / `apex extend pwa` crashing with `ENOENT … templates/features/pwa` (a regression
+  from generating PWA icons: the feature no longer ships template files, so its directory is
+  absent). `applyFeature` now skips the file copy for config/deps-only recipes.
+
 ## 0.44.4
 
 ### Patch Changes
