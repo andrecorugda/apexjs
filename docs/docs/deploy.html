@@ -106,6 +106,7 @@
               <li><a href="#hydrated">2 · Prerendered + hydrated</a></li>
               <li><a href="#server">3 · Server target</a></li>
               <li><a href="#presets">One-command deploys</a></li>
+              <li><a href="#cloudflare">Cloudflare Workers — edge</a></li>
               <li><a href="#db">Databases in production</a></li>
               <li><a href="#reliability">Production reliability</a></li>
               <li><a href="#hosting">Hosting targets</a></li>
@@ -180,12 +181,41 @@ vercel deploy</code></pre>
       <p class="code-label">Netlify — serverless</p>
       <pre><code>apex build --preset netlify  <span class="c"># writes netlify/functions/server.mjs + netlify.toml</span>
 netlify deploy</code></pre>
+      <p class="code-label">Cloudflare — Workers (edge)</p>
+      <pre><code>apex build --preset cloudflare  <span class="c"># writes _worker.js + apex-cf-assets.json + wrangler.toml</span>
+wrangler deploy</code></pre>
       <p class="code-label">Docker — Railway / Render / Fly.io / any container or VM</p>
       <pre><code>apex build --preset docker   <span class="c"># writes a Dockerfile (+ .dockerignore)</span>
 <span class="c"># push to your host — apex start listens on the injected $PORT</span></code></pre>
       <div class="callout">
         <span class="h">How it works</span>
         <p>The serverless presets wrap the built app in one function via <code>createProdNodeHandler</code> (Vercel) / <code>createProdWebHandler</code> (Netlify) from <code>@apex-stack/core/server</code>; the Docker preset builds and runs <code>apex start</code>. All serve SSR + <code>/api</code> + <code>/mcp</code> from the same server target — one build, any host.</p>
+      </div>
+
+      <h3 id="cloudflare">Cloudflare Workers — edge <a class="anchor" href="#cloudflare">#</a></h3>
+      <p>
+        The Cloudflare preset emits a <strong>module worker</strong> — <code>export default { fetch(request, env, ctx) }</code> — that serves the same server target from the edge. It writes three files at your project root:
+      </p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>File</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td><code>_worker.js</code></td><td>The module worker. Static-asset URLs go straight to Cloudflare's asset binding (<code>env.ASSETS</code>); everything else (SSR + <code>/api</code> + <code>/mcp</code>) falls through to the thin h3 <strong>web</strong> handler (<code>createProdWebHandler</code>, a <code>fetch</code>-style <code>(Request) =&gt; Response</code> adapter — no Node HTTP server on the edge).</td></tr>
+            <tr><td><code>apex-cf-assets.json</code></td><td>The asset manifest — the public URL of every static file in the build (server modules + the run manifest are excluded). The worker consults it to route static-vs-SSR.</td></tr>
+            <tr><td><code>wrangler.toml</code></td><td>Points <code>[assets]</code> at the build output (binding <code>ASSETS</code>) and enables <code>nodejs_compat</code> — the built server reads its run manifest via <code>node:fs</code>/<code>node:path</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>apex build --preset cloudflare
+<span class="c"># set secrets, then deploy:</span>
+wrangler secret put DATABASE_URL
+wrangler secret put APEX_SESSION_PASSWORD
+wrangler deploy</code></pre>
+      <div class="callout warm">
+        <span class="h">Pair the edge with a fetch-based DB driver</span>
+        <p>
+          Workers have no TCP sockets — use a fetch/HTTP database driver (Turso, Supabase, or Neon; see <a href="#db">Databases in production</a>), not a raw Postgres/SQLite-file connection. The keep-the-adapter-thin design means the worker just forwards to <code>createProdWebHandler</code>; a real edge deploy is verified with <code>wrangler deploy</code> (out of CI scope).
+        </p>
       </div>
 
       <h2 id="db">Databases in production <a class="anchor" href="#db">#</a></h2>
@@ -265,8 +295,7 @@ netlify deploy</code></pre>
       <div class="callout warm">
         <span class="h">On the roadmap</span>
         <p>
-          A <strong>Cloudflare Workers</strong> (edge) preset — the shipped presets (<a href="#presets">Vercel, Netlify, Docker</a>)
-          target Node / serverless-Node. Also planned: streaming SSR and a MySQL/PlanetScale driver.
+          Streaming SSR and a MySQL/PlanetScale driver. The shipped presets — <a href="#presets">Vercel, Netlify, Docker</a> (Node / serverless-Node) and <a href="#cloudflare">Cloudflare Workers</a> (edge) — cover Node, serverless, and the edge.
         </p>
       </div>
 
