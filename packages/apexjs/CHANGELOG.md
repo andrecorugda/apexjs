@@ -1,5 +1,14 @@
 # @apex-stack/core
 
+## 0.45.0
+
+### Minor Changes
+
+- Add a `head` option to `apex.config.ts` — raw HTML injected first into every page's `<head>`
+  (before the title, styles, and app bundle), so it runs before first paint. The scaffold uses it
+  for a synchronous dark-mode script that applies the `dark` class up front, eliminating the
+  light→dark theme flash on initial load and on reloads (e.g. after a form post's `location.reload()`).
+
 ## 0.44.5
 
 ### Patch Changes
