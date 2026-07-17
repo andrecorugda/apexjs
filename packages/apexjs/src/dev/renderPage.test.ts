@@ -65,6 +65,34 @@ describe('renderPage — head/SEO', () => {
   })
 })
 
+describe('renderPage — self-hosted fonts (#18)', () => {
+  it('injects the pre-built font <head> fragment into the shell head', async () => {
+    const fontHead =
+      '<style>@font-face{font-family:"Inter";src:url("/fonts/Inter.woff2") format("woff2")}</style>\n  ' +
+      '<link rel="preload" as="font" type="font/woff2" href="/fonts/Inter.woff2" crossorigin />'
+    const html = await renderPage({
+      loadModule: async () => makeModule(),
+      pageId: '/pages/index.alpine',
+      url: '/',
+      fontHead,
+    })
+    expect(html).toContain('@font-face{font-family:"Inter"')
+    expect(html).toContain('<link rel="preload" as="font" type="font/woff2"')
+    // Injected inside <head>, before </head>.
+    expect(html.indexOf(fontHead)).toBeLessThan(html.indexOf('</head>'))
+  })
+
+  it('emits no font tags when fontHead is absent (gated)', async () => {
+    const html = await renderPage({
+      loadModule: async () => makeModule(),
+      pageId: '/pages/index.alpine',
+      url: '/',
+    })
+    expect(html).not.toContain('@font-face')
+    expect(html).not.toContain('rel="preload" as="font"')
+  })
+})
+
 describe('renderPage — error boundary', () => {
   it('renders the error page with { error } when a loader throws', async () => {
     const boom = makeModule({

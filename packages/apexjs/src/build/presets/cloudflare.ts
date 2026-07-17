@@ -107,9 +107,12 @@ binding = "ASSETS"
   )
 
   console.log(
-    `  ${'\x1b[36m'}Cloudflare${'\x1b[0m'} preset → wrote _worker.js + apex-cf-assets.json + wrangler.toml\n` +
-      `  ${assets.length} static asset(s) mapped to env.ASSETS; SSR/API/MCP fall through to the worker.\n` +
-      '  Set DATABASE_URL + APEX_SESSION_PASSWORD as Worker secrets, then: wrangler deploy\n',
+    `  ${'\x1b[33m'}⚠ Cloudflare preset is EXPERIMENTAL and not yet edge-ready${'\x1b[0m'} (see #19).\n` +
+      "  The emitted worker's SSR path currently reads the build via node:fs + a runtime dynamic\n" +
+      '  import() — which do NOT work on the real Workers runtime. A self-contained bundled worker\n' +
+      '  (like the mobile preset) is in progress. Do not ship this to production yet.\n' +
+      `  ${'\x1b[36m'}Cloudflare${'\x1b[0m'} preset → wrote _worker.js + apex-cf-assets.json + wrangler.toml\n` +
+      `  ${assets.length} static asset(s) mapped to env.ASSETS; SSR/API/MCP fall through to the worker.\n`,
   )
 }
 

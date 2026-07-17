@@ -7,11 +7,12 @@ import { createServer as createViteServer } from 'vite'
 import { buildClient, type ClientAssets } from '../build/buildClient.js'
 import { buildIslandsRuntime } from '../build/buildIslands.js'
 import { buildServer } from '../build/buildServer.js'
+import { emitFontAssets, fontHeadTags } from '../build/fonts.js'
 import { deployPresets, resolveDeployPreset } from '../build/presets/index.js'
 import { emitPwaAssets } from '../build/pwa.js'
 import { loadComponents, scanComponents } from '../components/registry.js'
 import { resolveApexConfig } from '../config/resolve.js'
-import type { PwaConfig, RuntimeConfig } from '../config/runtime.js'
+import type { ApexConfig, FontConfig, PwaConfig, RuntimeConfig } from '../config/runtime.js'
 import { type PageModule, renderPage } from '../dev/renderPage.js'
 import { createI18n } from '../i18n/index.js'
 import { loadMessages } from '../i18n/run.js'
@@ -108,17 +109,6 @@ export const buildCommand = defineCommand({
       return
     }
 
-    // Component mode: build a client bundle per page so the prerendered HTML hydrates.
-    // Islands mode: build the islands runtime instead (loader asset + lazy Alpine
-    // chunk + compiled global stylesheet) — the inline dev loader's bare
-    // `import('alpinejs')` cannot resolve in a static build.
-    const hrefs = args.islands
-      ? new Map<string, ClientAssets>()
-      : await buildClient(root, staticRoutes, outDir, args.base)
-    const islandsRuntime = args.islands
-      ? await buildIslandsRuntime(root, outDir, args.base)
-      : undefined
-
     const vite = await createViteServer({
       root,
       appType: 'custom',
@@ -127,15 +117,39 @@ export const buildCommand = defineCommand({
     })
 
     try {
+      // Resolve apex.config.ts FIRST so the image transform (config.image) is wired into
+      // the client/islands bundles and self-hosted fonts (config.fonts) can be copied —
+      // both need the resolved config BEFORE the client build runs.
+      const { config, runtimeConfig, publicConfig } = await resolveApexConfig(
+        root,
+        (id) => vite.ssrLoadModule(id) as never,
+      )
+
+      // Component mode: build a client bundle per page so the prerendered HTML hydrates.
+      // Islands mode: build the islands runtime instead (loader asset + lazy Alpine
+      // chunk + compiled global stylesheet) — the inline dev loader's bare
+      // `import('alpinejs')` cannot resolve in a static build.
+      const hrefs = args.islands
+        ? new Map<string, ClientAssets>()
+        : await buildClient(root, staticRoutes, outDir, args.base, config)
+      const islandsRuntime = args.islands
+        ? await buildIslandsRuntime(root, outDir, args.base, config)
+        : undefined
+
+      // Self-hosted fonts (#18): copy declared font files into dist/fonts/ and build the
+      // <head> fragment (@font-face + preload) injected into every prerendered shell below.
+      const fonts = config.fonts as FontConfig | undefined
+      const fontHead = fonts?.families?.length ? fontHeadTags(fonts) : ''
+      if (fonts?.families?.length) {
+        const copied = emitFontAssets(outDir, root, fonts)
+        console.log(`  ✓ Fonts — ${copied} file(s) → fonts/`)
+      }
+
       const { registry, css: componentCss } = await loadComponents(
         root,
         (id) => vite.ssrLoadModule(id) as never,
       )
       const stores = await loadStores(root, (id) => vite.ssrLoadModule(id) as never)
-      const { config, runtimeConfig, publicConfig } = await resolveApexConfig(
-        root,
-        (id) => vite.ssrLoadModule(id) as never,
-      )
       const clientNav = config.clientNav !== false
       const pwa = config.pwa as PwaConfig | undefined
       // i18n (#54): the servers seed locals.t/locale per request — the prerender loop must
@@ -193,6 +207,7 @@ export const buildCommand = defineCommand({
             locals,
             locale: variant.locale,
             pwa,
+            fontHead,
           }
           const assets = hrefs.get(route.pageId)
           const html = args.islands
@@ -250,13 +265,12 @@ async function buildServerTarget(
   outLabel: string,
   routes: RouteDef[],
 ) {
-  const clientHrefs = await buildClient(root, routes, outDir)
-  const server = await buildServer(root, routes, outDir)
-
-  // Load apex.config.ts DEFAULTS to bake into the manifest — never the env-resolved
-  // values, so build-time secrets don't get written to dist. The prod server applies
-  // deploy-time .env / process.env over these defaults at start. A short-lived Vite
-  // loads the TS config.
+  // Load apex.config.ts DEFAULTS FIRST — the image transform needs config.image before the
+  // client build runs, self-hosted fonts need config.fonts, and the manifest bakes these
+  // pristine defaults (never the env-resolved values, so build-time secrets don't get
+  // written to dist). The prod server applies deploy-time .env / process.env over these
+  // defaults at start. A short-lived Vite loads the TS config.
+  let config: ApexConfig = {}
   let runtimeConfig: RuntimeConfig = { public: {} }
   let clientNav = true
   let loadingHtml: string | undefined
@@ -270,6 +284,7 @@ async function buildServerTarget(
   })
   try {
     const resolved = await resolveApexConfig(root, (id) => cfgVite.ssrLoadModule(id) as never)
+    config = resolved.config
     runtimeConfig = { public: {}, ...(resolved.config.runtimeConfig ?? {}) }
     if (!runtimeConfig.public) runtimeConfig.public = {}
     clientNav = resolved.config.clientNav !== false
@@ -283,6 +298,20 @@ async function buildServerTarget(
     }
   } finally {
     await cfgVite.close()
+  }
+
+  const clientHrefs = await buildClient(root, routes, outDir, '/', config)
+  const server = await buildServer(root, routes, outDir)
+
+  // Self-hosted fonts (#18): copy declared font files into dist/fonts/ so they're served
+  // statically, and bake the prebuilt @font-face/preload <head> fragment into the manifest.
+  // The prod server injects that plain string at runtime (prod/server.ts → renderPage's
+  // `fontHead`), so it never imports build/fonts.ts (keeps node:fs out of the mobile bundle).
+  const fonts = config.fonts as FontConfig | undefined
+  const fontHead = fonts?.families?.length ? fontHeadTags(fonts) : undefined
+  if (fonts?.families?.length) {
+    const copied = emitFontAssets(outDir, root, fonts)
+    console.log(`  ✓ Fonts — ${copied} file(s) → fonts/`)
   }
 
   const components: Record<string, string> = {}
@@ -354,6 +383,7 @@ async function buildServerTarget(
     loadingHtml,
     i18n,
     pwa,
+    fontHead,
     hooks,
   }
   writeFileSync(join(outDir, 'apex-manifest.json'), JSON.stringify(manifest, null, 2))

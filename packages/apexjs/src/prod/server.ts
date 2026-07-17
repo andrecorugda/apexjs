@@ -63,6 +63,8 @@ export interface ProdManifest {
   loadingHtml?: string
   /** PWA config baked at build — the runtime SSR shell links the manifest + worker. */
   pwa?: PwaConfig
+  /** Prebuilt self-hosted-fonts `<head>` fragment (@font-face + preload), injected as-is. */
+  fontHead?: string
   /** Observability hooks module (server/hooks.ts), if the app defined one. */
   hooks?: { serverFile: string }
 }
@@ -388,6 +390,7 @@ export async function createProdApp(options: {
           clientNav: manifest.clientNav !== false,
           loadingHtml: manifest.loadingHtml,
           pwa: manifest.pwa,
+          fontHead: manifest.fontHead,
           locale,
           locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
           errorPageId,
