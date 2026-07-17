@@ -1,5 +1,8 @@
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { featureKeys, getFeature, isFeature } from './features.js'
+import { applyFeature, featureKeys, getFeature, isFeature } from './features.js'
 
 // The file-copy + dep-merge paths are covered end-to-end by scaffolding an app;
 // here we lock down the fragile string patches (apex.config.ts / .env) and their
@@ -20,6 +23,18 @@ describe('feature recipes', () => {
     expect(featureKeys().sort()).toEqual(['auth', 'data', 'i18n', 'pwa'])
     expect(isFeature('auth')).toBe(true)
     expect(isFeature('nope')).toBe(false)
+  })
+
+  it('applyFeature handles a config/deps-only recipe (pwa, no template dir) without ENOENT', () => {
+    const root = mkdtempSync(join(tmpdir(), 'apex-feat-pwa-'))
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'x', dependencies: {} }))
+    writeFileSync(join(root, 'apex.config.ts'), CONFIG)
+    expect(() => applyFeature(root, 'pwa')).not.toThrow()
+    expect(readFileSync(join(root, 'apex.config.ts'), 'utf8')).toContain('pwa:')
+    expect(
+      JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).dependencies,
+    ).toHaveProperty('@resvg/resvg-js')
+    rmSync(root, { recursive: true, force: true })
   })
 
   it('auth patchConfig injects sessionPassword, idempotently', () => {

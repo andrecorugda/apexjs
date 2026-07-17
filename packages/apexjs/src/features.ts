@@ -141,8 +141,11 @@ export function applyFeature(
     return false
   }
 
-  // 1. Copy the recipe's files (merges into existing dirs; no base-file collisions).
-  cpSync(join(FEATURES_DIR, key), root, { recursive: true })
+  // 1. Copy the recipe's files, if it ships any (merges into existing dirs; no base-file
+  // collisions). Some recipes are config/deps-only (e.g. PWA, whose icons are generated from
+  // the favicon at build) and have no template dir — skip the copy rather than ENOENT.
+  const filesDir = join(FEATURES_DIR, key)
+  if (existsSync(filesDir)) cpSync(filesDir, root, { recursive: true })
 
   // 2. Merge dependencies (never downgrade an existing pin).
   if (f.deps) {
