@@ -29,6 +29,14 @@ export interface ApexConfig {
    */
   runtimeConfig?: RuntimeConfig
   /**
+   * Raw HTML injected FIRST into every page's `<head>` — before the title, styles,
+   * and the app bundle. Runs before first paint, so it's the place for a synchronous
+   * theme (dark-mode) script that sets the `dark` class up front and avoids a
+   * light→dark flash on load and on every reload. App-authored + trusted (emitted
+   * verbatim). Keep it tiny and side-effect-only.
+   */
+  head?: string
+  /**
    * Client-side navigation (SPA link nav + prefetch + progress bar). On by
    * default; set `false` to fall back to full-page loads.
    */

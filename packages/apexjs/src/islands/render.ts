@@ -83,6 +83,9 @@ export interface RenderIslandsPageOptions {
   /** Pre-rendered self-hosted-font `<head>` fragment (`@font-face` + preload links),
    * built by `apex build` from `config.fonts` and injected as-is into the shell (🟡). */
   fontHead?: string
+  /** Raw HTML (`config.head`) injected FIRST in `<head>`, before first paint — e.g. the
+   * synchronous dark-mode script that prevents a theme flash. Emitted verbatim (trusted). */
+  head?: string
   /** Active locale (i18n) — sets `<html lang>`. Default `en`. */
   locale?: string
   /**
@@ -166,13 +169,14 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
   const configScript = hydratingCount > 0 ? `\n${clientConfigScript(opts.publicConfig ?? {})}` : ''
   const pwaTags = opts.pwa ? `\n  ${pwaHeadTags(opts.pwa)}\n  ${pwaRegisterScript()}` : ''
   const fontTags = opts.fontHead ? `\n  ${opts.fontHead}` : ''
+  const headRaw = opts.head ? `\n  ${opts.head}` : ''
   const appCssLink = [...(opts.appCss ? [opts.appCss] : []), ...(opts.cssHrefs ?? [])]
     .map((href) => `\n  <link rel="stylesheet" href="${href}" />`)
     .join('')
 
   const doc = `<!DOCTYPE html>
 <html lang="${opts.locale ?? 'en'}">
-<head>
+<head>${headRaw}
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

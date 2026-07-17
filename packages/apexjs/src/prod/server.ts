@@ -65,6 +65,8 @@ export interface ProdManifest {
   pwa?: PwaConfig
   /** Prebuilt self-hosted-fonts `<head>` fragment (@font-face + preload), injected as-is. */
   fontHead?: string
+  /** Raw `<head>` HTML (`config.head`) injected first — e.g. the anti-flash theme script. */
+  head?: string
   /** Observability hooks module (server/hooks.ts), if the app defined one. */
   hooks?: { serverFile: string }
 }
@@ -391,6 +393,7 @@ export async function createProdApp(options: {
           loadingHtml: manifest.loadingHtml,
           pwa: manifest.pwa,
           fontHead: manifest.fontHead,
+          head: manifest.head,
           locale,
           locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
           errorPageId,

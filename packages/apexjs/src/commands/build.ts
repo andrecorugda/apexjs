@@ -208,6 +208,7 @@ export const buildCommand = defineCommand({
             locale: variant.locale,
             pwa,
             fontHead,
+            head: config.head,
           }
           const assets = hrefs.get(route.pageId)
           const html = args.islands
@@ -386,6 +387,7 @@ async function buildServerTarget(
     i18n,
     pwa,
     fontHead,
+    head: config.head,
     hooks,
   }
   writeFileSync(join(outDir, 'apex-manifest.json'), JSON.stringify(manifest, null, 2))

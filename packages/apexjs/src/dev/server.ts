@@ -342,6 +342,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
           clientNav,
           clientEntry: clientEntryId(options.root) ?? undefined,
           loadingHtml,
+          head: config.head,
           locale,
           locals: (event.context.apexLocals as Record<string, unknown>) ?? {},
           errorPageId: existsSync(join(options.root, 'pages', 'error.alpine'))

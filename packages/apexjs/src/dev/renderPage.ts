@@ -131,6 +131,9 @@ export interface RenderPageOptions {
   /** Pre-rendered self-hosted-font `<head>` fragment (`@font-face` + preload links),
    * built by `apex build` from `config.fonts` and injected as-is into the shell (🟡). */
   fontHead?: string
+  /** Raw HTML (`config.head`) injected FIRST in `<head>`, before first paint — e.g. the
+   * synchronous dark-mode script that prevents a theme flash. Emitted verbatim (trusted). */
+  head?: string
 }
 
 /**
@@ -238,6 +241,7 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     appCss: opts.appCss,
     clientCss: opts.clientCss,
     headTags:
+      (opts.head ? `${opts.head}\n  ` : '') +
       renderHead(head) +
       (opts.fontHead ? `\n  ${opts.fontHead}` : '') +
       (opts.pwa ? `\n  ${pwaHeadTags(opts.pwa)}\n  ${pwaRegisterScript()}` : ''),

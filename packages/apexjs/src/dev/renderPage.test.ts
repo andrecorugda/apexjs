@@ -93,6 +93,21 @@ describe('renderPage — self-hosted fonts (#18)', () => {
   })
 })
 
+describe('renderPage — config.head (anti-flash / early head)', () => {
+  it('injects config.head first in <head>, before the title (runs before paint)', async () => {
+    const head = "<script>document.documentElement.classList.toggle('dark',true)</script>"
+    const html = await renderPage({
+      loadModule: async () => makeModule(),
+      pageId: '/pages/index.alpine',
+      url: '/',
+      head,
+    })
+    expect(html).toContain(head)
+    // Before <title> (and thus before the app bundle) so the theme applies pre-paint.
+    expect(html.indexOf(head)).toBeLessThan(html.indexOf('<title>'))
+  })
+})
+
 describe('renderPage — error boundary', () => {
   it('renders the error page with { error } when a loader throws', async () => {
     const boom = makeModule({
