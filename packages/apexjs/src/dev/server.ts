@@ -84,6 +84,24 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   // Optional Tailwind — auto-load @tailwindcss/vite if the project installed it.
   const plugins: PluginOption[] = [
     apex({ clientRuntime: '@apex-stack/core/client', fullReloadOnly: options.islands }),
+    {
+      // In dev, actively unregister any leftover service worker and clear its caches on every
+      // page. A prod PWA build registers `/sw.js`, which precaches the app and PERSISTS on the
+      // origin (`localhost:<port>`) across reloads — and across other apps / dev sessions on the
+      // same port — serving stale modules (→ "apex_c… is not defined") until the user manually
+      // clears browser data. Injecting this guarantees `apex dev` never inherits a stale SW.
+      name: 'apex:dev-sw-cleanup',
+      transformIndexHtml() {
+        return [
+          {
+            tag: 'script',
+            injectTo: 'head-prepend' as const,
+            children:
+              "if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()})}).catch(function(){});if(self.caches)caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k)})}).catch(function(){})}",
+          },
+        ]
+      },
+    },
   ]
   let hasTailwind = false
   try {
