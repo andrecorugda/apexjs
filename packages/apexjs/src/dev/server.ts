@@ -123,6 +123,9 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
     // User apps depend on `@apex-stack/core`, so the client module imports the runtime
     // from `@apex-stack/core/client` (a re-export) rather than the internal kit package.
     plugins,
+    // The kit client runtime bundles its own leaf deps (morphdom/devalue) into its dist, so
+    // Vite never discovers them mid-session and never fires a dep re-optimization + hard reload
+    // (that window briefly 404s `.alpine` modules → "apex_c… is not defined" during a morph swap).
     optimizeDeps: { include: ['alpinejs'] },
   })
 
