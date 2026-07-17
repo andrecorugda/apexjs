@@ -25,6 +25,7 @@
     "@biomejs/biome": "^2.5.3",
     "@changesets/cli": "^2.27.11",
     "@types/node": "^26.1.1",
+    "jsdom": "^29.1.1",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
     "vitest": "^4.1.10"
