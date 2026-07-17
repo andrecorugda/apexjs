@@ -4,6 +4,9 @@ This is the promise. Everything listed here is **public**; anything not listed i
 **internal** and may change without notice. The goal of this document is the road
 to **1.0**: a surface people can build on without it breaking under them.
 
+> Upgrading between versions? See **[UPGRADING.md](./UPGRADING.md)** for the narrative guide
+> (how to bump safely, what the 🟢/🟡 split means in practice, notable pre-1.0 shifts).
+
 ## Stability levels
 
 | Level | Meaning | Change policy |
