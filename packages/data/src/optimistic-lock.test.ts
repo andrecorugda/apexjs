@@ -17,17 +17,19 @@ describe('optimistic locking', () => {
     // Two independent handles on the same row (simulate concurrent editors).
     const first = await Doc.find(h, a.id)
     const second = await Doc.find(h, a.id)
+    if (!first || !second) throw new Error('both handles should resolve the created row')
 
-    first!.title = 'edited by first'
-    await first!.save()
-    expect(first!.version).toBe(1) // bumped
+    first.title = 'edited by first'
+    await first.save()
+    expect(first.version).toBe(1) // bumped
 
     // second still thinks version is 0 → its save must lose.
-    second!.title = 'edited by second'
-    await expect(second!.save()).rejects.toBeInstanceOf(StaleModelException)
+    second.title = 'edited by second'
+    await expect(second.save()).rejects.toBeInstanceOf(StaleModelException)
 
     const fresh = await Doc.find(h, a.id)
-    expect(fresh!.title).toBe('edited by first') // the loser did not overwrite
+    if (!fresh) throw new Error('the row should still exist')
+    expect(fresh.title).toBe('edited by first') // the loser did not overwrite
     await h.close()
   })
 })

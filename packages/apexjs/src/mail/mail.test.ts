@@ -5,7 +5,10 @@ import { createMailer, normalizeMessage } from './mail.js'
 import { escapeHtml, renderTemplate } from './template.js'
 
 /** A minimal ok/JSON `fetch` mock that records the last call. */
-function mockFetch(body: unknown, status = 200): (input: string, init: FetchInit) => Promise<FetchResponse> {
+function mockFetch(
+  body: unknown,
+  status = 200,
+): (input: string, init: FetchInit) => Promise<FetchResponse> {
   return vi.fn(async () => ({
     ok: status >= 200 && status < 300,
     status,
@@ -86,7 +89,8 @@ describe('createMailer — http transport', () => {
     })
 
     expect(fetch).toHaveBeenCalledTimes(1)
-    const [url, init] = (fetch as unknown as { mock: { calls: [string, FetchInit][] } }).mock.calls[0]!
+    const [url, init] = (fetch as unknown as { mock: { calls: [string, FetchInit][] } }).mock
+      .calls[0] as [string, FetchInit]
     expect(url).toBe('https://mail.test/send')
     expect(init.method).toBe('POST')
     expect(init.headers).toMatchObject({
@@ -120,7 +124,8 @@ describe('createMailer — http transport', () => {
       replyTo: 'reply@example.com',
     })
 
-    const [url, init] = (fetch as unknown as { mock: { calls: [string, FetchInit][] } }).mock.calls[0]!
+    const [url, init] = (fetch as unknown as { mock: { calls: [string, FetchInit][] } }).mock
+      .calls[0] as [string, FetchInit]
     expect(url).toBe('https://api.resend.com/emails')
     expect(init.headers.authorization).toBe('Bearer re_test_key')
     expect(JSON.parse(init.body)).toEqual({
@@ -143,7 +148,8 @@ describe('createMailer — http transport', () => {
       text: 'body',
     })
 
-    const [url, init] = (fetch as unknown as { mock: { calls: [string, FetchInit][] } }).mock.calls[0]!
+    const [url, init] = (fetch as unknown as { mock: { calls: [string, FetchInit][] } }).mock
+      .calls[0] as [string, FetchInit]
     expect(url).toBe('https://api.postmarkapp.com/email')
     expect(init.headers['x-postmark-server-token']).toBe('pm_test_key')
     expect(JSON.parse(init.body)).toEqual({

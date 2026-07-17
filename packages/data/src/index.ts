@@ -16,6 +16,15 @@ export {
   softDeletes,
   timestamps,
 } from './behavior.js'
+// Fluent result collection returned by model reads.
+export { Collection, collect } from './collection.js'
+// Typed data errors (Eloquent-style) — thrown by *OrFail + wrapped driver failures.
+export {
+  ApexDataError,
+  ModelNotFoundException,
+  QueryException,
+  StaleModelException,
+} from './errors.js'
 export type { Factory, FactoryOptions } from './factory.js'
 // Schema-inferred test-data factories.
 export { factory } from './factory.js'
@@ -32,8 +41,6 @@ export type {
 } from './model.js'
 // defineModel — single source of truth: fields → table + zod + migration + resource.
 export { defineModel } from './model.js'
-// Active-record query layer (P1): raw() escape hatch + the chainable QueryBuilder.
-export { QueryBuilder, raw, Raw } from './query.js'
 export type {
   Cond,
   ModelInstance,
@@ -44,15 +51,8 @@ export type {
   Values,
   WhereConds,
 } from './query.js'
-// Fluent result collection returned by model reads.
-export { Collection, collect } from './collection.js'
-// Typed data errors (Eloquent-style) — thrown by *OrFail + wrapped driver failures.
-export {
-  ApexDataError,
-  ModelNotFoundException,
-  QueryException,
-  StaleModelException,
-} from './errors.js'
+// Active-record query layer (P1): raw() escape hatch + the chainable QueryBuilder.
+export { QueryBuilder, Raw, raw } from './query.js'
 // Relationships + eager loading (`.with(...)`).
 export { belongsTo, hasMany, hasOne, type RelationDef } from './relations.js'
 
@@ -581,7 +581,9 @@ export function defineResource(name: string, opts: DefineResourceOptions): ApexR
             }
             const page = Number(q.page ?? 1)
             const perPage = Number(q.perPage ?? 25)
-            const data = await build().limit(perPage).offset((page - 1) * perPage)
+            const data = await build()
+              .limit(perPage)
+              .offset((page - 1) * perPage)
             const totalQ = db.select({ n: sql<number>`count(*)` }).from(table)
             const totalRows = where ? await totalQ.where(where) : await totalQ
             const total = Number((totalRows[0] as { n: unknown } | undefined)?.n ?? 0)

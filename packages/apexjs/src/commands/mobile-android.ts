@@ -20,12 +20,20 @@ export const mobileAndroidCommand = defineCommand({
     description: 'Package the app as an offline Android app (WebView + on-device Apex engine)',
   },
   args: {
-    appId: { type: 'string', alias: 'app-id', description: 'Android applicationId, e.g. com.acme.app' },
+    appId: {
+      type: 'string',
+      alias: 'app-id',
+      description: 'Android applicationId, e.g. com.acme.app',
+    },
     name: { type: 'string', description: 'App display name' },
     icon: { type: 'string', description: 'Source icon (PNG/SVG) to generate launcher icons from' },
     assemble: { type: 'boolean', description: 'Run gradle assembleDebug to produce an APK' },
     force: { type: 'boolean', description: 'Re-scaffold mobile/android even if it exists' },
-    build: { type: 'boolean', default: true, description: 'Rebuild the mobile bundle first (--no-build reuses dist/mobile)' },
+    build: {
+      type: 'boolean',
+      default: true,
+      description: 'Rebuild the mobile bundle first (--no-build reuses dist/mobile)',
+    },
   },
   async run({ args }) {
     const root = process.cwd()
@@ -65,7 +73,10 @@ export const mobileAndroidCommand = defineCommand({
         // `site.apexjs.shell` to match the Kotlin package, so the manifest's relative
         // `android:name=".MainActivity"` still resolves to a real class — otherwise a custom id
         // yields `<appId>.MainActivity` and the app crashes with ClassNotFoundException at launch.
-        writeFileSync(gradle, setKotlinAssign(readFileSync(gradle, 'utf8'), 'applicationId', args.appId))
+        writeFileSync(
+          gradle,
+          setKotlinAssign(readFileSync(gradle, 'utf8'), 'applicationId', args.appId),
+        )
         log(`applicationId → ${args.appId}`)
       }
       const strings = join(proj, 'app', 'src', 'main', 'res', 'values', 'strings.xml')

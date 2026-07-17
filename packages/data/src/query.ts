@@ -32,7 +32,7 @@ import {
 } from 'drizzle-orm'
 import { z } from 'zod'
 import type { BehaviorHooks, FilterFn } from './behavior.js'
-import { Collection, collect } from './collection.js'
+import { type Collection, collect } from './collection.js'
 import { guard, ModelNotFoundException, StaleModelException } from './errors.js'
 import type { ApexDbHandle, Dialect, ScopeFn } from './index.js'
 import type { FieldDef, ResolvedCast } from './model.js'
@@ -141,7 +141,9 @@ async function eagerLoad(
         for (const r of rows) r[name] = rel.kind === 'hasMany' ? collect([]) : null
         continue
       }
-      const children = await related.where({ [rel.foreignKey]: { in: parentVals } }).all(handle, opts)
+      const children = await related
+        .where({ [rel.foreignKey]: { in: parentVals } })
+        .all(handle, opts)
       const groups = new Map<unknown, ModelInstance[]>()
       for (const c of children) {
         const k = c[rel.foreignKey]
@@ -192,7 +194,10 @@ function makeInstance(cfg: ModelArConfig, handle: ApexDbHandle, attrs: Row): Mod
       const vcol = cfg.versionColumn
       let extra = eq(b.table[pk], this[pk])
       if (vcol) {
-        extra = and(eq(b.table[pk], this[pk]), eq(b.table[vcol], state.original[vcol])) as typeof extra
+        extra = and(
+          eq(b.table[pk], this[pk]),
+          eq(b.table[vcol], state.original[vcol]),
+        ) as typeof extra
         dirty[vcol] = raw(`"${vcol}" + 1`)
       }
       const data = prepareWrite(dirty, b.cols, cfg.insertShape, true, cfg.casts)
@@ -541,7 +546,10 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
     if (!rows.length) return []
     const b = bindModel(cfg, handle)
     const scope = cfg.scope?.({ user: opts?.user ?? null }) ?? {}
-    const data = rows.map((r) => ({ ...prepareWrite(r, b.cols, cfg.insertShape, false, cfg.casts), ...scope }))
+    const data = rows.map((r) => ({
+      ...prepareWrite(r, b.cols, cfg.insertShape, false, cfg.casts),
+      ...scope,
+    }))
     return guard(
       cfg.name,
       'insertMany',
@@ -578,13 +586,18 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
     all: (handle: ApexDbHandle, opts?: QueryOpts) => qb().all(handle, opts),
     insertMany,
     updateMany,
-    first: (handle: ApexDbHandle, opts?: QueryOpts) => qb().orderBy(cfg.pk, 'asc').first(handle, opts),
+    first: (handle: ApexDbHandle, opts?: QueryOpts) =>
+      qb().orderBy(cfg.pk, 'asc').first(handle, opts),
     find: (handle: ApexDbHandle, id: unknown, opts?: QueryOpts) =>
-      qb().where({ [cfg.pk]: id }).first(handle, opts),
+      qb()
+        .where({ [cfg.pk]: id })
+        .first(handle, opts),
     firstOrFail: (handle: ApexDbHandle, opts?: QueryOpts) =>
       qb().orderBy(cfg.pk, 'asc').firstOrFail(handle, opts),
     findOrFail: (handle: ApexDbHandle, id: unknown, opts?: QueryOpts) =>
-      qb().where({ [cfg.pk]: id }).firstOrFail(handle, opts, id),
+      qb()
+        .where({ [cfg.pk]: id })
+        .firstOrFail(handle, opts, id),
     where: (conds: WhereConds) => qb().where(conds),
     orderBy: (col: string, dir?: 'asc' | 'desc') => qb().orderBy(col, dir),
     with: (...names: string[]) => qb().with(...names),
@@ -633,8 +646,7 @@ export function attachActiveRecord<T extends object>(model: T, cfg: ModelArConfi
         if (conflictKeys.includes(col)) continue
         const mode = keep[col]
         if (mode) {
-          const fn =
-            handle.dialect === 'sqlite' ? mode : mode === 'max' ? 'GREATEST' : 'LEAST'
+          const fn = handle.dialect === 'sqlite' ? mode : mode === 'max' ? 'GREATEST' : 'LEAST'
           set[col] = sql`${sql.raw(fn)}(${b.table[col]}, ${sql.raw(`excluded.${col}`)})`
         } else {
           set[col] = sql`${sql.raw(`excluded.${col}`)}`

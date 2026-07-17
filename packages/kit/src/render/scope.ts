@@ -67,7 +67,7 @@ export function createScopeProxy(layers: ScopeLayer[]): Record<PropertyKey, unkn
         // Search top-down so the descriptor matches what `get` returns.
         for (let i = ordered.length - 1; i >= 0; i--) {
           const layer = ordered[i]
-          if (layer && Object.prototype.hasOwnProperty.call(layer, key)) {
+          if (layer && Object.hasOwn(layer, key)) {
             const desc = Object.getOwnPropertyDescriptor(layer, key)
             // The proxy target is an empty `{}` that lacks this key, so the
             // descriptor MUST be configurable or the invariant check throws.

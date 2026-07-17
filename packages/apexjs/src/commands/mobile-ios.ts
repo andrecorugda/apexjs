@@ -13,11 +13,22 @@ export const mobileIosCommand = defineCommand({
     description: 'Package the app as an offline iOS app (WKWebView + on-device Apex engine)',
   },
   args: {
-    appId: { type: 'string', alias: 'app-id', description: 'iOS bundle identifier, e.g. com.acme.app' },
+    appId: {
+      type: 'string',
+      alias: 'app-id',
+      description: 'iOS bundle identifier, e.g. com.acme.app',
+    },
     name: { type: 'string', description: 'App display name' },
-    generate: { type: 'boolean', description: 'Run `xcodegen generate` to emit the .xcodeproj (needs XcodeGen + a Mac)' },
+    generate: {
+      type: 'boolean',
+      description: 'Run `xcodegen generate` to emit the .xcodeproj (needs XcodeGen + a Mac)',
+    },
     force: { type: 'boolean', description: 'Re-scaffold mobile/ios even if it exists' },
-    build: { type: 'boolean', default: true, description: 'Rebuild the mobile bundle first (--no-build reuses dist/mobile)' },
+    build: {
+      type: 'boolean',
+      default: true,
+      description: 'Rebuild the mobile bundle first (--no-build reuses dist/mobile)',
+    },
   },
   async run({ args }) {
     const root = process.cwd()
@@ -53,7 +64,10 @@ export const mobileIosCommand = defineCommand({
       const yml = join(proj, 'project.yml')
       if (existsSync(yml)) {
         let y = readFileSync(yml, 'utf8')
-        y = y.replace(/(PRODUCT_BUNDLE_IDENTIFIER:\s*)site\.apexjs\.shell\.tests/, `$1${args.appId}.tests`)
+        y = y.replace(
+          /(PRODUCT_BUNDLE_IDENTIFIER:\s*)site\.apexjs\.shell\.tests/,
+          `$1${args.appId}.tests`,
+        )
         y = y.replace(/(PRODUCT_BUNDLE_IDENTIFIER:\s*)site\.apexjs\.shell(?!\.)/, `$1${args.appId}`)
         writeFileSync(yml, y)
         log(`bundle id → ${args.appId}`)

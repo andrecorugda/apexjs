@@ -5,8 +5,8 @@
 // Node/Web response duality (same call h3's own EventStream uses internally).
 
 import {
-  type H3Event,
   defineEventHandler,
+  type H3Event,
   sendStream,
   setResponseHeaders,
   setResponseStatus,

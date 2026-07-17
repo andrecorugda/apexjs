@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { sql } from 'drizzle-orm'
+import { describe, expect, it } from 'vitest'
 import { createDb } from './index.js'
 import { defineModel } from './model.js'
 

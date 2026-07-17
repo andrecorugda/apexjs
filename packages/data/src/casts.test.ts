@@ -8,8 +8,12 @@ const Event = defineModel('events', {
 })
 
 describe('casts', () => {
-  beforeEach(() => { globalThis.__APEX_DEVICE__ = true })
-  afterEach(() => { globalThis.__APEX_DEVICE__ = undefined })
+  beforeEach(() => {
+    globalThis.__APEX_DEVICE__ = true
+  })
+  afterEach(() => {
+    globalThis.__APEX_DEVICE__ = undefined
+  })
   it('date cast: Date in/out; json cast: object in/out', async () => {
     const h = await createDb({ driver: 'libsql', url: ':memory:' })
     await h.exec(Event.migrationSql(h.dialect))

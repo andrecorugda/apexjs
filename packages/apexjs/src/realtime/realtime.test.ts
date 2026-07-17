@@ -118,10 +118,7 @@ describe('sseHandler — h3 integration', () => {
   it('sets SSE headers and streams the opening comment then a published frame', async () => {
     const hub = createBroadcaster()
     const app = createApp()
-    app.use(
-      '/events',
-      sseHandler(hub, { channels: () => ['room:1'], keepAliveMs: 0 }),
-    )
+    app.use('/events', sseHandler(hub, { channels: () => ['room:1'], keepAliveMs: 0 }))
     const handler = toWebHandler(app)
 
     const res = await handler(new Request('http://localhost/events'))
@@ -129,7 +126,8 @@ describe('sseHandler — h3 integration', () => {
     expect(res.headers.get('Cache-Control')).toBe('no-cache')
     expect(res.headers.get('Connection')).toBe('keep-alive')
 
-    const reader = res.body!.getReader()
+    if (!res.body) throw new Error('expected a response body')
+    const reader = res.body.getReader()
     const decoder = new TextDecoder()
 
     // First chunk: the opening keep-open comment.

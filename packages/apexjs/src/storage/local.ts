@@ -3,7 +3,7 @@
 // by the app (`/storage/<key>`), optionally HMAC-signed with an expiry (see ./signing.ts). Every
 // key is resolved against the base dir and REJECTED if it escapes it — the guard against `..`
 // path-traversal. Server-only (imports `node:fs`/`node:path`).
-import { existsSync } from 'node:fs'
+import { type Dirent, existsSync } from 'node:fs'
 import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { normalizeKey, signedQuery } from './signing.js'
@@ -31,7 +31,7 @@ export function createLocalStorage(config: LocalStorageConfig): Storage {
   }
 
   const collect = async (dir: string, out: StorageEntry[]): Promise<void> => {
-    let dirents
+    let dirents: Dirent[]
     try {
       dirents = await readdir(dir, { withFileTypes: true })
     } catch {

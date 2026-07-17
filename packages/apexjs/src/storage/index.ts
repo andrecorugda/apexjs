@@ -1,15 +1,7 @@
 // Public entry for the storage subsystem. `createStorage(config)` selects a driver by its
 // discriminant (`local` — the default — or `s3`) and returns the driver-agnostic {@link Storage}.
 // Apps depend only on the `Storage` interface, so swapping filesystem ↔ S3 is a config change.
-export type {
-  LocalStorageConfig,
-  PutOptions,
-  S3StorageConfig,
-  Storage,
-  StorageConfig,
-  StorageEntry,
-  UrlOptions,
-} from './types.js'
+
 export { createLocalStorage, StoragePathError } from './local.js'
 export { createS3Storage, parseListXml } from './s3.js'
 export { normalizeKey, signedQuery, signPath, verifySignedUrl } from './signing.js'
@@ -22,6 +14,16 @@ export {
   signRequest,
   UNSIGNED_PAYLOAD,
 } from './sigv4.js'
+export type {
+  LocalStorageConfig,
+  PutOptions,
+  S3StorageConfig,
+  Storage,
+  StorageConfig,
+  StorageEntry,
+  UrlOptions,
+} from './types.js'
+
 import { createLocalStorage } from './local.js'
 import { createS3Storage } from './s3.js'
 import type { Storage, StorageConfig } from './types.js'
@@ -38,7 +40,9 @@ export function createStorage(config: StorageConfig): Storage {
       return createLocalStorage(config)
     default: {
       const exhaustive: never = config
-      throw new Error(`Unknown storage driver: ${JSON.stringify((exhaustive as { driver?: string }).driver)}`)
+      throw new Error(
+        `Unknown storage driver: ${JSON.stringify((exhaustive as { driver?: string }).driver)}`,
+      )
     }
   }
 }

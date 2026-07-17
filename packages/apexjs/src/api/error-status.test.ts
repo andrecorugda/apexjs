@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { createTestApp } from '../testing/index.js'
 import { defineApexRoute } from './defineRoute.js'
 import { expandApiModule } from './routes.js'
-import { createTestApp } from '../testing/index.js'
 
 // A thrown error carrying `httpStatus` (e.g. @apex-stack/data's ModelNotFoundException) is
 // mapped to that status; its message surfaces for 4xx, but a plain 500 stays masked.

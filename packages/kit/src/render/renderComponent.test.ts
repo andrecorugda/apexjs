@@ -170,10 +170,9 @@ describe('x-model initial state (zero-flash)', async () => {
   })
 
   it('renders an explicit input type value=', async () => {
-    const html = await render(
-      '<template x-data><input type="email" x-model="email"></template>',
-      { email: 'a@b.com' },
-    )
+    const html = await render('<template x-data><input type="email" x-model="email"></template>', {
+      email: 'a@b.com',
+    })
     expect(html).toMatch(/value="a@b\.com"/)
   })
 
@@ -185,10 +184,9 @@ describe('x-model initial state (zero-flash)', async () => {
   })
 
   it('adds checked to a boolean checkbox when truthy, omits when falsy', async () => {
-    const on = await render(
-      '<template x-data><input type="checkbox" x-model="agree"></template>',
-      { agree: true },
-    )
+    const on = await render('<template x-data><input type="checkbox" x-model="agree"></template>', {
+      agree: true,
+    })
     expect(on).toMatch(/<input[^>]*checked/)
     const off = await render(
       '<template x-data><input type="checkbox" x-model="agree"></template>',

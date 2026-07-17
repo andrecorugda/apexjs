@@ -19,6 +19,7 @@ import {
 import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { z } from 'zod'
 import { type Behavior, composeBehaviors } from './behavior.js'
+import type { Collection } from './collection.js'
 import {
   type AccessMap,
   type ApexDbHandle,
@@ -26,8 +27,6 @@ import {
   defineResource,
   type ScopeFn,
 } from './index.js'
-import type { Collection } from './collection.js'
-import type { RelationDef } from './relations.js'
 import {
   attachActiveRecord,
   type ModelInstance,
@@ -38,6 +37,7 @@ import {
   type Values,
   type WhereConds,
 } from './query.js'
+import type { RelationDef } from './relations.js'
 
 export type FieldType = 'string' | 'text' | 'int' | 'float' | 'boolean' | 'timestamp' | 'json'
 

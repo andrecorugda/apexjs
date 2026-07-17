@@ -12,7 +12,9 @@ export function normalizeKey(path: string): string {
 
 /** Compute the hex HMAC-SHA256 signature binding an object path to an expiry. */
 export function signPath(path: string, exp: number, secret: string): string {
-  return createHmac('sha256', secret).update(`${normalizeKey(path)}:${exp}`).digest('hex')
+  return createHmac('sha256', secret)
+    .update(`${normalizeKey(path)}:${exp}`)
+    .digest('hex')
 }
 
 /**
