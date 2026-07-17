@@ -14,6 +14,11 @@ import java.io.ByteArrayInputStream
  * Static client assets (the built client bundle under assets, favicon) are served straight from
  * the APK; everything else goes to `__apexHandle` (SSR pages + /api). shouldInterceptRequest runs
  * off the UI thread, so blocking on the engine coroutine here is fine.
+ *
+ * NOTE: only requests that flow through the WebView resource loader reach here — img/Image(),
+ * audio/Audio(), link, CSS url(). A same-origin fetch('/sprites/...') does NOT: the document-start
+ * fetch-patch routes same-origin fetch() to the SSR engine (offline loaders/API), which 404s a
+ * static file. Load binary assets with Image()/Audio()/link, not fetch().
  * NOTE: avoid a slash-star sequence in KDoc — Kotlin block comments nest and it won't close.
  */
 class ApexInterceptor(

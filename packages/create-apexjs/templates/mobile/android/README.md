@@ -38,6 +38,15 @@ The installed app has your **launcher icon**, shows the **native splash** (icon 
 then your **`pages/splash.alpine`** animated intro, then the app — all rendered by the Apex
 server running inside the app on `androidx.javascriptengine`. Turn Wi-Fi off: it still works.
 
+## Static assets on-device
+
+Bundled `public/` files (sprites, audio, fonts…) are served from the APK by the interceptor —
+but only through the WebView resource loader: `<img>`/`Image()`, `<audio>`/`Audio()`, `<link>`,
+CSS `url(...)`. A same-origin **`fetch('/sprites/…')` will 404** by design: the document-start
+fetch-patch routes same-origin `fetch()` to the on-device SSR engine (so loaders/API work
+offline), which has no static file. **Load binary assets with `Image()`/`Audio()`/`<link>`,
+not `fetch()`.**
+
 ## Engine note
 `ApexEngine` uses Google's **androidx.javascriptengine** (out-of-process JS sandbox, no JNI).
 `__apexHandle` returns a `Promise<string>`; that resolves via the `PROMISE_RETURN` feature

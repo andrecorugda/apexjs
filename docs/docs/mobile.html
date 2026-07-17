@@ -196,6 +196,20 @@ apex mobile ios --appId com.you.app --name "My App" --generate   <span class="c"
         <code>URL</code>, <code>Request</code>, <code>Response</code>, <code>fetch</code>, and friends — so the
         unchanged app code runs as-is.
       </p>
+      <div class="callout">
+        <span class="h">Loading static assets on-device (sprites, audio, images)</span>
+        <p>
+          Bundled files under <code>public/</code> (sprites, audio, fonts…) are served from the app
+          package by the native interceptor — but only for requests that go through the WebView's
+          resource loader: <code>&lt;img&gt;</code>/<code>Image()</code>, <code>&lt;audio&gt;</code>/<code>Audio()</code>,
+          <code>&lt;link&gt;</code>, CSS <code>url(...)</code>. A same-origin <code>fetch('/sprites/…')</code> does
+          <strong>not</strong> — the document-start fetch-patch routes same-origin <code>fetch()</code> to the
+          on-device SSR engine (so your loaders/API work offline), which has no such file and returns 404.
+          <strong>Load binary assets with <code>Image()</code>/<code>Audio()</code>/<code>&lt;link&gt;</code>, not
+          <code>fetch()</code>.</strong> (If you truly need the bytes, fetch a route your app serves, or inline
+          them as data URLs at build time.)
+        </p>
+      </div>
 
       <h2 id="db-auth">On-device DB, auth &amp; persistence <a class="anchor" href="#db-auth">#</a></h2>
       <p>
