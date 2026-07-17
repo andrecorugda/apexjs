@@ -9,6 +9,10 @@ import { defineConfig } from '@apex-stack/core'
 //   • components/composables (client): useRuntimeConfig().public.appName
 //   • raw escape hatch: env('SOME_KEY', 'fallback')
 export default defineConfig({
+  // Runs first in <head>, before paint — sets the `dark` class from the saved theme (or the
+  // OS preference) so there's no light→dark flash on load or on any reload.
+  head: `<script>try{var t=localStorage.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.classList.toggle('dark',t==='dark')}catch(e){}</script>`,
+
   runtimeConfig: {
     // Private — server-only, never sent to the browser.
     apiSecret: '', // ← APEX_API_SECRET

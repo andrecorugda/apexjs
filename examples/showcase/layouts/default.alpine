@@ -7,7 +7,7 @@
       <div
         class="relative"
         x-data="{ dark: false, open: false }"
-        x-init="dark = localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches); document.documentElement.classList.toggle('dark', dark)"
+        x-init="dark = document.documentElement.classList.contains('dark')"
         @resize.window="open = false"
         client:load
       >
