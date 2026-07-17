@@ -2,8 +2,10 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { build, type Plugin, type Rollup } from 'vite'
 import { clientEntryId } from '../client-entry.js'
+import type { ApexConfig } from '../config/runtime.js'
 import { islandLoader } from '../islands/render.js'
 import { runtimeAlias } from './buildClient.js'
+import { imagePlugins } from './imagetools.js'
 
 const VIRT = 'virtual:apex-islands'
 
@@ -28,6 +30,7 @@ export async function buildIslandsRuntime(
   root: string,
   outDir: string,
   base = '/',
+  config?: Pick<ApexConfig, 'image'> | null,
 ): Promise<IslandsRuntimeAssets> {
   const appCssRel = ['app.css', 'styles/app.css', 'src/app.css'].find((f) =>
     existsSync(join(root, f)),
@@ -61,12 +64,13 @@ export async function buildIslandsRuntime(
     // Tailwind not installed — fine, it's opt-in.
   }
 
+  const images = await imagePlugins(config)
   const result = (await build({
     root,
     base,
     logLevel: 'warn',
     resolve: { alias: runtimeAlias() },
-    plugins: [...(tw ? [tw] : []), entryPlugin],
+    plugins: [...(tw ? [tw] : []), ...images, entryPlugin],
     build: {
       outDir,
       emptyOutDir: false,

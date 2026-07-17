@@ -5,7 +5,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { apex } from '@apex-stack/vite'
 import { build, type Plugin } from 'vite'
 import { clientEntryId } from '../client-entry.js'
+import type { ApexConfig } from '../config/runtime.js'
 import type { RouteDef } from '../routing/router.js'
+import { imagePlugins } from './imagetools.js'
 
 const VIRT = 'virtual:apex-client:'
 
@@ -77,6 +79,7 @@ export async function buildClient(
   routes: RouteDef[],
   outDir: string,
   base = '/',
+  config?: Pick<ApexConfig, 'image'> | null,
 ): Promise<Map<string, ClientAssets>> {
   const input: Record<string, string> = {}
   for (const r of routes) input[entryName(r.pageId)] = `${VIRT}${r.pageId}`
@@ -135,12 +138,18 @@ export async function buildClient(
   }
 
   const tw = await tailwindPlugin(root)
+  const images = await imagePlugins(config)
   await build({
     root,
     base,
     logLevel: 'warn',
     resolve: { alias: runtimeAlias() },
-    plugins: [...(tw ? [tw] : []), apex({ clientRuntime: '@apex-stack/core/client' }), entryPlugin],
+    plugins: [
+      ...(tw ? [tw] : []),
+      ...images,
+      apex({ clientRuntime: '@apex-stack/core/client' }),
+      entryPlugin,
+    ],
     build: {
       outDir,
       emptyOutDir: false,

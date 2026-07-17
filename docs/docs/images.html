@@ -1,0 +1,311 @@
+<title>Images &amp; Fonts — Apex JS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="canonical" href="https://apexjs.site/docs/images.html" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <meta name="keywords" content="Apex JS, Alpine.js, meta-framework, image optimization, responsive images, srcset, sizes, lazy loading, CLS, vite-imagetools, self-hosted fonts, font preload, TypeScript" />
+  <meta property="og:site_name" content="Apex JS" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://apexjs.site/docs/images.html" />
+  <meta property="og:title" content="Images &amp; Fonts — Apex JS" />
+  <meta property="og:description" content="An <Image> helper that emits responsive srcset/sizes markup with explicit dimensions, a build-time image transform (vite-imagetools), and self-hosted fonts with @font-face + preload — Apex matches Next/Nuxt on image and font optimization." />
+  <meta property="og:image" content="https://apexjs.site/assets/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Images &amp; Fonts — Apex JS" />
+  <meta name="twitter:description" content="An <Image> helper that emits responsive srcset/sizes markup with explicit dimensions, a build-time image transform (vite-imagetools), and self-hosted fonts with @font-face + preload." />
+  <meta name="twitter:image" content="https://apexjs.site/assets/og-image.png" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"Images & Fonts — Apex JS","description":"An Image helper that emits responsive srcset/sizes markup with explicit dimensions, a build-time image transform (vite-imagetools), and self-hosted fonts with @font-face + preload.","url":"https://apexjs.site/docs/images.html","isPartOf":{"@type":"WebSite","name":"Apex JS","url":"https://apexjs.site"},"inLanguage":"en"}]}</script>
+<meta name="description" content="An <Image> helper that emits responsive srcset/sizes markup with explicit dimensions, a build-time image transform (vite-imagetools), and self-hosted fonts with @font-face + preload — Apex matches Next/Nuxt on image and font optimization." />
+<link rel="stylesheet" href="../style.css?v=20260711c" />
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="../index.html">
+      <img src="../assets/apex-mark.svg" alt="Apex JS" class="brand-mark" width="22" height="22" />
+      Apex&nbsp;JS
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="../index.html">Home</a>
+      <a href="./index.html">Docs</a>
+      <a href="../ui.html">UI Kit</a>
+      <a href="../theme.html">Theme</a>
+      <a href="https://github.com/andrecorugda/apexjs" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle light or dark theme" title="Toggle theme"><svg class="ic-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="ic-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">Images &amp; Fonts</p>
+      <h1>Fast images, self-hosted fonts.</h1>
+      <p class="lede">
+        An <code>&lt;Image&gt;</code> helper that emits responsive <code>srcset</code>/<code>sizes</code> markup
+        with explicit dimensions (no layout shift), a build-time transform that resizes and re-encodes into
+        <code>dist/</code>, and <strong>self-hosted fonts</strong> with <code>@font-face</code> + preload — so Apex
+        matches Next / Nuxt on image and font optimization.
+        <span class="pill">🟡 Experimental</span>
+      </p>
+    </div>
+  </section>
+
+  <div class="docs-shell">
+    <aside class="docs-sidebar" aria-label="Docs sections">
+      <div class="group">
+        <p class="group-title">Introduction</p>
+        <ul>
+          <li><a href="./index.html">Overview</a></li>
+          <li><a href="./getting-started.html">Getting Started</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Core</p>
+        <ul>
+          <li><a href="./routing.html">Routing</a></li>
+          <li><a href="./components.html">Components</a></li>
+          <li><a href="./islands.html">Islands</a></li>
+          <li><a href="./i18n.html">Internationalization</a></li>
+          <li><a href="./images.html" aria-current="page">Images &amp; Fonts</a>
+            <ul class="subnav">
+              <li><a href="#what">What you get</a></li>
+              <li><a href="#quickstart">Quickstart</a></li>
+              <li><a href="#image-helper">The Image helper</a></li>
+              <li><a href="#image-config">The image config block</a></li>
+              <li><a href="#fonts">Self-hosted fonts</a></li>
+              <li><a href="#verify">Verify it</a></li>
+              <li><a href="#scope">Scope &amp; status</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Backend &amp; Data</p>
+        <ul>
+          <li><a href="./data.html">Data</a></li>
+          <li><a href="./ai-native.html">AI-Native APIs</a></li>
+          <li><a href="./auth.html">Auth</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Platform</p>
+        <ul>
+          <li><a href="./cache.html">Cache</a></li>
+          <li><a href="./storage.html">Storage</a></li>
+          <li><a href="./queues.html">Queues</a></li>
+          <li><a href="./mail.html">Mail</a></li>
+          <li><a href="./notifications.html">Notifications</a></li>
+          <li><a href="./realtime.html">Real-time</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Testing</p>
+        <ul>
+          <li><a href="./testing.html">Test Kit</a></li>
+        </ul>
+      </div>
+      <div class="group">
+        <p class="group-title">Ship</p>
+        <ul>
+          <li><a href="./cli.html">CLI</a></li>
+          <li><a href="./deploy.html">Build &amp; Deploy</a></li>
+          <li><a href="./mobile.html">Mobile</a></li>
+          <li><a href="./pwa.html">PWA</a></li>
+          <li><a href="./versioning.html">Stability &amp; Versioning</a></li>
+        </ul>
+      </div>
+    </aside>
+    <section class="doc">
+
+      <h2 id="what">What you get <a class="anchor" href="#what">#</a></h2>
+      <p>
+        Two independent, opt-in optimizations — turn on either or both. Both are gated on a config block:
+        declare nothing and nothing changes.
+      </p>
+      <ul>
+        <li><strong>The <code>&lt;Image&gt;</code> helper</strong> (<code>@apex-stack/kit</code>) — a pure function that renders a responsive <code>&lt;img&gt;</code>: <code>srcset</code> candidates, a <code>sizes</code> attribute, explicit <code>width</code>/<code>height</code> to reserve layout (no CLS), and <code>loading="lazy"</code> / <code>decoding="async"</code> defaults.</li>
+        <li><strong>The image transform</strong> — an <code>image</code> block in <code>apex.config.ts</code> wires <a href="https://github.com/JonasKruckenberg/imagetools" target="_blank" rel="noopener"><code>vite-imagetools</code></a> into the client / islands builds, turning the <code>?w=…&amp;format=…</code> candidates into hashed, optimized variants under <code>dist/</code>.</li>
+        <li><strong>Self-hosted fonts</strong> — a <code>fonts</code> block copies declared font files into <code>dist/fonts/</code>, emits the matching <code>@font-face</code> rules, and injects <code>&lt;link rel="preload" as="font" crossorigin&gt;</code> into the page shell.</li>
+      </ul>
+      <p class="muted">
+        Nothing is forced: the <code>&lt;Image&gt;</code> helper works on its own (plain URLs still render), and the
+        transform / fonts steps only run when their config block is present — keeping the core dependency-light for
+        projects that don't need them.
+      </p>
+
+      <h2 id="quickstart">Quickstart <a class="anchor" href="#quickstart">#</a></h2>
+      <p>Render a responsive image from a template or loader, and (optionally) turn on the build transform + fonts.</p>
+      <pre><code><span class="c">// anywhere you build HTML — a loader, a template helper, the client</span>
+import { image } from '@apex-stack/kit'
+
+image({ src: '/hero.png', width: 800, height: 600, alt: 'Hero', format: 'webp' })
+<span class="c">// → &lt;img src="/hero.png" width="800" height="600" alt="Hero"</span>
+<span class="c">//        loading="lazy" decoding="async"</span>
+<span class="c">//        srcset="/hero.png?w=800&amp;format=webp 800w, /hero.png?w=1600&amp;format=webp 1600w"</span>
+<span class="c">//        sizes="100vw" /&gt;</span></code></pre>
+      <pre><code><span class="c">// apex.config.ts — opt in to the build transform + self-hosted fonts</span>
+export default defineConfig({
+  image: { formats: ['webp'], sizes: [640, 1200], quality: 70 },
+  fonts: {
+    families: [{ family: 'Inter', src: 'fonts/Inter.woff2', weight: 400 }],
+  },
+})</code></pre>
+
+      <h2 id="image-helper">The <code>&lt;Image&gt;</code> helper <a class="anchor" href="#image-helper">#</a></h2>
+      <p>
+        <code>image(opts)</code> returns an HTML string; <code>imageAttrs(opts)</code> returns the same as a
+        structured attribute map if you'd rather spread it into your own renderer. Both are pure and browser-safe —
+        no DOM, no Node, no imports.
+      </p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Option</th><th>Required</th><th>Default</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>src</code></td><td>Yes</td><td>—</td><td>The image URL / import path. Query candidates are appended to build <code>srcset</code>.</td></tr>
+            <tr><td><code>width</code> / <code>height</code></td><td>Yes</td><td>—</td><td>Intrinsic dimensions, emitted as attributes to reserve layout and avoid CLS.</td></tr>
+            <tr><td><code>alt</code></td><td>No</td><td><code>""</code></td><td>Alt text (always emitted; empty = decorative).</td></tr>
+            <tr><td><code>widths</code></td><td>No</td><td><code>[width, width*2]</code></td><td>Candidate widths for <code>srcset</code> (retina by default). Pass <code>[]</code> to omit <code>srcset</code>.</td></tr>
+            <tr><td><code>sizes</code></td><td>No</td><td><code>100vw</code></td><td>The <code>sizes</code> attribute (only when a <code>srcset</code> is emitted).</td></tr>
+            <tr><td><code>format</code></td><td>No</td><td>—</td><td>Target format appended to each candidate (<code>?format=webp</code>) for the transform.</td></tr>
+            <tr><td><code>loading</code></td><td>No</td><td><code>lazy</code></td><td><code>eager</code> for above-the-fold hero images.</td></tr>
+            <tr><td><code>decoding</code></td><td>No</td><td><code>async</code></td><td>Decoding hint.</td></tr>
+            <tr><td><code>fetchpriority</code></td><td>No</td><td>—</td><td><code>high</code> for the LCP image.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>An above-the-fold hero, told to load eagerly at high priority with explicit candidates:</p>
+      <pre><code>image({
+  src: '/lcp.jpg', width: 1200, height: 630, alt: 'Cover',
+  widths: [640, 1200], sizes: '(max-width: 640px) 100vw, 1200px',
+  loading: 'eager', fetchpriority: 'high',
+})</code></pre>
+
+      <h2 id="image-config">The <code>image</code> config block <a class="anchor" href="#image-config">#</a></h2>
+      <p>
+        Add an <code>image</code> block and <code>apex build</code> wires <code>vite-imagetools</code> into the
+        client and islands bundles. Imports carrying transform queries — the ones the helper's <code>srcset</code>
+        emits, or ones you write by hand — are resized and re-encoded into hashed variants in <code>dist/</code>.
+        The block's mere presence turns the transform on; every field is optional.
+      </p>
+      <pre><code>export default defineConfig({
+  image: {
+    formats: ['avif', 'webp'],  <span class="c">// optional — output formats (defaults to source format)</span>
+    sizes: [640, 828, 1200],     <span class="c">// optional — responsive srcset widths the helper mirrors</span>
+    quality: 70,                 <span class="c">// optional — encode quality (1–100) for lossy formats</span>
+  },
+})</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Field</th><th>Required</th><th>Default</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>formats</code></td><td>No</td><td>source format</td><td>Output formats applied as the transform's default directives.</td></tr>
+            <tr><td><code>sizes</code></td><td>No</td><td>—</td><td>Responsive <code>srcset</code> widths; align these with the <code>widths</code> you pass the helper.</td></tr>
+            <tr><td><code>quality</code></td><td>No</td><td>lib default</td><td>Encode quality (1–100) for lossy output formats.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">
+        <code>vite-imagetools</code> is loaded lazily and optionally — like the Tailwind plugin. If it isn't
+        installed, the transform is skipped rather than failing the build. Add it with
+        <code>pnpm add -D vite-imagetools</code>.
+      </p>
+
+      <h2 id="fonts">Self-hosted fonts <a class="anchor" href="#fonts">#</a></h2>
+      <p>
+        Declare a <code>fonts</code> block and <code>apex build</code> copies the files into <code>dist/fonts/</code>,
+        emits an <code>@font-face</code> rule per family, and injects a
+        <code>&lt;link rel="preload" as="font" crossorigin&gt;</code> per face into the shell — the browser fetches
+        the font early, from your origin, with no third-party request and no flash of invisible text.
+      </p>
+      <pre><code>export default defineConfig({
+  fonts: {
+    display: 'swap',   <span class="c">// optional — font-display for every face (default: swap)</span>
+    preload: true,      <span class="c">// optional — emit preload links (default: true)</span>
+    families: [
+      { family: 'Inter', src: 'fonts/Inter.woff2', weight: 400 },
+      { family: 'Inter', src: 'fonts/Inter-Italic.woff2', weight: 400, style: 'italic' },
+    ],
+  },
+})</code></pre>
+      <p>The emitted head fragment, for the first family above:</p>
+      <pre><code>&lt;style&gt;@font-face{font-family:"Inter";font-style:normal;font-weight:400;
+  font-display:swap;src:url("/fonts/Inter.woff2") format("woff2")}&lt;/style&gt;
+&lt;link rel="preload" as="font" type="font/woff2" href="/fonts/Inter.woff2" crossorigin /&gt;</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Field</th><th>Required</th><th>Default</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>families[].family</code></td><td>Yes</td><td>—</td><td>The CSS <code>font-family</code> name.</td></tr>
+            <tr><td><code>families[].src</code></td><td>Yes</td><td>—</td><td>Project-relative path to the font file; copied into <code>dist/fonts/</code>.</td></tr>
+            <tr><td><code>families[].weight</code></td><td>No</td><td><code>400</code></td><td><code>font-weight</code> (<code>"100 900"</code> for a variable font).</td></tr>
+            <tr><td><code>families[].style</code></td><td>No</td><td><code>normal</code></td><td><code>font-style</code> (<code>italic</code> / <code>oblique</code>).</td></tr>
+            <tr><td><code>families[].format</code></td><td>No</td><td>from extension</td><td>Explicit <code>format()</code> hint; inferred from the file extension otherwise.</td></tr>
+            <tr><td><code>display</code></td><td>No</td><td><code>swap</code></td><td>Global <code>font-display</code> for every emitted face.</td></tr>
+            <tr><td><code>preload</code></td><td>No</td><td><code>true</code></td><td>Set <code>false</code> to emit the <code>@font-face</code> rules without preload hints.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="verify">Verify it <a class="anchor" href="#verify">#</a></h2>
+      <p>Build and inspect the output the way a browser does.</p>
+      <pre><code>apex build
+apex start         <span class="c"># or any static host</span></code></pre>
+      <ul>
+        <li>View source on a page using <code>image()</code> — the <code>&lt;img&gt;</code> should carry <code>srcset</code>, <code>sizes</code>, explicit <code>width</code>/<code>height</code>, and <code>loading="lazy"</code>.</li>
+        <li>With an <code>image</code> block, check <code>dist/</code> for the hashed, re-encoded variants.</li>
+        <li>With a <code>fonts</code> block, confirm the files landed in <code>dist/fonts/</code> and DevTools → <strong>Network</strong> shows the preload firing early with <strong>no</strong> third-party font request.</li>
+        <li>Run a <strong>Lighthouse</strong> pass — "properly size images", "serve images in next-gen formats", and "ensure text remains visible during webfont load" should be green.</li>
+      </ul>
+
+      <h2 id="scope">Scope &amp; status <a class="anchor" href="#scope">#</a></h2>
+      <p>The honest edges.</p>
+      <ul>
+        <li><strong>🟡 Experimental</strong> — the config surface (<code>image</code> / <code>fonts</code>) may still move.</li>
+        <li><strong>The helper is markup-only</strong> — <code>image()</code> emits the candidate URLs; the actual resizing happens only when the <code>image</code> block wires the transform in at build.</li>
+        <li><strong>Transform is opt-in + optional</strong> — no <code>image</code> block means no plugin; a missing <code>vite-imagetools</code> is skipped, not fatal.</li>
+        <li><strong>No subsetting yet</strong> — fonts are copied and preloaded as-is; there's no automatic glyph subsetting.</li>
+      </ul>
+      <p class="muted">See <a href="./components.html">Components</a> for how kit renders markup, and <a href="./deploy.html">Build &amp; deploy</a> for the build modes the transform runs inside.</p>
+
+  </section>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand-col">
+        <a class="brand" href="../index.html">
+          <img src="../assets/apex-mark.svg" alt="Apex JS" class="brand-mark" width="22" height="22" />
+          Apex&nbsp;JS
+        </a>
+        <p>The full-stack, AI-native meta-framework for Alpine.js.</p>
+        <p class="kofi" style="margin-top:.75rem"><a href="https://ko-fi.com/G7S722N0L8" target="_blank" rel="noopener"><img height="36" style="border:0;height:36px;" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" alt="Buy Me a Coffee at ko-fi.com" /></a></p>
+      </div>
+      <div class="links">
+        <a href="https://github.com/andrecorugda/apexjs">GitHub</a>
+        <a href="./getting-started.html">Get started</a>
+        <a href="./ai-native.html">AI-native</a>
+        <a href="./cli.html">CLI</a>
+      </div>
+    </div>
+    <p class="foot-note">Apex&nbsp;JS · MIT · built by Andre Corugda · npm create apexjs@latest</p>
+  </div>
+</footer>
+
+<script src="../enhance.js" defer></script>
+<script>
+  document.documentElement.classList.add("js");
+  (() => {
+    var root = document.documentElement;
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      var dark = getComputedStyle(root).getPropertyValue("--ground").trim().indexOf("#0a") === 0;
+      root.setAttribute("data-theme", dark ? "light" : "dark");
+    });
+  })();
+</script>
