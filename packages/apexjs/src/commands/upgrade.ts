@@ -46,11 +46,18 @@ function latestVersion(pkg: string): string | null {
  * as-is but still counted so the caller reinstalls to pull the newest. Local
  * `file:` / `link:` / `workspace:` refs are left untouched.
  */
-function syncApexDeps(root: string): { bumped: number; apexDeps: number } {
+function syncApexDeps(root: string): {
+  bumped: number
+  apexDeps: number
+  prod: string[]
+  dev: string[]
+} {
   const pkgPath = join(root, 'package.json')
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
   let bumped = 0
   let apexDeps = 0
+  const prod: string[] = []
+  const dev: string[] = []
   for (const field of ['dependencies', 'devDependencies']) {
     const deps = pkg[field] as Record<string, string> | undefined
     if (!deps) continue
@@ -59,7 +66,8 @@ function syncApexDeps(root: string): { bumped: number; apexDeps: number } {
       const spec = deps[dep] ?? ''
       if (/^(file:|link:|workspace:)/.test(spec)) continue
       apexDeps++
-      // Only rewrite pinned numeric ranges; `latest`/tags refresh via reinstall.
+      ;(field === 'devDependencies' ? dev : prod).push(dep)
+      // Only rewrite pinned numeric ranges; `latest`/tags refresh via the forced re-install below.
       if (/^[\d^~]/.test(spec)) {
         const latest = latestVersion(dep)
         const target = `^${latest ?? VERSION}`
@@ -71,7 +79,7 @@ function syncApexDeps(root: string): { bumped: number; apexDeps: number } {
     }
   }
   if (bumped) writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
-  return { bumped, apexDeps }
+  return { bumped, apexDeps, prod, dev }
 }
 
 function detectPm(): 'npm' | 'pnpm' | 'yarn' | 'bun' {
@@ -209,7 +217,7 @@ export const upgradeCommand = defineCommand({
     // Bring @apex-stack/* deps to the latest PUBLISHED versions (registry-queried,
     // not this CLI's version). Pinned specs are rewritten; `latest`/ranges refresh
     // on the reinstall below.
-    const { bumped, apexDeps } = syncApexDeps(root)
+    const { bumped, apexDeps, prod, dev } = syncApexDeps(root)
     if (bumped) log(`\n  ${color.cyan('↑')} Bumped ${bumped} @apex-stack/* dependency to latest`)
 
     if (!added.length && !updated.length && apexDeps === 0) {
@@ -223,12 +231,24 @@ export const upgradeCommand = defineCommand({
     if (apexDeps > 0 && args.install) {
       const pm = detectPm()
       log(`\n  ${color.gray(`Installing latest with ${pm}…`)}`)
-      const ok =
-        spawnSync(pm, ['install'], {
-          cwd: root,
-          stdio: 'inherit',
-          shell: process.platform === 'win32',
-        }).status === 0
+      // A plain `install` with a lockfile keeps `latest`/range specs pinned to the locked
+      // version — npm reports "up to date" and nothing moves. Force re-resolution by
+      // (re)installing each @apex-stack/* at @latest, which bumps the lockfile. `add` for
+      // pnpm/yarn/bun, `install` for npm; `-D`/`--dev` keeps devDependencies in their section.
+      const verb = pm === 'npm' ? 'install' : 'add'
+      const devFlag = pm === 'yarn' || pm === 'bun' ? '--dev' : '-D'
+      const run = (pkgs: string[], isDev: boolean): boolean => {
+        if (!pkgs.length) return true
+        const specs = pkgs.map((n) => `${n}@latest`)
+        return (
+          spawnSync(pm, [verb, ...(isDev ? [devFlag] : []), ...specs], {
+            cwd: root,
+            stdio: 'inherit',
+            shell: process.platform === 'win32',
+          }).status === 0
+        )
+      }
+      const ok = run(prod, false) && run(dev, true)
       log(
         ok
           ? `  ${color.green('✓')} Dependencies updated to latest`
