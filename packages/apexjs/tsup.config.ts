@@ -12,7 +12,9 @@ export default defineConfig({
   dts: true,
   clean: true,
   target: 'node20',
-  external: ['vite', 'alpinejs'],
+  // `@resvg/resvg-js` is an optional, native (.node) module the PWA build lazily imports —
+  // it's provided by the app (`apex extend pwa` adds it), never bundled into core.
+  external: ['vite', 'alpinejs', '@resvg/resvg-js'],
   // Bundle the (pure) theme package so `apex theme` works from a global install.
   noExternal: [/@apex-stack\/theme/],
 })

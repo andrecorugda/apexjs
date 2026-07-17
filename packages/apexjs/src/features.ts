@@ -92,18 +92,17 @@ export const FEATURES: Record<string, Feature> = {
     key: 'pwa',
     title: 'PWA',
     summary:
-      'installable + offline (🟡): apex build emits manifest.webmanifest + a precache service worker, with default icons',
-    detect: (root) =>
-      read(join(root, 'apex.config.ts')).includes('pwa:') ||
-      existsSync(join(root, 'public/icons/pwa-192.png')),
-    // Copies public/icons/pwa-{192,512,maskable-512}.png from the feature template.
+      'installable + offline (🟡): apex build emits manifest.webmanifest + a precache service worker; icons generated from your favicon',
+    detect: (root) => read(join(root, 'apex.config.ts')).includes('pwa:'),
+    // `apex build` rasterizes public/favicon.svg → dist/icons/ via @resvg/resvg-js (added below).
+    deps: { '@resvg/resvg-js': '^2.6.2' },
     navLinks: [],
     patchConfig: (s) =>
       s.includes('pwa:')
         ? s
         : s.replace(
             /\n\}\)\s*$/,
-            "\n\n  // Progressive Web App (🟡 Experimental) — `apex build` emits a web manifest +\n  // a precache service worker: installable, works offline. Icons: public/icons/.\n  pwa: {\n    name: 'My Apex App',\n  },\n})\n",
+            "\n\n  // Progressive Web App (🟡 Experimental) — `apex build` emits a web manifest +\n  // a precache service worker: installable, works offline. Icons are generated from\n  // public/favicon.svg (change it → the app icons follow); or drop your own PNGs in\n  // public/icons/pwa-{192,512,maskable-512}.png to override.\n  pwa: {\n    name: 'My Apex App',\n  },\n})\n",
           ),
   },
 }
