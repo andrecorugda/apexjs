@@ -121,7 +121,7 @@ export interface DefineModelOptions {
   /**
    * Composable behaviors ("traits") — e.g. `timestamps()`, `owned()`, `observable(...)`.
    * They fold their fields/access/scope/hooks into this model. See `@apex-stack/data`
-   * behaviors and AUTH_DESIGN.md §8.
+   * behaviors and docs/architecture/auth.md §8.
    */
   use?: Behavior[]
   /**

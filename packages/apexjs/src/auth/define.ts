@@ -2,7 +2,7 @@
 //
 // This module is dependency-light (no `node:fs`, no h3) so it can be imported
 // anywhere. The server-only resolver/loader lives in ./run.ts and is never
-// bundled to the client. See AUTH_DESIGN.md for the full model.
+// bundled to the client. See docs/architecture/auth.md for the full model.
 
 import type { RuntimeConfig } from '../config/runtime.js'
 
