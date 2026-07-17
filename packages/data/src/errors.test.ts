@@ -5,8 +5,12 @@ import { defineModel } from './model.js'
 const Thing = defineModel('things', { fields: { name: { type: 'string', notNull: true } } })
 
 describe('typed data errors', () => {
-  beforeEach(() => { globalThis.__APEX_DEVICE__ = true })
-  afterEach(() => { globalThis.__APEX_DEVICE__ = undefined })
+  beforeEach(() => {
+    globalThis.__APEX_DEVICE__ = true
+  })
+  afterEach(() => {
+    globalThis.__APEX_DEVICE__ = undefined
+  })
 
   it('findOrFail / firstOrFail throw ModelNotFoundException (httpStatus 404)', async () => {
     const h = await createDb({ driver: 'libsql', url: ':memory:' })

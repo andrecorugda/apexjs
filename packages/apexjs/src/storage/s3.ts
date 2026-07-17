@@ -46,7 +46,11 @@ export function createS3Storage(config: S3StorageConfig): Storage {
     opts: { body?: Uint8Array; contentType?: string; query?: Record<string, string> } = {},
   ): Promise<Response> => {
     const t = target(key)
-    const payloadHash = opts.body ? sha256Hex(opts.body) : method === 'PUT' ? sha256Hex('') : UNSIGNED_PAYLOAD
+    const payloadHash = opts.body
+      ? sha256Hex(opts.body)
+      : method === 'PUT'
+        ? sha256Hex('')
+        : UNSIGNED_PAYLOAD
     const extraHeaders: Record<string, string> = {}
     if (opts.contentType) extraHeaders['content-type'] = opts.contentType
     const { headers } = signRequest({
@@ -141,15 +145,17 @@ async function s3Error(op: string, key: string, res: Response): Promise<Error> {
   } catch {
     /* ignore */
   }
-  return new Error(`S3 ${op} failed for ${JSON.stringify(key)}: ${res.status} ${res.statusText} ${body}`.trim())
+  return new Error(
+    `S3 ${op} failed for ${JSON.stringify(key)}: ${res.status} ${res.statusText} ${body}`.trim(),
+  )
 }
 
 /** Extract object keys + sizes from a ListObjectsV2 XML response (no XML dep — regex over Contents). */
 export function parseListXml(xml: string): StorageEntry[] {
   const out: StorageEntry[] = []
   const contents = /<Contents>([\s\S]*?)<\/Contents>/g
-  let m: RegExpExecArray | null
-  while ((m = contents.exec(xml)) !== null) {
+  let m: RegExpExecArray | null = contents.exec(xml)
+  while (m !== null) {
     const block = m[1] ?? ''
     const key = /<Key>([\s\S]*?)<\/Key>/.exec(block)?.[1]
     if (key === undefined) continue
@@ -157,6 +163,7 @@ export function parseListXml(xml: string): StorageEntry[] {
     const entry: StorageEntry = { path: decodeXmlEntities(key) }
     if (sizeStr !== undefined) entry.size = Number(sizeStr)
     out.push(entry)
+    m = contents.exec(xml)
   }
   return out
 }

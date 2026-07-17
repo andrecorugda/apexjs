@@ -55,7 +55,11 @@ export interface Cache {
    * under `key` (with `ttlSeconds`, omit/undefined ⇒ no expiry), and return it. The factory runs
    * at most once per miss.
    */
-  remember<T>(key: string, ttlSeconds: number | undefined, factory: () => T | Promise<T>): Promise<T>
+  remember<T>(
+    key: string,
+    ttlSeconds: number | undefined,
+    factory: () => T | Promise<T>,
+  ): Promise<T>
   /**
    * A scoped view over the same storage. Values `set` through the view are associated with the
    * given tag names; calling `flush()` on the view invalidates ONLY the keys written under those

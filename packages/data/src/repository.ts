@@ -49,11 +49,7 @@ export interface Repo {
   /** Bulk delete over a fully-built WHERE (soft-delete aware); returns rows affected. No per-row hooks. */
   bulkRemove(where: SQL | undefined): Promise<number>
   runAfterList(rows: Record<string, unknown>[], user: ApexUser | null): Promise<void>
-  runAfterGet(
-    row: Record<string, unknown> | null,
-    id: number,
-    user: ApexUser | null,
-  ): Promise<void>
+  runAfterGet(row: Record<string, unknown> | null, id: number, user: ApexUser | null): Promise<void>
 }
 
 export function repository(cfg: RepoConfig): Repo {
@@ -115,7 +111,12 @@ export function repository(cfg: RepoConfig): Repo {
         const data = { ...input, ...(scope?.({ user }) ?? {}) }
         const ctx = mkCtx({ op: 'create', user, data })
         for (const h of hooks) await h.beforeCreate?.(ctx)
-        const row = (await db.insert(table).values(ctx.data as never).returning())[0]
+        const row = (
+          await db
+            .insert(table)
+            .values(ctx.data as never)
+            .returning()
+        )[0]
         ctx.row = row
         await runAfter('afterCreate', ctx)
         return row
@@ -145,11 +146,13 @@ export function repository(cfg: RepoConfig): Repo {
         const w = where(extra, user)
         // Soft delete stamps a column; hard delete removes the row.
         const row = softDelete
-          ? ((await db
-              .update(table)
-              .set({ [softDelete]: new Date().toISOString() })
-              .where(w)
-              .returning())[0] ?? null)
+          ? ((
+              await db
+                .update(table)
+                .set({ [softDelete]: new Date().toISOString() })
+                .where(w)
+                .returning()
+            )[0] ?? null)
           : ((await db.delete(table).where(w).returning())[0] ?? null)
         if (row) {
           ctx.row = row
@@ -176,7 +179,8 @@ export function repository(cfg: RepoConfig): Repo {
       if (hooks.length) await runAfter('afterList', mkCtx({ op: 'list', user, data: {}, rows }))
     },
     async runAfterGet(row, id, user) {
-      if (row && hooks.length) await runAfter('afterGet', mkCtx({ op: 'get', user, data: {}, row, id }))
+      if (row && hooks.length)
+        await runAfter('afterGet', mkCtx({ op: 'get', user, data: {}, row, id }))
     },
   }
 }

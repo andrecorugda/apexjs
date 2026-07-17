@@ -182,9 +182,9 @@ vercel deploy</code></pre>
       <p class="code-label">Netlify — serverless</p>
       <pre><code>apex build --preset netlify  <span class="c"># writes netlify/functions/server.mjs + netlify.toml</span>
 netlify deploy</code></pre>
-      <p class="code-label">Cloudflare — Workers (edge)</p>
+      <p class="code-label">Cloudflare — Workers (edge) <span class="pill">🚧 experimental</span></p>
       <pre><code>apex build --preset cloudflare  <span class="c"># writes _worker.js + apex-cf-assets.json + wrangler.toml</span>
-wrangler deploy</code></pre>
+<span class="c"># ⚠ not yet edge-ready — see the note below (#19)</span></code></pre>
       <p class="code-label">Docker — Railway / Render / Fly.io / any container or VM</p>
       <pre><code>apex build --preset docker   <span class="c"># writes a Dockerfile (+ .dockerignore)</span>
 <span class="c"># push to your host — apex start listens on the injected $PORT</span></code></pre>
@@ -193,7 +193,17 @@ wrangler deploy</code></pre>
         <p>The serverless presets wrap the built app in one function via <code>createProdNodeHandler</code> (Vercel) / <code>createProdWebHandler</code> (Netlify) from <code>@apex-stack/core/server</code>; the Docker preset builds and runs <code>apex start</code>. All serve SSR + <code>/api</code> + <code>/mcp</code> from the same server target — one build, any host.</p>
       </div>
 
-      <h3 id="cloudflare">Cloudflare Workers — edge <a class="anchor" href="#cloudflare">#</a></h3>
+      <h3 id="cloudflare">Cloudflare Workers — edge <span class="pill">🚧 experimental</span> <a class="anchor" href="#cloudflare">#</a></h3>
+      <div class="callout warm">
+        <span class="h">Not yet edge-ready — tracked by <a href="https://github.com/andrecorugda/apexjs/issues/19">#19</a></span>
+        <p>
+          The preset emits the three files below, but the worker's SSR path currently reads the build
+          via <code>node:fs</code> and a runtime dynamic <code>import()</code> — neither of which runs on the
+          real Cloudflare Workers runtime (no filesystem, no computed dynamic import). A self-contained
+          <em>bundled</em> worker (mirroring the mobile preset) is in progress. Vercel, Netlify and Docker
+          are production-ready today; use one of those for now.
+        </p>
+      </div>
       <p>
         The Cloudflare preset emits a <strong>module worker</strong> — <code>export default { fetch(request, env, ctx) }</code> — that serves the same server target from the edge. It writes three files at your project root:
       </p>
@@ -296,7 +306,7 @@ wrangler deploy</code></pre>
       <div class="callout warm">
         <span class="h">On the roadmap</span>
         <p>
-          Streaming SSR and a MySQL/PlanetScale driver. The shipped presets — <a href="#presets">Vercel, Netlify, Docker</a> (Node / serverless-Node) and <a href="#cloudflare">Cloudflare Workers</a> (edge) — cover Node, serverless, and the edge.
+          Streaming SSR and a MySQL/PlanetScale driver. The shipped presets — <a href="#presets">Vercel, Netlify, Docker</a> (Node / serverless-Node) — cover Node and serverless; <a href="#cloudflare">Cloudflare Workers</a> (edge) is experimental (<a href="https://github.com/andrecorugda/apexjs/issues/19">#19</a>) and not yet edge-ready.
         </p>
       </div>
 

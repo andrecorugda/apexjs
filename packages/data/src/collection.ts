@@ -26,7 +26,9 @@ export class Collection<T> extends Array<T> {
     const out: Record<string, T[]> = {}
     for (const x of this) {
       const k = String(x[key])
-      ;(out[k] ??= []).push(x)
+      const bucket = out[k] ?? []
+      bucket.push(x)
+      out[k] = bucket
     }
     return out
   }

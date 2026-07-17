@@ -114,7 +114,7 @@ function contract(make: () => Promise<ApexDbHandle>): void {
   it('an unknown column throws instead of becoming SQL (injection guard)', async () => {
     const h = await make()
     await seed(h)
-    await expect(Player.where({ "plays; DROP TABLE players; --": 1 }).all(h)).rejects.toThrow(
+    await expect(Player.where({ 'plays; DROP TABLE players; --': 1 }).all(h)).rejects.toThrow(
       /unknown column/,
     )
     // table intact

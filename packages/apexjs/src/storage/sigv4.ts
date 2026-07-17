@@ -22,7 +22,12 @@ function hmac(key: string | Buffer, data: string): Buffer {
 }
 
 /** Derive the SigV4 date-scoped signing key. */
-export function signingKey(secret: string, dateStamp: string, region: string, service: string): Buffer {
+export function signingKey(
+  secret: string,
+  dateStamp: string,
+  region: string,
+  service: string,
+): Buffer {
   const kDate = hmac(`AWS4${secret}`, dateStamp)
   const kRegion = hmac(kDate, region)
   const kService = hmac(kRegion, service)
@@ -47,7 +52,10 @@ export function encodePath(path: string): string {
 
 /** `YYYYMMDDTHHMMSSZ` (amz-date) and its `YYYYMMDD` date stamp for a given instant. */
 export function amzDate(now: Date): { amzDate: string; dateStamp: string } {
-  const iso = now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  const iso = now
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}/, '')
   return { amzDate: iso, dateStamp: iso.slice(0, 8) }
 }
 
@@ -114,7 +122,10 @@ export function signRequest(params: SignRequestParams): SignedHeaders {
 
   const scope = `${dateStamp}/${params.region}/${service}/aws4_request`
   const stringToSign = [ALGORITHM, amz, scope, sha256Hex(canonicalRequest)].join('\n')
-  const signature = createHmac('sha256', signingKey(params.secretAccessKey, dateStamp, params.region, service))
+  const signature = createHmac(
+    'sha256',
+    signingKey(params.secretAccessKey, dateStamp, params.region, service),
+  )
     .update(stringToSign, 'utf8')
     .digest('hex')
 
@@ -167,11 +178,14 @@ export function presignGetUrl(params: PresignParams): string {
   ].join('\n')
 
   const stringToSign = [ALGORITHM, amz, scope, sha256Hex(canonicalRequest)].join('\n')
-  const signature = createHmac('sha256', signingKey(params.secretAccessKey, dateStamp, params.region, service))
+  const signature = createHmac(
+    'sha256',
+    signingKey(params.secretAccessKey, dateStamp, params.region, service),
+  )
     .update(stringToSign, 'utf8')
     .digest('hex')
 
-  const finalQuery = canonicalQuery(query) + `&X-Amz-Signature=${signature}`
+  const finalQuery = `${canonicalQuery(query)}&X-Amz-Signature=${signature}`
   return `${protocol}//${params.host}${encodePath(params.path)}?${finalQuery}`
 }
 

@@ -65,9 +65,11 @@ describe('model instances', () => {
     const h = await createDb({ driver: 'libsql', url: ':memory:' })
     await h.exec(User.migrationSql(h.dialect))
     await User.create(h, { name: 'x', password: 'p' })
-    const list = User.resource(h).routes.find((r) => r.mcpName === 'users_list')?.route.handler as (
-      a: { input?: unknown; user?: unknown },
-    ) => Promise<Array<Record<string, unknown>>>
+    const list = User.resource(h).routes.find((r) => r.mcpName === 'users_list')?.route
+      .handler as (a: {
+      input?: unknown
+      user?: unknown
+    }) => Promise<Array<Record<string, unknown>>>
     const rows = await list({})
     expect(rows[0]).not.toHaveProperty('password')
     expect(rows[0]?.name).toBe('x')
@@ -89,9 +91,9 @@ describe('model instances', () => {
     // Collection.map returns a plain array (Symbol.species = Array)
     expect(Array.isArray(users.map((u) => u.name))).toBe(true)
     // toJSON serializes each instance (password hidden)
-    expect((users.toJSON() as Array<Record<string, unknown>>).every((u) => !('password' in u))).toBe(
-      true,
-    )
+    expect(
+      (users.toJSON() as Array<Record<string, unknown>>).every((u) => !('password' in u)),
+    ).toBe(true)
     // collect() helper
     expect(collect([1, 2, 3]).sum('length' as never)).toBeDefined()
     await h.close()

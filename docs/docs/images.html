@@ -128,7 +128,7 @@
       </p>
       <ul>
         <li><strong>The <code>&lt;Image&gt;</code> helper</strong> (<code>@apex-stack/kit</code>) — a pure function that renders a responsive <code>&lt;img&gt;</code>: <code>srcset</code> candidates, a <code>sizes</code> attribute, explicit <code>width</code>/<code>height</code> to reserve layout (no CLS), and <code>loading="lazy"</code> / <code>decoding="async"</code> defaults.</li>
-        <li><strong>The image transform</strong> — an <code>image</code> block in <code>apex.config.ts</code> wires <a href="https://github.com/JonasKruckenberg/imagetools" target="_blank" rel="noopener"><code>vite-imagetools</code></a> into the client / islands builds, turning the <code>?w=…&amp;format=…</code> candidates into hashed, optimized variants under <code>dist/</code>.</li>
+        <li><strong>The image transform</strong> — an <code>image</code> block in <code>apex.config.ts</code> wires <a href="https://github.com/JonasKruckenberg/imagetools" target="_blank" rel="noopener"><code>vite-imagetools</code></a> into the client build for the default (<code>apex build</code>) and <code>--server</code> targets, turning the <code>?w=…&amp;format=…</code> candidates into hashed, optimized variants under <code>dist/</code>. <em>(Transforming per-page image imports under <code>--islands</code> is a known follow-up — <a href="https://github.com/andrecorugda/apexjs/issues/57">#57</a>; fonts work in all modes.)</em></li>
         <li><strong>Self-hosted fonts</strong> — a <code>fonts</code> block copies declared font files into <code>dist/fonts/</code>, emits the matching <code>@font-face</code> rules, and injects <code>&lt;link rel="preload" as="font" crossorigin&gt;</code> into the page shell.</li>
       </ul>
       <p class="muted">
@@ -187,10 +187,19 @@ export default defineConfig({
       <h2 id="image-config">The <code>image</code> config block <a class="anchor" href="#image-config">#</a></h2>
       <p>
         Add an <code>image</code> block and <code>apex build</code> wires <code>vite-imagetools</code> into the
-        client and islands bundles. Imports carrying transform queries — the ones the helper's <code>srcset</code>
+        client bundle. Imports carrying transform queries — the ones the helper's <code>srcset</code>
         emits, or ones you write by hand — are resized and re-encoded into hashed variants in <code>dist/</code>.
         The block's mere presence turns the transform on; every field is optional.
       </p>
+      <div class="callout warm">
+        <span class="h">Build-target note</span>
+        <p>
+          The transform runs in the default <code>apex build</code> (prerender + hydrate) and
+          <code>apex build --server</code> builds. Transforming per-page image imports under
+          <code>apex build --islands</code> (SSG) is a known follow-up (<a href="https://github.com/andrecorugda/apexjs/issues/57">#57</a>) — self-hosted
+          <a href="#fonts">fonts</a> already work in every mode.
+        </p>
+      </div>
       <pre><code>export default defineConfig({
   image: {
     formats: ['avif', 'webp'],  <span class="c">// optional — output formats (defaults to source format)</span>

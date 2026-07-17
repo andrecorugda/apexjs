@@ -32,13 +32,14 @@ describe('relationships + eager loading', () => {
     const posts = await Post.with('author', 'comments').orderBy('id', 'asc').all(h)
     expect(posts).toHaveLength(2)
     // belongsTo → the right author instance
-    expect((posts[0]?.author as { name: string }).name).toBe('Ada')
-    expect((posts[1]?.author as { name: string }).name).toBe('Bob')
+    expect((posts[0] as unknown as { author: { name: string } }).author.name).toBe('Ada')
+    expect((posts[1] as unknown as { author: { name: string } }).author.name).toBe('Bob')
     // hasMany → grouped by postId (not cross-contaminated)
-    expect((posts[0]?.comments as unknown[]).map((c) => (c as { body: string }).body).sort()).toEqual([
-      'c1',
-      'c2',
-    ])
+    expect(
+      (posts[0] as unknown as { comments: unknown[] }).comments
+        .map((c) => (c as { body: string }).body)
+        .sort(),
+    ).toEqual(['c1', 'c2'])
     expect(posts[1]?.comments as unknown[]).toHaveLength(1)
 
     // nested serialization: JSON.stringify includes the loaded relations

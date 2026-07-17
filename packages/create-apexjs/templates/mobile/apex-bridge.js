@@ -11,7 +11,7 @@
 // jsonRequest  = { "url": "...", "method": "GET", "headers": {..}, "body": "..."|null }
 // jsonResponse = { "status": 200, "headers": {"content-type": "text/html", ...}, "body": "..." }
 
-globalThis.__apexHandle = async function (jsonRequest) {
+globalThis.__apexHandle = async (jsonRequest) => {
   const { url, method, headers, body } = JSON.parse(jsonRequest)
   const req = new Request(url, { method: method || 'GET', headers: headers || {}, body })
   const res = await globalThis.APEX.run(req) // { status, headers, body }

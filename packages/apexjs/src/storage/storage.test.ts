@@ -9,6 +9,12 @@ import { signedQuery, verifySignedUrl } from './signing.js'
 import { presignGetUrl, signRequest } from './sigv4.js'
 import type { Storage } from './types.js'
 
+/** Assert a value is present, narrowing away null/undefined (test-only guard). */
+function notNull<T>(value: T | null | undefined): T {
+  if (value == null) throw new Error('expected a non-null value')
+  return value
+}
+
 describe('local driver', () => {
   let dir: string
   let store: Storage
@@ -29,7 +35,7 @@ describe('local driver', () => {
     await store.put('docs/a.txt', 'hello world', { contentType: 'text/plain' })
     expect(await store.exists('docs/a.txt')).toBe(true)
     expect(await store.getText('docs/a.txt')).toBe('hello world')
-    expect(Array.from((await store.get('docs/a.txt'))!)).toEqual(
+    expect(Array.from(notNull(await store.get('docs/a.txt')))).toEqual(
       Array.from(new TextEncoder().encode('hello world')),
     )
 
@@ -42,7 +48,7 @@ describe('local driver', () => {
   it('stores and reads binary data', async () => {
     const bytes = new Uint8Array([0, 1, 2, 253, 254, 255])
     await store.put('bin/blob', bytes)
-    expect(Array.from((await store.get('bin/blob'))!)).toEqual(Array.from(bytes))
+    expect(Array.from(notNull(await store.get('bin/blob')))).toEqual(Array.from(bytes))
   })
 
   it('lists objects, optionally by prefix', async () => {
@@ -76,8 +82,8 @@ describe('local driver', () => {
   it('signs a URL that verifySignedUrl accepts, and rejects tampering/expiry', async () => {
     const url = await store.url('img/pic.png', { expiresInSeconds: 3600 })
     const parsed = new URL(url, 'http://host')
-    const sig = parsed.searchParams.get('sig')!
-    const exp = parsed.searchParams.get('exp')!
+    const sig = notNull(parsed.searchParams.get('sig'))
+    const exp = notNull(parsed.searchParams.get('exp'))
     expect(parsed.pathname).toBe('/storage/img/pic.png')
 
     expect(verifySignedUrl('img/pic.png', sig, exp, 'top-secret')).toBe(true)
@@ -94,8 +100,8 @@ describe('local driver', () => {
   it('signedQuery/verifySignedUrl agree over an injected clock', () => {
     const now = 1_000_000
     const q = new URLSearchParams(signedQuery('k/v', 60, 'secret', now))
-    const sig = q.get('sig')!
-    const exp = q.get('exp')!
+    const sig = notNull(q.get('sig'))
+    const exp = notNull(q.get('exp'))
     expect(Number(exp)).toBe(now + 60)
     expect(verifySignedUrl('k/v', sig, exp, 'secret', now + 59)).toBe(true)
     expect(verifySignedUrl('k/v', sig, exp, 'secret', now + 60)).toBe(false)
@@ -178,8 +184,7 @@ describe('s3 driver (mocked fetch)', () => {
     secretAccessKey: 'secret-test',
   }
 
-  const mockFetch = (impl: (url: string, init?: RequestInit) => Promise<Response>) =>
-    vi.fn(impl)
+  const mockFetch = (impl: (url: string, init?: RequestInit) => Promise<Response>) => vi.fn(impl)
 
   it('PUTs to the virtual-hosted host with a signed Authorization header', async () => {
     const fetchMock = mockFetch(async () => new Response(null, { status: 200 }))
@@ -187,10 +192,10 @@ describe('s3 driver (mocked fetch)', () => {
     await s3.put('avatars/1.png', new Uint8Array([1, 2, 3]), { contentType: 'image/png' })
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    const [url, init] = fetchMock.mock.calls[0]!
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('https://my-bucket.s3.eu-west-1.amazonaws.com/avatars/1.png')
-    expect(init!.method).toBe('PUT')
-    const headers = init!.headers as Record<string, string>
+    expect(init.method).toBe('PUT')
+    const headers = init.headers as Record<string, string>
     expect(headers['content-type']).toBe('image/png')
     expect(headers.Authorization).toMatch(/^AWS4-HMAC-SHA256 Credential=AKIA-TEST\//)
     expect(headers['x-amz-content-sha256']).toMatch(/^[0-9a-f]{64}$/)
@@ -199,7 +204,7 @@ describe('s3 driver (mocked fetch)', () => {
   it('GET returns bytes on 200 and null on 404', async () => {
     const ok = vi.fn(async () => new Response(new Uint8Array([9, 8, 7]), { status: 200 }))
     const s3ok = createS3Storage({ ...config, fetch: ok as unknown as typeof fetch })
-    expect(Array.from((await s3ok.get('x'))!)).toEqual([9, 8, 7])
+    expect(Array.from(notNull(await s3ok.get('x')))).toEqual([9, 8, 7])
 
     const missing = vi.fn(async () => new Response(null, { status: 404 }))
     const s3missing = createS3Storage({ ...config, fetch: missing as unknown as typeof fetch })
@@ -210,14 +215,14 @@ describe('s3 driver (mocked fetch)', () => {
     const head = mockFetch(async () => new Response(null, { status: 404 }))
     const s3 = createS3Storage({ ...config, fetch: head as unknown as typeof fetch })
     expect(await s3.exists('nope')).toBe(false)
-    expect(head.mock.calls[0]![1]!.method).toBe('HEAD')
+    expect((head.mock.calls[0] as [string, RequestInit])[1].method).toBe('HEAD')
   })
 
   it('delete tolerates a 404', async () => {
     const del = mockFetch(async () => new Response(null, { status: 404 }))
     const s3 = createS3Storage({ ...config, fetch: del as unknown as typeof fetch })
     await expect(s3.delete('gone')).resolves.toBeUndefined()
-    expect(del.mock.calls[0]![1]!.method).toBe('DELETE')
+    expect((del.mock.calls[0] as [string, RequestInit])[1].method).toBe('DELETE')
   })
 
   it('list issues a list-type=2 query and parses the XML', async () => {
@@ -226,7 +231,7 @@ describe('s3 driver (mocked fetch)', () => {
     const s3 = createS3Storage({ ...config, fetch: listFetch as unknown as typeof fetch })
     const res = await s3.list('p/')
     expect(res).toEqual([{ path: 'p/a', size: 1 }])
-    const url = listFetch.mock.calls[0]![0]
+    const url = (listFetch.mock.calls[0] as [string, RequestInit])[0]
     expect(url).toContain('list-type=2')
     expect(url).toContain('prefix=p%2F')
   })
@@ -239,7 +244,9 @@ describe('s3 driver (mocked fetch)', () => {
       fetch: fetchMock as unknown as typeof fetch,
     })
     await s3.put('k.txt', 'hi')
-    expect(fetchMock.mock.calls[0]![0]).toBe('https://minio.example.com/my-bucket/k.txt')
+    expect((fetchMock.mock.calls[0] as [string, RequestInit])[0]).toBe(
+      'https://minio.example.com/my-bucket/k.txt',
+    )
   })
 
   it('url() returns a presigned GET URL with an expiry', async () => {
@@ -251,6 +258,8 @@ describe('s3 driver (mocked fetch)', () => {
     expect(parsed.searchParams.get('X-Amz-Expires')).toBe('900')
     expect(parsed.searchParams.get('X-Amz-Signature')).toMatch(/^[0-9a-f]{64}$/)
     // plain public URL without expiry
-    expect(await s3.url('avatars/1.png')).toBe('https://my-bucket.s3.eu-west-1.amazonaws.com/avatars/1.png')
+    expect(await s3.url('avatars/1.png')).toBe(
+      'https://my-bucket.s3.eu-west-1.amazonaws.com/avatars/1.png',
+    )
   })
 })

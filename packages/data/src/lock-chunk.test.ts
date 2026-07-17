@@ -23,10 +23,12 @@ describe('lockForUpdate + chunk', () => {
     )
     const seen: number[] = []
     const batches: number[] = []
-    await Row.where({}).orderBy('n', 'asc').chunk(h, 10, (rows) => {
-      batches.push(rows.length)
-      for (const r of rows) seen.push(r.n as number)
-    })
+    await Row.where({})
+      .orderBy('n', 'asc')
+      .chunk(h, 10, (rows) => {
+        batches.push(rows.length)
+        for (const r of rows) seen.push(r.n as number)
+      })
     expect(batches).toEqual([10, 10, 5]) // 25 rows in batches of 10
     expect(seen).toHaveLength(25)
     await h.close()

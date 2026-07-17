@@ -80,6 +80,9 @@ export interface RenderIslandsPageOptions {
   cssHrefs?: string[]
   /** PWA config — links the manifest/theme-color + registers the service worker (🟡). */
   pwa?: PwaConfig
+  /** Pre-rendered self-hosted-font `<head>` fragment (`@font-face` + preload links),
+   * built by `apex build` from `config.fonts` and injected as-is into the shell (🟡). */
+  fontHead?: string
   /** Active locale (i18n) — sets `<html lang>`. Default `en`. */
   locale?: string
   /**
@@ -162,6 +165,7 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
       : ''
   const configScript = hydratingCount > 0 ? `\n${clientConfigScript(opts.publicConfig ?? {})}` : ''
   const pwaTags = opts.pwa ? `\n  ${pwaHeadTags(opts.pwa)}\n  ${pwaRegisterScript()}` : ''
+  const fontTags = opts.fontHead ? `\n  ${opts.fontHead}` : ''
   const appCssLink = [...(opts.appCss ? [opts.appCss] : []), ...(opts.cssHrefs ?? [])]
     .map((href) => `\n  <link rel="stylesheet" href="${href}" />`)
     .join('')
@@ -172,7 +176,7 @@ export async function renderIslandsPage(opts: RenderIslandsPageOptions): Promise
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  ${renderHead(head)}${pwaTags}${appCssLink}
+  ${renderHead(head)}${fontTags}${pwaTags}${appCssLink}
   <style>${mod.css}${layoutCss}${opts.componentCss ?? ''}</style>
 </head>
 <body>

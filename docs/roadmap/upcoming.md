@@ -44,9 +44,15 @@ Mirrors the existing middleware/auth discovery-and-run shape. This is the keysto
 ecosystem (and dovetails with deploy presets exposing a `DeployPreset` contract). Without
 it, all extension goes through core.
 
-> **Merged on `develop` (pending release):** #18, #19, and #20 below are **code-complete and
-> merged** — they ship in the next release and move to [done](done.md) then. Kept here (with their
-> original scope) until that release closes the issues.
+> **Status after end-to-end verification (fresh-scaffold E2E, not just unit tests):**
+> - **#20 (morph HMR)** — verified working end-to-end in a real browser; ships next release.
+> - **#18 (image/font)** — merged, but E2E found the image-transform and fonts pipelines were
+>   *unit-tested yet never wired into the real build*; the `<Image>` helper works. Wiring fixes
+>   (config threading + font emit/preload + scaffold `@apex-stack/kit` dep) are in progress; ships
+>   once the transform + fonts are proven emitting in a built app.
+> - **#19 (Cloudflare edge)** — **held back**: the emitted worker reads the build via `node:fs` +
+>   a runtime dynamic `import()`, which don't run on the real Workers edge. It needs a self-contained
+>   bundled worker (like the mobile preset). Issue #19 stays open; kept out of the release until fixed.
 
 ### [#19](https://github.com/andrecorugda/apexjs/issues/19) — Deploy preset: Cloudflare (edge)
 
@@ -60,7 +66,8 @@ edge constraints (no `node:*` in the edge path). A `DeployPreset` interface (`na
 An `<Image>`-style helper backed by an image transform (`vite-imagetools` or `sharp`) that
 emits responsive `srcset`/`sizes` + explicit dimensions (avoid CLS), plus self-hosted fonts
 with `<link rel="preload">`. Closes the last raw parity gap with Next/Nuxt on asset
-optimization. **Merged on `develop`** — ships next release.
+optimization. **Merged on `develop`; wiring fixes in progress** (see the status note above) — the
+helper works; the transform + fonts are being wired into the real build before release.
 
 ## Later — larger builds
 

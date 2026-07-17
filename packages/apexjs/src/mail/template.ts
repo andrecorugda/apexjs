@@ -32,5 +32,7 @@ function stringify(value: TemplateValue): string {
 export function renderTemplate(template: string, vars: TemplateVars): string {
   return template
     .replace(/\{\{\{\s*([\w.$]+)\s*\}\}\}/g, (_match, name: string) => stringify(vars[name]))
-    .replace(/\{\{\s*([\w.$]+)\s*\}\}/g, (_match, name: string) => escapeHtml(stringify(vars[name])))
+    .replace(/\{\{\s*([\w.$]+)\s*\}\}/g, (_match, name: string) =>
+      escapeHtml(stringify(vars[name])),
+    )
 }

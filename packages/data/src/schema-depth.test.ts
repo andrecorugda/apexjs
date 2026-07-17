@@ -17,7 +17,9 @@ describe('schema depth — foreign keys + indexes', () => {
     expect(sql).toContain('REFERENCES "teams"("id")')
     expect(sql).toContain('ON DELETE CASCADE')
     expect(sql).toContain('CREATE INDEX IF NOT EXISTS idx_players_teamId ON "players" ("teamId")')
-    expect(sql).toContain('CREATE UNIQUE INDEX IF NOT EXISTS idx_players_name ON "players" ("name")')
+    expect(sql).toContain(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_players_name ON "players" ("name")',
+    )
   })
 
   it('enforces the unique index and FK cascade (Postgres)', async () => {

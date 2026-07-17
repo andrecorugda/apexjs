@@ -1,5 +1,7 @@
 // @apex-stack/kit — public API.
 
+export type { ImageOptions } from './image.js'
+export { image, imageAttrs, imageSrcset } from './image.js'
 export type {
   AlpineDescriptor,
   ScriptBlock,
@@ -15,8 +17,6 @@ export type {
 } from './render/components.js'
 export { rewriteComponentTags } from './render/components.js'
 export { AlpineEvalError, clearExprCache, evaluate } from './render/evaluator.js'
-export type { ImageOptions } from './image.js'
-export { image, imageAttrs, imageSrcset } from './image.js'
 export { serializeState, stateIsland } from './render/island.js'
 export type {
   ClientDirective,

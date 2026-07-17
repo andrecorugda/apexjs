@@ -128,6 +128,9 @@ export interface RenderPageOptions {
   locale?: string
   /** PWA config — links the manifest/theme-color + registers the service worker (🟡). */
   pwa?: PwaConfig
+  /** Pre-rendered self-hosted-font `<head>` fragment (`@font-face` + preload links),
+   * built by `apex build` from `config.fonts` and injected as-is into the shell (🟡). */
+  fontHead?: string
 }
 
 /**
@@ -235,7 +238,9 @@ export async function renderPage(opts: RenderPageOptions): Promise<string> {
     appCss: opts.appCss,
     clientCss: opts.clientCss,
     headTags:
-      renderHead(head) + (opts.pwa ? `\n  ${pwaHeadTags(opts.pwa)}\n  ${pwaRegisterScript()}` : ''),
+      renderHead(head) +
+      (opts.fontHead ? `\n  ${opts.fontHead}` : '') +
+      (opts.pwa ? `\n  ${pwaHeadTags(opts.pwa)}\n  ${pwaRegisterScript()}` : ''),
     configScript: clientConfigScript(opts.publicConfig ?? {}),
     // dev imports the page module by path; prod imports its hashed bundle.
     moduleUrl: opts.clientHref ?? opts.pageId,

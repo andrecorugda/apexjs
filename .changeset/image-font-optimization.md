@@ -11,7 +11,8 @@ Build-time image & font optimization (🟡 Experimental) — Apex matches Next/N
   (retina by default, or your configured widths), `sizes`, explicit `width`/`height` to avoid CLS,
   and `loading="lazy"`/`decoding="async"` defaults.
 - **Image transform** — an optional `image` block in `apex.config.ts` wires `vite-imagetools` into
-  the client/islands builds (gated on config presence), turning `?w=…&format=…` candidates into
+  the client build for the default (`apex build`, prerender+hydrate) and `--server` targets (gated on
+  config presence), turning `?w=…&format=…` candidates into
   hashed, optimized variants under `dist/`.
 - **Self-hosted fonts** — a `fonts` block copies declared font files into `dist/fonts/`, emits the
   matching `@font-face` rules, and injects `<link rel="preload" as="font" crossorigin>` hints into

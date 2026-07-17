@@ -9,7 +9,10 @@ describe('createScopeProxy enumeration traps', () => {
   })
 
   it('spread `{...scope}` copies every layer value (top layer wins on collision)', () => {
-    const proxy = createScopeProxy([{ a: 1, shared: 'low' }, { b: 2, shared: 'high' }])
+    const proxy = createScopeProxy([
+      { a: 1, shared: 'low' },
+      { b: 2, shared: 'high' },
+    ])
     expect({ ...proxy }).toEqual({ a: 1, b: 2, shared: 'high' })
   })
 
