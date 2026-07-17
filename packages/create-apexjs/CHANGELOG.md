@@ -1,5 +1,13 @@
 # create-apexjs
 
+## 0.7.2
+
+### Patch Changes
+
+- Scaffold new apps with `@apex-stack/kit` as a direct dependency, so the documented
+  `import { image } from '@apex-stack/kit'` (feature #18) resolves out of the box in a fresh
+  app instead of failing with `ERR_MODULE_NOT_FOUND` under pnpm's strict `node_modules`.
+
 ## 0.7.1
 
 ### Patch Changes
