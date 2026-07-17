@@ -113,12 +113,20 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
     }
   }
 
+  // Create the h3 app + its Node HTTP server up front so Vite shares the SAME server (and
+  // port) for its HMR WebSocket — see `hmr: { server }` below. A separate HMR port (Vite's
+  // default 24678, or port+1) is a common Windows failure: a per-port firewall block or an
+  // un-bindable extra port kills the HMR socket, which then cascades into `.alpine` page
+  // modules failing to load (empty MIME → "apex_c… is not defined"). Middleware is
+  // registered on `app` before `server.listen`, so the deferred node listener still sees it.
+  const app = createApp()
+  const server = createHttpServer(toNodeListener(app))
+
   const vite = await createViteServer({
     root: options.root,
     appType: 'custom',
-    // Derive the HMR port from the dev port so multiple `apex dev` instances
-    // don't all fight over Vite's default 24678.
-    server: { middlewareMode: true, fs: { strict: false }, hmr: { port: port + 1 } },
+    // Share the single dev-server port for HMR — no second port to bind or get firewalled.
+    server: { middlewareMode: true, fs: { strict: false }, hmr: { server } },
     resolve: { alias },
     // User apps depend on `@apex-stack/core`, so the client module imports the runtime
     // from `@apex-stack/core/client` (a re-export) rather than the internal kit package.
@@ -152,8 +160,6 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
   // i18n: load message catalogs once at boot (edits need a restart, like config).
   const i18nCfg = config.i18n
   const messages = i18nCfg ? loadMessages(options.root, i18nCfg.locales) : {}
-
-  const app = createApp()
 
   // Vite handles assets, HMR client, and .alpine module requests. When it has
   // nothing to serve it calls next() and the request falls through to the
@@ -346,7 +352,6 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
     }),
   )
 
-  const server = createHttpServer(toNodeListener(app))
   await new Promise<void>((resolve) => server.listen(port, resolve))
 
   return {
