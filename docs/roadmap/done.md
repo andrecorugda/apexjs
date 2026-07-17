@@ -30,7 +30,8 @@ minors unchanged + a real app using it).
 | Runtime config, middleware, `InferInput/Output` shared FE/BE types | Wave B | `defineConfig` + `.env`; `middleware/*.ts` |
 | i18n | 0.17.0 | `i18n` config + `locales/*.json`; `t`/`locale` in loaders; `/<locale>` + `Accept-Language`; SSR `<html lang>` |
 | `app.client.ts` hook | 0.29.0 | register Alpine plugins/directives/magics (`$persist`, `x-mask`, morph…); root-x-data magic support (0.32–0.34) |
-| **Style-only HMR** (hot-swap scoped CSS, state preserved) | 0.9.0 | template/script edits still full-reload but **restore scroll**; DOM-morphing template HMR is *not* done — see [upcoming](upcoming.md) ([#20](https://github.com/andrecorugda/apexjs/issues/20)) |
+| **Fine-grained (DOM-morphing) HMR** 🟡 | vite 0.5.0 / kit 0.10.0 ([#20](https://github.com/andrecorugda/apexjs/issues/20)) | template-markup edits morph the live DOM preserving Alpine state (open dropdowns, input, scroll); style edits hot-swap; `x-data`/`<script>` changes fall back to full-reload. Verified in a real browser |
+| **Image & font optimization** 🟡 | core 0.44.0 / kit 0.10.0 ([#18](https://github.com/andrecorugda/apexjs/issues/18)) | `<Image>` helper (responsive `srcset`/`sizes` + explicit dims); build-time transform → hashed webp/avif variants (`apex build` / `--server`); self-hosted fonts (`@font-face` + `<link rel=preload>`). Islands-mode transform is a follow-up ([#57](https://github.com/andrecorugda/apexjs/issues/57)) |
 
 ## Data layer — `@apex-stack/data` (Eloquent-parity ORM)
 
