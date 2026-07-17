@@ -7,9 +7,51 @@ import {
   buildWebManifest,
   collectPrecacheUrls,
   emitPwaAssets,
+  generatePwaIcons,
   pwaHeadTags,
   pwaRegisterScript,
 } from './pwa.js'
+
+const FAVICON =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#22d3ee"/></svg>'
+/** Width from a PNG buffer's IHDR (big-endian uint32 at byte 16). 0 if not a PNG. */
+function pngWidth(buf: Buffer): number {
+  return buf[0] === 0x89 && buf[1] === 0x50 ? buf.readUInt32BE(16) : 0
+}
+
+describe('generatePwaIcons', () => {
+  it('rasterizes the app favicon into 192/512/maskable PNGs', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'apex-pwa-gen-'))
+    mkdirSync(join(root, 'public'), { recursive: true })
+    writeFileSync(join(root, 'public', 'favicon.svg'), FAVICON)
+    const dist = mkdtempSync(join(tmpdir(), 'apex-pwa-dist-'))
+
+    const n = await generatePwaIcons(root, dist, { name: 'X', themeColor: '#0a0e1a' })
+    expect(n).toBe(3)
+    expect(pngWidth(readFileSync(join(dist, 'icons/pwa-192.png')))).toBe(192)
+    expect(pngWidth(readFileSync(join(dist, 'icons/pwa-512.png')))).toBe(512)
+    expect(pngWidth(readFileSync(join(dist, 'icons/pwa-maskable-512.png')))).toBe(512)
+    rmSync(root, { recursive: true, force: true })
+    rmSync(dist, { recursive: true, force: true })
+  })
+
+  it('does nothing when icons are explicitly configured, or already present', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'apex-pwa-gen2-'))
+    mkdirSync(join(root, 'public'), { recursive: true })
+    writeFileSync(join(root, 'public', 'favicon.svg'), FAVICON)
+    const dist = mkdtempSync(join(tmpdir(), 'apex-pwa-dist2-'))
+    // explicit icons config → never touch
+    expect(await generatePwaIcons(root, dist, { name: 'X', icons: [] })).toBe(0)
+    // user already supplied the icons (copied into dist) → skip
+    mkdirSync(join(dist, 'icons'), { recursive: true })
+    for (const f of ['pwa-192.png', 'pwa-512.png', 'pwa-maskable-512.png']) {
+      writeFileSync(join(dist, 'icons', f), 'x')
+    }
+    expect(await generatePwaIcons(root, dist, { name: 'X' })).toBe(0)
+    rmSync(root, { recursive: true, force: true })
+    rmSync(dist, { recursive: true, force: true })
+  })
+})
 
 describe('buildWebManifest', () => {
   it('applies sensible defaults', () => {

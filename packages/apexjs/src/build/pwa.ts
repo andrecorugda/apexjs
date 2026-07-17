@@ -4,7 +4,7 @@
 // list is known right here at build time — so a ~60-line generated worker keeps core
 // dependency-light while covering the install/offline story.
 import { createHash } from 'node:crypto'
-import { readdirSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import type { PwaConfig } from '../config/runtime.js'
 
@@ -36,6 +36,90 @@ export function buildWebManifest(pwa: PwaConfig): string {
     null,
     2,
   )
+}
+
+/** The icons `generatePwaIcons` produces from the app's favicon (matches DEFAULT_ICONS). */
+const GENERATED_ICONS = [
+  { file: 'pwa-192.png', size: 192, maskable: false },
+  { file: 'pwa-512.png', size: 512, maskable: false },
+  { file: 'pwa-maskable-512.png', size: 512, maskable: true },
+] as const
+
+/** Lazily load the SVG rasterizer. Optional — `apex extend pwa` adds it, but an app that
+ * hand-writes a `pwa` block may not have it, so we degrade gracefully with a hint. */
+type ResvgCtor = new (
+  svg: string,
+  opts?: { fitTo?: { mode: 'width'; value: number }; background?: string },
+) => { render(): { asPng(): Buffer } }
+async function loadResvg(): Promise<ResvgCtor | null> {
+  try {
+    return ((await import('@resvg/resvg-js')) as { Resvg: ResvgCtor }).Resvg
+  } catch {
+    return null
+  }
+}
+
+/** Rasterize an SVG string to a square PNG of `size` px (transparent background). */
+function renderIcon(Resvg: ResvgCtor, svg: string, size: number): Buffer {
+  return new Resvg(svg, {
+    fitTo: { mode: 'width', value: size },
+    background: 'rgba(0,0,0,0)',
+  })
+    .render()
+    .asPng()
+}
+
+/** A maskable icon: the favicon centered at 80% on a solid background (10% safe-zone padding),
+ * so the OS mask (circle / squircle) never clips the mark. Wraps the favicon in a nested <svg>. */
+function renderMaskable(Resvg: ResvgCtor, svg: string, size: number, bg: string): Buffer {
+  const viewBox = /viewBox="([^"]+)"/.exec(svg)?.[1] ?? '0 0 64 64'
+  const inner = svg.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '')
+  const pad = Math.round(size * 0.1)
+  const innerSize = size - pad * 2
+  const wrapped = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="${bg}"/><svg x="${pad}" y="${pad}" width="${innerSize}" height="${innerSize}" viewBox="${viewBox}">${inner}</svg></svg>`
+  return new Resvg(wrapped, { fitTo: { mode: 'width', value: size } }).render().asPng()
+}
+
+/**
+ * Generate PWA icons from the app's `public/favicon.svg` into `<dist>/icons/`, so the installed
+ * app icon matches the app's own brand — change the favicon, the icons follow. Skips any icon the
+ * user already supplied (a `public/icons/pwa-*.png` copied into dist) and does nothing when the
+ * `pwa.icons` config is set explicitly. Returns the number of icons generated. Requires
+ * `@resvg/resvg-js` (added by `apex extend pwa`); without it, warns and leaves icons to the user.
+ */
+export async function generatePwaIcons(
+  root: string,
+  distDir: string,
+  pwa: PwaConfig,
+): Promise<number> {
+  if (pwa.icons) return 0 // explicit config wins — never touch it
+  const iconsDir = join(distDir, 'icons')
+  const missing = GENERATED_ICONS.filter((t) => !existsSync(join(iconsDir, t.file)))
+  if (!missing.length) return 0 // user provided their own icons (already copied from public/)
+
+  const favicon = join(root, 'public', 'favicon.svg')
+  if (!existsSync(favicon)) {
+    console.warn(
+      '  ⚠ PWA: no public/favicon.svg to generate icons from — add public/icons/pwa-{192,512,maskable-512}.png yourself.',
+    )
+    return 0
+  }
+  const Resvg = await loadResvg()
+  if (!Resvg) {
+    console.warn(
+      '  ⚠ PWA: install @resvg/resvg-js to auto-generate icons from your favicon, or add public/icons/pwa-{192,512,maskable-512}.png.',
+    )
+    return 0
+  }
+
+  mkdirSync(iconsDir, { recursive: true })
+  const svg = readFileSync(favicon, 'utf8')
+  const bg = pwa.backgroundColor ?? pwa.themeColor ?? '#0a0e1a'
+  for (const t of missing) {
+    const png = t.maskable ? renderMaskable(Resvg, svg, t.size, bg) : renderIcon(Resvg, svg, t.size)
+    writeFileSync(join(iconsDir, t.file), png)
+  }
+  return missing.length
 }
 
 /** Files that don't belong in a precache (the worker itself, build metadata, sourcemaps). */

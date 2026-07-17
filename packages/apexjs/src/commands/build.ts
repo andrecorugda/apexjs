@@ -9,7 +9,7 @@ import { buildIslandsRuntime } from '../build/buildIslands.js'
 import { buildServer } from '../build/buildServer.js'
 import { emitFontAssets, fontHeadTags } from '../build/fonts.js'
 import { deployPresets, resolveDeployPreset } from '../build/presets/index.js'
-import { emitPwaAssets } from '../build/pwa.js'
+import { emitPwaAssets, generatePwaIcons } from '../build/pwa.js'
 import { loadComponents, scanComponents } from '../components/registry.js'
 import { resolveApexConfig } from '../config/resolve.js'
 import type { ApexConfig, FontConfig, PwaConfig, RuntimeConfig } from '../config/runtime.js'
@@ -239,6 +239,8 @@ export const buildCommand = defineCommand({
       // PWA (🟡): emit manifest.webmanifest + a precache service worker AFTER every page,
       // asset, and public file is on disk — the worker's precache list is the dist tree.
       if (pwa) {
+        const icons = await generatePwaIcons(root, outDir, pwa)
+        if (icons) console.log(`  ✓ PWA — ${icons} icon(s) generated from public/favicon.svg`)
         const precached = emitPwaAssets(outDir, pwa)
         console.log(`  ✓ PWA — manifest.webmanifest + sw.js (${precached} file(s) precached)`)
       }
@@ -399,6 +401,8 @@ async function buildServerTarget(
   // served network-first with a cache fallback by the worker). Emitted after the public copy
   // so the precache list sees the full dist tree (server/ + mobile/ are skipped).
   if (pwa) {
+    const icons = await generatePwaIcons(root, outDir, pwa)
+    if (icons) console.log(`  ✓ PWA — ${icons} icon(s) generated from public/favicon.svg`)
     const precached = emitPwaAssets(outDir, pwa)
     console.log(`  ✓ PWA — manifest.webmanifest + sw.js (${precached} file(s) precached)`)
   }

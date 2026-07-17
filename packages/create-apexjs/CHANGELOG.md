@@ -1,5 +1,16 @@
 # create-apexjs
 
+## 0.7.3
+
+### Patch Changes
+
+- PWA: generate the installable app icons from the app's `public/favicon.svg` at `apex build`
+  (via `@resvg/resvg-js`), instead of shipping Apex-robot default icons. Change your favicon and
+  the 192/512/maskable icons follow; drop your own PNGs in `public/icons/` to override. `apex
+extend pwa` adds the (lazy, optional) rasterizer dep. Also: `apex dev` now unregisters any
+  stale service worker + clears its caches on every page, so a lingering PWA `sw.js` on
+  `localhost:<port>` can't keep serving cached/broken modules across reloads or app switches.
+
 ## 0.7.2
 
 ### Patch Changes
