@@ -1,6 +1,6 @@
 {
   "name": "@apex-stack/kit",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Apex JS core — .alpine SFC parser, SSR renderer, and client runtime",
   "type": "module",
   "license": "MIT",
