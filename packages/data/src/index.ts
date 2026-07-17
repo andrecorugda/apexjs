@@ -7,7 +7,7 @@ import type { BehaviorHooks, FilterFn } from './behavior.js'
 import { repository } from './repository.js'
 
 export type { Behavior, BehaviorHooks, FilterFn, HookCtx } from './behavior.js'
-// Model behaviors ("traits") — composable fields/access/scope/hooks. AUTH_DESIGN.md §8.
+// Model behaviors ("traits") — composable fields/access/scope/hooks. docs/architecture/auth.md §8.
 export {
   auditable,
   composeBehaviors,

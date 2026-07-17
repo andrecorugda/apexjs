@@ -40,6 +40,22 @@ export interface ApexConfig {
    */
   i18n?: { defaultLocale: string; locales: string[] }
   /**
+   * Build-time image optimization (🟡 Experimental). When set, `apex build`
+   * wires the image transform (`vite-imagetools`) into the client/islands
+   * bundles so `import img from './hero.png?w=800&format=webp'` (and the
+   * `<Image>` kit helper's `srcset` candidates) are resized/re-encoded into
+   * hashed variants under `dist/`. Purely opt-in — omit the block and the
+   * transform is never added and images pass through untouched.
+   */
+  image?: ImageConfig
+  /**
+   * Self-hosted fonts (🟡 Experimental). Declare the font families to bundle and
+   * `apex build` copies them into `dist/fonts/`, emits the matching `@font-face`
+   * rules, and injects `<link rel="preload" as="font" crossorigin>` into the page
+   * shell so text paints without a flash and without a third-party request.
+   */
+  fonts?: FontConfig
+  /**
    * Progressive Web App (🟡 Experimental). When set, `apex build` emits a
    * `manifest.webmanifest` + a service worker (`sw.js`) that precaches the built
    * pages/assets — the app becomes installable and works offline — and the HTML
@@ -49,6 +65,44 @@ export interface ApexConfig {
    */
   pwa?: PwaConfig
   [key: string]: unknown
+}
+
+/** The `image` block of `apex.config.ts` (🟡 Experimental). All fields optional — the
+ * mere presence of the block turns the transform on with sensible defaults. */
+export interface ImageConfig {
+  /** Output formats the transform may emit (e.g. `['avif','webp']`). Defaults to the
+   * source format when omitted. Surfaced to `vite-imagetools` as `defaultDirectives`. */
+  formats?: string[]
+  /** Candidate widths (px) generated for responsive `srcset`, e.g. `[640, 828, 1200]`.
+   * The `<Image>` helper mirrors these when it builds `srcset` if none are passed inline. */
+  sizes?: number[]
+  /** Encode quality 1–100 applied to lossy output formats. */
+  quality?: number
+}
+
+/** The `fonts` block of `apex.config.ts` (🟡 Experimental). Declares font families to
+ * self-host + preload; each `src` is a project-relative path copied into `dist/fonts/`. */
+export interface FontConfig {
+  families: FontFamily[]
+  /** Global `font-display` for every emitted `@font-face` (defaults to `swap`). */
+  display?: 'auto' | 'block' | 'swap' | 'fallback' | 'optional'
+  /** Preload every declared face (`<link rel="preload" as="font">`). Defaults to `true`;
+   * set `false` to emit the `@font-face` rules without the preload hints. */
+  preload?: boolean
+}
+
+/** One self-hosted font face. */
+export interface FontFamily {
+  /** CSS `font-family` name, e.g. `"Inter"`. */
+  family: string
+  /** Project-relative path to the font file, e.g. `"fonts/Inter.woff2"`. */
+  src: string
+  /** `font-weight` for the face (`400`, `"700"`, `"100 900"` for variable). */
+  weight?: string | number
+  /** `font-style` for the face (defaults to `normal`). */
+  style?: 'normal' | 'italic' | 'oblique'
+  /** Explicit format hint; inferred from the file extension when omitted. */
+  format?: string
 }
 
 /** The `pwa` block of `apex.config.ts` (🟡 Experimental). */

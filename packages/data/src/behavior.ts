@@ -3,7 +3,7 @@
 // (server-managed columns), lifecycle hooks, a row-level scope, and per-op access.
 // They fold into the model's effective spec inside defineModel, and their
 // hooks/scope/access ride into defineResource — enforced identically over REST + MCP.
-// See AUTH_DESIGN.md §8.
+// See docs/architecture/auth.md §8.
 import type { ApexUser } from '@apex-stack/core'
 import { isNull, type SQL } from 'drizzle-orm'
 import type { AccessMap, AccessRule, ApexDbHandle, ResourceOp, ScopeFn } from './index.js'

@@ -68,7 +68,7 @@ export interface ApexPluginOptions {
   fullReloadOnly?: boolean
 }
 
-/** The parts of a descriptor that force a reload when they change. */
+/** Everything that, when unchanged, makes an edit style-only (→ scoped-CSS hot swap). */
 function structuralKey(d: AlpineDescriptor): string {
   return JSON.stringify([
     d.template?.content ?? '',
@@ -76,6 +76,35 @@ function structuralKey(d: AlpineDescriptor): string {
     d.script?.content ?? '',
     d.clientScript?.content ?? '',
   ])
+}
+
+/**
+ * The parts that, when changed, make a morph UNSAFE and force a full reload: the
+ * root `x-data` expression (it compiles into the `Alpine.data` factory) and the
+ * server/client scripts (loader + composables). When these are unchanged but the
+ * template markup changed, the edit is a safe, morphable template-only edit.
+ */
+function reloadKey(d: AlpineDescriptor): string {
+  return JSON.stringify([
+    d.template?.attrs?.['x-data'] ?? '',
+    d.script?.content ?? '',
+    d.clientScript?.content ?? '',
+  ])
+}
+
+/** The non-`x-data` root `<template>` attributes (x-init, x-effect, @events, …),
+ *  carried in the morph payload so the rebuilt root keeps them (mirrors SSR). */
+function rootAttrsOf(d: AlpineDescriptor): Record<string, string> {
+  const attrs = { ...(d.template?.attrs ?? {}) }
+  delete attrs['x-data']
+  return attrs
+}
+
+interface StructureSnapshot {
+  /** Style-only detection key (template + all attrs + scripts). */
+  structural: string
+  /** Morph-safety key (x-data + scripts); unchanged ⇒ a template edit is morphable. */
+  reload: string
 }
 
 /** The scoped CSS for a descriptor (same computation the compiler uses). */
@@ -91,16 +120,17 @@ function scopedCssOf(d: AlpineDescriptor, scopeId: string): string {
  * TypeScript in the `<script server>` block is transpiled.
  *
  * HMR: a style-only edit hot-swaps the component's scoped CSS in place (no
- * reload, state + scroll preserved) via a custom `apex:css` event the client
- * runtime listens for. Template/script edits still full-reload (the client
- * saves + restores scroll around it); fine-grained template patching is a
- * later milestone.
+ * reload, state + scroll preserved) via a custom `apex:css` event. A template
+ * markup edit (root x-data + scripts unchanged) ships the new markup via an
+ * `apex:template` event and the client MORPHS the live DOM in place (fine-grained
+ * HMR — Alpine state, form input and scroll preserved), see #20. Only an unsafe
+ * change — root `x-data` shape or a `<script>` body — still triggers a full reload.
  */
 export function apex(options: ApexPluginOptions = {}): Plugin {
   const clientRuntime = options.clientRuntime ?? '@apex-stack/kit/client'
-  // Last-seen structure per file, so a hot update can tell "style-only edit"
-  // from "template/script edit". Populated on every transform.
-  const structure = new Map<string, string>()
+  // Last-seen structure per file, so a hot update can classify an edit as
+  // style-only, template-markup-only, or a full-reload change. Set on every transform.
+  const structure = new Map<string, StructureSnapshot>()
 
   return {
     name: 'apexjs',
@@ -112,7 +142,10 @@ export function apex(options: ApexPluginOptions = {}): Plugin {
       if (!filePath.endsWith('.alpine')) return
 
       const descriptor = parseAlpineFile(code, filePath)
-      structure.set(filePath, structuralKey(descriptor))
+      structure.set(filePath, {
+        structural: structuralKey(descriptor),
+        reload: reloadKey(descriptor),
+      })
       const ssr = transformOptions?.ssr === true
       // For SSR, hand compileAlpine a declarations-only client body so client-only side
       // effects don't run during server eval (they still ship in the client module). #53
@@ -142,20 +175,41 @@ export function apex(options: ApexPluginOptions = {}): Plugin {
         moduleGraph.invalidateModule(mod)
       }
 
-      // Style-only edit → swap the scoped CSS in place, no reload. Falls back
-      // to a full reload on parse errors or when the structure changed.
+      // Islands pages carry no HMR listener, so any custom event is dropped there —
+      // always full-reload. Otherwise classify the edit against the last snapshot.
       if (!options.fullReloadOnly) {
         try {
           const next = parseAlpineFile(await ctx.read(), ctx.file)
           const prev = structure.get(ctx.file)
-          if (prev !== undefined && prev === structuralKey(next)) {
-            const { scopeId } = computeIds(ctx.file)
-            ctx.server.ws.send({
-              type: 'custom',
-              event: 'apex:css',
-              data: { scopeId, css: scopedCssOf(next, scopeId) },
-            })
-            return []
+          if (prev !== undefined) {
+            const { componentId, scopeId } = computeIds(ctx.file)
+
+            // Style-only edit → swap the scoped CSS in place, no reload.
+            if (prev.structural === structuralKey(next)) {
+              ctx.server.ws.send({
+                type: 'custom',
+                event: 'apex:css',
+                data: { scopeId, css: scopedCssOf(next, scopeId) },
+              })
+              return []
+            }
+
+            // Template-markup-only edit (root x-data + scripts unchanged) → ship the new
+            // markup and let the client morph the live DOM in place, preserving Alpine
+            // state (#20). A changed x-data/script falls through to a full reload.
+            if (prev.reload === reloadKey(next)) {
+              ctx.server.ws.send({
+                type: 'custom',
+                event: 'apex:template',
+                data: {
+                  componentId,
+                  scopeId,
+                  template: next.template?.content ?? '',
+                  rootAttrs: rootAttrsOf(next),
+                },
+              })
+              return []
+            }
           }
         } catch {
           // fall through to full reload

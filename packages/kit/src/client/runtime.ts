@@ -14,6 +14,7 @@
  *     there is no flash.
  */
 import { parse } from 'devalue'
+import { installTemplateHmr } from './hmr.js'
 
 type Factory = () => Record<string, unknown>
 
@@ -103,6 +104,19 @@ export function removeSsrClones(root: ParentNode = document): void {
 export type { ActionOptions, ActionState } from './action.js'
 // Form-action sugar (see ./action.ts).
 export { createAction } from './action.js'
+// Fine-grained (DOM-morphing) HMR receiver (see ./hmr.ts). Self-installs below so a
+// template edit morphs the live DOM instead of full-reloading (dev-only, no-op in prod).
+export {
+  applyTemplatePatch,
+  buildRootElement,
+  installTemplateHmr,
+  type TemplatePatch,
+} from './hmr.js'
+
+// Arm template-morph HMR once, on first import of the runtime (no-op without a dev
+// server / import.meta.hot, and in non-browser environments).
+installTemplateHmr()
+
 // Client-side navigation (see ./nav.ts).
 export { installNav, type NavOptions } from './nav.js'
 // Reactive CRUD data-hook for a model resource (see ./resource.ts).
