@@ -49,8 +49,8 @@ the `apex` CLI (see `API.md`).
 | **`packages/create-apexjs`** | `npm create apexjs` / scaffold templates | The starter template (`templates/default`, incl. `AGENTS.md`) and the `apex new` scaffold generators. |
 
 Also present: `packages/theme` + `packages/components` (themeable UI copied in via
-`apex add`), `examples/`, `e2e/`, `mobile-poc/`, and `site/` — supporting, not core
-subsystems.
+`apex add`), `examples/`, `e2e/`, `mobile-poc/`, and `docs/` (the published site) —
+supporting, not core subsystems.
 
 ## Reading order for a new maintainer
 
