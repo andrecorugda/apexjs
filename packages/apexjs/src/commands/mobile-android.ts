@@ -3,6 +3,11 @@ import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
+import { MissingToolError, runExternalTool } from '../util/externalTool.js'
+
+const GRADLE_HINT =
+  'Install the Android SDK + Gradle (easiest: Android Studio, which bundles both), then\n' +
+  '  re-run. Or open mobile/android in Android Studio and press Run — no CLI gradle needed.'
 
 // The native-shell template ships with the package (packages/apexjs/templates/mobile). The CLI
 // build is flat (dist/<cmd>-HASH.js), so ../templates and ./cli.js resolve from the dist root.
@@ -115,8 +120,24 @@ export const mobileAndroidCommand = defineCommand({
 
     // 6) Assemble the APK, or print how to.
     if (args.assemble) {
-      log('Running gradle assembleDebug…')
-      execFileSync('gradle', ['assembleDebug'], { cwd: proj, stdio: 'inherit' })
+      // Prefer the project's Gradle wrapper (self-contained, no system gradle needed) when it
+      // exists; fall back to a PATH gradle. Both are resolved cross-platform (.bat/.cmd on Win).
+      const wrapper = join(proj, process.platform === 'win32' ? 'gradlew.bat' : 'gradlew')
+      const tool = existsSync(wrapper) ? wrapper : 'gradle'
+      log(`Running ${existsSync(wrapper) ? 'gradlew' : 'gradle'} assembleDebug…`)
+      try {
+        runExternalTool(tool, ['assembleDebug'], { cwd: proj, stdio: 'inherit' }, GRADLE_HINT)
+      } catch (err) {
+        if (err instanceof MissingToolError) {
+          console.error(`\n  ✗ Gradle not found — the APK was not assembled.\n  ${err.hint}\n`)
+          console.error(
+            `  Everything else is ready: the shell is scaffolded and the bundle is synced at\n  mobile/android. Only the final APK compile needs the Android toolchain.\n`,
+          )
+          process.exitCode = 1
+          return
+        }
+        throw err
+      }
       console.log(
         `\n  ✓ APK → mobile/android/app/build/outputs/apk/debug/app-debug.apk\n    Install: adb install -r that.apk\n`,
       )

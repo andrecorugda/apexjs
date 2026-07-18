@@ -3,6 +3,11 @@ import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
+import { MissingToolError, runExternalTool } from '../util/externalTool.js'
+
+const XCODEGEN_HINT =
+  'iOS needs a Mac with Xcode + XcodeGen. Install XcodeGen (`brew install xcodegen`),\n' +
+  '  then re-run — or open mobile/ios in Xcode after generating the project manually.'
 
 const TEMPLATE = fileURLToPath(new URL('../templates/mobile', import.meta.url))
 const CLI = fileURLToPath(new URL('./cli.js', import.meta.url))
@@ -101,7 +106,21 @@ export const mobileIosCommand = defineCommand({
     // 5) Generate the Xcode project, or print how (both need a Mac).
     if (args.generate) {
       log('Running xcodegen generate…')
-      execFileSync('xcodegen', ['generate'], { cwd: proj, stdio: 'inherit' })
+      try {
+        runExternalTool('xcodegen', ['generate'], { cwd: proj, stdio: 'inherit' }, XCODEGEN_HINT)
+      } catch (err) {
+        if (err instanceof MissingToolError) {
+          console.error(
+            `\n  ✗ XcodeGen not found — the Xcode project was not generated.\n  ${err.hint}\n`,
+          )
+          console.error(
+            `  The shell + bundle are already synced at mobile/ios; only project generation needs XcodeGen.\n`,
+          )
+          process.exitCode = 1
+          return
+        }
+        throw err
+      }
     }
     console.log(
       `\n  iOS needs a Mac + Xcode. Then:\n    brew install xcodegen\n    cd mobile/ios && xcodegen generate && open ApexShell.xcodeproj\n  Add a free Apple ID signing team, pick your iPhone, and Run. (The Simulator needs no signing.)\n`,
