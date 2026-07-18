@@ -148,9 +148,22 @@ apex mobile android --assemble   <span class="c"># also run gradle assembleDebug
       <p>Name the app and set its package id when you scaffold:</p>
       <pre><code>apex mobile android --appId com.you.app --name "My App" --icon icon.png --assemble</code></pre>
       <p class="muted">
-        <code>--assemble</code> shells out to Gradle, so it needs the Android SDK installed. Without it, the
-        command still scaffolds <code>mobile/android</code> and syncs assets — open it in Android Studio to
-        build. Full flag reference on <a href="./cli.html#mobile">CLI → apex mobile</a>.
+        <code>--assemble</code> runs Gradle, so it needs a <strong>JDK 17+</strong>, the <strong>Android SDK</strong>,
+        and <strong>Gradle</strong> — but <em>not</em> Android Studio (the IDE just bundles those three).
+        Point Apex at a Gradle that isn't on <code>PATH</code> and at your SDK, and it wires everything up:
+      </p>
+      <pre><code>apex mobile android --assemble \
+  --gradle /path/to/gradle-8.9/bin/gradle   <span class="c"># or …\bin\gradle.bat on Windows</span>
+  --sdk    ~/Android/Sdk                     <span class="c"># writes mobile/android/local.properties for you</span></code></pre>
+      <p class="muted">
+        Gradle resolves in order: <code>--gradle &lt;path&gt;</code> → the project <code>gradlew</code> wrapper →
+        <code>$APEX_GRADLE</code> → <code>gradle</code> on <code>PATH</code>. The SDK comes from <code>--sdk</code>,
+        else <code>$ANDROID_HOME</code>/<code>$ANDROID_SDK_ROOT</code>. First time? Add <code>--wrapper</code> to
+        generate <code>gradlew</code> so later builds are self-contained (JDK-only, no system Gradle). Windows
+        <code>gradle.bat</code>/<code>gradlew.bat</code> are run through <code>cmd.exe</code>, and paths with spaces
+        are handled. If the toolchain is missing, the command still scaffolds <code>mobile/android</code> + syncs
+        assets and prints exactly what to install — full flag reference on
+        <a href="./cli.html#mobile">CLI → apex mobile</a>.
       </p>
       <p>Targeting iOS? The same bundle drives a WKWebView shell:</p>
       <pre><code>apex mobile ios         <span class="c"># scaffold mobile/ios + sync the bundle &amp; client assets</span>

@@ -32,8 +32,10 @@ apex add button card modal        # copy themeable UI components in
 apex migrate                      # apply DB migrations
 apex check                        # type-check (tsc --noEmit; fast with the native compiler)
 apex build --preset vercel        # build + Vercel config (also: netlify, docker); then deploy
+apex mobile android --assemble    # package the whole app as an offline APK (on-device SSR+API)
 apex test                         # run Vitest
 ```
+**Ship it as a native app.** `apex build --mobile` bundles the *entire* app (SSR + API + on-device SQLite + auth) into a self-contained JS bundle that runs on a bare on-device engine — offline, no server. `apex mobile android --assemble` scaffolds a WebView shell around it and builds an installable APK. That needs a JDK 17+, the Android SDK, and Gradle — **not** Android Studio. If Gradle isn't on `PATH`, point at it and your SDK: `apex mobile android --assemble --gradle <…/bin/gradle[.bat]> --sdk <android-sdk-dir>` (add `--wrapper` once to generate `gradlew` so later builds need only a JDK). iOS: `apex mobile ios` scaffolds a WKWebView shell anywhere, but building/signing an IPA needs a Mac + Xcode.
 `apex make <kind> …` kinds: `page component api service store layout middleware test model migration auth client composable`.
 
 **Data flow, end to end.** One `defineModel` drives the whole stack: schema + migration + REST (`/api/articles` list/get/create/update/delete) + MCP tools **and** the client. `apex make composable Article` emits `composables/useArticles.ts` — a typed `useArticles()` returning `items / loading / error` + `fetch / find / create / update / remove` bound to that resource. Spread it into an x-data:

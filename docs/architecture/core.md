@@ -176,6 +176,19 @@ module registry, and `createProdWebHandler` gives a `(Request) => Promise<Respon
 handler with no Node dependency. This is what lets the *same* SSR+API pipeline run in a
 WebView/QuickJS isolate (see `mobile-poc/`).
 
+**Native packaging — `src/commands/mobile-*.ts` + `src/mobile/androidToolchain.ts`.**
+`apex mobile android` scaffolds the WebView shell (`templates/mobile/android`), syncs the
+on-device bundle into the APK assets, and — with `--assemble` — drives Gradle to a real
+APK. The toolchain is resolved, not assumed: `resolveGradle()` picks `--gradle <path>` →
+project `gradlew` → `$APEX_GRADLE` → `PATH` `gradle`; `ensureLocalProperties()` writes
+`sdk.dir` from `--sdk`/`$ANDROID_HOME`; a missing tool yields a clean, actionable message
+(never a `spawnSync` crash). Cross-platform spawning lives in `src/util/externalTool.ts`:
+`resolveBin()` honors Windows `PATHEXT`, and `execTool()` routes `.bat`/`.cmd` through
+`cmd.exe` (Node throws `EINVAL` on a direct batch spawn). `apex mobile ios` is symmetric
+but caps at scaffold + `xcodegen` — `xcodebuild`/`codesign` are macOS-only. The
+`scripts/e2e-targets.sh` harness fresh-scaffolds an app and asserts every target
+(build/islands/pwa/mobile/android/ios) plus clean failure when a toolchain is absent.
+
 ## 9. Server hardening — `src/security/`
 
 `resolveSecurityConfig(runtimeConfig.security)` resolves headers/CSP, CORS, HSTS,

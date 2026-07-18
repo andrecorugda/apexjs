@@ -111,11 +111,17 @@ It's a WebView app (like Capacitor or Ionic), but unlike them it runs your **act
 apex build --mobile                          # self-contained on-device bundle
 apex mobile android --appId com.you.app \
   --name "My App" --assemble                 # scaffold native shell, sync assets → APK
+
+# Gradle not on PATH (and no Android Studio)? point Apex at it + your SDK:
+apex mobile android --assemble \
+  --gradle ~/tools/gradle-8.9/bin/gradle \
+  --sdk    ~/Android/Sdk                      # (…/bin/gradle.bat on Windows)
+
 apex mobile ios --appId com.you.app \
   --name "My App" --generate                 # scaffold WKWebView shell, sync assets (build on a Mac)
 ```
 
-`apex mobile android` scaffolds the native shell and syncs your assets; `--assemble` runs gradle to produce an installable APK (needs the Android SDK). `apex mobile ios` scaffolds a WKWebView + JavaScriptCore shell into `mobile/ios` and syncs the same bundle; `--generate` runs XcodeGen for you, but building and signing needs a Mac + Xcode. The iOS engine is CI-verified on the iOS Simulator; Android is turnkey (one command → APK) while iOS scaffolds anywhere and compiles on a Mac. See the [mobile docs](https://apexjs.site/docs/mobile.html).
+`apex mobile android` scaffolds the native shell and syncs your assets; `--assemble` runs Gradle to produce an installable APK. That needs a **JDK 17+, the Android SDK, and Gradle — but not the Android Studio IDE** (the IDE just bundles those three). Apex resolves Gradle from `--gradle` → the project `gradlew` → `$APEX_GRADLE` → `PATH`, writes `local.properties` from `--sdk`/`$ANDROID_HOME`, runs Windows `gradle.bat` correctly, and `--wrapper` generates a `gradlew` so later builds need only a JDK. `apex mobile ios` scaffolds a WKWebView + JavaScriptCore shell into `mobile/ios` and syncs the same bundle; `--generate` runs XcodeGen, but building and signing an IPA needs a Mac + Xcode (macOS-only — no Windows/Linux path). Android is turnkey; iOS scaffolds anywhere and compiles on a Mac. See the [mobile docs](https://apexjs.site/docs/mobile.html).
 
 ## Status
 
