@@ -3,11 +3,12 @@ import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
-import { MissingToolError, runExternalTool } from '../util/externalTool.js'
+import { ensureLocalProperties, resolveGradle, resolveSdkDir } from '../mobile/androidToolchain.js'
 
 const GRADLE_HINT =
-  'Install the Android SDK + Gradle (easiest: Android Studio, which bundles both), then\n' +
-  '  re-run. Or open mobile/android in Android Studio and press Run — no CLI gradle needed.'
+  'Point Apex at a Gradle with --gradle <path> (e.g. …/gradle-8.9/bin/gradle.bat), set\n' +
+  '  $APEX_GRADLE, or install the Android SDK + Gradle (Android Studio bundles both). A JDK 17+\n' +
+  '  and the Android SDK are still required — pass --sdk <dir> or set $ANDROID_HOME.'
 
 // The native-shell template ships with the package (packages/apexjs/templates/mobile). The CLI
 // build is flat (dist/<cmd>-HASH.js), so ../templates and ./cli.js resolve from the dist root.
@@ -33,6 +34,18 @@ export const mobileAndroidCommand = defineCommand({
     name: { type: 'string', description: 'App display name' },
     icon: { type: 'string', description: 'Source icon (PNG/SVG) to generate launcher icons from' },
     assemble: { type: 'boolean', description: 'Run gradle assembleDebug to produce an APK' },
+    gradle: {
+      type: 'string',
+      description: 'Path to a Gradle binary (e.g. …/gradle-8.9/bin/gradle.bat) not on PATH',
+    },
+    sdk: {
+      type: 'string',
+      description: 'Android SDK dir (writes local.properties). Defaults to $ANDROID_HOME',
+    },
+    wrapper: {
+      type: 'boolean',
+      description: 'Generate the Gradle wrapper (gradlew) so future builds need no system Gradle',
+    },
     force: { type: 'boolean', description: 'Re-scaffold mobile/android even if it exists' },
     build: {
       type: 'boolean',
@@ -119,31 +132,50 @@ export const mobileAndroidCommand = defineCommand({
     }
 
     // 6) Assemble the APK, or print how to.
-    if (args.assemble) {
-      // Prefer the project's Gradle wrapper (self-contained, no system gradle needed) when it
-      // exists; fall back to a PATH gradle. Both are resolved cross-platform (.bat/.cmd on Win).
-      const wrapper = join(proj, process.platform === 'win32' ? 'gradlew.bat' : 'gradlew')
-      const tool = existsSync(wrapper) ? wrapper : 'gradle'
-      log(`Running ${existsSync(wrapper) ? 'gradlew' : 'gradle'} assembleDebug…`)
-      try {
-        runExternalTool(tool, ['assembleDebug'], { cwd: proj, stdio: 'inherit' }, GRADLE_HINT)
-      } catch (err) {
-        if (err instanceof MissingToolError) {
-          console.error(`\n  ✗ Gradle not found — the APK was not assembled.\n  ${err.hint}\n`)
-          console.error(
-            `  Everything else is ready: the shell is scaffolded and the bundle is synced at\n  mobile/android. Only the final APK compile needs the Android toolchain.\n`,
-          )
-          process.exitCode = 1
-          return
-        }
-        throw err
+    if (args.assemble || args.wrapper) {
+      // Resolve a usable Gradle: --gradle path > project gradlew > $APEX_GRADLE > PATH gradle.
+      // (Handles a standalone gradle not on PATH — the common "I have Gradle, just not on
+      // PATH / no Android Studio" case — plus Windows .bat/.cmd shims.)
+      const gradle = resolveGradle({ gradleArg: args.gradle, proj })
+      if (!gradle) {
+        console.error(`\n  ✗ Gradle not found — the APK was not assembled.\n  ${GRADLE_HINT}\n`)
+        console.error(
+          `  Everything else is ready: the shell is scaffolded and the bundle is synced at\n  mobile/android. Only the final APK compile needs Gradle + the Android SDK.\n`,
+        )
+        process.exitCode = 1
+        return
       }
-      console.log(
-        `\n  ✓ APK → mobile/android/app/build/outputs/apk/debug/app-debug.apk\n    Install: adb install -r that.apk\n`,
-      )
+
+      // Point Gradle at the SDK via local.properties (so ANDROID_HOME isn't needed each run).
+      const sdkDir = resolveSdkDir(args.sdk)
+      const localProps = ensureLocalProperties(proj, sdkDir)
+      if (localProps === 'written') log(`Wrote local.properties (sdk.dir=${sdkDir})`)
+      else if (localProps === 'no-sdk')
+        log(
+          '⚠ No Android SDK found — set $ANDROID_HOME or pass --sdk <dir> if Gradle cannot locate it',
+        )
+
+      // Generate the wrapper on request, so subsequent builds are self-contained (JDK-only).
+      if (args.wrapper) {
+        log(
+          `Generating the Gradle wrapper (${gradle.kind === 'wrapper' ? 'gradlew' : gradle.bin})…`,
+        )
+        execFileSync(gradle.bin, ['wrapper'], { cwd: proj, stdio: 'inherit' })
+        log('Wrapper written → future builds can use ./gradlew (no system Gradle needed)')
+      }
+
+      if (args.assemble) {
+        // If we just generated the wrapper, prefer it (self-contained) over the bootstrap gradle.
+        const runner = args.wrapper ? (resolveGradle({ proj }) ?? gradle) : gradle
+        log(`Running ${runner.kind === 'wrapper' ? 'gradlew' : 'gradle'} assembleDebug…`)
+        execFileSync(runner.bin, ['assembleDebug', '--no-daemon'], { cwd: proj, stdio: 'inherit' })
+        console.log(
+          `\n  ✓ APK → mobile/android/app/build/outputs/apk/debug/app-debug.apk\n    Install: adb install -r that.apk\n`,
+        )
+      }
     } else {
       console.log(
-        `\n  Next: build the APK (needs Android SDK + gradle):\n    cd mobile/android && gradle assembleDebug\n  Or re-run with --assemble. Then: adb install -r app/build/outputs/apk/debug/app-debug.apk\n`,
+        `\n  Next: build the APK. Needs a JDK 17+, the Android SDK, and Gradle:\n    apex mobile android --assemble --gradle <path-to-gradle> --sdk <android-sdk-dir>\n  Or, if Gradle is on PATH with $ANDROID_HOME set, just: apex mobile android --assemble\n  First time? Add --wrapper to generate ./gradlew so later builds need no system Gradle.\n  Then: adb install -r mobile/android/app/build/outputs/apk/debug/app-debug.apk\n`,
       )
     }
   },

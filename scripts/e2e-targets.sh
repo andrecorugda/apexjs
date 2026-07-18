@@ -119,6 +119,21 @@ if [ $CODE -ne 0 ]; then ok "exits non-zero (did not falsely succeed)"; else bad
 echo "$OUT" | grep -qi "gradle not found" && ok "prints clean 'Gradle not found' message" || bad "no clean gradle message"
 echo "$OUT" | grep -q "spawnSync" && bad "LEAKED raw spawnSync stack trace" || ok "no raw spawnSync stack trace"
 
+# ── TARGET 6b: android --assemble with a resolvable Gradle → wiring works ─────
+step "TARGET 6b — apex mobile android --assemble --gradle <fake> --sdk <dir>"
+FAKE="$WORK/fakegradle.sh"
+cat > "$FAKE" <<'EOF'
+#!/usr/bin/env bash
+echo "FAKEGRADLE $*"
+mkdir -p app/build/outputs/apk/debug && echo apk > app/build/outputs/apk/debug/app-debug.apk
+EOF
+chmod +x "$FAKE"
+rm -f "$APP/mobile/android/local.properties"
+OUT="$( cd "$APP" && node "$CLI" mobile android --assemble --no-build --gradle "$FAKE" --sdk "/fake/Sdk" 2>&1 )"; CODE=$?
+[ $CODE -eq 0 ] && ok "assemble exits 0 with a resolvable gradle" || bad "assemble failed with a resolvable gradle"
+echo "$OUT" | grep -q "FAKEGRADLE assembleDebug --no-daemon" && ok "invokes gradle assembleDebug --no-daemon" || bad "did not invoke assembleDebug --no-daemon"
+grep -q "sdk.dir=/fake/Sdk" "$APP/mobile/android/local.properties" 2>/dev/null && ok "wrote local.properties (sdk.dir)" || bad "local.properties sdk.dir not written"
+
 # ── TARGET 7: ios scaffold ───────────────────────────────────────────────────
 step "TARGET 7 — apex mobile ios (scaffold + sync)"
 ( cd "$APP" && node "$CLI" mobile ios --no-build >/dev/null 2>&1 ) && ok "ios scaffold ran" || bad "ios scaffold crashed"
