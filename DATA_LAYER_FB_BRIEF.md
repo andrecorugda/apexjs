@@ -1,48 +1,45 @@
 # Co-worker brief: Facebook post plan + 9:16 video — the Apex data layer
 
-The full prompt below is self-contained (hand it to any co-worker/AI session as-is). Deliverables:
-a Facebook post plan and a 9:16 vertical video (Reel) explaining Apex's data layer — model,
-migrations, composables, and the Eloquent-style ORM.
+Self-contained prompt for a co-worker/AI session. Deliverables: a Facebook post plan and a 9:16
+vertical Reel explaining Apex's data layer. **Every fact and snippet below is taken from the
+shipped docs (apexjs.site/docs/data.html) and verified against the source — do not invent APIs.**
 
 ---
 
 ## THE PROMPT
 
 You're producing launch content for **Apex JS** (apexjs.site) — the full-stack, AI-native
-meta-framework for Alpine.js ("Apex is to Alpine what Nuxt is to Vue"). Target: web developers on
-Facebook, especially **Laravel/PHP developers** — the data layer is deliberately Eloquent-flavored,
-and that audience will feel at home instantly.
+meta-framework for Alpine.js. Target audience: web developers on Facebook, especially
+**Laravel/PHP developers** — the data layer is deliberately Eloquent-flavored, and the docs
+themselves describe the feature set as rounding out *Eloquent parity*. That audience will feel at
+home in seconds; lean into it.
 
 ### Deliverable 1 — Facebook post plan
-A Reel-first plan: primary post (the 9:16 video below + caption), plus copy variants.
-- **Caption** for the Reel: hook line first (visible before "…see more"), 3–5 short lines, one CTA
-  (`npm create apexjs@latest`), link to https://apexjs.site/docs/data.html in the caption AND
-  repeated as the first comment (FB downranks link posts less in comments).
+Reel-first: primary post = the 9:16 video + caption.
+- **Caption**: hook line first (visible before "…see more" — e.g. "Laravel devs: your ORM instincts
+  work in TypeScript now."), 3–5 short lines, one CTA (`npm create apexjs@latest`); the docs link
+  https://apexjs.site/docs/data.html in the caption AND repeated as the first comment.
 - **Hashtags** (6–10): #webdev #javascript #typescript #laravel #eloquent #alpinejs #opensource
-  #fullstack — Laravel tags on purpose; this piece is aimed at them.
-- **A text-only companion post** (for groups/pages that prefer text): the code snippet as an image
-  + 4-6 line explainer.
-- **Cadence suggestion**: Reel day 1, text+code-image day 3, a "behaviors deep-dive" follow-up
-  clip day 7.
+  #fullstack.
+- **Text-only companion post** (for dev groups): the `defineModel` snippet as a code image + a
+  6-line explainer ending on the MCP twist.
+- **Cadence**: Reel day 1 → code-image post day 3 → a follow-up clip day 7 (suggest: "relations &
+  eager loading in one query" as the sequel topic).
 
-### Deliverable 2 — the 9:16 video (~60s Reel)
-- **Format**: 1080×1920 vertical. Big type — code must be readable on a phone (max ~40 char lines,
-  22pt+ equivalent). **Burned-in captions on every VO line** (FB autoplays muted — the video must
-  work with sound OFF).
-- **Voiceover**: female narrator, warm and genuinely excited — a team showing off something they're
-  proud of, never corporate or hypey. **Never speak a URL** (screen-only — subtitles must never
-  read "dot site"). Keep the VO lines short and clean for TTS (they're listed per scene below;
-  don't rewrite them into run-ons).
-- **All code shown must be EXACTLY the snippets given below** — they're real, from the shipped
-  framework. Do not invent APIs.
+### Deliverable 2 — the 9:16 video (60–90s Reel; 75s target)
+- 1080×1920. Code must be phone-readable (≤40-char lines, large type). **Burned-in captions on
+  every VO line** (FB autoplays muted — the video must work with sound OFF).
+- **Voiceover: female narrator** — warm, genuinely excited, a team showing off work they're proud
+  of; never corporate. **Never speak a URL** (screen-only; subtitles must never read "dot site").
+- All code EXACTLY as written below (from the shipped docs).
 
-#### Scene-by-scene (adapt timing, keep the order + beats)
+#### Scenes (keep order + beats; tune timing)
 
-**Scene 1 — Hook (0:00–0:06).** Full-screen text over the Apex mark: "Laravel developers… this
-will feel like home." VO: *"Hey Laravel folks — this one's for you. This is Apex, and its data
-layer will feel like home."*
+**S1 — Hook (0:00–0:06).** Text over the Apex mark: "Laravel developers… this will feel like
+home." VO: *"Hey Laravel folks — this one's for you. This is Apex. And its data layer speaks your
+language."*
 
-**Scene 2 — The model (0:06–0:20).** Type this code on screen (it's the entire model):
+**S2 — One model, everything derived (0:06–0:20).**
 ```ts
 // models/Message.ts
 export const Message = defineModel('messages', {
@@ -53,59 +50,99 @@ export const Message = defineModel('messages', {
   use: [timestamps()],
 })
 ```
-Then four badges pop around it, one per beat: `SQL schema` · `zod validation` · `migration` ·
-`REST + MCP API`. VO: *"One model. That's it. From this single definition, Apex derives the
-database schema… the validation… the migration… and a full REST API."* Then the one-liner:
+Badges pop per beat: `Zod validation` · `Drizzle table` · `migration SQL` · `REST + MCP API` ·
+`typed query API`. Then the one-liner:
 ```ts
 // server/api/messages.ts
 export default Message.resource(handle)
 ```
-VO: *"One line, and it's live — list, get, create, update, delete."*
+VO: *"One model — that's the single source of truth. From it, Apex derives the validation, the
+table, the migration, AND a full REST API. One more line… and it's live. List, get, create,
+update, delete — with pagination, filtering, and sorting for free."*
 
-**Scene 3 — Behaviors = traits (0:20–0:32).** The `use:` line expands:
+**S3 — Active record (0:20–0:34).** Type, in quick succession:
 ```ts
-use: [timestamps(), owned(), softDeletes(), auditable()]
+await Player.find(handle, id)
+await Player.where({ team: 'A', plays: { gt: 5 } })
+  .orderBy('plays', 'desc').limit(10).all(handle)
+
+const p = await Player.find(handle, id)
+p.plays = 5
+p.isDirty()      // true
+await p.save()   // persists only what changed
 ```
-VO: *"And these? They're like Laravel traits. Timestamps. Ownership with row-level security. Soft
-deletes. A full audit trail. Composable — stack what you need."*
+VO: *"And querying? Pure Eloquent instincts. Find. Where. Order, limit, all. Instances track their
+own dirty state — save writes only what changed."*
 
-**Scene 4 — Migrations (0:32–0:42).** Terminal: `apex make model Post` then `apex migrate`. Show a
-migration file with the `-- @down` marker visible; then `apex migrate --rollback` (if unsure of the
-exact rollback flag, show only `apex migrate` — do NOT invent flags). VO: *"Migrations? Generated
-for you — with up and down. Run them, roll them back. You know this dance."*
-
-**Scene 5 — Composables (0:42–0:50).** Show:
+**S4 — Relations (0:34–0:46).**
 ```ts
-// composables/useToggle.ts
-export function useToggle(initial = false) {
-  return { on: initial, toggle() { this.on = !this.on } }
+relations: {
+  author:   belongsTo(() => User, 'authorId'),
+  comments: hasMany(() => Comment, 'postId'),
 }
+
+const posts = await Post.with('author', 'comments').all(handle)
+posts[0].author    // a User
+posts[0].comments  // a Collection
 ```
-and its use: `<template x-data="useToggle(true)">`. VO: *"Reusable logic? Composables — write a
-function once, use it in any component. Server and client."*
+VO: *"Relations — with eager loading. And here's the nice bit: loading a relation for a hundred
+posts is ONE extra query. Not a hundred."*
 
-**Scene 6 — The twist Eloquent doesn't have (0:50–1:00).** The REST endpoints morph into MCP tool
-chips: `messages_list · messages_create · …` with a chat bubble "AI: create a message…" VO: *"And
-here's the part Eloquent can't do: every model operation is also an AI tool — automatically. Your
-assistant can query and write your data, with your auth rules enforced."* End card: Apex mark +
-`apexjs.site` + `npm create apexjs@latest` (screen only). VO: *"One model. Everything derived.
-This is Apex."*
+**S5 — The rapid-fire parity list (0:46–0:58).** Fast cuts, one line each on screen:
+`handle.transaction(async (tx) => { … })` → `scopes: { published: (q) => q.where({status:'published'}) }`
+→ `casts: { at: 'date', prefs: 'json' }` → `optimisticLock: 'version'` → behaviors
+`timestamps() · owned() · softDeletes() · auditable()`. VO: *"Transactions with auto-rollback.
+Named scopes. Casts. Optimistic locking. And behaviors — like traits: timestamps, ownership with
+row-level security, soft deletes, audit trails."*
 
-#### Honesty guardrails (non-negotiable)
-- Say "**Eloquent-style**" / "will feel like home" — NEVER "Eloquent parity" or "everything
-  Eloquent has" (relations, for one, aren't there yet). The honest claim: one definition derives
-  schema + validation + migration + REST + MCP, with trait-like behaviors.
-- The AI/MCP claim is real and is the differentiator — auth-scoped MCP tools per model. Lean on it.
+**S6 — Migrations (0:58–1:06).** Terminal:
+```
+apex make model Post title:string published:boolean
+apex migrate
+apex migrate --rollback --steps 2
+```
+VO: *"Migrations are plain SQL, generated for you — reversible, tracked, rolled back on command.
+You know this dance."*
+
+**S7 — The model reaches the browser (1:06–1:14).** Terminal: `apex make composable Post` →
+```ts
+// generated: composables/usePosts.ts — typed from the model
+const { items, loading, fetch, create } = usePosts()
+```
+→ `<template x-data="{ ...usePosts(), init() { this.fetch() } }">`. VO: *"And the model drives the
+browser too: one command generates a typed composable — fetch, create, update, remove — straight
+into your components."*
+
+**S8 — The twist Eloquent doesn't have (1:14–1:24).** The REST table morphs into MCP tool chips
+(`messages_list · messages_create · …`) + a chat bubble "AI: create a message…". End card: Apex
+mark + `apexjs.site` + `npm create apexjs@latest` (screen only). VO: *"And the part Eloquent can't
+do: every one of those model operations is also an AI tool — automatically, with your auth rules
+enforced. One model. Schema, queries, relations, REST, the browser… and AI. This is Apex."*
+
+#### Honesty guardrails
+- "Eloquent-style" / "Eloquent parity across queries, relations, scopes, casts, transactions,
+  locking" is FAIR (it's the docs' own framing). Do NOT claim "everything Eloquent has":
+  relations are `hasOne`/`hasMany`/`belongsTo` — **no many-to-many or polymorphic yet**; don't
+  show or mention them.
+- Every command shown is real: `apex make model <Name> field:type…`, `apex migrate`,
+  `apex migrate --rollback --steps N`, `apex make composable <Model>`.
 - Under the hood it's **Drizzle** — if asked, say so proudly (curate, don't rebuild).
+- Writes via `Model.create/update/delete` run the SAME pipeline as REST/MCP (hooks, scope,
+  validation) — safe to say "your rules apply everywhere". Bulk ops (`insertMany`/`upsert`)
+  bypass per-row hooks (like Eloquent's bulk ops) — don't claim hooks there.
 
-#### Facts you may also use (all shipped, verifiable at apexjs.site/docs/data.html)
-- Drivers: SQLite/libSQL (zero-config in-memory for dev), Turso, Postgres (Supabase/Neon), PGlite.
-  One `DATABASE_URL` switch to production.
-- `access` + row-level `scope` gate every operation identically over REST **and** MCP.
-- Schema-inferred test factories (`factory(Message).createMany(db, 5)`).
-- The same model runs on-device in the native mobile build (offline SQLite) — same code.
+#### Extra verified facts (usable)
+- List endpoints paginate/filter/sort out of the box: `?page&perPage` → `{data,total,page,perPage,lastPage}`, `?sort=-createdAt`, `?<col>=value` — REST **and** MCP.
+- Typed errors: `findOrFail` → 404 `ModelNotFoundException`; stale `save()` under
+  `optimisticLock` → 409 `StaleModelException`.
+- `hidden` columns are stripped from `toJSON` and every REST/MCP response.
+- Drivers: libSQL/SQLite (file or memory), Turso (edge), Postgres (Supabase/Neon), PGlite (tests)
+  — one model runs unchanged on all; one `DATABASE_URL` switch.
+- The same model runs **on-device** in the native mobile build (offline SQLite) — same code.
+- Escape hatch: `Model.tableFor(handle)` exposes the Drizzle table for joins/window functions;
+  `raw('plays + 1')` for trusted SQL expressions.
 
 ### Return format
 1. The FB post plan (caption, hashtags, companion post, cadence).
-2. The video script as a scene table (time · visual · on-screen text · VO line · caption text).
+2. The video script as a scene table (time · visual · on-screen text · VO · caption).
 3. A clean VO-only block (one line per subtitle, no URLs) for the narrator/TTS.
