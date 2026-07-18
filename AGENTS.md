@@ -21,7 +21,7 @@ pipeline in the browser, on a server, on serverless, or **on-device** (mobile).
 | `packages/create-apexjs` | `npm create apexjs` | The starter template (`templates/default`) + `apex new` generators. |
 
 Also: `packages/theme` + `packages/components` (UI copied in via `apex add`), `examples/`,
-`e2e/`, `mobile-poc/`, `site/`, `docs/`. Deep architecture: **[`docs/architecture/`](./docs/architecture/)**
+`e2e/`, `mobile-poc/`, `docs/` (the published site — `apexjs.site`). Deep architecture: **[`docs/architecture/`](./docs/architecture/)**
 (start with `core.md` — the request pipeline is the spine).
 
 ## Commands
