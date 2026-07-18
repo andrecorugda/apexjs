@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
 import { ensureLocalProperties, resolveGradle, resolveSdkDir } from '../mobile/androidToolchain.js'
+import { execTool } from '../util/externalTool.js'
 
 const GRADLE_HINT =
   'Point Apex at a Gradle with --gradle <path> (e.g. …/gradle-8.9/bin/gradle.bat), set\n' +
@@ -138,10 +139,18 @@ export const mobileAndroidCommand = defineCommand({
       // PATH / no Android Studio" case — plus Windows .bat/.cmd shims.)
       const gradle = resolveGradle({ gradleArg: args.gradle, proj })
       if (!gradle) {
-        console.error(`\n  ✗ Gradle not found — the APK was not assembled.\n  ${GRADLE_HINT}\n`)
-        console.error(
-          `  Everything else is ready: the shell is scaffolded and the bundle is synced at\n  mobile/android. Only the final APK compile needs Gradle + the Android SDK.\n`,
-        )
+        // Distinguish "you gave me a --gradle path that doesn't exist" from "found nothing" —
+        // the former is a path typo, not a missing toolchain.
+        if (args.gradle)
+          console.error(
+            `\n  ✗ --gradle path does not exist: ${args.gradle}\n  Check the path (it should end in bin/gradle.bat on Windows, bin/gradle on macOS/Linux).\n`,
+          )
+        else {
+          console.error(`\n  ✗ Gradle not found — the APK was not assembled.\n  ${GRADLE_HINT}\n`)
+          console.error(
+            `  Everything else is ready: the shell is scaffolded and the bundle is synced at\n  mobile/android. Only the final APK compile needs Gradle + the Android SDK.\n`,
+          )
+        }
         process.exitCode = 1
         return
       }
@@ -160,7 +169,7 @@ export const mobileAndroidCommand = defineCommand({
         log(
           `Generating the Gradle wrapper (${gradle.kind === 'wrapper' ? 'gradlew' : gradle.bin})…`,
         )
-        execFileSync(gradle.bin, ['wrapper'], { cwd: proj, stdio: 'inherit' })
+        execTool(gradle.bin, ['wrapper'], { cwd: proj, stdio: 'inherit' })
         log('Wrapper written → future builds can use ./gradlew (no system Gradle needed)')
       }
 
@@ -168,7 +177,7 @@ export const mobileAndroidCommand = defineCommand({
         // If we just generated the wrapper, prefer it (self-contained) over the bootstrap gradle.
         const runner = args.wrapper ? (resolveGradle({ proj }) ?? gradle) : gradle
         log(`Running ${runner.kind === 'wrapper' ? 'gradlew' : 'gradle'} assembleDebug…`)
-        execFileSync(runner.bin, ['assembleDebug', '--no-daemon'], { cwd: proj, stdio: 'inherit' })
+        execTool(runner.bin, ['assembleDebug', '--no-daemon'], { cwd: proj, stdio: 'inherit' })
         console.log(
           `\n  ✓ APK → mobile/android/app/build/outputs/apk/debug/app-debug.apk\n    Install: adb install -r that.apk\n`,
         )

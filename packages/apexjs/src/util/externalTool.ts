@@ -32,6 +32,37 @@ export function resolveBin(cmd: string): string | null {
   return null
 }
 
+/**
+ * Build the command line for running a Windows `.bat`/`.cmd` through `cmd.exe /d /s /c`.
+ * Exported for testing. The executable is always quoted (it may sit under `Program Files`),
+ * args are quoted only when they contain whitespace/metacharacters, and the whole thing is
+ * wrapped in one more pair of quotes — which `cmd /s` strips, leaving the inner quoting intact.
+ */
+export function windowsBatchCommandLine(bin: string, argv: string[]): string {
+  const needsQuote = (s: string) => s === '' || /[\s"&|<>^()%!]/.test(s)
+  const quote = (s: string) => `"${s.replace(/"/g, '""')}"`
+  const parts = [quote(bin), ...argv.map((a) => (needsQuote(a) ? quote(a) : a))]
+  return `"${parts.join(' ')}"`
+}
+
+/**
+ * Like {@link execFileSync}, but can actually run a Windows `.bat`/`.cmd`. Node refuses to
+ * `execFileSync` a batch file directly — it throws `EINVAL` since the CVE-2024-27980 fix —
+ * so batch files are routed through `cmd.exe` with verbatim (pre-quoted) arguments. Everything
+ * else (a real `.exe`, a POSIX binary, `gradlew` shell script) runs directly.
+ */
+export function execTool(bin: string, argv: string[], opts: ExecFileSyncOptions): void {
+  if (isWindows && /\.(bat|cmd)$/i.test(bin)) {
+    const comspec = process.env.ComSpec || 'cmd.exe'
+    execFileSync(comspec, ['/d', '/s', '/c', windowsBatchCommandLine(bin, argv)], {
+      ...opts,
+      windowsVerbatimArguments: true,
+    })
+    return
+  }
+  execFileSync(bin, argv, opts)
+}
+
 /** A required external CLI tool is not installed / not on PATH. Carries an actionable hint
  *  so the CLI can print guidance instead of a raw spawn stack trace. */
 export class MissingToolError extends Error {
