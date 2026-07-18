@@ -1,4 +1,4 @@
-import { type ExecFileSyncOptions, execFileSync } from 'node:child_process'
+import { type ExecFileSyncOptions, execFileSync, spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { delimiter, isAbsolute, join } from 'node:path'
 
@@ -61,6 +61,23 @@ export function execTool(bin: string, argv: string[], opts: ExecFileSyncOptions)
     return
   }
   execFileSync(bin, argv, opts)
+}
+
+/**
+ * Run a tool and capture its output (for version probes like `java -version`, which prints to
+ * **stderr** and exits 0). Handles Windows `.bat`/`.cmd` via `cmd.exe`. Returns null when the
+ * tool can't be spawned at all (not installed); otherwise `{ stdout, stderr, code }`.
+ */
+export function captureTool(
+  bin: string,
+  argv: string[],
+): { stdout: string; stderr: string; code: number } | null {
+  const isBatch = isWindows && /\.(bat|cmd)$/i.test(bin)
+  const cmd = isBatch ? process.env.ComSpec || 'cmd.exe' : bin
+  const args = isBatch ? ['/d', '/s', '/c', windowsBatchCommandLine(bin, argv)] : argv
+  const r = spawnSync(cmd, args, { encoding: 'utf8', windowsVerbatimArguments: isBatch })
+  if (r.error) return null
+  return { stdout: r.stdout ?? '', stderr: r.stderr ?? '', code: r.status ?? 0 }
 }
 
 /** A required external CLI tool is not installed / not on PATH. Carries an actionable hint

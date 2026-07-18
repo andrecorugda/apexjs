@@ -14,5 +14,6 @@ export const mobileCommand = defineCommand({
   subCommands: {
     android: () => import('./mobile-android.js').then((m) => m.mobileAndroidCommand),
     ios: () => import('./mobile-ios.js').then((m) => m.mobileIosCommand),
+    doctor: () => import('./mobile-doctor.js').then((m) => m.mobileDoctorCommand),
   },
 })

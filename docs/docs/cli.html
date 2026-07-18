@@ -107,6 +107,7 @@
               <li><a href="#start">apex start</a></li>
               <li><a href="#mobile">apex mobile</a></li>
               <li><a href="#mobile-ios">apex mobile ios</a></li>
+              <li><a href="#mobile-doctor">apex mobile doctor</a></li>
               <li><a href="#upgrade">apex upgrade</a></li>
               <li><a href="#make">apex make</a></li>
               <li><a href="#add">apex add</a></li>
@@ -291,6 +292,30 @@ apex mobile android --assemble --gradle ~/tools/gradle-8.9/bin/gradle --sdk ~/An
 apex mobile ios         <span class="c"># scaffold mobile/ios + sync the bundle &amp; client assets</span>
 apex mobile ios --appId com.you.app --name "My App" --generate   <span class="c"># + run xcodegen generate (build on a Mac)</span></code></pre>
       <p class="muted">Without <code>--generate</code> it only scaffolds and syncs — run <code>xcodegen generate</code>, then <code>open mobile/ios/ApexShell.xcodeproj</code> on a Mac, add a free Apple ID team, and run on a device or the Simulator. Full story on <a href="./mobile.html#ios">Mobile → iOS</a>.</p>
+
+      <h2 id="mobile-doctor">apex mobile doctor <a class="anchor" href="#mobile-doctor">#</a></h2>
+      <p>
+        Check the native build toolchain and get set up. <code>apex mobile doctor</code> prints a ✓/✗
+        board for the <strong>Android</strong> chain (JDK, Android SDK + platform-tools / build-tools /
+        platform, Gradle) and, on a Mac, <strong>iOS</strong> (Xcode, XcodeGen) — and for anything
+        missing, the official download link plus the exact copy-paste setup commands for your OS. The
+        required versions are <em>read from your project's Gradle files</em> (the JDK floor, <code>compileSdk</code>,
+        build-tools), never hardcoded — bump the template and the check follows.
+      </p>
+      <pre><code>apex mobile doctor [--fix] [--sdk &lt;dir&gt;] [--gradle &lt;path&gt;] [--root &lt;dir&gt;]</code></pre>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Flag</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>--fix</code></td><td><code>false</code></td><td>Run the <strong>safe</strong> automatable steps with your consent: accept SDK licenses, install missing <code>sdkmanager</code> packages (platform-tools / build-tools / platform), write <code>local.properties</code>, and (on a Mac) <code>brew install xcodegen</code>. It never downloads a JDK or Xcode — those get a link + one command.</td></tr>
+            <tr><td><code>--sdk</code></td><td><code>$ANDROID_HOME</code></td><td>Android SDK directory to check / wire up.</td></tr>
+            <tr><td><code>--gradle</code></td><td>—</td><td>Gradle binary to check (same resolution as <a href="#mobile"><code>apex mobile android</code></a>).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>apex mobile doctor          <span class="c"># status board + links + copy-paste setup for what's missing</span>
+apex mobile doctor --fix    <span class="c"># also run the safe installs (licenses, sdkmanager packages, local.properties)</span></code></pre>
+      <p class="muted">When <code>apex mobile android --assemble</code> can't find a tool, it points you here. Full story on <a href="./mobile.html">Mobile</a>.</p>
 
       <h2 id="upgrade">apex upgrade <a class="anchor" href="#upgrade">#</a></h2>
       <p>
