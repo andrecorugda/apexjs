@@ -6,8 +6,8 @@ import { defineCommand } from 'citty'
 import { MissingToolError, runExternalTool } from '../util/externalTool.js'
 
 const XCODEGEN_HINT =
-  'iOS needs a Mac with Xcode + XcodeGen. Install XcodeGen (`brew install xcodegen`),\n' +
-  '  then re-run — or open mobile/ios in Xcode after generating the project manually.'
+  'Run "apex mobile doctor" to check the iOS toolchain + get setup links (--fix installs XcodeGen\n' +
+  '  via Homebrew). iOS needs a Mac with Xcode + XcodeGen — or open mobile/ios in Xcode manually.'
 
 const TEMPLATE = fileURLToPath(new URL('../templates/mobile', import.meta.url))
 const CLI = fileURLToPath(new URL('./cli.js', import.meta.url))

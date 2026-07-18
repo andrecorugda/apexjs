@@ -7,9 +7,9 @@ import { ensureLocalProperties, resolveGradle, resolveSdkDir } from '../mobile/a
 import { execTool } from '../util/externalTool.js'
 
 const GRADLE_HINT =
-  'Point Apex at a Gradle with --gradle <path> (e.g. …/gradle-8.9/bin/gradle.bat), set\n' +
-  '  $APEX_GRADLE, or install the Android SDK + Gradle (Android Studio bundles both). A JDK 17+\n' +
-  '  and the Android SDK are still required — pass --sdk <dir> or set $ANDROID_HOME.'
+  'Run "apex mobile doctor" to check the toolchain + get setup links/commands (--fix to install\n' +
+  '  what it can). Or point Apex at a Gradle: --gradle <…/bin/gradle[.bat]>, set $APEX_GRADLE, or\n' +
+  '  put gradle on PATH. A JDK 17+ and the Android SDK are also required (--sdk <dir> / $ANDROID_HOME).'
 
 // The native-shell template ships with the package (packages/apexjs/templates/mobile). The CLI
 // build is flat (dist/<cmd>-HASH.js), so ../templates and ./cli.js resolve from the dist root.

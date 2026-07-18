@@ -165,6 +165,15 @@ apex mobile android --assemble   <span class="c"># also run gradle assembleDebug
         assets and prints exactly what to install — full flag reference on
         <a href="./cli.html#mobile">CLI → apex mobile</a>.
       </p>
+      <p>Not sure what you're missing? <code>apex mobile doctor</code> checks the whole toolchain and walks you through setup:</p>
+      <pre><code>apex mobile doctor          <span class="c"># ✓/✗ board for JDK, SDK, Gradle (+ Xcode on a Mac) with install links</span>
+apex mobile doctor --fix    <span class="c"># run the safe installs: SDK licenses, sdkmanager packages, local.properties</span></code></pre>
+      <p class="muted">
+        The doctor reads the required JDK / <code>compileSdk</code> / build-tools versions straight from your
+        project's Gradle files, so they're never out of date. It never downloads a JDK or Xcode (those need
+        a link + one command), but it will install the Android SDK packages and accept licenses for you.
+        See <a href="./cli.html#mobile-doctor">CLI → apex mobile doctor</a>.
+      </p>
       <p>Targeting iOS? The same bundle drives a WKWebView shell:</p>
       <pre><code>apex mobile ios         <span class="c"># scaffold mobile/ios + sync the bundle &amp; client assets</span>
 apex mobile ios --appId com.you.app --name "My App" --generate   <span class="c"># + run xcodegen generate</span></code></pre>

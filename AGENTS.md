@@ -99,4 +99,7 @@ drives Gradle to a real APK. The toolchain is *resolved, not assumed*
 spawning is in `src/util/externalTool.ts` — `resolveBin()` honors Windows `PATHEXT`, and
 `execTool()` routes `.bat`/`.cmd` through `cmd.exe` (Node throws `EINVAL` on a direct batch
 spawn). Building an APK needs a JDK 17+, the Android SDK, and Gradle — **not** Android Studio.
-iOS caps at scaffold + `xcodegen`; `xcodebuild`/`codesign` are macOS-only.
+iOS caps at scaffold + `xcodegen`; `xcodebuild`/`codesign` are macOS-only. `apex mobile doctor`
+(`src/mobile/doctor.ts`) checks the whole toolchain and (with `--fix`) runs the safe installs;
+required versions (JDK floor, `compileSdk`, build-tools) are **derived from the Gradle files**
+via `src/mobile/requirements.ts` — never hardcoded, so bumping the template moves the check.
