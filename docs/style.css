@@ -2219,7 +2219,7 @@ footer.site-footer {
   /* A definite height + a single full-height row so the editor column fills it: the code
      area grows and the terminal stays pinned to the bottom no matter how short the file is.
      Taller than the terminal needs, so the code pane gets comfortable room. */
-  height: clamp(540px, 72vh, 660px);
+  height: clamp(620px, 82vh, 780px);
   grid-template-rows: minmax(0, 1fr);
 }
 .ax-explorer {
