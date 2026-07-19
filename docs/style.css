@@ -2217,8 +2217,9 @@ footer.site-footer {
   display: grid;
   grid-template-columns: 246px 1fr;
   /* A definite height + a single full-height row so the editor column fills it: the code
-     area grows and the terminal stays pinned to the bottom no matter how short the file is. */
-  height: clamp(460px, 62vh, 560px);
+     area grows and the terminal stays pinned to the bottom no matter how short the file is.
+     Taller than the terminal needs, so the code pane gets comfortable room. */
+  height: clamp(540px, 72vh, 660px);
   grid-template-rows: minmax(0, 1fr);
 }
 .ax-explorer {
@@ -2660,7 +2661,7 @@ pre.ax-term {
     height: auto;
   }
   .ax-scroll {
-    min-height: 300px;
+    min-height: 340px;
   }
   .ax-explorer {
     border-right: none;
