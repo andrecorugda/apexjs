@@ -6,7 +6,7 @@
 // page). Until it's set — or off the production domain — nothing loads, so
 // local dev and previews never pollute the stats.
 ;(() => {
-  const CF_BEACON_TOKEN = '__CF_BEACON_TOKEN__' // ← replace with the real token
+  const CF_BEACON_TOKEN = '82075e4d042a4b308f8ede9d732999cf' // Cloudflare Web Analytics (apexjs.site)
   if (!CF_BEACON_TOKEN || CF_BEACON_TOKEN.startsWith('__')) return
   if (!/(^|\.)apexjs\.site$/.test(location.hostname)) return // prod domain only
   const s = document.createElement('script')
