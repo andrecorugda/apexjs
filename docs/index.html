@@ -44,7 +44,7 @@
     <canvas id="hero-net" class="apex-net" aria-hidden="true"></canvas>
     <div class="wrap">
       <div class="hero-copy">
-        <a class="hero-badge" href="#mobile">✦ New — your full-stack app runs on the phone, offline <span>→</span></a>
+        <a class="hero-badge" href="#platforms">✦ New — one app → web, native mobile &amp; PWA <span>→</span></a>
         <h1>HTML-first apps.<br /><span class="ai">AI-native</span> APIs.</h1>
         <p class="lede">
           Apex is to Alpine what Next.js is to React — file routing, server rendering, and islands.
@@ -173,37 +173,76 @@
           </div>
         </div>
       </div>
-
-      <div class="ax-panel">
-        <div class="ax-panelh"><b>my-app</b> · /blog <span class="ax-reqlog" id="axReqlog">GET /api/posts → 200</span></div>
-        <div class="ax-demoapp">
-          <div class="ax-demomain">
-            <input class="ax-filter" id="axFilter" type="text" placeholder="Filter posts…" aria-label="Filter posts" />
-            <div class="ax-posts" id="axPosts"></div>
-          </div>
-          <div class="ax-demoside">
-            <h4>Publish a post</h4>
-            <p>The same code, running on sample data — no database. Posts a JSON body and prepends the result.</p>
-            <form id="axAddForm">
-              <span class="ax-field"><label for="axTitle">Title</label><input id="axTitle" required placeholder="What's on your mind?" /></span>
-              <span class="ax-field"><label for="axAuthor">Author</label><input id="axAuthor" required placeholder="Your name" /></span>
-              <button class="btn" type="submit" style="width:100%;justify-content:center">Publish post</button>
-            </form>
-          </div>
-        </div>
-      </div>
     </div>
   </section>
 
 
-  <section class="section mobile-keynote" aria-label="On-device mobile" id="mobile">
+  <!-- Reusable live blog demo. Cloned into every [data-demoapp] slot (Web pane, PWA browser
+       frame, PWA app-window) and initialised per-instance by the inline script. -->
+  <template id="axDemoTpl">
+    <div class="ax-demoapp" data-demoapp>
+      <div class="ax-demomain">
+        <div class="ax-demobar"><span class="ax-route">/blog</span><span class="ax-reqlog">GET /api/posts → 200</span></div>
+        <input class="ax-filter" type="text" placeholder="Filter posts…" aria-label="Filter posts" />
+        <div class="ax-posts"></div>
+      </div>
+      <div class="ax-demoside">
+        <h4>Publish a post</h4>
+        <p>The same code, on sample data — no database. POSTs a JSON body and prepends the result.</p>
+        <form class="ax-addform">
+          <span class="ax-field"><label>Title</label><input class="ax-title" required placeholder="What's on your mind?" aria-label="Post title" /></span>
+          <span class="ax-field"><label>Author</label><input class="ax-author" required placeholder="Your name" aria-label="Author" /></span>
+          <button class="btn" type="submit" style="width:100%;justify-content:center">Publish post</button>
+        </form>
+      </div>
+    </div>
+  </template>
+
+  <section class="section platforms" aria-label="One codebase, every platform" id="platforms">
+    <div class="pf-bg" aria-hidden="true">
+      <div class="pf-layer pf-glow" data-parallax="0.16"></div>
+      <div class="pf-layer pf-grid" data-parallax="0.42"></div>
+    </div>
     <div class="wrap">
       <div class="section-head">
-        <p class="eyebrow">New · runs on the phone</p>
-        <h2>Your full-stack app. On the <span class="grad">phone</span>. Offline.</h2>
-        <p>Swipe the phone — it boots offline, runs your app with no network, then shows how the whole server fits inside. One command: <code>apex build --mobile</code>, then <code>apex mobile android</code> or <code>apex mobile ios</code>.</p>
+        <p class="eyebrow">One codebase · every platform</p>
+        <h2>Ship it <span class="grad">everywhere</span>.</h2>
+        <p>The same Apex app — SSR, API, on-device data, auth — builds to the web, to native <strong>Android</strong> &amp; <strong>iOS</strong>, and to an installable <strong>PWA</strong>. Same code. Pick a target.</p>
       </div>
-      <div class="mk-phone" id="apexPhone">
+
+      <div class="pf-tabs" role="tablist" aria-label="Platforms">
+        <button class="pf-tab pill on" role="tab" aria-selected="true" data-pf="web" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/></svg>
+          Web
+        </button>
+        <button class="pf-tab pill" role="tab" aria-selected="false" data-pf="mobile" type="button">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 18c0 .55.45 1 1 1h1v3.5a1.5 1.5 0 0 0 3 0V19h2v3.5a1.5 1.5 0 0 0 3 0V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8A1.5 1.5 0 0 0 2 9.5v7a1.5 1.5 0 0 0 3 0v-7A1.5 1.5 0 0 0 3.5 8zm17 0a1.5 1.5 0 0 0-1.5 1.5v7a1.5 1.5 0 0 0 3 0v-7A1.5 1.5 0 0 0 20.5 8zM15.53 2.16l1.3-1.3a.5.5 0 0 0-.7-.7l-1.48 1.48A6.97 6.97 0 0 0 12 1c-.95 0-1.86.19-2.68.53L7.87.16a.5.5 0 1 0-.7.7l1.29 1.3A6.99 6.99 0 0 0 6 7h12a6.99 6.99 0 0 0-2.47-4.84zM10 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm4 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+          Mobile
+        </button>
+        <button class="pf-tab pill" role="tab" aria-selected="false" data-pf="pwa" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v9m0 0 3.2-3.2M12 12 8.8 8.8"/><path d="M4 14v3.5A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5V14"/></svg>
+          PWA
+        </button>
+      </div>
+
+      <div class="pf-panes">
+        <!-- WEB -->
+        <div class="pf-pane on" data-pane="web" role="tabpanel" aria-label="Web">
+          <div class="studio pf-studio">
+            <div class="studio-chrome">
+              <span class="studio-dots"><i></i><i></i><i></i></span>
+              <span class="studio-titlebar">my-app</span>
+              <span class="studio-address"><span class="lock">🔒</span> localhost:3000/blog</span>
+            </div>
+            <div class="pf-appbody" data-demoapp-slot></div>
+          </div>
+          <p class="pf-cap"><code>apex build</code> → server-rendered HTML, then Alpine hydrates. This is the real app running right here.</p>
+        </div>
+
+        <!-- MOBILE (the phone, moved here unchanged) -->
+        <div class="pf-pane" data-pane="mobile" role="tabpanel" aria-label="Mobile" hidden>
+          <div class="mk-phone" id="apexPhone">
         <div class="device">
           <div class="frame">
             <span class="btn-side btn-mute"></span><span class="btn-side btn-vup"></span><span class="btn-side btn-vdn"></span><span class="btn-side btn-pwr"></span>
@@ -256,6 +295,40 @@
           <button class="mk-nav" data-phone-next aria-label="Next screen" type="button">›</button>
         </div>
         <p class="mk-more"><a class="btn ghost" href="./docs/mobile.html">How it works →</a></p>
+          </div>
+          <p class="pf-cap">
+            <span class="pf-os"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 18c0 .55.45 1 1 1h1v3.5a1.5 1.5 0 0 0 3 0V19h2v3.5a1.5 1.5 0 0 0 3 0V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8A1.5 1.5 0 0 0 2 9.5v7a1.5 1.5 0 0 0 3 0v-7A1.5 1.5 0 0 0 3.5 8zm17 0a1.5 1.5 0 0 0-1.5 1.5v7a1.5 1.5 0 0 0 3 0v-7A1.5 1.5 0 0 0 20.5 8zM15.53 2.16l1.3-1.3a.5.5 0 0 0-.7-.7l-1.48 1.48A6.97 6.97 0 0 0 12 1c-.95 0-1.86.19-2.68.53L7.87.16a.5.5 0 1 0-.7.7l1.29 1.3A6.99 6.99 0 0 0 6 7h12a6.99 6.99 0 0 0-2.47-4.84zM10 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm4 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg> Android</span>
+            <span class="pf-os"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg> iOS</span>
+            — one <code>apex mobile</code> build runs the whole server on-device, offline.
+          </p>
+        </div>
+
+        <!-- PWA -->
+        <div class="pf-pane" data-pane="pwa" role="tabpanel" aria-label="PWA" hidden>
+          <div class="studio pf-studio" data-pwa>
+            <div class="studio-chrome">
+              <span class="studio-dots"><i></i><i></i><i></i></span>
+              <span class="studio-titlebar">my-app</span>
+              <span class="studio-address"><span class="lock">🔒</span> my-app.example</span>
+              <button class="studio-install" data-pwa-install type="button" title="Install my-app" aria-label="Install app">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v9m0 0 3.2-3.2M12 12 8.8 8.8"/><path d="M4 14v3.5A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5V14"/></svg>
+                <span>Install</span>
+              </button>
+            </div>
+            <div class="pf-appbody" data-demoapp-slot></div>
+
+            <div class="pwa-backdrop" data-pwa-backdrop></div>
+            <div class="pwa-window" data-pwa-window role="dialog" aria-modal="false" aria-label="Installed app window">
+              <div class="pwa-winbar">
+                <span class="pwa-windots"><i></i><i></i><i></i></span>
+                <span class="pwa-wintitle"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 7 L32 35 L20 56 L4 56 Z" fill="#22d3ee"/><path d="M32 7 L60 56 L44 56 L32 35 Z" fill="#6366f1"/></svg> my-app</span>
+                <button class="pwa-winclose" data-pwa-close type="button" aria-label="Close app window">✕</button>
+              </div>
+              <div class="pf-appbody" data-demoapp-slot></div>
+            </div>
+          </div>
+          <p class="pf-cap">Click <span class="pf-installchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v9m0 0 3.2-3.2M12 12 8.8 8.8"/><path d="M4 14v3.5A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5V14"/></svg> Install</span> in the address bar — it runs in its own app window. <code>apex build</code> emits <code>manifest.webmanifest</code> + a service worker.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -956,56 +1029,136 @@ apex dev --islands     <span class="c"># static-first islands mode</span></code>
     });
     openFile("pages/index.alpine");
 
-    // Live blog demo — sample data, filter + publish (no DB).
-    var POSTS = [
+    // Live blog demo — cloned into every [data-demoapp-slot] (Web pane, PWA frame, PWA window),
+    // each an independent instance so filtering/publishing in one doesn't touch the others.
+    var DEMO_SEED = [
       { id: 3, slug: "routes-are-tools", title: "Every route is an MCP tool", excerpt: "Ship an API your AI can call.", author: "Alan Turing", date: "2026-02-15" },
       { id: 2, slug: "ssr-then-hydrate", title: "SSR, then hydrate", excerpt: "Real HTML first. Interactivity second.", author: "Grace Hopper", date: "2026-02-08" },
       { id: 1, slug: "hello-apex", title: "Hello, Apex", excerpt: "Why Alpine deserved a meta-framework.", author: "Ada Lovelace", date: "2026-02-01" }
     ];
-    var nextId = 4, q = "";
-    var postsEl = document.getElementById("axPosts");
-    var reqlog = document.getElementById("axReqlog");
-    var filterEl = document.getElementById("axFilter");
-
     var toastEl = document.createElement("div");
     toastEl.className = "ax-toast";
     document.body.appendChild(toastEl);
     var toastT;
     function toast(html){
       toastEl.innerHTML = html; toastEl.classList.add("show");
-      clearTimeout(toastT); toastT = setTimeout(()=> { toastEl.classList.remove("show"); }, 2600);
+      clearTimeout(toastT); toastT = setTimeout(function(){ toastEl.classList.remove("show"); }, 2600);
     }
-
-    function render(){
-      if (!postsEl) return;
-      var list = POSTS.filter((p)=> p.title.toLowerCase().indexOf(q.toLowerCase()) > -1);
-      if (!list.length){ postsEl.innerHTML = '<div class="ax-empty">No posts match “'+esc(q)+'”.</div>'; return; }
-      postsEl.innerHTML = list.map((p)=> '<a class="ax-post" href="#showcase" onclick="return false"><strong>'+esc(p.title)+'</strong>'+
-               '<span>'+esc(p.excerpt)+'</span>'+
-               '<span class="by">'+esc(p.author)+' · '+p.date+' · /blog/'+esc(p.slug)+'</span></a>').join("");
-    }
-    if (filterEl) filterEl.addEventListener("input", (e)=> {
-      q = e.target.value;
-      reqlog.textContent = q ? 'filtering client-side · ' + POSTS.filter((p)=> p.title.toLowerCase().indexOf(q.toLowerCase())>-1).length + ' shown' : 'GET /api/posts → 200';
-      render();
-    });
-
     function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32) || "post"; }
-    var addForm = document.getElementById("axAddForm");
-    if (addForm) addForm.addEventListener("submit", (e)=> {
-      e.preventDefault();
-      var title = document.getElementById("axTitle").value.trim();
-      var author = document.getElementById("axAuthor").value.trim();
-      if (!title || !author) return;
-      var post = { id: nextId++, slug: slugify(title), title: title, excerpt: "Just published from the demo form.", author: author, date: "2026-02-20" };
-      POSTS.unshift(post);
-      q = ""; if (filterEl) filterEl.value = "";
+
+    function initDemoApp(root){
+      var postsEl = root.querySelector(".ax-posts");
+      if (!postsEl) return;
+      var reqlog = root.querySelector(".ax-reqlog");
+      var filterEl = root.querySelector(".ax-filter");
+      var addForm = root.querySelector(".ax-addform");
+      var POSTS = DEMO_SEED.map(function(p){ return Object.assign({}, p); });
+      var nextId = 4, q = "";
+      function render(){
+        var list = POSTS.filter(function(p){ return p.title.toLowerCase().indexOf(q.toLowerCase()) > -1; });
+        if (!list.length){ postsEl.innerHTML = '<div class="ax-empty">No posts match “'+esc(q)+'”.</div>'; return; }
+        postsEl.innerHTML = list.map(function(p){ return '<a class="ax-post" href="#platforms" onclick="return false"><strong>'+esc(p.title)+'</strong>'+
+                 '<span>'+esc(p.excerpt)+'</span>'+
+                 '<span class="by">'+esc(p.author)+' · '+p.date+' · /blog/'+esc(p.slug)+'</span></a>'; }).join("");
+      }
+      if (filterEl) filterEl.addEventListener("input", function(e){
+        q = e.target.value;
+        if (reqlog) reqlog.textContent = q ? 'filtering · ' + POSTS.filter(function(p){ return p.title.toLowerCase().indexOf(q.toLowerCase())>-1; }).length + ' shown' : 'GET /api/posts → 200';
+        render();
+      });
+      if (addForm) addForm.addEventListener("submit", function(e){
+        e.preventDefault();
+        var titleEl = root.querySelector(".ax-title"), authorEl = root.querySelector(".ax-author");
+        var title = titleEl.value.trim(), author = authorEl.value.trim();
+        if (!title || !author) return;
+        var post = { id: nextId++, slug: slugify(title), title: title, excerpt: "Just published from the demo form.", author: author, date: "2026-02-20" };
+        POSTS.unshift(post);
+        q = ""; if (filterEl) filterEl.value = "";
+        render();
+        if (reqlog) reqlog.textContent = 'POST /api/posts → 201';
+        toast('POST /api/posts → <span class="ax-code2">201 Created</span>  ·  id ' + post.id);
+        e.target.reset();
+      });
       render();
-      reqlog.textContent = 'POST /api/posts → 201';
-      toast('POST /api/posts → <span class="ax-code2">201 Created</span>  ·  id ' + post.id);
-      e.target.reset();
+    }
+
+    var demoTpl = document.getElementById("axDemoTpl");
+    if (demoTpl) document.querySelectorAll("[data-demoapp-slot]").forEach(function(slot){
+      slot.appendChild(demoTpl.content.cloneNode(true));
+      initDemoApp(slot);
     });
-    render();
+  })();
+
+  // Platform showcase — button-group tabs (Web / Mobile / PWA).
+  (() => {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll(".pf-tab"));
+    var panes = document.querySelectorAll(".pf-pane");
+    if (!tabs.length) return;
+    function activate(key){
+      tabs.forEach(function(t){
+        var on = t.dataset.pf === key;
+        t.classList.toggle("on", on);
+        t.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      panes.forEach(function(p){
+        var on = p.dataset.pane === key;
+        p.classList.toggle("on", on);
+        if (on) p.removeAttribute("hidden"); else p.setAttribute("hidden", "");
+      });
+    }
+    tabs.forEach(function(t, idx){
+      t.addEventListener("click", function(){ activate(t.dataset.pf); });
+      t.addEventListener("keydown", function(e){
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        e.preventDefault();
+        var next = (idx + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length;
+        tabs[next].focus(); activate(tabs[next].dataset.pf);
+      });
+    });
+  })();
+
+  // PWA tab — click the address-bar Install glyph → a mock standalone app-window overlays
+  // the browser frame (illustrative only, not a real OS window). Close returns to the browser.
+  (() => {
+    var studio = document.querySelector(".pf-studio[data-pwa]");
+    if (!studio) return;
+    var install = studio.querySelector("[data-pwa-install]");
+    var closeBtn = studio.querySelector("[data-pwa-close]");
+    var backdrop = studio.querySelector("[data-pwa-backdrop]");
+    var open = function(){ studio.classList.add("installed"); };
+    var close = function(){ studio.classList.remove("installed"); };
+    if (install) install.addEventListener("click", open);
+    if (closeBtn) closeBtn.addEventListener("click", close);
+    if (backdrop) backdrop.addEventListener("click", close);
+    document.addEventListener("keydown", function(e){ if (e.key === "Escape") close(); });
+  })();
+
+  // Scroll-linked parallax — background layers in #platforms lag the content as it scrolls,
+  // each by its own [data-parallax] factor. rAF-throttled, in-view only, reduced-motion aware.
+  (() => {
+    var section = document.getElementById("platforms");
+    if (!section) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var layers = Array.prototype.slice.call(section.querySelectorAll("[data-parallax]"));
+    if (!layers.length) return;
+    var inView = false, ticking = false;
+    var io = new IntersectionObserver(function(entries){ inView = entries[0].isIntersecting; if (inView) update(); }, { threshold: 0 });
+    io.observe(section);
+    function update(){
+      ticking = false;
+      var r = section.getBoundingClientRect();
+      // progress: -1 (below viewport) … +1 (above), 0 when the section is centered.
+      var progress = (r.top + r.height / 2 - window.innerHeight / 2) / (window.innerHeight + r.height);
+      layers.forEach(function(l){
+        var f = parseFloat(l.dataset.parallax) || 0;
+        l.style.transform = "translate3d(0," + (progress * f * 100).toFixed(2) + "px,0)";
+      });
+    }
+    window.addEventListener("scroll", function(){
+      if (!inView || ticking) return;
+      ticking = true; requestAnimationFrame(update);
+    }, { passive: true });
+    window.addEventListener("resize", update);
   })();
 
 

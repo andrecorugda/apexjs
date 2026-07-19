@@ -2216,6 +2216,10 @@ footer.site-footer {
 .ax-body {
   display: grid;
   grid-template-columns: 246px 1fr;
+  /* A definite height + a single full-height row so the editor column fills it: the code
+     area grows and the terminal stays pinned to the bottom no matter how short the file is. */
+  height: clamp(460px, 62vh, 560px);
+  grid-template-rows: minmax(0, 1fr);
 }
 .ax-explorer {
   background: var(--ground-deep);
@@ -2352,7 +2356,9 @@ footer.site-footer {
 .ax-scroll {
   position: relative;
   overflow: auto;
-  max-height: 460px;
+  /* Grow to fill the editor column; the terminal below keeps its natural height. */
+  flex: 1 1 auto;
+  min-height: 0;
   background: var(--surface);
 }
 .ax-coderow {
@@ -2390,6 +2396,7 @@ pre.ax-code {
   color: var(--amber);
 }
 .ax-terminal {
+  flex: none;
   border-top: 1px solid var(--line);
   background: var(--ground-deep);
 }
@@ -2650,6 +2657,10 @@ pre.ax-term {
 @media (max-width: 860px) {
   .ax-body {
     grid-template-columns: 1fr;
+    height: auto;
+  }
+  .ax-scroll {
+    min-height: 300px;
   }
   .ax-explorer {
     border-right: none;
@@ -2766,4 +2777,270 @@ pre.ax-term {
   .mk-phone .track { transition:none; }
   .mk-phone .scr-splash .mark, .mk-phone .scr-splash .typed { animation:none !important; }
   .mk-phone .scr-splash .typed { width:7ch; border:0; }
+}
+
+/* ============================================================
+   Platform showcase (#platforms) — one codebase, three targets.
+   Full-bleed, scroll-linked parallax band with a Web/Mobile/PWA
+   tab group. Web + PWA reuse the .studio macOS browser frame;
+   Mobile reuses the .mk-phone device; PWA adds an install overlay.
+   ============================================================ */
+.platforms {
+  position: relative;
+  overflow: hidden;
+  background: var(--ground-deep);
+}
+.platforms > .wrap {
+  position: relative;
+  z-index: 1;
+}
+/* ---- Parallax background layers (translated by JS on scroll) ---- */
+.pf-bg {
+  position: absolute;
+  inset: -18% 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.pf-layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.pf-glow {
+  background:
+    radial-gradient(900px 520px at 82% -8%, var(--glacier-soft), transparent 60%),
+    radial-gradient(720px 480px at 4% 108%, var(--alpenglow-soft), transparent 55%);
+}
+.pf-grid {
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 46px 46px;
+  opacity: 0.35;
+  mask-image: radial-gradient(circle at 50% 40%, #000, transparent 72%);
+}
+
+/* ---- Tabs (button group) ---- */
+.pf-tabs {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1.6rem 0 1.8rem;
+}
+.pf-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 0.5rem 1.05rem;
+  background: var(--surface);
+  color: var(--muted);
+  transition: color 0.18s, border-color 0.18s, background 0.18s, transform 0.1s;
+}
+.pf-tab svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.pf-tab:hover {
+  color: var(--text);
+  border-color: var(--glacier);
+}
+.pf-tab.on {
+  color: var(--text);
+  border-color: var(--glacier);
+  background: var(--glacier-soft);
+  box-shadow: 0 0 0 1px var(--glacier) inset;
+}
+.pf-tab:focus-visible {
+  outline: 2px solid var(--glacier);
+  outline-offset: 2px;
+}
+
+/* ---- Panes ---- */
+.pf-panes {
+  position: relative;
+}
+.pf-pane[hidden] {
+  display: none;
+}
+.pf-pane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  animation: pfFade 0.4s ease both;
+}
+@keyframes pfFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.pf-cap {
+  max-width: 60ch;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: 0.2rem auto 0;
+}
+.pf-cap code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  color: var(--glacier);
+}
+
+/* ---- macOS browser frame (Web + PWA) ---- */
+.pf-studio {
+  position: relative;
+  width: min(880px, 100%);
+}
+.pf-appbody {
+  background: var(--surface);
+  max-height: 480px;
+  overflow: auto;
+}
+.ax-demobar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--faint);
+}
+.ax-demobar .ax-route {
+  color: var(--muted);
+}
+.ax-demobar .ax-reqlog {
+  margin-left: auto;
+}
+
+/* Chrome address-bar Install glyph */
+.studio-install {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: none;
+  margin-left: 0.5rem;
+  padding: 0.22rem 0.6rem;
+  font-family: var(--sans);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--glacier);
+  background: var(--glacier-soft);
+  border: 1px solid var(--glacier);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.18s;
+  animation: pfNudge 2.4s ease-in-out infinite;
+}
+.studio-install svg { width: 15px; height: 15px; }
+.studio-install:hover { transform: translateY(-1px); box-shadow: 0 4px 12px -4px var(--glacier); }
+.pf-studio.installed .studio-install { animation: none; opacity: 0.55; }
+@keyframes pfNudge {
+  0%, 100% { box-shadow: 0 0 0 0 var(--glacier-soft); }
+  50% { box-shadow: 0 0 0 5px transparent; }
+}
+
+/* ---- PWA install overlay: a mock standalone app window over the browser ---- */
+.pwa-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: rgba(4, 7, 14, 0.55);
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.28s ease, visibility 0.28s;
+}
+.pwa-window {
+  position: absolute;
+  z-index: 6;
+  top: 50%;
+  left: 50%;
+  width: min(560px, 88%);
+  transform: translate(-50%, -50%) scale(0.95);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: 0 40px 90px -35px rgba(0, 0, 0, 0.8), 0 8px 24px -10px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1), visibility 0.28s;
+}
+.pf-studio.installed .pwa-backdrop { opacity: 1; visibility: visible; pointer-events: auto; }
+.pf-studio.installed .pwa-window { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+.pwa-winbar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.8rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+.pwa-windots { display: inline-flex; gap: 0.4rem; flex: none; }
+.pwa-windots i { width: 10px; height: 10px; border-radius: 50%; display: block; }
+.pwa-windots i:nth-child(1) { background: #ff5f57; }
+.pwa-windots i:nth-child(2) { background: #febc2e; }
+.pwa-windots i:nth-child(3) { background: #28c840; }
+.pwa-wintitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.pwa-wintitle svg { width: 16px; height: 16px; }
+.pwa-winclose {
+  margin-left: auto;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.pwa-winclose:hover { background: var(--glacier-soft); color: var(--text); }
+.pwa-window .pf-appbody { max-height: 340px; }
+
+/* ---- Mobile OS chips in the caption ---- */
+.pf-os {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--text);
+  font-weight: 600;
+}
+.pf-os svg { width: 16px; height: 16px; }
+.pf-installchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--glacier);
+  font-weight: 600;
+}
+.pf-installchip svg { width: 14px; height: 14px; }
+
+@media (max-width: 720px) {
+  .pf-tab { font-size: 0.85rem; padding: 0.44rem 0.85rem; }
+  .pf-appbody { max-height: 60vh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pf-pane { animation: none; }
+  .studio-install { animation: none; }
+  .pwa-backdrop, .pwa-window { transition: opacity 0.01s; }
+  .pf-studio.installed .pwa-window { transform: translate(-50%, -50%) scale(1); }
 }
