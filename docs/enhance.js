@@ -1,3 +1,21 @@
+// ── Traffic analytics: Cloudflare Web Analytics ────────────────────────────
+// Cookieless, no consent banner, ~1 tiny beacon. Loaded here so all 25 static
+// pages are covered from one file. To activate: paste the token from your
+// Cloudflare dashboard (Web Analytics → apexjs.site → the "token" in the JS
+// snippet) into CF_BEACON_TOKEN below. The token is public (it ships in the
+// page). Until it's set — or off the production domain — nothing loads, so
+// local dev and previews never pollute the stats.
+;(() => {
+  const CF_BEACON_TOKEN = '82075e4d042a4b308f8ede9d732999cf' // Cloudflare Web Analytics (apexjs.site)
+  if (!CF_BEACON_TOKEN || CF_BEACON_TOKEN.startsWith('__')) return
+  if (!/(^|\.)apexjs\.site$/.test(location.hostname)) return // prod domain only
+  const s = document.createElement('script')
+  s.defer = true
+  s.src = 'https://static.cloudflareinsights.com/beacon.min.js'
+  s.setAttribute('data-cf-beacon', JSON.stringify({ token: CF_BEACON_TOKEN }))
+  document.head.appendChild(s)
+})()
+
 // Progressive enhancement for every code block on the site: a line-number
 // gutter (like the editor) and a one-click Copy button. Purely additive —
 // runs on load, wraps each <pre> and never touches the interactive editor.
