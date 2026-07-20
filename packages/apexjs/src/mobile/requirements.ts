@@ -62,8 +62,8 @@ export function deriveAndroidRequirements(...androidDirs: string[]): AndroidRequ
     return {
       jdkFloor: jdk ? Number(jdk[1]) : DEFAULTS.jdkFloor,
       compileSdk,
-      buildTools: bt ? bt[1] : `${compileSdk}.0.0`,
-      agp: agp ? agp[1] : DEFAULTS.agp,
+      buildTools: bt?.[1] ?? `${compileSdk}.0.0`,
+      agp: agp?.[1] ?? DEFAULTS.agp,
     }
   }
   return { ...DEFAULTS }

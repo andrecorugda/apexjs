@@ -54,10 +54,12 @@ export function windowsBatchCommandLine(bin: string, argv: string[]): string {
 export function execTool(bin: string, argv: string[], opts: ExecFileSyncOptions): void {
   if (isWindows && /\.(bat|cmd)$/i.test(bin)) {
     const comspec = process.env.ComSpec || 'cmd.exe'
+    // windowsVerbatimArguments reaches spawnSync at runtime but @types/node omits it
+    // from ExecFileSyncOptions — hence the cast.
     execFileSync(comspec, ['/d', '/s', '/c', windowsBatchCommandLine(bin, argv)], {
       ...opts,
       windowsVerbatimArguments: true,
-    })
+    } as ExecFileSyncOptions)
     return
   }
   execFileSync(bin, argv, opts)
