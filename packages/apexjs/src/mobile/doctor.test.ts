@@ -26,10 +26,11 @@ const savedEnv = { ...process.env }
 let dir: string
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'apex-doctor-'))
-  process.env.JAVA_HOME = undefined
-  process.env.ANDROID_HOME = undefined
-  process.env.ANDROID_SDK_ROOT = undefined
-  process.env.APEX_GRADLE = undefined
+  // `= undefined` would store the string "undefined" — delete is the real unset.
+  delete process.env.JAVA_HOME
+  delete process.env.ANDROID_HOME
+  delete process.env.ANDROID_SDK_ROOT
+  delete process.env.APEX_GRADLE
 })
 afterEach(() => {
   rmSync(dir, { recursive: true, force: true })
@@ -119,6 +120,7 @@ describe('detectAndroidSdk', () => {
 
 describe('detectGradle', () => {
   it('is missing (with a link) when nothing resolves', () => {
+    process.env.PATH = dir // CI images ship gradle on PATH — confine resolution to the tmp dir
     const c = detectGradle({ proj: dir })
     expect(c.status).toBe('missing')
     expect(c.link).toContain('gradle.org')
