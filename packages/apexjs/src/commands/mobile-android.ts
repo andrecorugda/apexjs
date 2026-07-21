@@ -1,9 +1,14 @@
 import { execFileSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { dirname, isAbsolute, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineCommand } from 'citty'
-import { ensureLocalProperties, resolveGradle, resolveSdkDir } from '../mobile/androidToolchain.js'
+import {
+  ensureLocalProperties,
+  findDebugApk,
+  resolveGradle,
+  resolveSdkDir,
+} from '../mobile/androidToolchain.js'
 import { execTool } from '../util/externalTool.js'
 
 const GRADLE_HINT =
@@ -35,6 +40,10 @@ export const mobileAndroidCommand = defineCommand({
     name: { type: 'string', description: 'App display name' },
     icon: { type: 'string', description: 'Source icon (PNG/SVG) to generate launcher icons from' },
     assemble: { type: 'boolean', description: 'Run gradle assembleDebug to produce an APK' },
+    out: {
+      type: 'string',
+      description: 'Copy the assembled APK to this path (e.g. --out MyApp.apk)',
+    },
     gradle: {
       type: 'string',
       description: 'Path to a Gradle binary (e.g. …/gradle-8.9/bin/gradle.bat) not on PATH',
@@ -178,9 +187,21 @@ export const mobileAndroidCommand = defineCommand({
         const runner = args.wrapper ? (resolveGradle({ proj }) ?? gradle) : gradle
         log(`Running ${runner.kind === 'wrapper' ? 'gradlew' : 'gradle'} assembleDebug…`)
         execTool(runner.bin, ['assembleDebug', '--no-daemon'], { cwd: proj, stdio: 'inherit' })
-        console.log(
-          `\n  ✓ APK → mobile/android/app/build/outputs/apk/debug/app-debug.apk\n    Install: adb install -r that.apk\n`,
-        )
+
+        // Locate the APK by scan (its name changes when the app sets `archivesName`), copy it
+        // to --out if asked, and print a copy-pasteable install command with the REAL path.
+        const built = findDebugApk(proj)
+        let apk = built ?? join(proj, 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk')
+        if (args.out && built) {
+          const dest = isAbsolute(args.out) ? args.out : join(root, args.out)
+          mkdirSync(dirname(dest), { recursive: true })
+          cpSync(built, dest)
+          apk = dest
+        }
+        const rel = relative(root, apk)
+        const display = rel.startsWith('..') ? apk : rel.replace(/\\/g, '/')
+        const shown = /\s/.test(display) ? `"${display}"` : display
+        console.log(`\n  ✓ APK → ${shown}\n    Install: adb install -r ${shown}\n`)
       }
     } else {
       console.log(

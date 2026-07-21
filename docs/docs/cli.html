@@ -240,7 +240,7 @@ apex build --preset vercel   <span class="c"># server target + Vercel config (al
         port. <code>apex mobile android</code> scaffolds <code>mobile/android</code> and syncs the bundle as an
         asset; <code>--assemble</code> also runs Gradle to produce an installable APK. See <a href="./mobile.html">Mobile</a>.
       </p>
-      <pre><code>apex mobile android [--appId &lt;id&gt;] [--name &lt;name&gt;] [--icon &lt;file&gt;] [--assemble] [--gradle &lt;path&gt;] [--sdk &lt;dir&gt;] [--wrapper] [--force] [--no-build]</code></pre>
+      <pre><code>apex mobile android [--appId &lt;id&gt;] [--name &lt;name&gt;] [--icon &lt;file&gt;] [--assemble] [--out &lt;file&gt;] [--gradle &lt;path&gt;] [--sdk &lt;dir&gt;] [--wrapper] [--force] [--no-build]</code></pre>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Argument / flag</th><th>Default</th><th>Description</th></tr></thead>
@@ -250,6 +250,7 @@ apex build --preset vercel   <span class="c"># server target + Vercel config (al
             <tr><td><code>--name</code></td><td>project name</td><td>Display name of the app.</td></tr>
             <tr><td><code>--icon</code></td><td>—</td><td>Path to a source icon (e.g. <code>icon.png</code>) to generate launcher icons from.</td></tr>
             <tr><td><code>--assemble</code></td><td><code>false</code></td><td>After scaffolding, run <code>gradle assembleDebug --no-daemon</code> to build the APK. Needs a JDK 17+, the Android SDK, and Gradle (not Android Studio).</td></tr>
+            <tr><td><code>--out</code></td><td>—</td><td>Copy the assembled APK to this path (e.g. <code>--out MyApp.apk</code> → project root). Without it the APK stays at <code>mobile/android/app/build/outputs/apk/debug/app-debug.apk</code>. Use with <code>--assemble</code>.</td></tr>
             <tr><td><code>--gradle</code></td><td>—</td><td>Path to a Gradle binary not on <code>PATH</code> (e.g. <code>…/gradle-8.9/bin/gradle</code>, or <code>gradle.bat</code> on Windows). Otherwise resolves the project <code>gradlew</code>, then <code>$APEX_GRADLE</code>, then <code>gradle</code> on <code>PATH</code>.</td></tr>
             <tr><td><code>--sdk</code></td><td><code>$ANDROID_HOME</code></td><td>Android SDK directory. Writes <code>mobile/android/local.properties</code> so Gradle finds the SDK without env each run. Falls back to <code>$ANDROID_HOME</code>/<code>$ANDROID_SDK_ROOT</code>.</td></tr>
             <tr><td><code>--wrapper</code></td><td><code>false</code></td><td>Generate the Gradle wrapper (<code>gradlew</code>) so later builds are self-contained — a JDK is enough, no system Gradle.</td></tr>
@@ -261,6 +262,7 @@ apex build --preset vercel   <span class="c"># server target + Vercel config (al
       <pre><code>apex build --mobile     <span class="c"># first, produce dist/mobile/server.mjs</span>
 apex mobile android     <span class="c"># scaffold mobile/android + sync the bundle</span>
 apex mobile android --appId com.you.app --name "My App" --assemble   <span class="c"># build an installable APK</span>
+apex mobile android --assemble --out MyApp.apk   <span class="c"># and copy it to ./MyApp.apk (instead of digging in build outputs)</span>
 <span class="c"># Gradle not on PATH (no Android Studio)? point at it + your SDK:</span>
 apex mobile android --assemble --gradle ~/tools/gradle-8.9/bin/gradle --sdk ~/Android/Sdk</code></pre>
       <p class="muted">Without <code>--assemble</code> it only scaffolds and syncs. Building the APK needs a JDK&nbsp;17+, the Android SDK, and Gradle — but not the Android Studio IDE; the IDE only bundles those. Windows <code>gradle.bat</code> is handled. Full story on <a href="./mobile.html">Mobile</a>.</p>
