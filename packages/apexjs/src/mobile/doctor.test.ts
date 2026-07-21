@@ -26,10 +26,11 @@ const savedEnv = { ...process.env }
 let dir: string
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'apex-doctor-'))
-  process.env.JAVA_HOME = undefined
-  process.env.ANDROID_HOME = undefined
-  process.env.ANDROID_SDK_ROOT = undefined
-  process.env.APEX_GRADLE = undefined
+  // `= undefined` would store the string "undefined" — delete is the real unset.
+  delete process.env.JAVA_HOME
+  delete process.env.ANDROID_HOME
+  delete process.env.ANDROID_SDK_ROOT
+  delete process.env.APEX_GRADLE
 })
 afterEach(() => {
   rmSync(dir, { recursive: true, force: true })
@@ -83,9 +84,9 @@ describe('detectAndroidSdk', () => {
   it('flags a missing SDK with the cmdline-tools link + doctor --fix hint', () => {
     const checks = detectAndroidSdk(null, REQ)
     expect(checks).toHaveLength(1)
-    expect(checks[0].status).toBe('missing')
-    expect(checks[0].link).toContain('developer.android.com')
-    expect(checks[0].steps?.join('\n')).toContain('apex mobile doctor --fix')
+    expect(checks[0]?.status).toBe('missing')
+    expect(checks[0]?.link).toContain('developer.android.com')
+    expect(checks[0]?.steps?.join('\n')).toContain('apex mobile doctor --fix')
   })
 
   it('detects installed packages and offers auto-install for missing ones', () => {
@@ -100,12 +101,12 @@ describe('detectAndroidSdk', () => {
       string,
       Check
     >
-    expect(byKey.sdk.status).toBe('ok')
-    expect(byKey['platform-tools'].status).toBe('ok')
-    expect(byKey['build-tools'].status).toBe('missing')
+    expect(byKey.sdk?.status).toBe('ok')
+    expect(byKey['platform-tools']?.status).toBe('ok')
+    expect(byKey['build-tools']?.status).toBe('missing')
     // sdkmanager present → the missing package carries an auto step pointing at build-tools;34.0.0.
-    expect(byKey['build-tools'].auto?.args).toEqual(['build-tools;34.0.0'])
-    expect(byKey.platform.auto?.args).toEqual(['platforms;android-34'])
+    expect(byKey['build-tools']?.auto?.args).toEqual(['build-tools;34.0.0'])
+    expect(byKey.platform?.auto?.args).toEqual(['platforms;android-34'])
   })
 
   it('omits auto steps when sdkmanager is absent (cmdline-tools not installed)', () => {
@@ -119,6 +120,7 @@ describe('detectAndroidSdk', () => {
 
 describe('detectGradle', () => {
   it('is missing (with a link) when nothing resolves', () => {
+    process.env.PATH = dir // CI images ship gradle on PATH — confine resolution to the tmp dir
     const c = detectGradle({ proj: dir })
     expect(c.status).toBe('missing')
     expect(c.link).toContain('gradle.org')
@@ -134,8 +136,8 @@ describe('detectIos', () => {
     if (process.platform === 'darwin') return
     const ios = detectIos()
     expect(ios).toHaveLength(1)
-    expect(ios[0].status).toBe('na')
-    expect(ios[0].detail).toContain('require a Mac')
+    expect(ios[0]?.status).toBe('na')
+    expect(ios[0]?.detail).toContain('require a Mac')
   })
 })
 
@@ -180,13 +182,13 @@ describe('renderReport + fixableSteps', () => {
   })
 
   it('says the toolchain is ready when there are no android gaps', () => {
-    const ready: DoctorReport = { ...report, android: [report.android[0]] }
+    const ready: DoctorReport = { ...report, android: report.android.slice(0, 1) }
     expect(renderReport(ready, noColor)).toContain('ready')
   })
 
   it('fixableSteps returns only the gaps with an auto action', () => {
     const steps = fixableSteps(report)
     expect(steps).toHaveLength(1)
-    expect(steps[0].args).toEqual(['build-tools;34.0.0'])
+    expect(steps[0]?.args).toEqual(['build-tools;34.0.0'])
   })
 })
