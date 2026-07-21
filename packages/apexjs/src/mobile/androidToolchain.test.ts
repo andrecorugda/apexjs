@@ -1,9 +1,10 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   ensureLocalProperties,
+  findDebugApk,
   resolveGradle,
   resolveSdkDir,
   sdkDirForProperties,
@@ -15,9 +16,10 @@ const savedEnv = { ...process.env }
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'apex-android-'))
-  process.env.APEX_GRADLE = undefined
-  process.env.ANDROID_HOME = undefined
-  process.env.ANDROID_SDK_ROOT = undefined
+  // `= undefined` would store the string "undefined" — delete is the real unset.
+  delete process.env.APEX_GRADLE
+  delete process.env.ANDROID_HOME
+  delete process.env.ANDROID_SDK_ROOT
 })
 afterEach(() => {
   rmSync(dir, { recursive: true, force: true })
@@ -58,7 +60,7 @@ describe('resolveSdkDir — precedence', () => {
   it('falls back to $ANDROID_HOME then $ANDROID_SDK_ROOT', () => {
     process.env.ANDROID_HOME = '/env/home'
     expect(resolveSdkDir()).toBe('/env/home')
-    process.env.ANDROID_HOME = undefined
+    delete process.env.ANDROID_HOME
     process.env.ANDROID_SDK_ROOT = '/env/root'
     expect(resolveSdkDir()).toBe('/env/root')
   })
@@ -75,6 +77,33 @@ describe('sdkDirForProperties — Java .properties escaping', () => {
   })
   it('leaves a POSIX path unchanged', () => {
     expect(sdkDirForProperties('/home/andre/Android/Sdk')).toBe('/home/andre/Android/Sdk')
+  })
+})
+
+describe('findDebugApk', () => {
+  const outDir = () => join(dir, 'app', 'build', 'outputs', 'apk', 'debug')
+
+  it('returns null before any assemble (no output dir / no apk)', () => {
+    expect(findDebugApk(dir)).toBeNull()
+    mkdirSync(outDir(), { recursive: true })
+    writeFileSync(join(outDir(), 'output-metadata.json'), '{}')
+    expect(findDebugApk(dir)).toBeNull()
+  })
+
+  it('finds the default app-debug.apk', () => {
+    mkdirSync(outDir(), { recursive: true })
+    writeFileSync(join(outDir(), 'app-debug.apk'), '')
+    expect(findDebugApk(dir)).toBe(join(outDir(), 'app-debug.apk'))
+  })
+
+  it('picks the newest apk when archivesName produced a renamed one', () => {
+    mkdirSync(outDir(), { recursive: true })
+    const stale = join(outDir(), 'app-debug.apk')
+    const fresh = join(outDir(), 'doctor-test-debug.apk')
+    writeFileSync(stale, '')
+    writeFileSync(fresh, '')
+    utimesSync(stale, new Date(2000, 0, 1), new Date(2000, 0, 1))
+    expect(findDebugApk(dir)).toBe(fresh)
   })
 })
 

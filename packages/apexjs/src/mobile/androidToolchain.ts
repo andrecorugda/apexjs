@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { resolveBin } from '../util/externalTool.js'
 
@@ -37,6 +37,21 @@ export function resolveGradle(opts: { gradleArg?: string; proj: string }): Resol
   }
   const onPath = resolveBin('gradle')
   return onPath ? { bin: onPath, kind: 'path' } : null
+}
+
+/**
+ * The APK `assembleDebug` just produced — the newest `.apk` under the debug output dir.
+ * Found by scan, not by name: the default is `app-debug.apk`, but an app that sets
+ * `archivesName` in its build.gradle.kts produces `<name>-debug.apk`. Null when none exists.
+ */
+export function findDebugApk(proj: string): string | null {
+  const dir = join(proj, 'app', 'build', 'outputs', 'apk', 'debug')
+  if (!existsSync(dir)) return null
+  const apks = readdirSync(dir)
+    .filter((f) => f.endsWith('.apk'))
+    .map((f) => ({ path: join(dir, f), mtime: statSync(join(dir, f)).mtimeMs }))
+    .sort((a, b) => b.mtime - a.mtime)
+  return apks[0]?.path ?? null
 }
 
 /**

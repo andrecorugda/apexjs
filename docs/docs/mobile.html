@@ -148,6 +148,12 @@ apex mobile android --assemble   <span class="c"># also run gradle assembleDebug
       <p>Name the app and set its package id when you scaffold:</p>
       <pre><code>apex mobile android --appId com.you.app --name "My App" --icon icon.png --assemble</code></pre>
       <p class="muted">
+        The APK lands at <code>mobile/android/app/build/outputs/apk/debug/app-debug.apk</code>. Add
+        <code>--out MyApp.apk</code> to also copy it somewhere handy (a named file in your project root) —
+        or set <code>archivesName</code> in <code>mobile/android/app/build.gradle.kts</code> if you want
+        Gradle itself to name it.
+      </p>
+      <p class="muted">
         <code>--assemble</code> runs Gradle, so it needs a <strong>JDK 17+</strong>, the <strong>Android SDK</strong>,
         and <strong>Gradle</strong> — but <em>not</em> Android Studio (the IDE just bundles those three).
         Point Apex at a Gradle that isn't on <code>PATH</code> and at your SDK, and it wires everything up:

@@ -1,5 +1,23 @@
 # @apex-stack/core
 
+## 0.47.0
+
+### Minor Changes
+
+- feat(mobile): `apex mobile android --out <file>` — name the APK you just built
+
+  - `--out MyApp.apk` copies the assembled APK to a named file (relative to the project root, or an
+    absolute path) instead of leaving it buried in `mobile/android/app/build/outputs/apk/debug/`.
+  - The ✓ success line now prints the **real** APK path in a copy-pasteable
+    `adb install -r <path>` command (it previously said the literal words "that.apk").
+  - The APK is located by scan, not by name — an app that sets `archivesName` in its
+    `build.gradle.kts` (producing `myapp-debug.apk`) is picked up correctly.
+  - Scaffold AGENTS.md refresh: documents `--out`, `apex extend pwa`, `server/hooks.ts`
+    (defineHooks), the `Idempotency-Key` retry behavior, and the prod reliability surface
+    (/health, request log, SIGTERM drain, masked errors).
+
+  Purely additive — no existing flag, output path, or behavior changes unless `--out` is passed.
+
 ## 0.46.0
 
 ### Minor Changes
