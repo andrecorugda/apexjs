@@ -136,4 +136,4 @@ agent host at it to get `apex_make`, `apex_extend`, `apex_add`, `apex_build`, `a
 `apex_project_info`, `apex_check`, and `apex_test` as structured tools, so you scaffold,
 type-check, and test by calling tools instead of shelling out.
 
-Docs: https://apexjs.site/docs/
+Docs: https://apex-js.site/docs/

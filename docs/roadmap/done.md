@@ -120,8 +120,8 @@ it runs your server on the device.
 
 ## Component library + theming (SHIPPED epic)
 
-- **`@apex-stack/components`** (0.4.0) — 36 curated `.alpine` components (PenguinUI, MIT), token-driven; `apex add <name…>` / `--all`. Browse + tick-to-generate at apexjs.site/ui.html.
-- **`@apex-stack/theme`** (0.3.0) — Tailwind v4 `@theme` token contract; `apex theme --primary … --radius … --font-*` rewrites the managed block in `app.css`; every component inherits it. Visual builder at apexjs.site/theme.html.
+- **`@apex-stack/components`** (0.4.0) — 36 curated `.alpine` components (PenguinUI, MIT), token-driven; `apex add <name…>` / `--all`. Browse + tick-to-generate at apex-js.site/ui.html.
+- **`@apex-stack/theme`** (0.3.0) — Tailwind v4 `@theme` token contract; `apex theme --primary … --radius … --font-*` rewrites the managed block in `app.css`; every component inherits it. Visual builder at apex-js.site/theme.html.
 
 ## AI-agent tooling (dev-time)
 

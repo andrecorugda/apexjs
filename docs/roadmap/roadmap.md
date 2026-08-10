@@ -25,7 +25,7 @@ that *every model, route, and job is AI-callable by construction* — nothing el
 
 **Latest release (npm):** `@apex-stack/core@0.9.0` · `@apex-stack/kit@0.4.0` · `create-apexjs@0.5.0`
 · `@apex-stack/theme@0.3.0` · `@apex-stack/data@0.1.27` · `@apex-stack/vite@0.2.0`. Docs + UI Kit +
-Theme Builder live at **apexjs.site**. Client-side nav (0.8.0), style-only HMR + islands static
+Theme Builder live at **apex-js.site**. Client-side nav (0.8.0), style-only HMR + islands static
 build (0.9.0).
 
 ### ✅ Phase 0 — Spike
@@ -98,7 +98,7 @@ Package `@apex-stack/compass`, CLI `apex compass`.
   and **sealed-cookie auth** — the same server code as the web build, unchanged. `apex mobile
   android` scaffolds the native WebView shell + builds an APK in one command; an iOS shell exists
   (engine CI-verified on the iOS Simulator). This went *beyond* a static Capacitor/Tauri wrap — it
-  runs your server on the device. See [mobile docs](https://apexjs.site/docs/mobile.html). *Honest
+  runs your server on the device. See [mobile docs](https://apex-js.site/docs/mobile.html). *Honest
   scope: a WebView app (not native-widget UI); the on-device DB is in-memory + snapshot-persisted;
   native device APIs (camera, …) need shell wiring.*
 - **PWA (shipped — `@apex-stack/core@0.40.0`, 🟡):** a `pwa: { name, … }` config block makes
@@ -219,10 +219,10 @@ A first-class component library + theming story, all delivered:
 
 1. ✅ **`@apex-stack/components`** — 36 curated `.alpine` components adapted from Penguin UI (MIT),
    token-driven. `apex add <name...>` / `apex add --all` copies them into a project (registry bundled
-   into core). Browse + tick-to-generate at **apexjs.site/ui.html** (each previewed live).
+   into core). Browse + tick-to-generate at **apex-js.site/ui.html** (each previewed live).
 2. ✅ **`@apex-stack/theme`** — Tailwind v4 `@theme` token contract (colors/radius/fonts + `dark`
    variant). `apex theme --primary … --radius … --font-*` rewrites the managed block in `app.css`.
-3. ✅ **Visual theme builder** at **apexjs.site/theme.html** — pick colors/radius/fonts, live preview,
+3. ✅ **Visual theme builder** at **apex-js.site/theme.html** — pick colors/radius/fonts, live preview,
    copy the `apex theme …` command (only changed flags).
 4. ✅ **Inherited theming** — every component reads the shared tokens, so one `apex theme` restyles
    the whole app.

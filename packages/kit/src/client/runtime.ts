@@ -145,7 +145,7 @@ export function resolveRootMagic(
     console.warn(
       `[apex] $${name} has no global form (Alpine.$${name}), so it can't initialize a page-root ` +
         `x-data — it evaluates to undefined. Use it in a nested <div x-data="{ … }"> instead. ` +
-        `https://apexjs.site/docs/components.html#plugins`,
+        `https://apex-js.site/docs/components.html#plugins`,
     )
   }
   return () => undefined

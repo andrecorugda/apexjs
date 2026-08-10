@@ -68,7 +68,7 @@
 
     <footer class="border-t border-outline px-6 py-6 text-center text-sm text-on-surface/70 dark:border-outline-dark dark:text-on-surface-dark/70">
       Built with
-      <a href="https://apexjs.site" class="font-medium text-primary dark:text-primary-dark">Apex JS</a>
+      <a href="https://apex-js.site" class="font-medium text-primary dark:text-primary-dark">Apex JS</a>
     </footer>
   </div>
 </template>

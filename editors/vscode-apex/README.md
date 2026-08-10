@@ -1,6 +1,6 @@
 # Apex JS — `.alpine` language support
 
-Syntax highlighting and editor configuration for [Apex JS](https://apexjs.site) `.alpine`
+Syntax highlighting and editor configuration for [Apex JS](https://apex-js.site) `.alpine`
 single-file components.
 
 A `.alpine` file has three parts, and this extension highlights each correctly:

@@ -43,7 +43,7 @@ packages/
   create-apexjs/  → create-apexjs       (scaffolder)
 editors/vscode-apex → .alpine VS Code extension
 playground/       → example apps + e2e
-docs/             → the apexjs.site docs site
+docs/             → the apex-js.site docs site
 ```
 
 ## Reporting bugs / proposing features
