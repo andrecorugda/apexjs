@@ -1,6 +1,6 @@
 # {{name}}
 
-An [Apex JS](https://apexjs.site) app — HTML-first, server-rendered, AI-native.
+An [Apex JS](https://apex-js.site) app — HTML-first, server-rendered, AI-native.
 
 This starter is a small, themed demo: a landing page, a blog (list + dynamic
 `[slug]` detail) served from a sample-data service, an About page with SEO, a
@@ -64,9 +64,9 @@ apex make test billing         # → tests/billing.test.ts
   theme tokens (`--color-primary`, `--radius-radius`, fonts, and a `dark` variant). Components use
   token classes like `bg-primary` / `text-on-surface` / `rounded-radius`, so they all restyle at once.
 - **Restyle everything:** `apex theme --primary "#4f46e5" --radius 0.5rem` rewrites the managed
-  `/* apex-theme */` block in `app.css`. Or design it visually at https://apexjs.site/theme.html.
+  `/* apex-theme */` block in `app.css`. Or design it visually at https://apex-js.site/theme.html.
 - **Add components:** `apex add <name>` copies a themed component into `components/`. Browse them at
-  https://apexjs.site/ui.html.
+  https://apex-js.site/ui.html.
 - **Scoped styles** still work too: a `<style scoped>` block in an `.alpine` file is scoped to it.
 
 ## Config & environment
@@ -84,4 +84,4 @@ Adopt new scaffold defaults in this app without touching your code:
 apex upgrade        # adds any new template files; never overwrites yours (package.json preserved)
 ```
 
-Full docs: https://apexjs.site
+Full docs: https://apex-js.site

@@ -70,4 +70,4 @@ await Message.create(handle, { author: 'Ada', body: 'Hi' })         // insert
 ```
 
 `apex make model <Name> field:type …` generates the model, its resource, a starter
-migration, and `db/index.ts` (if absent) for you. See https://apexjs.site/data.html
+migration, and `db/index.ts` (if absent) for you. See https://apex-js.site/data.html

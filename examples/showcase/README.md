@@ -1,6 +1,6 @@
 # apex-showcase
 
-The **feature-complete** [Apex JS](https://apexjs.site) example — one app that exercises
+The **feature-complete** [Apex JS](https://apex-js.site) example — one app that exercises
 every core capability of the framework. It doubles as the target for the repo's
 end-to-end suite (`e2e/`). For a clean, minimal starting point instead, scaffold a
 fresh app with `npm create apexjs@latest` (or `apex new`).
@@ -57,4 +57,4 @@ everything else (including `sessionPassword`) is server-only. Override any value
 — `APEX_<KEY>` (private) / `APEX_PUBLIC_<KEY>` (public). Copy `.env.example` to `.env` and set
 a strong `APEX_SESSION_PASSWORD` (≥32 chars) before deploying.
 
-Full docs: https://apexjs.site
+Full docs: https://apex-js.site

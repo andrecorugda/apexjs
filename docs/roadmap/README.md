@@ -28,7 +28,7 @@ build on and 🟡 as "works, shape may still move."
 | `@apex-stack/components` | 0.4.0 | 36-component UI Kit (`apex add`) |
 | `@apex-stack/kit` · `@apex-stack/vite` | 0.9.1 · 0.4.1 | Internal — used via core / the CLI only |
 
-Docs, UI Kit browser, and Theme Builder are live at **apexjs.site**.
+Docs, UI Kit browser, and Theme Builder are live at **apex-js.site**.
 
 ## The three pillars (positioning)
 

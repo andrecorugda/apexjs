@@ -46,4 +46,4 @@ Allow: /
 User-agent: Meta-ExternalAgent
 Allow: /
 
-Sitemap: https://apexjs.site/sitemap.xml
+Sitemap: https://apex-js.site/sitemap.xml

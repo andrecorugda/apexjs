@@ -15,4 +15,4 @@ export default defineResource('posts', { db, table: schema.posts, insert: { titl
 ```
 
 That one line gives you `GET/POST/PATCH/DELETE /api/posts` plus the MCP tools
-`posts_list/get/create/update/delete`. See https://apexjs.site/data.html
+`posts_list/get/create/update/delete`. See https://apex-js.site/data.html
