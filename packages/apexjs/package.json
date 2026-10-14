@@ -59,7 +59,7 @@
     "@apex-stack/kit": "workspace:*",
     "@apex-stack/theme": "workspace:*",
     "@apex-stack/vite": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "citty": "^0.2.2",
     "h3": "^1.13.0",
     "vite": "^7.0.0",
