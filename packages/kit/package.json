@@ -45,7 +45,7 @@
     "linkedom": "^0.18.13",
     "morphdom": "^2.7.8",
     "postcss": "^8.5.19",
-    "postcss-selector-parser": "^7.0.0"
+    "postcss-selector-parser": "^7.1.6"
   },
   "engines": {
     "node": ">=20.19"
